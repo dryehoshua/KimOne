@@ -368,7 +368,7 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto minmax(180px, 30vh);
+      grid-template-rows: auto minmax(0, 1fr) auto minmax(170px, 28vh);
       overflow: hidden;
     }
 
@@ -439,15 +439,6 @@
       line-height: 1.45;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-    }
-
-    .memory-lab {
-      border-top: 1px solid var(--line);
-      background: #ffffff;
-      padding: 12px 14px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
-      gap: 12px;
     }
 
     .tool-surface {
@@ -546,6 +537,98 @@
       overflow-wrap: anywhere;
     }
 
+    .assistant-tools {
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr);
+      gap: 12px;
+    }
+
+    .capability-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .capability {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfd;
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .capability span {
+      color: #475467;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .capability strong {
+      color: var(--teal-dark);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .drop-zone {
+      min-height: 96px;
+      border: 1px dashed #94a3ad;
+      border-radius: 8px;
+      background: #f8fafb;
+      padding: 12px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      color: #344054;
+    }
+
+    .drop-zone.dragging {
+      border-color: var(--teal);
+      background: var(--soft-teal);
+    }
+
+    .drop-zone strong {
+      font-size: 14px;
+    }
+
+    .drop-zone span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .inline-button {
+      width: auto;
+      min-height: 34px;
+      padding: 7px 10px;
+      font-size: 13px;
+      justify-content: center;
+    }
+
+    .conversation-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .thread-item .thread-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .thread-item .thread-line span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .compiler {
       border-top: 1px solid var(--line);
       background: #ffffff;
@@ -609,7 +692,11 @@
         min-height: 680px;
       }
 
-      .memory-lab {
+      .assistant-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .capability-row {
         grid-template-columns: 1fr;
       }
     }
@@ -640,7 +727,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Tesca Elements Kim Live</h1>
+      <h1>Kim Live <span id="appVersion">1.4</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -712,6 +799,15 @@
           </span>
           Guardar en memoria
         </button>
+        <button class="secondary" id="draftDocument">
+          <span class="button-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 3h9l3 3v15H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M14 3v5h4M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Redactar documento
+        </button>
         <button class="danger" id="execute">
           <span class="button-icon">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -731,15 +827,14 @@
       </section>
 
       <section class="thread-list" aria-label="Conversaciones">
-        <p class="thread-title">Chats</p>
-        <button class="thread-item active" data-thread="kim">
-          Kim Live Conversations
-          <small>Sesion de voz y compilado actual</small>
+        <p class="thread-title">Conversaciones</p>
+        <button class="thread-item active" id="newConversation">
+          <span class="thread-line"><span>Nueva conversacion</span><small id="currentSessionLabel"></small></span>
+          <small>Sesion de voz, archivos y tareas</small>
         </button>
-        <button class="thread-item" data-thread="codex">
-          Codex
-          <small>Salida hacia tareas y ejecucion</small>
-        </button>
+        <div class="conversation-list" id="conversationList">
+          <small>Cargando historial...</small>
+        </div>
       </section>
     </aside>
 
@@ -759,32 +854,26 @@
         </article>
       </div>
 
-      <section class="memory-lab" aria-label="Memoria y navegacion">
-        <div class="tool-surface">
-          <div class="tool-title">Memoria de Kim</div>
-          <div class="metric-grid">
-            <div class="metric"><strong id="memoryFiles">0</strong><span>archivos</span></div>
-            <div class="metric"><strong id="memoryCalls">0</strong><span>llamadas</span></div>
-            <div class="metric"><strong id="memoryUploads">0</strong><span>cargas</span></div>
+      <section class="assistant-tools" aria-label="Herramientas de Kim">
+        <div class="capability-row">
+          <div class="capability">
+            <span>Investigacion</span>
+            <strong id="researchState">Automatica con herramientas</strong>
           </div>
-          <div class="topic-list" id="topicList">
-            <span>Cargando analiticos...</span>
+          <div class="capability">
+            <span>Documentos</span>
+            <strong id="documentState">Redaccion desde conversacion</strong>
           </div>
-          <div class="small-list" id="principlesList"></div>
+          <div class="capability">
+            <span>Sesion</span>
+            <strong id="sessionIdLabel">CALL</strong>
+          </div>
         </div>
-
-        <div class="tool-surface">
-          <div class="tool-title">Navegacion online</div>
-          <input id="researchQuery" type="search" placeholder="Investigar en internet">
-          <button class="secondary compact-button" id="researchButton">Buscar y guardar</button>
-          <div class="result-text" id="researchResults">Sin busqueda todavia.</div>
-        </div>
-
-        <div class="tool-surface">
-          <div class="tool-title">Carga de archivos</div>
-          <input id="memoryFile" type="file">
-          <button class="secondary compact-button" id="uploadButton">Cargar a BIFROST</button>
-          <div class="result-text" id="uploadResults">Los archivos se copian a BIFROST y quedan indexados.</div>
+        <div class="drop-zone" id="dropZone" tabindex="0">
+          <strong>Arrastra archivos aqui para que Kim los lea</strong>
+          <span id="uploadResults">Se guardan en BIFROST, se resumen y entran al contexto de esta conversacion.</span>
+          <input id="memoryFile" type="file" multiple hidden>
+          <button class="secondary inline-button" id="browseFiles">Adjuntar archivos</button>
         </div>
       </section>
 
@@ -819,11 +908,17 @@
     let conversationActive = false;
     let kimDraftText = "";
     let kimDraftBubble = null;
+    let activeUploadedFiles = [];
+    const completedToolCalls = new Set();
+    let workingToneContext = null;
+    let workingToneOscillator = null;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
       .replace(/\..+/, "")
       .replace("T", "-");
+    $("sessionIdLabel").textContent = sessionId;
+    $("currentSessionLabel").textContent = sessionId.slice(-13);
 
     function setStatus(text, state = null) {
       status.textContent = text;
@@ -863,6 +958,28 @@
         .replaceAll("'", "&#039;");
     }
 
+    function startWorkingTone() {
+      try {
+        if (workingToneOscillator) return;
+        workingToneContext = workingToneContext || new (window.AudioContext || window.webkitAudioContext)();
+        const gain = workingToneContext.createGain();
+        gain.gain.value = 0.018;
+        workingToneOscillator = workingToneContext.createOscillator();
+        workingToneOscillator.type = "sine";
+        workingToneOscillator.frequency.value = 520;
+        workingToneOscillator.connect(gain);
+        gain.connect(workingToneContext.destination);
+        workingToneOscillator.start();
+      } catch (_) {}
+    }
+
+    function stopWorkingTone() {
+      try {
+        if (workingToneOscillator) workingToneOscillator.stop();
+      } catch (_) {}
+      workingToneOscillator = null;
+    }
+
     function appendCompiled(speaker, text) {
       const safe = (text || "").trim();
       if (!safe) return;
@@ -886,29 +1003,61 @@
       return message;
     }
 
-    function renderMemoryAnalytics(data) {
-      $("memoryFiles").textContent = data.memory_file_count || 0;
-      $("memoryCalls").textContent = data.call_count || 0;
-      $("memoryUploads").textContent = data.uploaded_file_count || 0;
-      const topics = data.topics || [];
-      $("topicList").innerHTML = topics.length
-        ? topics.map((item) => "<div class=\"topic-chip\"><span>" + escapeHtml(item.name) + "</span><strong>" + escapeHtml(item.score) + "</strong></div>").join("")
-        : "<span>Sin temas dominantes todavia.</span>";
-      const principles = (data.principles || []).slice(-4);
-      $("principlesList").innerHTML = principles.length
-        ? principles.map((item) => "<span>- " + escapeHtml(item) + "</span>").join("")
-        : "<span>Sin principios visibles todavia.</span>";
-      $("contextSummary").textContent = "Sesion " + sessionId + ". Memoria: " + formatBytes(data.memory_bytes) + ".";
+    function renderConversationList(items) {
+      const list = $("conversationList");
+      if (!items.length) {
+        list.innerHTML = "<small>Sin conversaciones guardadas todavia.</small>";
+        return;
+      }
+      list.innerHTML = items.map((item) => {
+        const title = item.title || item.session_id || "Conversacion";
+        const topics = (item.topics || []).map((topic) => topic.name).slice(0, 2).join(", ");
+        const callNumber = item.call_number ? "#" + item.call_number : "CALL";
+        return "<button class=\"thread-item\" data-session-id=\"" + escapeHtml(item.session_id) + "\">"
+          + "<span class=\"thread-line\"><span>" + escapeHtml(title) + "</span><small>" + escapeHtml(callNumber) + "</small></span>"
+          + "<small>" + escapeHtml(topics || item.saved_at || "Guardada") + "</small>"
+          + "</button>";
+      }).join("");
+      for (const item of list.querySelectorAll(".thread-item")) {
+        item.addEventListener("click", () => openSavedConversation(item.dataset.sessionId));
+      }
     }
 
-    async function loadMemoryAnalytics() {
+    async function loadConversations() {
       try {
-        const response = await fetch("/api/memory-analytics");
+        const response = await fetch("/api/conversations");
         const data = await response.json();
-        if (data.ok) renderMemoryAnalytics(data);
+        if (data.ok) renderConversationList(data.conversations || []);
       } catch (_) {
-        $("topicList").innerHTML = "<span>No pude cargar analiticos.</span>";
+        $("conversationList").innerHTML = "<small>No pude cargar historial.</small>";
       }
+    }
+
+    async function openSavedConversation(sessionIdToOpen) {
+      try {
+        setStatus("Abriendo conversacion guardada...", "working");
+        const response = await fetch("/api/conversation?session_id=" + encodeURIComponent(sessionIdToOpen));
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || "No pude abrir la conversacion.");
+        const record = data.conversation;
+        document.querySelectorAll(".thread-item").forEach((button) => button.classList.remove("active"));
+        for (const button of document.querySelectorAll("[data-session-id]")) {
+          if (button.dataset.sessionId === sessionIdToOpen) button.classList.add("active");
+        }
+        $("threadHeading").textContent = record.title || record.session_id;
+        $("threadMeta").textContent = "Conversacion guardada " + (record.saved_at || "") + ". ID " + record.session_id + ".";
+        chatLog.innerHTML = "";
+        appendMessage("Kim", "Resumen guardado:\n" + (record.summary || "Sin resumen disponible."), "kim", false);
+        transcript.value = record.transcript || "";
+        updateLineCount();
+        setStatus("Conversacion cargada.", "idle");
+      } catch (error) {
+        setStatus("No pude abrir historial: " + error.message, "idle");
+      }
+    }
+
+    async function refreshMemoryState() {
+      await loadConversations();
     }
 
     function appendKimDelta(delta) {
@@ -971,6 +1120,104 @@
       setStatus(message, "idle");
     }
 
+    function sendRealtimeToolOutput(callId, output) {
+      if (!rtcChannel || rtcChannel.readyState !== "open" || !callId) return;
+      rtcChannel.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "function_call_output",
+          call_id: callId,
+          output: JSON.stringify(output)
+        }
+      }));
+      rtcChannel.send(JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: "Usa el resultado de la herramienta y responde al doctor de forma breve, con fuentes si aplica."
+        }
+      }));
+    }
+
+    async function runResearchTool(query, callId = null) {
+      const cleanQuery = (query || "").trim();
+      if (!cleanQuery) return null;
+      $("researchState").textContent = "Buscando...";
+      setStatus("Estoy buscando y guardando fuentes...", "working");
+      startWorkingTone();
+      appendMessage("Kim", "Estoy buscando: " + cleanQuery, "kim", false);
+      try {
+        const data = await post("/api/research-agent", {
+          query: cleanQuery,
+          transcript: transcript.value
+        });
+        const research = data.research;
+        const sourceLines = (research.sources || []).slice(0, 4).map((source) => "- " + source.title + ": " + source.url).join("\n");
+        appendMessage("Codex", "Investigacion guardada en BIFROST.\n" + (research.answer || "") + (sourceLines ? "\n\nFuentes:\n" + sourceLines : ""), "codex", false);
+        $("researchState").textContent = "Guardada";
+        refreshMemoryState();
+        sendRealtimeToolOutput(callId, research);
+        return research;
+      } catch (error) {
+        $("researchState").textContent = "Error";
+        const payload = {error: error.message};
+        appendMessage("Codex", "No pude investigar: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        stopWorkingTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
+    async function draftDocumentFromCurrent(instruction, callId = null) {
+      $("documentState").textContent = "Redactando...";
+      setStatus("Redactando documento...", "working");
+      startWorkingTone();
+      try {
+        const data = await post("/api/draft-document", {
+          instruction: instruction || "Redacta un documento a partir de esta conversacion.",
+          text: transcript.value,
+          session_id: sessionId
+        });
+        const doc = data.document;
+        appendMessage("Codex", "Documento redactado y guardado:\n" + doc.path + "\n\n" + (doc.preview || ""), "codex", false);
+        $("documentState").textContent = "Documento guardado";
+        sendRealtimeToolOutput(callId, doc);
+        refreshMemoryState();
+        return doc;
+      } catch (error) {
+        $("documentState").textContent = "Error";
+        const payload = {error: error.message};
+        appendMessage("Codex", "No pude redactar el documento: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        stopWorkingTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
+    async function handleRealtimeToolCall(data) {
+      const callId = data.call_id || data.callId || data.item?.call_id;
+      const name = data.name || data.item?.name;
+      const rawArguments = data.arguments || data.item?.arguments || "{}";
+      if (!callId || completedToolCalls.has(callId)) return;
+      completedToolCalls.add(callId);
+      let args = {};
+      try {
+        args = typeof rawArguments === "string" ? JSON.parse(rawArguments || "{}") : rawArguments;
+      } catch (_) {
+        args = {};
+      }
+      if (name === "kim_research_web") {
+        await runResearchTool(args.query, callId);
+      }
+      if (name === "kim_draft_document") {
+        await draftDocumentFromCurrent(args.instruction, callId);
+      }
+    }
+
     function handleRealtimeEvent(event) {
       let data;
       try {
@@ -995,6 +1242,12 @@
       if (data.type === "response.done") {
         finalizeKimDraft();
         if (conversationActive) setStatus("Escuchando...", "listening");
+      }
+      if (
+        data.type === "response.function_call_arguments.done" ||
+        (data.type === "response.output_item.done" && data.item?.type === "function_call")
+      ) {
+        handleRealtimeToolCall(data);
       }
       if (data.type === "error") {
         setStatus("Realtime: " + (data.error?.message || "error"), "idle");
@@ -1096,90 +1349,113 @@
 
     $("conversationToggle").onclick = startConversation;
 
-    $("endConversation").onclick = () => {
-      finishConversation("Conversacion terminada. Puedes guardar o ejecutar el compilado.");
-    };
-
-    $("save").onclick = async () => {
+    async function saveCurrentConversation(statusText = "Guardando memoria...") {
       const text = transcript.value.trim();
       if (!text) {
         setStatus("Primero conversa o escribe una nota para guardar.", "idle");
         transcript.focus();
-        return;
+        return null;
       }
-      setStatus("Guardando memoria...", "working");
+      setStatus(statusText, "working");
       try {
         const data = await post("/api/save", {
           text,
           session_id: sessionId,
           started_at: sessionStartedAt.toISOString(),
-          title: $("threadHeading").textContent
+          title: $("threadHeading").textContent,
+          uploaded_files: activeUploadedFiles
         });
         const target = data.call_saved_to || data.saved_to;
         appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
-        loadMemoryAnalytics();
+        refreshMemoryState();
         setStatus("Memoria guardada.", "idle");
+        return data;
       } catch (error) {
         setStatus("No pude guardar: " + error.message, "idle");
+        return null;
       }
+    }
+
+    $("endConversation").onclick = async () => {
+      finishConversation("Conversacion terminada. Guardando memoria...");
+      await saveCurrentConversation("Clasificando y guardando conversacion...");
     };
 
-    $("researchButton").onclick = async () => {
-      const query = $("researchQuery").value.trim();
-      if (!query) {
-        $("researchQuery").focus();
-        setStatus("Escribe que quieres investigar.", "idle");
-        return;
-      }
-      $("researchButton").disabled = true;
-      $("researchResults").textContent = "Buscando...";
-      setStatus("Navegando online...", "working");
-      try {
-        const data = await post("/api/research", {query});
-        const results = data.research.results || [];
-        $("researchResults").textContent = results.length
-          ? results.slice(0, 4).map((item, idx) => (idx + 1) + ". " + item.title + "\n" + item.url + "\n" + (item.snippet || "")).join("\n\n")
-          : "No encontre resultados utiles.";
-        appendMessage("Codex", "Busqueda guardada: " + query + " (" + results.length + " resultados)", "codex", false);
-        loadMemoryAnalytics();
-        setStatus("Busqueda guardada en memoria.", "idle");
-      } catch (error) {
-        $("researchResults").textContent = error.message;
-        setStatus("No pude navegar: " + error.message, "idle");
-      } finally {
-        $("researchButton").disabled = false;
-      }
-    };
+    $("save").onclick = () => saveCurrentConversation();
 
-    $("uploadButton").onclick = async () => {
-      const fileInput = $("memoryFile");
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) {
-        fileInput.focus();
-        setStatus("Elige un archivo para cargar.", "idle");
-        return;
-      }
-      $("uploadButton").disabled = true;
-      $("uploadResults").textContent = "Cargando " + file.name + "...";
-      setStatus("Cargando archivo a BIFROST...", "working");
+    async function uploadSingleFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/upload-memory-file", {method: "POST", body: formData});
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "No pude cargar archivo.");
+      return data.analysis;
+    }
+
+    async function uploadFiles(files) {
+      const incoming = Array.from(files || []);
+      if (!incoming.length) return;
+      $("browseFiles").disabled = true;
+      $("uploadResults").textContent = "Leyendo " + incoming.length + " archivo(s)...";
+      setStatus("Leyendo archivos y guardando contexto...", "working");
+      startWorkingTone();
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await fetch("/api/upload-memory-file", {method: "POST", body: formData});
-        const data = await response.json();
-        if (!data.ok) throw new Error(data.error || "No pude cargar archivo.");
-        const analysis = data.analysis;
-        $("uploadResults").textContent = "Guardado: " + analysis.stored_path + "\nTemas: " + (analysis.topics || []).map((item) => item.name).join(", ");
-        appendMessage("Codex", "Archivo cargado e indexado: " + analysis.filename, "codex", false);
-        fileInput.value = "";
-        loadMemoryAnalytics();
-        setStatus("Archivo cargado en BIFROST.", "idle");
+        for (const file of incoming) {
+          const analysis = await uploadSingleFile(file);
+          activeUploadedFiles.push(analysis);
+          const topics = (analysis.topics || []).map((item) => item.name).join(", ") || "Sin clasificar";
+          const summary = "Lei el archivo " + analysis.filename + ".\n"
+            + "Extractor: " + analysis.extractor + ". Caracteres: " + analysis.extracted_chars + ".\n"
+            + "Temas: " + topics + ".\n\n"
+            + analysis.summary;
+          appendMessage("Kim", summary, "kim");
+          if (rtcChannel && rtcChannel.readyState === "open") {
+            rtcChannel.send(JSON.stringify({
+              type: "conversation.item.create",
+              item: {
+                type: "message",
+                role: "user",
+                content: [{type: "input_text", text: "Archivo cargado para contexto:\n" + summary}]
+              }
+            }));
+          }
+        }
+        $("uploadResults").textContent = "Archivo(s) leidos y agregados al contexto.";
+        refreshMemoryState();
+        setStatus(conversationActive ? "Archivo listo. Seguimos conversando." : "Archivo listo.", conversationActive ? "listening" : "idle");
       } catch (error) {
         $("uploadResults").textContent = error.message;
         setStatus("No pude cargar archivo: " + error.message, "idle");
       } finally {
-        $("uploadButton").disabled = false;
+        stopWorkingTone();
+        $("browseFiles").disabled = false;
+        $("memoryFile").value = "";
       }
+    }
+
+    $("browseFiles").onclick = () => $("memoryFile").click();
+    $("memoryFile").addEventListener("change", () => uploadFiles($("memoryFile").files));
+    $("dropZone").addEventListener("dragover", (event) => {
+      event.preventDefault();
+      $("dropZone").classList.add("dragging");
+    });
+    $("dropZone").addEventListener("dragleave", () => $("dropZone").classList.remove("dragging"));
+    $("dropZone").addEventListener("drop", (event) => {
+      event.preventDefault();
+      $("dropZone").classList.remove("dragging");
+      uploadFiles(event.dataTransfer.files);
+    });
+
+    $("draftDocument").onclick = async () => {
+      const text = transcript.value.trim();
+      if (!text) {
+        setStatus("Primero necesito conversacion o notas para redactar.", "idle");
+        transcript.focus();
+        return;
+      }
+      $("draftDocument").disabled = true;
+      await draftDocumentFromCurrent("Redacta un documento profesional a partir del compilado actual.");
+      $("draftDocument").disabled = false;
     };
 
     $("execute").onclick = async () => {
@@ -1202,27 +1478,22 @@
       }
     };
 
-    for (const item of document.querySelectorAll(".thread-item")) {
-      item.addEventListener("click", () => {
-        document.querySelectorAll(".thread-item").forEach((button) => button.classList.remove("active"));
-        item.classList.add("active");
-        const thread = item.dataset.thread;
-        if (thread === "codex") {
-          $("threadHeading").textContent = "Codex";
-          $("threadMeta").textContent = "Aqui quedan los avisos de memoria, tareas y ejecucion.";
-        } else {
-          $("threadHeading").textContent = "Kim Live Conversations";
-          $("threadMeta").textContent = "Registro con hablantes identificados para convertirlo en memoria o tarea.";
-        }
-      });
-    }
+    $("newConversation").addEventListener("click", () => {
+      document.querySelectorAll(".thread-item").forEach((button) => button.classList.remove("active"));
+      $("newConversation").classList.add("active");
+      $("threadHeading").textContent = "Kim Live Conversations";
+      $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
+      chatLog.innerHTML = "";
+      appendMessage("Kim", "Estoy lista. Pulsa Conversar, habla conmigo, arrastra archivos cuando quieras y al terminar guardo la llamada con ID unico.", "kim", false);
+    });
 
     transcript.addEventListener("input", updateLineCount);
 
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode;
+        $("mode").textContent = data.mode + " v" + (data.version || "1.4");
+        $("appVersion").textContent = "v" + (data.version || "1.4");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
@@ -1240,8 +1511,8 @@
         $("contextSummary").textContent = "Kim puede conversar, pero no cargo memoria local.";
       });
 
-    $("threadMeta").textContent = "Sesion " + sessionId + " con resumen por llamada, tema y topico.";
-    loadMemoryAnalytics();
+    $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
+    loadConversations();
     updateLineCount();
   </script>
 </body>

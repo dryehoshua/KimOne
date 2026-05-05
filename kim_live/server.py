@@ -14,12 +14,16 @@ import hashlib
 import html
 import io
 import json
+import mimetypes
 import pathlib
 import re
 import subprocess
+import tempfile
 import urllib.parse
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
+import zipfile
 
 
 APP_DIR = pathlib.Path(__file__).resolve().parent
@@ -60,6 +64,11 @@ PORT = 8765
 OPENAI_API_BASE = "https://api.openai.com/v1"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
+APP_VERSION = "1.4.0"
+RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
+DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
+MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
+RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 
 
 def today():
@@ -207,7 +216,7 @@ def detect_topics(text):
         "ClickUp": {"clickup", "tarea", "tareas", "estatus", "deadline", "asignado"},
         "Notion": {"notion", "wiki", "base", "conocimiento"},
         "Memoria IA": {"memoria", "vector", "vectores", "embedding", "embeddings", "contexto"},
-        "Navegacion online": {"internet", "online", "navegacion", "busqueda", "investigar"},
+        "Investigacion web": {"internet", "online", "navegacion", "busqueda", "investigar"},
         "Archivos": {"archivo", "archivos", "documento", "carga", "subir"},
         "PipeDrive": {"pipedrive", "crm", "cliente", "clientes"},
         "AWS": {"aws", "nube", "servidor", "hosting"},
@@ -233,6 +242,227 @@ def stable_vector(text, dims=24):
         vector[idx] += sign * (1 + min(len(token), 12) / 12)
     total = sum(abs(value) for value in vector) or 1.0
     return [round(value / total, 6) for value in vector]
+
+
+def decode_text_bytes(data):
+    for encoding in ["utf-8", "utf-16", "latin-1"]:
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+def extract_openxml_text(data):
+    chunks = []
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        for name in archive.namelist():
+            if not name.endswith(".xml"):
+                continue
+            if not (
+                name.startswith("word/")
+                or name.startswith("ppt/")
+                or name.startswith("xl/")
+                or name == "xl/sharedStrings.xml"
+            ):
+                continue
+            try:
+                root = ET.fromstring(archive.read(name))
+            except ET.ParseError:
+                continue
+            for node in root.iter():
+                if node.text and node.text.strip():
+                    chunks.append(node.text.strip())
+    return "\n".join(chunks)
+
+
+def extract_pdf_text(data):
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as handle:
+        handle.write(data)
+        handle.flush()
+        for module_name in ["pypdf", "PyPDF2"]:
+            try:
+                completed = subprocess.run(
+                    [
+                        "python3",
+                        "-c",
+                        (
+                            "import sys\n"
+                            f"import {module_name} as pdf\n"
+                            "reader = pdf.PdfReader(sys.argv[1])\n"
+                            "print('\\n'.join((page.extract_text() or '') for page in reader.pages))\n"
+                        ),
+                        handle.name,
+                    ],
+                    text=True,
+                    capture_output=True,
+                    timeout=60,
+                    check=True,
+                )
+                if completed.stdout.strip():
+                    return completed.stdout
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                continue
+        try:
+            completed = subprocess.run(
+                ["strings", handle.name],
+                text=True,
+                capture_output=True,
+                timeout=30,
+                check=True,
+            )
+            lines = [line.strip() for line in completed.stdout.splitlines() if len(line.strip()) > 4]
+            return "\n".join(lines[:2500])
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+            return ""
+
+
+def extract_text_from_upload(data, filename):
+    suffix = pathlib.Path(filename).suffix.lower()
+    mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    text = ""
+    method = "binary-fallback"
+    if suffix in {".txt", ".md", ".markdown", ".csv", ".tsv", ".json", ".jsonl", ".xml", ".html", ".htm", ".log"}:
+        text = decode_text_bytes(data)
+        method = "plain-text"
+        if suffix in {".html", ".htm"}:
+            text = strip_tags(text)
+    elif suffix in {".docx", ".pptx", ".xlsx"}:
+        text = extract_openxml_text(data)
+        method = "openxml"
+    elif suffix == ".pdf":
+        text = extract_pdf_text(data)
+        method = "pdf"
+    elif suffix in {".rtf"}:
+        text = re.sub(r"[{}\\][A-Za-z0-9*'-]* ?", " ", decode_text_bytes(data))
+        method = "rtf-basic"
+    else:
+        decoded = decode_text_bytes(data)
+        printable_ratio = sum(ch.isprintable() or ch.isspace() for ch in decoded[:6000]) / max(len(decoded[:6000]), 1)
+        if printable_ratio > 0.78:
+            text = decoded
+            method = "text-guess"
+    text = re.sub(r"\n{3,}", "\n\n", text or "").strip()
+    return {
+        "text": text[:650000],
+        "extracted_chars": len(text),
+        "extractor": method,
+        "mime": mime,
+    }
+
+
+def output_text_from_response(response):
+    if response.get("output_text"):
+        return response.get("output_text", "").strip()
+    parts = []
+    for item in response.get("output", []):
+        if item.get("type") != "message":
+            continue
+        for content in item.get("content", []):
+            text = content.get("text") or content.get("transcript")
+            if text:
+                parts.append(text)
+    return "\n".join(parts).strip()
+
+
+def source_annotations_from_response(response):
+    sources = []
+    seen = set()
+    for item in response.get("output", []):
+        for content in item.get("content", []):
+            for annotation in content.get("annotations", []) or []:
+                url = annotation.get("url") or annotation.get("uri")
+                title = annotation.get("title") or url
+                if url and url not in seen:
+                    seen.add(url)
+                    sources.append({"title": title, "url": url})
+    return sources
+
+
+def openai_response_with_fallback(model_candidates, payload):
+    last_error = None
+    for model in model_candidates:
+        attempt = {**payload, "model": model}
+        try:
+            response = openai_json("/responses", payload=attempt, method="POST")
+            return response, model
+        except Exception as exc:
+            last_error = exc
+    if last_error:
+        raise last_error
+    raise RuntimeError("No hay modelos configurados para esta operacion.")
+
+
+def local_extract_summary(text, filename="", limit=900):
+    clean = re.sub(r"\s+", " ", text or "").strip()
+    if not clean:
+        return f"Guarde {filename}, pero no pude extraer texto legible automaticamente."
+    sentences = re.split(r"(?<=[.!?])\s+", clean)
+    summary = " ".join(sentences[:5]).strip() or clean
+    return brief(summary, limit)
+
+
+def summarize_uploaded_text(text, filename):
+    if len((text or "").strip()) < 120:
+        return local_extract_summary(text, filename)
+    prompt = (
+        "Resume este archivo para memoria de Kim Live. Responde en español. "
+        "Devuelve: 1) resumen ejecutivo, 2) puntos importantes, 3) posibles tareas, "
+        "4) temas/categorias. No inventes datos si el texto no los contiene.\n\n"
+        f"Archivo: {filename}\n\nContenido:\n{text[:30000]}"
+    )
+    payload = {
+        "input": prompt,
+        "max_output_tokens": 900,
+    }
+    try:
+        response, _ = openai_response_with_fallback(DOCUMENT_MODEL_CANDIDATES, payload)
+        return output_text_from_response(response) or local_extract_summary(text, filename)
+    except Exception:
+        return local_extract_summary(text, filename)
+
+
+def draft_document(instruction, source_text="", session_id=""):
+    instruction = (instruction or "").strip()
+    source_text = (source_text or "").strip()
+    if len(instruction) < 3 and len(source_text) < 20:
+        raise ValueError("Necesito una instruccion o una conversacion para redactar el documento.")
+    prompt = (
+        "Eres Kim, asistente ejecutiva de Dr. Yehoshua. Redacta un documento profesional "
+        "en español mexicano, claro y listo para editar. Usa Markdown. Si faltan datos, "
+        "incluye una seccion breve de supuestos o pendientes.\n\n"
+        f"Instruccion:\n{instruction or 'Redacta un documento a partir de la conversacion.'}\n\n"
+        f"Contexto/conversacion:\n{source_text[:50000]}"
+    )
+    response, model = openai_response_with_fallback(
+        DOCUMENT_MODEL_CANDIDATES,
+        {"input": prompt, "max_output_tokens": 2200},
+    )
+    text = output_text_from_response(response)
+    if not text:
+        raise RuntimeError("OpenAI no devolvio texto para el documento.")
+    doc_id = "DOC-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if session_id:
+        doc_id = re.sub(r"[^A-Za-z0-9_-]+", "-", f"{session_id}-{doc_id}")
+    docs_dir = MEMORY_DOCUMENTS / today()
+    try:
+        docs_dir.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        docs_dir = RUNTIME_DOCUMENTS / today()
+        docs_dir.mkdir(parents=True, exist_ok=True)
+    path = docs_dir / f"{doc_id}.md"
+    path.write_text(text, encoding="utf-8")
+    payload = {
+        "doc_id": doc_id,
+        "path": str(path),
+        "created_at": now_iso(),
+        "model": model,
+        "chars": len(text),
+        "preview": brief(text, 600),
+    }
+    append_memory("document_drafted", payload)
+    append_daily_note(f"Documento redactado desde Kim Live: {path}")
+    return payload
 
 
 def file_stats(path):
@@ -344,6 +574,9 @@ def save_call_record(body):
     started_at = body.get("started_at") or now_iso()
     title = (body.get("title") or "Kim Live call").strip()[:120]
     topics = detect_topics(text)
+    summary = local_extract_summary(text, title, limit=1400)
+    related_files = body.get("uploaded_files") or []
+    call_number = len(load_call_entries(limit=5000)) + 1
     calls_dir = MEMORY_CALLS / today()
     try:
         calls_dir.mkdir(parents=True, exist_ok=True)
@@ -355,13 +588,22 @@ def save_call_record(body):
         f"# {session_id}",
         "",
         f"- Title: {title}",
+        f"- Call number: {call_number}",
         f"- Started: {started_at}",
         f"- Saved: {now_iso()}",
         f"- Topics: {', '.join(item['name'] for item in topics) or 'Sin clasificar'}",
+        f"- Related files: {len(related_files)}",
         "",
         "## Summary",
         "",
-        brief(text, 1200),
+        summary,
+        "",
+        "## Related Files",
+        "",
+        "\n".join(
+            f"- {item.get('filename', 'archivo')}: {item.get('stored_path', '')}"
+            for item in related_files
+        ) or "- Ninguno",
         "",
         "## Transcript",
         "",
@@ -372,10 +614,13 @@ def save_call_record(body):
     entry = {
         "session_id": session_id,
         "title": title,
+        "call_number": call_number,
         "started_at": started_at,
         "saved_at": now_iso(),
         "path": str(call_path),
         "topics": topics,
+        "summary": summary,
+        "related_files": related_files,
         "chars": len(text),
     }
     append_jsonl_any([CALL_INDEX, RUNTIME_CALL_INDEX], entry)
@@ -412,15 +657,21 @@ def parse_upload(handler):
         suffix = target.suffix
         target = upload_dir / f"{stem}-{dt.datetime.now().strftime('%H%M%S')}{suffix}"
     target.write_bytes(data)
-    text = data[:400000].decode("utf-8", errors="replace")
+    extraction = extract_text_from_upload(data, raw_name)
+    text = extraction["text"]
     topics = detect_topics(text + " " + safe_name)
+    summary = summarize_uploaded_text(text, raw_name)
     analysis = {
         "filename": raw_name,
         "stored_path": str(target),
         "uploaded_at": now_iso(),
         "bytes": len(data),
         "sha256": hashlib.sha256(data).hexdigest(),
-        "summary": brief(text, 1400),
+        "summary": summary,
+        "text_preview": brief(text, 2200),
+        "extracted_chars": extraction["extracted_chars"],
+        "extractor": extraction["extractor"],
+        "mime": extraction["mime"],
         "topics": topics,
         "local_vector_note": "Vector local ligero por hashing; embeddings semanticos externos quedan para fase posterior.",
         "local_vector": stable_vector(text + " " + safe_name),
@@ -493,6 +744,97 @@ def research_web(query):
     append_memory("online_research", {"query": query, "result_count": len(results), "path": str(path)})
     append_daily_note(f"Busqueda web desde Kim Live: {query} ({len(results)} resultados)")
     return payload
+
+
+def research_with_openai(query, transcript=""):
+    query = (query or "").strip()
+    if len(query) < 3:
+        raise ValueError("Necesito una pregunta mas especifica para investigar.")
+    local_context = context_brief(limit=2500)
+    prompt = (
+        "Investiga en internet como Kim Live para el Dr. Yehoshua. "
+        "Responde en español, separa: respuesta ejecutiva, datos clave, fuentes y siguiente accion. "
+        "Usa busqueda web cuando necesites datos actuales. No inventes fuentes.\n\n"
+        f"Pregunta: {query}\n\n"
+        f"Contexto BIFROST breve:\n{local_context}\n\n"
+        f"Conversacion activa:\n{brief(transcript, 3500)}"
+    )
+    payload = {
+        "input": prompt,
+        "tools": [
+            {
+                "type": "web_search",
+                "user_location": {
+                    "type": "approximate",
+                    "country": "MX",
+                    "city": "Mexico City",
+                    "timezone": "America/Mexico_City",
+                },
+            }
+        ],
+        "max_output_tokens": 1600,
+    }
+    try:
+        response, model = openai_response_with_fallback(RESEARCH_MODEL_CANDIDATES, payload)
+        answer = output_text_from_response(response)
+        sources = source_annotations_from_response(response)
+        source = f"OpenAI Responses web_search ({model})"
+        if not answer:
+            raise RuntimeError("OpenAI no devolvio respuesta de investigacion.")
+    except Exception as exc:
+        fallback = research_web(query)
+        answer = (
+            "No pude usar OpenAI web_search en este intento; use busqueda HTML local como respaldo. "
+            "Resultados principales:\n"
+            + "\n".join(
+                f"- {item['title']}: {item['url']} {item.get('snippet', '')}"
+                for item in fallback.get("results", [])[:5]
+            )
+        )
+        sources = [{"title": item["title"], "url": item["url"]} for item in fallback.get("results", [])[:8]]
+        source = f"DuckDuckGo fallback; OpenAI web_search error: {brief(str(exc), 240)}"
+    payload = {
+        "query": query,
+        "searched_at": now_iso(),
+        "source": source,
+        "answer": answer,
+        "sources": sources,
+        "topics": detect_topics(query + " " + answer),
+    }
+    path = MEMORY_RESEARCH / f"{today()}_research.jsonl"
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        path = RUNTIME_RESEARCH / f"{today()}_research.jsonl"
+    append_jsonl_any([path, RUNTIME_RESEARCH / f"{today()}_research.jsonl"], payload)
+    append_memory("research_agent", {"query": query, "source_count": len(sources), "path": str(path)})
+    append_daily_note(f"Investigacion asistida desde Kim Live: {query} ({len(sources)} fuentes)")
+    payload["path"] = str(path)
+    return payload
+
+
+def conversation_record_from_entry(entry):
+    path = pathlib.Path(entry.get("path", ""))
+    transcript = ""
+    markdown = ""
+    try:
+        markdown = path.read_text(encoding="utf-8")
+    except (FileNotFoundError, PermissionError, OSError):
+        pass
+    if "## Transcript" in markdown:
+        transcript = markdown.split("## Transcript", 1)[1].strip()
+    return {
+        **entry,
+        "markdown": markdown,
+        "transcript": transcript,
+    }
+
+
+def load_conversation(session_id):
+    matches = [item for item in load_call_entries(limit=5000) if item.get("session_id") == session_id]
+    if not matches:
+        raise ValueError("No encontre esa conversacion en memoria.")
+    return conversation_record_from_entry(matches[-1])
 
 
 def latest_kim_live_notes(limit=6):
@@ -607,6 +949,24 @@ def context_brief(limit=9000):
         parts.append(
             "Notas recientes de Kim Live:\n"
             + "\n".join(f"- {item['at']} {item['kind']}: {item['text']}" for item in latest)
+        )
+    recent_calls = load_call_entries(limit=4)
+    if recent_calls:
+        parts.append(
+            "Conversaciones recientes:\n"
+            + "\n".join(
+                f"- {item.get('session_id')}: {brief(item.get('summary') or item.get('title'), 240)}"
+                for item in recent_calls[-4:]
+            )
+        )
+    recent_uploads = load_upload_entries(limit=4)
+    if recent_uploads:
+        parts.append(
+            "Archivos recientes:\n"
+            + "\n".join(
+                f"- {item.get('filename')}: {brief(item.get('summary'), 220)}"
+                for item in recent_uploads[-4:]
+            )
         )
     clickup = clickup_context()
     if clickup.get("available"):
@@ -744,10 +1104,48 @@ def realtime_session_config():
                 "Habla en espanol mexicano con tono calido, directo y util. "
                 "Responde breve en conversacion viva. Si el doctor te dicta una "
                 "tarea, confirma la accion y sugiere guardarla o ejecutarla desde Kim Live. "
+                "Si necesitas datos actuales, investigacion externa o verificacion en internet, "
+                "di brevemente que vas a buscar y llama la herramienta kim_research_web. "
+                "Si el doctor pide redactar una carta, propuesta, reporte o documento, llama "
+                "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
+                "en la conversacion activa como contexto. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
                 f"MEMORIA LOCAL BIFROST:\n{local_context}"
             ),
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "kim_research_web",
+                    "description": "Investiga en internet con OpenAI web_search, guarda fuentes en BIFROST y devuelve una respuesta con fuentes.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Pregunta exacta o tema que Kim debe investigar.",
+                            }
+                        },
+                        "required": ["query"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_draft_document",
+                    "description": "Redacta un documento profesional en Markdown usando la conversacion activa como contexto.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "instruction": {
+                                "type": "string",
+                                "description": "Tipo de documento y objetivo de redaccion.",
+                            }
+                        },
+                        "required": ["instruction"],
+                    },
+                },
+            ],
+            "tool_choice": "auto",
             "audio": {
                 "input": {
                     "noise_reduction": {
@@ -825,6 +1223,7 @@ class Handler(BaseHTTPRequestHandler):
                 self,
                 {
                     "ok": True,
+                    "version": APP_VERSION,
                     "mode": "Kim Live + Realtime",
                     "memory_inbox": str(MEMORY_INBOX),
                     "runtime_memory_inbox": str(RUNTIME_MEMORY_INBOX),
@@ -849,6 +1248,34 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/api/context":
             write_json(self, load_context_bundle())
+            return
+        if parsed.path == "/api/conversations":
+            entries = list(reversed(load_call_entries(limit=80)))
+            write_json(
+                self,
+                {
+                    "ok": True,
+                    "conversations": [
+                        {
+                            "session_id": item.get("session_id"),
+                            "title": item.get("title"),
+                            "call_number": item.get("call_number"),
+                            "started_at": item.get("started_at"),
+                            "saved_at": item.get("saved_at"),
+                            "summary": item.get("summary"),
+                            "topics": item.get("topics", []),
+                            "chars": item.get("chars"),
+                            "path": item.get("path"),
+                        }
+                        for item in entries
+                    ],
+                },
+            )
+            return
+        if parsed.path == "/api/conversation":
+            params = urllib.parse.parse_qs(parsed.query)
+            session_id = (params.get("session_id") or [""])[0]
+            write_json(self, {"ok": True, "conversation": load_conversation(session_id)})
             return
         if parsed.path == "/api/memory-analytics":
             write_json(self, memory_analytics())
@@ -908,6 +1335,18 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/research":
                 result = research_web(body.get("query", ""))
                 write_json(self, {"ok": True, "research": result})
+                return
+            if parsed.path == "/api/research-agent":
+                result = research_with_openai(body.get("query", ""), body.get("transcript", ""))
+                write_json(self, {"ok": True, "research": result})
+                return
+            if parsed.path == "/api/draft-document":
+                result = draft_document(
+                    body.get("instruction", ""),
+                    body.get("text", ""),
+                    body.get("session_id", ""),
+                )
+                write_json(self, {"ok": True, "document": result})
                 return
             if parsed.path == "/api/store-openai-key":
                 store_openai_key(body.get("api_key", ""))
