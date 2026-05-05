@@ -1,0 +1,1248 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tesca Elements Kim Live</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7f8;
+      color: #202124;
+      --ink: #202124;
+      --muted: #667085;
+      --line: #d7dde3;
+      --panel: #ffffff;
+      --teal: #0f766e;
+      --teal-dark: #0f4f4b;
+      --rose: #be123c;
+      --amber: #b45309;
+      --green: #15803d;
+      --soft-teal: #e7f5f3;
+      --soft-rose: #fff1f2;
+      --soft-amber: #fff7ed;
+      --shadow: 0 18px 42px rgba(32, 33, 36, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      min-height: 720px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, #ffffff 0, #f5f7f8 36%, #eef4f3 100%);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header {
+      min-height: 76px;
+      padding: 14px 22px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .eyebrow {
+      color: var(--teal-dark);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 13px;
+      color: #344054;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+
+    main {
+      min-height: 0;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(290px, 380px) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .panel {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .control-panel {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .kim-stage {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .portrait-wrap {
+      display: grid;
+      grid-template-columns: 124px minmax(0, 1fr);
+      align-items: center;
+      gap: 14px;
+    }
+
+    .portrait {
+      width: 124px;
+      height: 124px;
+      border-radius: 8px;
+      background: #f0f7f6;
+      border: 1px solid #cfe2df;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .portrait svg {
+      width: 124px;
+      height: 124px;
+      display: block;
+    }
+
+    .kim-meta {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .kim-name {
+      font-weight: 750;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      min-height: 36px;
+    }
+
+    .voice-meter {
+      height: 84px;
+      border: 1px solid #cfe2df;
+      border-radius: 8px;
+      background: var(--soft-teal);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mic-button {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid var(--teal);
+      background: #ffffff;
+      color: var(--teal-dark);
+      display: grid;
+      place-items: center;
+      z-index: 2;
+    }
+
+    .mic-button svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .wave {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid rgba(15, 118, 110, 0.28);
+      opacity: 0;
+      transform: scale(0.72);
+    }
+
+    body[data-voice-state="listening"] .wave,
+    body[data-voice-state="speaking"] .wave,
+    body[data-voice-state="working"] .wave {
+      animation: voiceWave 1.7s ease-out infinite;
+      opacity: 1;
+    }
+
+    body[data-voice-state="speaking"] .voice-meter {
+      background: var(--soft-amber);
+      border-color: #fed7aa;
+    }
+
+    body[data-voice-state="working"] .voice-meter {
+      background: var(--soft-rose);
+      border-color: #fecdd3;
+    }
+
+    .wave:nth-child(2) {
+      animation-delay: 0.35s;
+    }
+
+    .wave:nth-child(3) {
+      animation-delay: 0.7s;
+    }
+
+    @keyframes voiceWave {
+      0% {
+        opacity: 0.72;
+        transform: scale(0.7);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(2.7);
+      }
+    }
+
+    .actions {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid #cbd5dc;
+      background: #ffffff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 11px 12px;
+      min-height: 44px;
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      text-align: left;
+    }
+
+    button:hover {
+      border-color: #94a3ad;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    .button-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 22px;
+    }
+
+    .button-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #ffffff;
+    }
+
+    .danger {
+      background: #ffffff;
+      color: var(--rose);
+      border-color: #fda4af;
+    }
+
+    .secondary {
+      background: #f8fafb;
+    }
+
+    .thread-list {
+      min-height: 0;
+      padding: 14px 16px 18px;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .thread-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      margin-bottom: 2px;
+    }
+
+    .thread-item {
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 4px;
+      background: #ffffff;
+    }
+
+    .thread-item.active {
+      border-color: var(--teal);
+      background: var(--soft-teal);
+    }
+
+    .thread-item small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .context-box {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+
+    .context-card {
+      border: 1px solid #cfe2df;
+      background: #f4fbfa;
+      border-radius: 8px;
+      padding: 11px;
+      display: grid;
+      gap: 6px;
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .context-card strong {
+      color: var(--teal-dark);
+      font-size: 13px;
+    }
+
+    .workspace {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto minmax(180px, 30vh);
+      overflow: hidden;
+    }
+
+    .workspace-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .workspace-meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .chat-log {
+      min-height: 0;
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      background: #fbfcfd;
+    }
+
+    .message {
+      max-width: 76ch;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      display: grid;
+      gap: 6px;
+    }
+
+    .message.user {
+      border-color: #c7d2fe;
+      background: #f7f8ff;
+      justify-self: end;
+    }
+
+    .message.kim {
+      border-color: #b7dfd8;
+      background: #f4fbfa;
+      justify-self: start;
+    }
+
+    .message.codex {
+      border-color: #fed7aa;
+      background: #fffaf3;
+      justify-self: start;
+    }
+
+    .message-speaker {
+      font-size: 12px;
+      font-weight: 800;
+      color: #344054;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .message-text {
+      font-size: 15px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .memory-lab {
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .tool-surface {
+      border: 1px solid #d7dde3;
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-width: 0;
+      background: #fbfcfd;
+    }
+
+    .tool-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #344054;
+      text-transform: uppercase;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 8px;
+      background: #ffffff;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.1;
+      color: var(--teal-dark);
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .topic-list,
+    .small-list {
+      display: grid;
+      gap: 5px;
+      max-height: 96px;
+      overflow: auto;
+      color: #344054;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .topic-chip {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid #cfe2df;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #f4fbfa;
+    }
+
+    input[type="search"],
+    input[type="file"] {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 9px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .compact-button {
+      min-height: 36px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .result-text {
+      color: #475467;
+      font-size: 12px;
+      line-height: 1.35;
+      max-height: 112px;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .compiler {
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .compiler-header {
+      padding: 12px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .compiler-title {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 0;
+      resize: none;
+      border: 0;
+      border-top: 1px solid #edf0f2;
+      padding: 13px 14px;
+      font: 14px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--ink);
+      outline: none;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      color: #475467;
+      font-size: 12px;
+      padding: 9px 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 880px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace {
+        min-height: 680px;
+      }
+
+      .memory-lab {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding: 12px;
+      }
+
+      .portrait-wrap {
+        grid-template-columns: 96px minmax(0, 1fr);
+      }
+
+      .portrait,
+      .portrait svg {
+        width: 96px;
+        height: 96px;
+      }
+    }
+  </style>
+</head>
+<body data-voice-state="idle">
+  <header>
+    <div>
+      <p class="eyebrow">Tesca Elements</p>
+      <h1>Tesca Elements Kim Live</h1>
+    </div>
+    <span class="pill" id="mode">Conectando</span>
+  </header>
+
+  <main>
+    <aside class="panel control-panel">
+      <section class="kim-stage" aria-label="Kim Live">
+        <div class="portrait-wrap">
+          <div class="portrait" aria-label="Imagen de Kim">
+            <svg viewBox="0 0 124 124" role="img" aria-label="Kim, asistente ejecutiva">
+              <rect width="124" height="124" fill="#e7f5f3"/>
+              <circle cx="62" cy="42" r="26" fill="#27272a"/>
+              <path d="M27 112c3-24 18-39 35-39s32 15 35 39" fill="#0f766e"/>
+              <path d="M41 82c5 9 13 14 21 14s16-5 21-14c-4-6-12-10-21-10s-17 4-21 10z" fill="#ffffff"/>
+              <path d="M44 47c0-16 8-27 19-27s19 11 19 27c0 18-9 30-19 30S44 65 44 47z" fill="#f2c8a7"/>
+              <path d="M42 44c6-12 16-18 30-17 8 4 12 10 14 19-4-15-14-26-27-26-11 0-19 8-17 24z" fill="#18181b"/>
+              <path d="M37 49c1-20 11-34 26-34 18 0 29 14 29 35 0 14-5 25-11 31 5-17 1-30-5-39-11 4-23 4-39 7z" fill="#202124"/>
+              <circle cx="54" cy="51" r="2.2" fill="#202124"/>
+              <circle cx="70" cy="51" r="2.2" fill="#202124"/>
+              <path d="M55 63c4 3 10 3 14 0" fill="none" stroke="#8a4b35" stroke-width="2" stroke-linecap="round"/>
+              <path d="M35 112h54l-8-26H43z" fill="#123f3d"/>
+              <path d="M50 89h25l-4 23H54z" fill="#ffffff"/>
+              <path d="M54 92l8 9 8-9" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="94" cy="28" r="7" fill="#be123c"/>
+              <path d="M92 27h4M94 25v4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="kim-meta">
+            <p class="kim-name">Kim</p>
+            <p class="status" id="status">Lista para conversar contigo y preparar tareas para Codex.</p>
+          </div>
+        </div>
+        <div class="voice-meter" aria-hidden="true">
+          <span class="wave"></span>
+          <span class="wave"></span>
+          <span class="wave"></span>
+          <div class="mic-button">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 14a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v4a4 4 0 0 0 4 4z" stroke="currentColor" stroke-width="2"/>
+              <path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="actions" aria-label="Acciones">
+        <button class="primary" id="conversationToggle">
+          <span class="button-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 14a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v4a4 4 0 0 0 4 4zM19 10a7 7 0 0 1-14 0M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Conversar
+        </button>
+        <button class="secondary" id="endConversation">
+          <span class="button-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Terminar conversacion
+        </button>
+        <button class="secondary" id="save">
+          <span class="button-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 4h11l3 3v13H5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M8 4v6h8M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Guardar en memoria
+        </button>
+        <button class="danger" id="execute">
+          <span class="button-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h10M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          Convertir en tarea y ejecutar
+        </button>
+      </section>
+
+      <section class="context-box" aria-label="Memoria local">
+        <p class="thread-title">Memoria local</p>
+        <div class="context-card">
+          <strong id="contextStatus">Cargando contexto BIFROST...</strong>
+          <span id="contextSummary">Kim consultara memoria local antes de conversar.</span>
+        </div>
+      </section>
+
+      <section class="thread-list" aria-label="Conversaciones">
+        <p class="thread-title">Chats</p>
+        <button class="thread-item active" data-thread="kim">
+          Kim Live Conversations
+          <small>Sesion de voz y compilado actual</small>
+        </button>
+        <button class="thread-item" data-thread="codex">
+          Codex
+          <small>Salida hacia tareas y ejecucion</small>
+        </button>
+      </section>
+    </aside>
+
+    <section class="panel workspace" aria-label="Conversacion">
+      <div class="workspace-header">
+        <div>
+          <h2 id="threadHeading">Kim Live Conversations</h2>
+          <p class="workspace-meta" id="threadMeta">Registro con hablantes identificados para convertirlo en memoria o tarea.</p>
+        </div>
+        <span class="pill" id="sessionState">Sesion lista</span>
+      </div>
+
+      <div class="chat-log" id="chatLog">
+        <article class="message kim">
+          <div class="message-speaker">Kim</div>
+          <div class="message-text">Estoy lista. Pulsa Conversar, habla conmigo y despues guardamos o mandamos el compilado a Codex.</div>
+        </article>
+      </div>
+
+      <section class="memory-lab" aria-label="Memoria y navegacion">
+        <div class="tool-surface">
+          <div class="tool-title">Memoria de Kim</div>
+          <div class="metric-grid">
+            <div class="metric"><strong id="memoryFiles">0</strong><span>archivos</span></div>
+            <div class="metric"><strong id="memoryCalls">0</strong><span>llamadas</span></div>
+            <div class="metric"><strong id="memoryUploads">0</strong><span>cargas</span></div>
+          </div>
+          <div class="topic-list" id="topicList">
+            <span>Cargando analiticos...</span>
+          </div>
+          <div class="small-list" id="principlesList"></div>
+        </div>
+
+        <div class="tool-surface">
+          <div class="tool-title">Navegacion online</div>
+          <input id="researchQuery" type="search" placeholder="Investigar en internet">
+          <button class="secondary compact-button" id="researchButton">Buscar y guardar</button>
+          <div class="result-text" id="researchResults">Sin busqueda todavia.</div>
+        </div>
+
+        <div class="tool-surface">
+          <div class="tool-title">Carga de archivos</div>
+          <input id="memoryFile" type="file">
+          <button class="secondary compact-button" id="uploadButton">Cargar a BIFROST</button>
+          <div class="result-text" id="uploadResults">Los archivos se copian a BIFROST y quedan indexados.</div>
+        </div>
+      </section>
+
+      <div class="compiler">
+        <div class="compiler-header">
+          <div class="compiler-title">Compilado para Codex</div>
+          <span class="pill" id="lineCount">0 lineas</span>
+        </div>
+        <textarea id="transcript" placeholder="Aqui se registra la conversacion con formato: Dr. Yehoshua: ... / Kim: ..."></textarea>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Desarrollado por el Dr. Yehoshua y el equipo AI de Tesca Elements</span>
+    <span>BIFROST local: memoria, Telegram y Codex</span>
+  </footer>
+
+  <audio id="remoteAudio" autoplay></audio>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const transcript = $("transcript");
+    const status = $("status");
+    const remoteAudio = $("remoteAudio");
+    const chatLog = $("chatLog");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let rtcPeer = null;
+    let rtcChannel = null;
+    let rtcStream = null;
+    let conversationActive = false;
+    let kimDraftText = "";
+    let kimDraftBubble = null;
+    const sessionStartedAt = new Date();
+    const sessionId = "CALL-" + sessionStartedAt.toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\..+/, "")
+      .replace("T", "-");
+
+    function setStatus(text, state = null) {
+      status.textContent = text;
+      $("sessionState").textContent = text.length > 42 ? text.slice(0, 41) + "..." : text;
+      if (state) document.body.dataset.voiceState = state;
+    }
+
+    function updateLineCount() {
+      const count = transcript.value.trim() ? transcript.value.trim().split(/\n+/).length : 0;
+      $("lineCount").textContent = count + (count === 1 ? " linea" : " lineas");
+    }
+
+    async function post(path, payload) {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "Error");
+      return data;
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes || 0);
+      if (value < 1024) return value + " B";
+      if (value < 1024 * 1024) return Math.round(value / 1024) + " KB";
+      return (value / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function appendCompiled(speaker, text) {
+      const safe = (text || "").trim();
+      if (!safe) return;
+      const prefix = transcript.value && !transcript.value.endsWith("\n") ? "\n" : "";
+      transcript.value += prefix + speaker + ": " + safe + "\n";
+      transcript.scrollTop = transcript.scrollHeight;
+      updateLineCount();
+    }
+
+    function appendMessage(speaker, text, type = "kim", includeCompiled = true) {
+      const safe = (text || "").trim();
+      if (!safe) return null;
+      const message = document.createElement("article");
+      message.className = "message " + type;
+      message.innerHTML = "<div class=\"message-speaker\"></div><div class=\"message-text\"></div>";
+      message.querySelector(".message-speaker").textContent = speaker;
+      message.querySelector(".message-text").textContent = safe;
+      chatLog.appendChild(message);
+      chatLog.scrollTop = chatLog.scrollHeight;
+      if (includeCompiled) appendCompiled(speaker, safe);
+      return message;
+    }
+
+    function renderMemoryAnalytics(data) {
+      $("memoryFiles").textContent = data.memory_file_count || 0;
+      $("memoryCalls").textContent = data.call_count || 0;
+      $("memoryUploads").textContent = data.uploaded_file_count || 0;
+      const topics = data.topics || [];
+      $("topicList").innerHTML = topics.length
+        ? topics.map((item) => "<div class=\"topic-chip\"><span>" + escapeHtml(item.name) + "</span><strong>" + escapeHtml(item.score) + "</strong></div>").join("")
+        : "<span>Sin temas dominantes todavia.</span>";
+      const principles = (data.principles || []).slice(-4);
+      $("principlesList").innerHTML = principles.length
+        ? principles.map((item) => "<span>- " + escapeHtml(item) + "</span>").join("")
+        : "<span>Sin principios visibles todavia.</span>";
+      $("contextSummary").textContent = "Sesion " + sessionId + ". Memoria: " + formatBytes(data.memory_bytes) + ".";
+    }
+
+    async function loadMemoryAnalytics() {
+      try {
+        const response = await fetch("/api/memory-analytics");
+        const data = await response.json();
+        if (data.ok) renderMemoryAnalytics(data);
+      } catch (_) {
+        $("topicList").innerHTML = "<span>No pude cargar analiticos.</span>";
+      }
+    }
+
+    function appendKimDelta(delta) {
+      if (!delta) return;
+      if (!kimDraftBubble) {
+        kimDraftText = "";
+        kimDraftBubble = appendMessage("Kim", "Kim esta hablando...", "kim", false);
+      }
+      kimDraftText += delta;
+      kimDraftBubble.querySelector(".message-text").textContent = kimDraftText.trimStart();
+      chatLog.scrollTop = chatLog.scrollHeight;
+      setStatus("Kim esta respondiendo...", "speaking");
+    }
+
+    function finalizeKimDraft() {
+      const finalText = kimDraftText.trim();
+      if (finalText) appendCompiled("Kim", finalText);
+      kimDraftText = "";
+      kimDraftBubble = null;
+    }
+
+    async function getRealtimeToken() {
+      const response = await fetch("/api/realtime-token");
+      const data = await response.json();
+      if (!response.ok || !data.value) {
+        throw new Error(data.error || "No pude crear el secreto efimero de Realtime.");
+      }
+      return data.value;
+    }
+
+    function cleanupRealtime() {
+      if (rtcChannel) {
+        try { rtcChannel.close(); } catch (_) {}
+        rtcChannel = null;
+      }
+      if (rtcPeer) {
+        try { rtcPeer.close(); } catch (_) {}
+        rtcPeer = null;
+      }
+      if (rtcStream) {
+        rtcStream.getTracks().forEach((track) => track.stop());
+        rtcStream = null;
+      }
+      remoteAudio.srcObject = null;
+    }
+
+    function stopDictation() {
+      if (recognition) {
+        try { recognition.stop(); } catch (_) {}
+        recognition = null;
+      }
+    }
+
+    function finishConversation(message = "Conversacion terminada.") {
+      conversationActive = false;
+      finalizeKimDraft();
+      stopDictation();
+      cleanupRealtime();
+      $("conversationToggle").disabled = false;
+      setStatus(message, "idle");
+    }
+
+    function handleRealtimeEvent(event) {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (_) {
+        return;
+      }
+      if (data.type === "conversation.item.input_audio_transcription.completed") {
+        appendMessage("Dr. Yehoshua", data.transcript, "user");
+        setStatus("Escuchando...", "listening");
+      }
+      if (
+        data.type === "response.output_text.delta" ||
+        data.type === "response.audio_transcript.delta" ||
+        data.type === "response.output_audio_transcript.delta"
+      ) {
+        appendKimDelta(data.delta);
+      }
+      if (data.type === "response.audio.delta") {
+        setStatus("Kim esta hablando...", "speaking");
+      }
+      if (data.type === "response.done") {
+        finalizeKimDraft();
+        if (conversationActive) setStatus("Escuchando...", "listening");
+      }
+      if (data.type === "error") {
+        setStatus("Realtime: " + (data.error?.message || "error"), "idle");
+      }
+    }
+
+    async function startRealtime() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Este navegador no permite abrir el microfono aqui.");
+      }
+      cleanupRealtime();
+      setStatus("Preparando llamada Realtime...", "working");
+      const ephemeralKey = await getRealtimeToken();
+      rtcPeer = new RTCPeerConnection();
+      rtcChannel = rtcPeer.createDataChannel("oai-events");
+      rtcChannel.addEventListener("message", handleRealtimeEvent);
+      rtcChannel.addEventListener("open", () => {
+        setStatus("Realtime conectado. Ya puedes hablar.", "listening");
+        rtcChannel.send(JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+            instructions: "Saluda al doctor en una frase corta y confirma que Kim Live esta lista."
+          }
+        }));
+      });
+      rtcPeer.addEventListener("track", (event) => {
+        remoteAudio.srcObject = event.streams[0];
+      });
+      rtcStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      rtcStream.getTracks().forEach((track) => rtcPeer.addTrack(track, rtcStream));
+      const offer = await rtcPeer.createOffer();
+      await rtcPeer.setLocalDescription(offer);
+      const answerResponse = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + ephemeralKey,
+          "Content-Type": "application/sdp"
+        },
+        body: offer.sdp
+      });
+      if (!answerResponse.ok) {
+        throw new Error(await answerResponse.text());
+      }
+      await rtcPeer.setRemoteDescription({
+        type: "answer",
+        sdp: await answerResponse.text()
+      });
+    }
+
+    function startDictationFallback() {
+      if (!SpeechRecognition) {
+        throw new Error("Este navegador no ofrece dictado local. Prueba Realtime o escribe el compilado.");
+      }
+      recognition = new SpeechRecognition();
+      recognition.lang = "es-MX";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (event) => {
+        let finalText = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) finalText += event.results[i][0].transcript + " ";
+        }
+        if (finalText.trim()) appendMessage("Dr. Yehoshua", finalText.trim(), "user");
+      };
+      recognition.onerror = (event) => setStatus("Dictado: " + event.error, "idle");
+      recognition.onstart = () => setStatus("Escuchando con dictado local...", "listening");
+      recognition.onend = () => {
+        if (conversationActive && !rtcPeer) setStatus("Dictado local detenido.", "idle");
+      };
+      recognition.start();
+    }
+
+    async function startConversation() {
+      if (conversationActive) return;
+      conversationActive = true;
+      $("conversationToggle").disabled = true;
+      try {
+        appendMessage("Kim", "Abro la conversacion. Si el navegador pide permiso de microfono, aceptalo para hablar conmigo.", "kim", false);
+        await startRealtime();
+      } catch (error) {
+        cleanupRealtime();
+        try {
+          startDictationFallback();
+          appendMessage("Kim", "No pude abrir Realtime, pero active dictado local para capturar tu voz.", "kim", false);
+        } catch (fallbackError) {
+          conversationActive = false;
+          $("conversationToggle").disabled = false;
+          setStatus("No pude iniciar voz: " + error.message, "idle");
+        }
+      }
+    }
+
+    $("conversationToggle").onclick = startConversation;
+
+    $("endConversation").onclick = () => {
+      finishConversation("Conversacion terminada. Puedes guardar o ejecutar el compilado.");
+    };
+
+    $("save").onclick = async () => {
+      const text = transcript.value.trim();
+      if (!text) {
+        setStatus("Primero conversa o escribe una nota para guardar.", "idle");
+        transcript.focus();
+        return;
+      }
+      setStatus("Guardando memoria...", "working");
+      try {
+        const data = await post("/api/save", {
+          text,
+          session_id: sessionId,
+          started_at: sessionStartedAt.toISOString(),
+          title: $("threadHeading").textContent
+        });
+        const target = data.call_saved_to || data.saved_to;
+        appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
+        loadMemoryAnalytics();
+        setStatus("Memoria guardada.", "idle");
+      } catch (error) {
+        setStatus("No pude guardar: " + error.message, "idle");
+      }
+    };
+
+    $("researchButton").onclick = async () => {
+      const query = $("researchQuery").value.trim();
+      if (!query) {
+        $("researchQuery").focus();
+        setStatus("Escribe que quieres investigar.", "idle");
+        return;
+      }
+      $("researchButton").disabled = true;
+      $("researchResults").textContent = "Buscando...";
+      setStatus("Navegando online...", "working");
+      try {
+        const data = await post("/api/research", {query});
+        const results = data.research.results || [];
+        $("researchResults").textContent = results.length
+          ? results.slice(0, 4).map((item, idx) => (idx + 1) + ". " + item.title + "\n" + item.url + "\n" + (item.snippet || "")).join("\n\n")
+          : "No encontre resultados utiles.";
+        appendMessage("Codex", "Busqueda guardada: " + query + " (" + results.length + " resultados)", "codex", false);
+        loadMemoryAnalytics();
+        setStatus("Busqueda guardada en memoria.", "idle");
+      } catch (error) {
+        $("researchResults").textContent = error.message;
+        setStatus("No pude navegar: " + error.message, "idle");
+      } finally {
+        $("researchButton").disabled = false;
+      }
+    };
+
+    $("uploadButton").onclick = async () => {
+      const fileInput = $("memoryFile");
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        fileInput.focus();
+        setStatus("Elige un archivo para cargar.", "idle");
+        return;
+      }
+      $("uploadButton").disabled = true;
+      $("uploadResults").textContent = "Cargando " + file.name + "...";
+      setStatus("Cargando archivo a BIFROST...", "working");
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch("/api/upload-memory-file", {method: "POST", body: formData});
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || "No pude cargar archivo.");
+        const analysis = data.analysis;
+        $("uploadResults").textContent = "Guardado: " + analysis.stored_path + "\nTemas: " + (analysis.topics || []).map((item) => item.name).join(", ");
+        appendMessage("Codex", "Archivo cargado e indexado: " + analysis.filename, "codex", false);
+        fileInput.value = "";
+        loadMemoryAnalytics();
+        setStatus("Archivo cargado en BIFROST.", "idle");
+      } catch (error) {
+        $("uploadResults").textContent = error.message;
+        setStatus("No pude cargar archivo: " + error.message, "idle");
+      } finally {
+        $("uploadButton").disabled = false;
+      }
+    };
+
+    $("execute").onclick = async () => {
+      const text = transcript.value.trim();
+      if (!text) {
+        setStatus("Primero conversa o escribe una instruccion.", "idle");
+        transcript.focus();
+        return;
+      }
+      $("execute").disabled = true;
+      setStatus("Creando tarea y despertando Codex...", "working");
+      try {
+        const data = await post("/api/execute", {text});
+        appendMessage("Codex", "Tarea creada y enviada: " + data.task, "codex", false);
+        setStatus("Tarea enviada a Codex.", "idle");
+      } catch (error) {
+        setStatus("No pude ejecutar: " + error.message, "idle");
+      } finally {
+        $("execute").disabled = false;
+      }
+    };
+
+    for (const item of document.querySelectorAll(".thread-item")) {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".thread-item").forEach((button) => button.classList.remove("active"));
+        item.classList.add("active");
+        const thread = item.dataset.thread;
+        if (thread === "codex") {
+          $("threadHeading").textContent = "Codex";
+          $("threadMeta").textContent = "Aqui quedan los avisos de memoria, tareas y ejecucion.";
+        } else {
+          $("threadHeading").textContent = "Kim Live Conversations";
+          $("threadMeta").textContent = "Registro con hablantes identificados para convertirlo en memoria o tarea.";
+        }
+      });
+    }
+
+    transcript.addEventListener("input", updateLineCount);
+
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((data) => {
+        $("mode").textContent = data.mode;
+      })
+      .catch(() => {
+        $("mode").textContent = "Sin conexion local";
+      });
+
+    fetch("/api/context")
+      .then((r) => r.json())
+      .then((data) => {
+        const availableSources = (data.sources || []).filter((source) => source.exists).length;
+        $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
+        $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
+      })
+      .catch(() => {
+        $("contextStatus").textContent = "Contexto no disponible";
+        $("contextSummary").textContent = "Kim puede conversar, pero no cargo memoria local.";
+      });
+
+    $("threadMeta").textContent = "Sesion " + sessionId + " con resumen por llamada, tema y topico.";
+    loadMemoryAnalytics();
+    updateLineCount();
+  </script>
+</body>
+</html>
