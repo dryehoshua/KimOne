@@ -368,7 +368,7 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto minmax(170px, 28vh);
+      grid-template-rows: auto minmax(0, 1fr) auto auto minmax(170px, 28vh);
       overflow: hidden;
     }
 
@@ -546,6 +546,30 @@
       gap: 12px;
     }
 
+    .composer {
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 132px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .composer textarea {
+      min-height: 52px;
+      max-height: 120px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 10px 11px;
+      font: 14px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .composer button {
+      justify-content: center;
+      min-height: 52px;
+    }
+
     .capability-row {
       min-width: 0;
       display: grid;
@@ -693,6 +717,10 @@
       }
 
       .assistant-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .composer {
         grid-template-columns: 1fr;
       }
 
@@ -850,9 +878,14 @@
       <div class="chat-log" id="chatLog">
         <article class="message kim">
           <div class="message-speaker">Kim</div>
-          <div class="message-text">Estoy lista. Pulsa Conversar, habla conmigo y despues guardamos o mandamos el compilado a Codex.</div>
+          <div class="message-text">Estoy lista. Pulsa Conversar, habla conmigo, pega texto o adjunta archivos cuando lo necesites.</div>
         </article>
       </div>
+
+      <section class="composer" aria-label="Texto para Kim">
+        <textarea id="manualInput" placeholder="Pega aqui texto, links o instrucciones para Kim"></textarea>
+        <button class="primary" id="sendManualText">Enviar texto</button>
+      </section>
 
       <section class="assistant-tools" aria-label="Herramientas de Kim">
         <div class="capability-row">
@@ -909,9 +942,11 @@
     let kimDraftText = "";
     let kimDraftBubble = null;
     let activeUploadedFiles = [];
+    let activeResearchSources = [];
     const completedToolCalls = new Set();
     let workingToneContext = null;
     let workingToneOscillator = null;
+    let workingToneTimer = null;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -960,23 +995,40 @@
 
     function startWorkingTone() {
       try {
-        if (workingToneOscillator) return;
         workingToneContext = workingToneContext || new (window.AudioContext || window.webkitAudioContext)();
-        const gain = workingToneContext.createGain();
-        gain.gain.value = 0.018;
-        workingToneOscillator = workingToneContext.createOscillator();
-        workingToneOscillator.type = "sine";
-        workingToneOscillator.frequency.value = 520;
-        workingToneOscillator.connect(gain);
-        gain.connect(workingToneContext.destination);
-        workingToneOscillator.start();
+        if (workingToneTimer) return;
+        const strikeBowl = () => {
+          const now = workingToneContext.currentTime;
+          const gain = workingToneContext.createGain();
+          const tone = workingToneContext.createOscillator();
+          const overtone = workingToneContext.createOscillator();
+          tone.type = "sine";
+          overtone.type = "sine";
+          tone.frequency.setValueAtTime(196, now);
+          overtone.frequency.setValueAtTime(392, now);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.045, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+          tone.connect(gain);
+          overtone.connect(gain);
+          gain.connect(workingToneContext.destination);
+          tone.start(now);
+          overtone.start(now);
+          tone.stop(now + 1.8);
+          overtone.stop(now + 1.8);
+          workingToneOscillator = tone;
+        };
+        strikeBowl();
+        workingToneTimer = window.setInterval(strikeBowl, 2600);
       } catch (_) {}
     }
 
     function stopWorkingTone() {
       try {
+        if (workingToneTimer) window.clearInterval(workingToneTimer);
         if (workingToneOscillator) workingToneOscillator.stop();
       } catch (_) {}
+      workingToneTimer = null;
       workingToneOscillator = null;
     }
 
@@ -1142,16 +1194,18 @@
     async function runResearchTool(query, callId = null) {
       const cleanQuery = (query || "").trim();
       if (!cleanQuery) return null;
-      $("researchState").textContent = "Buscando...";
-      setStatus("Estoy buscando y guardando fuentes...", "working");
+      $("researchState").textContent = "Haciendo busqueda web";
+      setStatus("Haciendo busqueda web y guardando fuentes...", "working");
       startWorkingTone();
       appendMessage("Kim", "Estoy buscando: " + cleanQuery, "kim", false);
       try {
         const data = await post("/api/research-agent", {
           query: cleanQuery,
-          transcript: transcript.value
+          transcript: transcript.value,
+          session_id: sessionId
         });
         const research = data.research;
+        if (research.source_cache_item) activeResearchSources.push(research.source_cache_item);
         const sourceLines = (research.sources || []).slice(0, 4).map((source) => "- " + source.title + ": " + source.url).join("\n");
         appendMessage("Codex", "Investigacion guardada en BIFROST.\n" + (research.answer || "") + (sourceLines ? "\n\nFuentes:\n" + sourceLines : ""), "codex", false);
         $("researchState").textContent = "Guardada";
@@ -1172,7 +1226,7 @@
 
     async function draftDocumentFromCurrent(instruction, callId = null) {
       $("documentState").textContent = "Redactando...";
-      setStatus("Redactando documento...", "working");
+      setStatus("Procesando datos y redactando documento...", "working");
       startWorkingTone();
       try {
         const data = await post("/api/draft-document", {
@@ -1349,6 +1403,45 @@
 
     $("conversationToggle").onclick = startConversation;
 
+    function sendManualTextToKim() {
+      const box = $("manualInput");
+      const text = box.value.trim();
+      if (!text) {
+        box.focus();
+        return;
+      }
+      appendMessage("Dr. Yehoshua", text, "user");
+      box.value = "";
+      if (rtcChannel && rtcChannel.readyState === "open") {
+        setStatus("Texto enviado a Kim.", "working");
+        rtcChannel.send(JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{type: "input_text", text}]
+          }
+        }));
+        rtcChannel.send(JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+            instructions: "Responde al texto pegado por el doctor. Si contiene un link o pide investigacion, usa la herramienta de busqueda."
+          }
+        }));
+      } else {
+        setStatus("Texto agregado al compilado. Pulsa Conversar para que Kim responda en vivo.", "idle");
+      }
+    }
+
+    $("sendManualText").onclick = sendManualTextToKim;
+    $("manualInput").addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        sendManualTextToKim();
+      }
+    });
+
     async function saveCurrentConversation(statusText = "Guardando memoria...") {
       const text = transcript.value.trim();
       if (!text) {
@@ -1363,7 +1456,8 @@
           session_id: sessionId,
           started_at: sessionStartedAt.toISOString(),
           title: $("threadHeading").textContent,
-          uploaded_files: activeUploadedFiles
+          uploaded_files: activeUploadedFiles,
+          research_sources: activeResearchSources
         });
         const target = data.call_saved_to || data.saved_to;
         appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
@@ -1397,7 +1491,7 @@
       if (!incoming.length) return;
       $("browseFiles").disabled = true;
       $("uploadResults").textContent = "Leyendo " + incoming.length + " archivo(s)...";
-      setStatus("Leyendo archivos y guardando contexto...", "working");
+      setStatus("Procesando archivo con OCR/vision si hace falta...", "working");
       startWorkingTone();
       try {
         for (const file of incoming) {
@@ -1406,6 +1500,7 @@
           const topics = (analysis.topics || []).map((item) => item.name).join(", ") || "Sin clasificar";
           const summary = "Lei el archivo " + analysis.filename + ".\n"
             + "Extractor: " + analysis.extractor + ". Caracteres: " + analysis.extracted_chars + ".\n"
+            + "Procesado: " + analysis.processed_chars + " caracteres.\n"
             + "Temas: " + topics + ".\n\n"
             + analysis.summary;
           appendMessage("Kim", summary, "kim");
@@ -1484,7 +1579,7 @@
       $("threadHeading").textContent = "Kim Live Conversations";
       $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
       chatLog.innerHTML = "";
-      appendMessage("Kim", "Estoy lista. Pulsa Conversar, habla conmigo, arrastra archivos cuando quieras y al terminar guardo la llamada con ID unico.", "kim", false);
+      appendMessage("Kim", "Estoy lista. Pulsa Conversar, habla conmigo, pega texto o arrastra archivos cuando quieras; al terminar guardo la llamada con ID unico.", "kim", false);
     });
 
     transcript.addEventListener("input", updateLineCount);

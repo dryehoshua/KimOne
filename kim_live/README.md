@@ -2,7 +2,7 @@
 
 Kim Live is the local conversation surface for BIFROST.
 
-Current version: `1.4.0`
+Current version: `1.4.1`
 
 ## URL
 
@@ -21,6 +21,7 @@ http://127.0.0.1:8765
 - OpenAI Realtime voice through browser WebRTC.
 - Realtime input transcription through `gpt-4o-mini-transcribe`.
 - Realtime tool calling for `kim_research_web` and `kim_draft_document`.
+- Manual text composer for pasted text, links, and written instructions during a live conversation.
 - OpenAI API key stored in macOS Keychain, not in page code.
 - Save notes to `BIFROST/MEMORY/inbox`.
 - Save full calls to `BIFROST/MEMORY/calls/YYYY-MM-DD`.
@@ -28,7 +29,10 @@ http://127.0.0.1:8765
 - Read saved conversations by unique session ID from `/api/conversation`.
 - Drag-and-drop or browse file upload while a conversation is active.
 - File uploads are copied to `BIFROST/MEMORY/uploads/YYYY-MM-DD`, text is extracted when possible, summarized, classified, and added to the conversation context.
+- PDF/image uploads use OpenAI file/vision analysis when local text extraction is insufficient, then the temporary OpenAI file is deleted best-effort.
 - OpenAI Responses API with `web_search` is used for internal research; there is no manual search panel in the frontend.
+- Research sources are cached in `BIFROST/MEMORY/context/research_sources_latest.json` and appended to saved call reports under `Sources Consulted`.
+- If OpenAI returns an answer without URL annotations, Kim adds DuckDuckGo source links as backup citations.
 - Drafted documents are saved to `BIFROST/MEMORY/documents/YYYY-MM-DD`.
 - Convert a conversation into a Telegram/Codex task.
 
@@ -38,7 +42,7 @@ http://127.0.0.1:8765
 - Safari may not support dictation the same way Chrome does.
 - Conversation-to-execution remains explicit: save or convert to task before Codex runs work.
 - Memory analytics were intentionally deferred after the v1.4 frontend cleanup.
-- PDF extraction depends on available local Python PDF libraries; text-like files, Markdown, CSV, JSON, HTML, DOCX, XLSX, and PPTX have built-in extraction paths.
+- PDF/image OCR depends on OpenAI API availability when local extraction cannot read the document.
 
 ## Local Endpoints
 
