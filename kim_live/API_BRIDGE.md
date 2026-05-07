@@ -66,6 +66,13 @@ service: codex.notion.integration_token
 account: dryehoshuapython
 ```
 
+Estado al 2026-05-06:
+
+- Token directo guardado en Keychain.
+- `/api/api-bridge/status` valida la integracion `KimOne` en el workspace `Ai People`.
+- Las busquedas devuelven vacio hasta que el doctor comparta paginas/bases con la integracion.
+- Prueba con `Kim - Centro de Trabajo` devolvio 404 con indicacion de compartir la pagina/base con la integracion `KimOne`.
+
 Acciones preparadas:
 
 - `status`: valida si hay token y, si existe, consulta usuario/bot.
