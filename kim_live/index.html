@@ -573,7 +573,7 @@
     .capability-row {
       min-width: 0;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
     }
 
@@ -632,6 +632,68 @@
       padding: 7px 10px;
       font-size: 13px;
       justify-content: center;
+    }
+
+    .market-desk {
+      border-top: 1px solid var(--line);
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .market-toolbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 118px 112px 132px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: #475467;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.2;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 8px 9px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .market-chart {
+      min-height: 360px;
+      height: 44vh;
+      border: 1px solid #d7dde3;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f8fafb;
+      position: relative;
+    }
+
+    .tradingview-widget-container,
+    #tradingviewChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    .market-note {
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .conversation-list {
@@ -725,7 +787,11 @@
       }
 
       .capability-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .market-toolbar {
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -747,6 +813,11 @@
       .portrait svg {
         width: 96px;
         height: 96px;
+      }
+
+      .capability-row,
+      .market-toolbar {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -887,6 +958,33 @@
         <button class="primary" id="sendManualText">Enviar texto</button>
       </section>
 
+      <section class="market-desk" aria-label="TradingView Market Desk">
+        <div class="market-toolbar">
+          <div class="field">
+            <label for="marketSymbol">Simbolo TradingView</label>
+            <input id="marketSymbol" value="BINANCE:BTCUSDT" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="marketInterval">Temporalidad</label>
+            <select id="marketInterval">
+              <option value="15">15m</option>
+              <option value="60">1h</option>
+              <option value="240">4h</option>
+              <option value="D" selected>1D</option>
+              <option value="W">1W</option>
+            </select>
+          </div>
+          <button class="secondary compact-button" id="loadTradingView">Cargar</button>
+          <button class="primary compact-button" id="sendChartContext">Mandar a Kim</button>
+        </div>
+        <div class="market-chart">
+          <div class="tradingview-widget-container">
+            <div id="tradingviewChart"></div>
+          </div>
+        </div>
+        <div class="market-note" id="marketNote">TradingView muestra el grafico. Para analisis visual profundo, adjunta una captura del grafico a Kim.</div>
+      </section>
+
       <section class="assistant-tools" aria-label="Herramientas de Kim">
         <div class="capability-row">
           <div class="capability">
@@ -953,6 +1051,7 @@
     let workingToneTimer = null;
     let apiToneContext = null;
     let apiToneTimer = null;
+    let tradingViewScriptPromise = null;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -1092,6 +1191,72 @@
       chatLog.scrollTop = chatLog.scrollHeight;
       if (includeCompiled) appendCompiled(speaker, safe);
       return message;
+    }
+
+    function normalizeTradingViewSymbol(value) {
+      return (value || "BINANCE:BTCUSDT").trim().toUpperCase().replace(/\s+/g, "");
+    }
+
+    function loadTradingViewScript() {
+      if (window.TradingView) return Promise.resolve();
+      if (tradingViewScriptPromise) return tradingViewScriptPromise;
+      tradingViewScriptPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/tv.js";
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error("No pude cargar TradingView."));
+        document.head.appendChild(script);
+      });
+      return tradingViewScriptPromise;
+    }
+
+    async function loadTradingViewChart() {
+      const symbol = normalizeTradingViewSymbol($("marketSymbol").value);
+      const interval = $("marketInterval").value || "D";
+      $("marketSymbol").value = symbol;
+      $("marketNote").textContent = "Cargando " + symbol + " en TradingView...";
+      try {
+        await loadTradingViewScript();
+        $("tradingviewChart").innerHTML = "";
+        new TradingView.widget({
+          autosize: true,
+          symbol,
+          interval,
+          timezone: "America/Mexico_City",
+          theme: "light",
+          style: "1",
+          locale: "en",
+          enable_publishing: false,
+          allow_symbol_change: true,
+          withdateranges: true,
+          hide_side_toolbar: false,
+          save_image: true,
+          studies: ["RSI@tv-basicstudies"],
+          container_id: "tradingviewChart"
+        });
+        $("marketNote").textContent = "Grafico activo: " + symbol + " / " + interval + ". Para que Kim lea las velas, adjunta captura o dicta tus observaciones.";
+      } catch (error) {
+        $("marketNote").textContent = error.message;
+      }
+    }
+
+    function sendChartContextToKim() {
+      const symbol = normalizeTradingViewSymbol($("marketSymbol").value);
+      const interval = $("marketInterval").value || "D";
+      const text = "Grafico TradingView activo: " + symbol + " en temporalidad " + interval + ". Quiero analizar tendencia, soporte, resistencia, volumen visible, momentum, escenarios, invalidacion y riesgo. Si necesitas ver el grafico, te adjunto una captura.";
+      appendMessage("Dr. Yehoshua", text, "user");
+      if (rtcChannel && rtcChannel.readyState === "open") {
+        rtcChannel.send(JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{type: "input_text", text}]
+          }
+        }));
+        rtcChannel.send(JSON.stringify({type: "response.create"}));
+      }
     }
 
     function renderConversationList(items) {
@@ -1661,6 +1826,11 @@
       appendMessage("Kim", "Estoy lista. Pulsa Conversar, habla conmigo, pega texto o arrastra archivos cuando quieras; al terminar guardo la llamada con ID unico.", "kim", false);
     });
 
+    $("loadTradingView").onclick = loadTradingViewChart;
+    $("sendChartContext").onclick = sendChartContextToKim;
+    $("marketSymbol").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") loadTradingViewChart();
+    });
     transcript.addEventListener("input", updateLineCount);
 
     fetch("/api/status")
@@ -1691,6 +1861,7 @@
       });
 
     $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
+    loadTradingViewChart();
     loadConversations();
     updateLineCount();
   </script>
