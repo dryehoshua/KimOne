@@ -785,7 +785,7 @@
           </div>
           <div class="kim-meta">
             <p class="kim-name">Kim</p>
-            <p class="status" id="status">Lista para conversar contigo y preparar tareas para Codex.</p>
+            <p class="status" id="status">Lista para conversar contigo, leer contexto local y preparar acciones seguras para Codex o tus APIs.</p>
           </div>
         </div>
         <div class="voice-meter" aria-hidden="true">
@@ -850,7 +850,7 @@
         <p class="thread-title">Memoria local</p>
         <div class="context-card">
           <strong id="contextStatus">Cargando contexto BIFROST...</strong>
-          <span id="contextSummary">Kim consultara memoria local antes de conversar.</span>
+          <span id="contextSummary">Kim consultara memoria local antes de conversar y pedira confirmacion antes de modificar ClickUp o Notion.</span>
         </div>
       </section>
 
@@ -896,6 +896,10 @@
           <div class="capability">
             <span>Documentos</span>
             <strong id="documentState">Redaccion desde conversacion</strong>
+          </div>
+          <div class="capability">
+            <span>APIs</span>
+            <strong id="apiBridgeState">ClickUp / Notion con confirmacion</strong>
           </div>
           <div class="capability">
             <span>Sesion</span>
@@ -947,6 +951,8 @@
     let workingToneContext = null;
     let workingToneOscillator = null;
     let workingToneTimer = null;
+    let apiToneContext = null;
+    let apiToneTimer = null;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -1030,6 +1036,39 @@
       } catch (_) {}
       workingToneTimer = null;
       workingToneOscillator = null;
+    }
+
+    function startApiTone() {
+      try {
+        apiToneContext = apiToneContext || new (window.AudioContext || window.webkitAudioContext)();
+        if (apiToneTimer) return;
+        const notes = [659.25, 783.99, 987.77, 783.99];
+        let index = 0;
+        const playNote = () => {
+          const now = apiToneContext.currentTime;
+          const osc = apiToneContext.createOscillator();
+          const gain = apiToneContext.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(notes[index % notes.length], now);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.032, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+          osc.connect(gain);
+          gain.connect(apiToneContext.destination);
+          osc.start(now);
+          osc.stop(now + 0.46);
+          index += 1;
+        };
+        playNote();
+        apiToneTimer = window.setInterval(playNote, 520);
+      } catch (_) {}
+    }
+
+    function stopApiTone() {
+      try {
+        if (apiToneTimer) window.clearInterval(apiToneTimer);
+      } catch (_) {}
+      apiToneTimer = null;
     }
 
     function appendCompiled(speaker, text) {
@@ -1252,6 +1291,43 @@
       }
     }
 
+    async function runApiBridgeTool(args, callId = null) {
+      const provider = (args.provider || "").trim().toLowerCase();
+      const action = (args.action || "").trim().toLowerCase();
+      if (!provider || !action) return null;
+      $("apiBridgeState").textContent = provider + " / " + action;
+      setStatus("Interactuando con " + provider + "...", "working");
+      startApiTone();
+      try {
+        const data = await post("/api/api-bridge", {
+          provider,
+          action,
+          parameters: args.parameters || {},
+          confirm: Boolean(args.confirm),
+          transcript: transcript.value,
+          session_id: sessionId
+        });
+        const result = data.result;
+        const message = result.requires_confirmation
+          ? "Accion preparada; necesito confirmacion explicita antes de modificar."
+          : (result.confirmed ? "Accion confirmada por la API." : "Consulta API completada.");
+        appendMessage("Codex", message + "\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        $("apiBridgeState").textContent = result.confirmed ? "Cambio confirmado" : (result.requires_confirmation ? "Esperando confirmacion" : "Consulta completada");
+        sendRealtimeToolOutput(callId, result);
+        refreshMemoryState();
+        return result;
+      } catch (error) {
+        $("apiBridgeState").textContent = "Error API";
+        const payload = {error: error.message, provider, action};
+        appendMessage("Codex", "No pude completar la accion API: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        stopApiTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
     async function handleRealtimeToolCall(data) {
       const callId = data.call_id || data.callId || data.item?.call_id;
       const name = data.name || data.item?.name;
@@ -1269,6 +1345,9 @@
       }
       if (name === "kim_draft_document") {
         await draftDocumentFromCurrent(args.instruction, callId);
+      }
+      if (name === "kim_api_bridge") {
+        await runApiBridgeTool(args, callId);
       }
     }
 
@@ -1598,12 +1677,17 @@
       .then((r) => r.json())
       .then((data) => {
         const availableSources = (data.sources || []).filter((source) => source.exists).length;
+        const bridge = data.api_bridge || {};
+        const clickupReady = bridge.clickup && bridge.clickup.configured;
+        const notionReady = bridge.notion && bridge.notion.configured;
         $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
         $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
+        $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave") + " / Notion " + (notionReady ? "listo" : "sin llave");
       })
       .catch(() => {
         $("contextStatus").textContent = "Contexto no disponible";
         $("contextSummary").textContent = "Kim puede conversar, pero no cargo memoria local.";
+        $("apiBridgeState").textContent = "APIs sin contexto";
       });
 
     $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";

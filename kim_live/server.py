@@ -57,17 +57,26 @@ CLICKUP_TASKS_JSON = BIFROST / "MEMORY" / "context" / "clickup_open_tasks_latest
 CLICKUP_TASKS_MARKDOWN = BIFROST / "MEMORY" / "context" / "clickup_open_tasks_latest.md"
 RUNTIME_CLICKUP_TASKS_JSON = RUNTIME_CONTEXT / "clickup_open_tasks_latest.json"
 RUNTIME_CLICKUP_TASKS_MARKDOWN = RUNTIME_CONTEXT / "clickup_open_tasks_latest.md"
+API_BRIDGE_SPEC = BIFROST / "docs" / "kim_live_api_bridge_spec.md"
+RUNTIME_API_BRIDGE_SPEC = RUNTIME_CONTEXT / "kim_live_api_bridge_spec.md"
+API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
+RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
 OPENAI_KEYCHAIN_SERVICE = "codex.openai.api_key"
+CLICKUP_KEYCHAIN_SERVICE = "codex.clickup.personal_token"
+NOTION_KEYCHAIN_SERVICE = "codex.notion.integration_token"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
 HOST = "127.0.0.1"
 PORT = 8765
 OPENAI_API_BASE = "https://api.openai.com/v1"
+CLICKUP_API_BASE = "https://api.clickup.com/api/v2"
+NOTION_API_BASE = "https://api.notion.com/v1"
+NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.1"
+APP_VERSION = "1.4.2"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -219,6 +228,31 @@ def write_json_file_both(primary, runtime, payload):
         except PermissionError:
             continue
     return written
+
+
+def load_keychain_secret(service, required=True):
+    try:
+        completed = subprocess.run(
+            [
+                "security",
+                "find-generic-password",
+                "-a",
+                KEYCHAIN_ACCOUNT,
+                "-s",
+                service,
+                "-w",
+            ],
+            text=True,
+            capture_output=True,
+            timeout=60,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        if not required:
+            return ""
+        detail = (exc.stderr or exc.stdout or "").strip()
+        raise ValueError(f"No encontre credencial en Keychain para {service}.") from ValueError(detail)
+    return completed.stdout.strip()
 
 
 def text_tokens(text):
@@ -1106,6 +1140,324 @@ def clickup_task_names_context(limit=3200, max_items=35):
     return read_text_tail_any([CLICKUP_TASKS_MARKDOWN, RUNTIME_CLICKUP_TASKS_MARKDOWN], limit=limit)
 
 
+def api_bridge_config_status(live=False):
+    clickup_configured = bool(load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE, required=False))
+    notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
+    status = {
+        "clickup": {
+            "configured": clickup_configured,
+            "write_requires_confirmation": True,
+            "capabilities": ["status", "inventory", "list_tasks", "get_task", "create_task", "update_task", "comment_task"],
+        },
+        "notion": {
+            "configured": notion_configured,
+            "write_requires_confirmation": True,
+            "capabilities": ["status", "search", "get_page", "update_page_properties"],
+            "note": (
+                "Kim Live necesita un token de integracion Notion en Keychain para operar autonomamente. "
+                "Codex Desktop tambien tiene acceso Notion por MCP, pero ese acceso no vive dentro del servidor local."
+            ),
+        },
+    }
+    if live and clickup_configured:
+        try:
+            user = clickup_request("/user").get("user", {})
+            status["clickup"]["user"] = {key: user.get(key) for key in ["id", "username", "email"]}
+            status["clickup"]["live_ok"] = True
+        except Exception as exc:
+            status["clickup"]["live_ok"] = False
+            status["clickup"]["error"] = brief(str(exc), 220)
+    if live and notion_configured:
+        try:
+            result = notion_request("/users/me")
+            bot = result.get("bot", {}) if isinstance(result, dict) else {}
+            status["notion"]["user"] = {
+                "id": result.get("id"),
+                "name": result.get("name"),
+                "workspace_name": bot.get("workspace_name"),
+            }
+            status["notion"]["live_ok"] = True
+        except Exception as exc:
+            status["notion"]["live_ok"] = False
+            status["notion"]["error"] = brief(str(exc), 220)
+    return status
+
+
+def api_json_request(base_url, path, headers, method="GET", payload=None, params=None, timeout=90):
+    params = params or {}
+    query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None})
+    url = base_url + path + (f"?{query}" if query else "")
+    data = None
+    req_headers = dict(headers)
+    if payload is not None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req_headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=data, headers=req_headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        message = raw
+        try:
+            parsed = json.loads(raw)
+            message = (
+                parsed.get("err")
+                or parsed.get("error")
+                or parsed.get("message")
+                or parsed.get("object")
+                or raw
+            )
+        except json.JSONDecodeError:
+            pass
+        raise RuntimeError(f"API error {exc.code}: {message}") from exc
+    if not raw:
+        return {}
+    return json.loads(raw)
+
+
+def clickup_request(path, method="GET", payload=None, params=None):
+    token = load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE)
+    return api_json_request(
+        CLICKUP_API_BASE,
+        path,
+        {"Authorization": token},
+        method=method,
+        payload=payload,
+        params=params,
+    )
+
+
+def notion_request(path, method="GET", payload=None, params=None):
+    token = load_keychain_secret(NOTION_KEYCHAIN_SERVICE)
+    return api_json_request(
+        NOTION_API_BASE,
+        path,
+        {
+            "Authorization": f"Bearer {token}",
+            "Notion-Version": NOTION_VERSION,
+        },
+        method=method,
+        payload=payload,
+        params=params,
+    )
+
+
+def normalize_clickup_task(task):
+    status = task.get("status") or {}
+    return {
+        "id": task.get("id"),
+        "name": task.get("name"),
+        "status": status.get("status") if isinstance(status, dict) else status,
+        "url": task.get("url"),
+        "assignees": [person.get("username") or person.get("email") for person in task.get("assignees", [])],
+        "due_date": task.get("due_date"),
+        "priority": task.get("priority"),
+    }
+
+
+def clickup_snapshot_tasks(limit=20):
+    data, source = load_json_any([CLICKUP_TASKS_JSON, RUNTIME_CLICKUP_TASKS_JSON])
+    if not data:
+        return {"ok": True, "mode": "snapshot", "source": None, "tasks": [], "message": "No hay snapshot local de tareas."}
+    tasks = data.get("tasks", [])[: int(limit or 20)]
+    rows = [
+        {
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "status": item.get("status"),
+            "team": item.get("team"),
+            "space": item.get("space"),
+            "folder": item.get("folder"),
+            "list": item.get("list"),
+            "url": item.get("url"),
+        }
+        for item in tasks
+    ]
+    return {"ok": True, "mode": "snapshot", "source": str(source), "tasks": rows, "count": data.get("task_count", len(rows))}
+
+
+def confirmation_preview(provider, action, summary, parameters):
+    return {
+        "ok": True,
+        "requires_confirmation": True,
+        "provider": provider,
+        "action": action,
+        "summary": summary,
+        "parameters": parameters,
+        "message": "Operacion preparada. Kim debe pedir confirmacion explicita antes de ejecutar con confirm=true.",
+    }
+
+
+def run_clickup_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        status = api_bridge_config_status(live=True)["clickup"]
+        return {"ok": True, "provider": "clickup", "action": action, "status": status}
+    if action == "inventory":
+        teams = clickup_request("/team").get("teams", [])
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "teams": [{"id": team.get("id"), "name": team.get("name")} for team in teams],
+        }
+    if action in {"list_tasks", "tasks"}:
+        list_id = str(parameters.get("list_id") or "").strip()
+        limit = int(parameters.get("limit") or 20)
+        if not list_id:
+            return clickup_snapshot_tasks(limit=limit)
+        payload = clickup_request(
+            f"/list/{urllib.parse.quote(list_id)}/task",
+            params={
+                "include_closed": str(bool(parameters.get("include_closed", False))).lower(),
+                "subtasks": "true",
+                "page": 0,
+            },
+        )
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "list_id": list_id,
+            "tasks": [normalize_clickup_task(task) for task in payload.get("tasks", [])[:limit]],
+        }
+    if action == "get_task":
+        task_id = str(parameters.get("task_id") or "").strip()
+        if not task_id:
+            raise ValueError("Falta task_id para leer tarea de ClickUp.")
+        task = clickup_request(f"/task/{urllib.parse.quote(task_id)}")
+        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "raw": task}
+    if action == "create_task":
+        list_id = str(parameters.get("list_id") or "").strip()
+        name = str(parameters.get("name") or "").strip()
+        if not list_id or not name:
+            raise ValueError("Faltan list_id y name para crear tarea en ClickUp.")
+        payload = {"name": name}
+        for key in ["description", "status", "priority", "due_date", "due_date_time"]:
+            if parameters.get(key) not in (None, ""):
+                payload[key] = parameters.get(key)
+        if not confirm:
+            return confirmation_preview("clickup", action, f"Crear tarea '{name}' en lista {list_id}.", payload)
+        task = clickup_request(f"/list/{urllib.parse.quote(list_id)}/task", method="POST", payload=payload)
+        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "confirmed": True}
+    if action == "update_task":
+        task_id = str(parameters.get("task_id") or "").strip()
+        fields = dict(parameters.get("fields") or {})
+        for key in ["name", "description", "status", "priority", "due_date", "due_date_time"]:
+            if parameters.get(key) not in (None, ""):
+                fields[key] = parameters.get(key)
+        if not task_id or not fields:
+            raise ValueError("Faltan task_id y fields para actualizar tarea en ClickUp.")
+        if not confirm:
+            return confirmation_preview("clickup", action, f"Actualizar tarea {task_id}.", {"task_id": task_id, "fields": fields})
+        task = clickup_request(f"/task/{urllib.parse.quote(task_id)}", method="PUT", payload=fields)
+        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "confirmed": True}
+    if action == "comment_task":
+        task_id = str(parameters.get("task_id") or "").strip()
+        comment_text = str(parameters.get("comment_text") or parameters.get("text") or "").strip()
+        if not task_id or not comment_text:
+            raise ValueError("Faltan task_id y comment_text para comentar tarea en ClickUp.")
+        payload = {"comment_text": comment_text}
+        if not confirm:
+            return confirmation_preview("clickup", action, f"Comentar tarea {task_id}.", {"task_id": task_id, "comment_text": comment_text})
+        comment = clickup_request(f"/task/{urllib.parse.quote(task_id)}/comment", method="POST", payload=payload)
+        return {"ok": True, "provider": "clickup", "action": action, "comment": comment, "confirmed": True}
+    raise ValueError(f"Accion ClickUp no soportada: {action}")
+
+
+def run_notion_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "notion", "action": action, "status": api_bridge_config_status(live=True)["notion"]}
+    if not load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False):
+        return {
+            "ok": False,
+            "provider": "notion",
+            "action": action,
+            "configured": False,
+            "message": (
+                "Notion no tiene token de integracion en Keychain. "
+                f"Guarda uno como service={NOTION_KEYCHAIN_SERVICE}, account={KEYCHAIN_ACCOUNT}, "
+                "o usa Codex Desktop MCP para tareas Notion mientras conectamos la API directa."
+            ),
+        }
+    if action == "search":
+        query = str(parameters.get("query") or "").strip()
+        page_size = min(int(parameters.get("page_size") or 10), 20)
+        result = notion_request("/search", method="POST", payload={"query": query, "page_size": page_size})
+        rows = []
+        for item in result.get("results", []):
+            rows.append(
+                {
+                    "id": item.get("id"),
+                    "object": item.get("object"),
+                    "url": item.get("url"),
+                    "created_time": item.get("created_time"),
+                    "last_edited_time": item.get("last_edited_time"),
+                }
+            )
+        return {"ok": True, "provider": "notion", "action": action, "results": rows}
+    if action == "get_page":
+        page_id = str(parameters.get("page_id") or "").strip()
+        if not page_id:
+            raise ValueError("Falta page_id para leer pagina de Notion.")
+        page = notion_request(f"/pages/{urllib.parse.quote(page_id)}")
+        return {"ok": True, "provider": "notion", "action": action, "page": page}
+    if action == "update_page_properties":
+        page_id = str(parameters.get("page_id") or "").strip()
+        properties = parameters.get("properties") or {}
+        if not page_id or not properties:
+            raise ValueError("Faltan page_id y properties para actualizar Notion.")
+        payload = {"properties": properties}
+        if not confirm:
+            return confirmation_preview("notion", action, f"Actualizar propiedades de pagina {page_id}.", payload)
+        page = notion_request(f"/pages/{urllib.parse.quote(page_id)}", method="PATCH", payload=payload)
+        return {"ok": True, "provider": "notion", "action": action, "page": page, "confirmed": True}
+    raise ValueError(f"Accion Notion no soportada: {action}")
+
+
+def record_api_bridge_action(provider, action, parameters, result, session_id="", transcript=""):
+    event = {
+        "at": now_iso(),
+        "session_id": session_id,
+        "provider": provider,
+        "action": action,
+        "confirmed": bool(result.get("confirmed")) if isinstance(result, dict) else False,
+        "requires_confirmation": bool(result.get("requires_confirmation")) if isinstance(result, dict) else False,
+        "ok": bool(result.get("ok")) if isinstance(result, dict) else False,
+        "parameters": parameters,
+        "result_summary": brief(json.dumps(result, ensure_ascii=False), 900),
+        "transcript_excerpt": brief(transcript, 900),
+    }
+    append_jsonl_any([API_BRIDGE_LOG, RUNTIME_API_BRIDGE_LOG], event)
+    append_memory("api_bridge_action", event)
+    append_daily_note(
+        f"Kim API bridge: {provider}/{action}; ok={event['ok']}; "
+        f"confirmed={event['confirmed']}; requires_confirmation={event['requires_confirmation']}"
+    )
+    return event
+
+
+def run_api_bridge(provider, action, parameters=None, confirm=False, session_id="", transcript=""):
+    provider = (provider or "").strip().lower()
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if provider in {"status", "all"} or action in {"status_all", "bridge_status"}:
+        result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
+    elif provider == "clickup":
+        result = run_clickup_bridge(action, parameters, confirm=confirm)
+    elif provider == "notion":
+        result = run_notion_bridge(action, parameters, confirm=confirm)
+    else:
+        raise ValueError("Proveedor no soportado. Usa clickup, notion o all/status.")
+    record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+    result["action_log"] = record
+    return result
+
+
 def context_brief(limit=9000):
     parts = [
         "Identidad: Dr. Yehoshua trabaja con Kim como interfaz verbal y Codex como ejecutor.",
@@ -1151,6 +1503,9 @@ def context_brief(limit=9000):
     task_names = clickup_task_names_context()
     if task_names:
         parts.append("Memoria de nombres de tareas ClickUp:\n" + task_names)
+    api_spec = read_text_tail_any([API_BRIDGE_SPEC, RUNTIME_API_BRIDGE_SPEC], 1600)
+    if api_spec:
+        parts.append("Kim API bridge:\n" + api_spec)
     text = "\n\n".join(parts)
     if len(text) > limit:
         return text[:limit].rstrip() + "\n...[contexto truncado]..."
@@ -1169,6 +1524,8 @@ def load_context_bundle():
         CLICKUP_TASKS_MARKDOWN,
         RUNTIME_CLICKUP_TASKS_JSON,
         RUNTIME_CLICKUP_TASKS_MARKDOWN,
+        API_BRIDGE_SPEC,
+        API_BRIDGE_LOG,
     ]:
         sources.append(
             {
@@ -1185,6 +1542,7 @@ def load_context_bundle():
         "brief": context_brief(),
         "latest_kim_live_notes": latest_kim_live_notes(),
         "clickup": clickup_context(),
+        "api_bridge": api_bridge_config_status(live=False),
         "research_sources": load_research_source_cache().get("items", [])[-12:],
         "sources": sources,
     }
@@ -1285,6 +1643,10 @@ def realtime_session_config():
                 "Si el doctor pide redactar una carta, propuesta, reporte o documento, llama "
                 "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
                 "en la conversacion activa como contexto. "
+                "Para ClickUp o Notion, usa kim_api_bridge: puedes leer estado en vivo; para crear, "
+                "actualizar o comentar, primero prepara la operacion con confirm=false, pide confirmacion "
+                "explicita al doctor y solo despues llama la herramienta con confirm=true. "
+                "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
                 f"MEMORIA LOCAL BIFROST:\n{local_context}"
@@ -1318,6 +1680,40 @@ def realtime_session_config():
                             }
                         },
                         "required": ["instruction"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_api_bridge",
+                    "description": (
+                        "Lee o modifica ClickUp/Notion desde Kim Live. Las operaciones de escritura "
+                        "requieren confirmacion explicita del doctor y confirm=true."
+                    ),
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "provider": {
+                                "type": "string",
+                                "description": "Proveedor: clickup, notion o all.",
+                            },
+                            "action": {
+                                "type": "string",
+                                "description": (
+                                    "Accion. ClickUp: status, inventory, list_tasks, get_task, "
+                                    "create_task, update_task, comment_task. Notion: status, search, "
+                                    "get_page, update_page_properties."
+                                ),
+                            },
+                            "parameters": {
+                                "type": "object",
+                                "description": "Parametros concretos de la accion.",
+                            },
+                            "confirm": {
+                                "type": "boolean",
+                                "description": "true solo despues de confirmacion explicita del doctor.",
+                            },
+                        },
+                        "required": ["provider", "action"],
                     },
                 },
             ],
@@ -1425,6 +1821,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/context":
             write_json(self, load_context_bundle())
             return
+        if parsed.path == "/api/api-bridge/status":
+            write_json(self, {"ok": True, "status": api_bridge_config_status(live=True)})
+            return
         if parsed.path == "/api/conversations":
             entries = list(reversed(load_call_entries(limit=80)))
             write_json(
@@ -1527,6 +1926,17 @@ class Handler(BaseHTTPRequestHandler):
                     body.get("session_id", ""),
                 )
                 write_json(self, {"ok": True, "document": result})
+                return
+            if parsed.path == "/api/api-bridge":
+                result = run_api_bridge(
+                    body.get("provider", ""),
+                    body.get("action", ""),
+                    body.get("parameters") or {},
+                    confirm=bool(body.get("confirm", False)),
+                    session_id=body.get("session_id", ""),
+                    transcript=body.get("transcript", ""),
+                )
+                write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/store-openai-key":
                 store_openai_key(body.get("api_key", ""))
