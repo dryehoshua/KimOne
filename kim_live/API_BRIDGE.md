@@ -1,7 +1,7 @@
 # Kim Live API Bridge Spec
 
-Fecha: 2026-05-06.
-Tarea: KIM-0034.
+Fecha: 2026-05-08.
+Tarea: KIM-0034 / KIM-0035.
 
 ## Objetivo
 
@@ -51,11 +51,18 @@ Acciones activas:
 
 - `status`: valida conexion y usuario.
 - `inventory`: lee equipos/workspaces.
+- `list_spaces`: lista Spaces por workspace/equipo.
+- `list_folders`: lista Folders dentro de un Space por `space_id` o `space_name`.
+- `list_lists`: lista Lists dentro de un Folder o Lists directas de un Space.
 - `list_tasks`: lista tareas de una lista por `list_id`; si no recibe `list_id`, devuelve snapshot local.
 - `get_task`: lee una tarea por `task_id`.
+- `create_folder`: crea un Folder en un Space, requiere confirmacion.
+- `create_list`: crea una List dentro de un Folder o directa en un Space, requiere confirmacion.
 - `create_task`: crea tarea en una lista, requiere confirmacion.
 - `update_task`: actualiza campos de una tarea, requiere confirmacion.
 - `comment_task`: comenta una tarea, requiere confirmacion.
+
+Uso operativo: si Kim no conoce el `list_id`, ya no debe detenerse. Primero debe usar `list_spaces`, luego `list_folders` y `list_lists`. Si la estructura no existe, puede preparar `create_folder` o `create_list` con `confirm=false` y esperar confirmacion.
 
 ## Notion
 
@@ -78,6 +85,7 @@ Acciones preparadas:
 - `status`: valida si hay token y, si existe, consulta usuario/bot.
 - `search`: busca paginas o bases de datos.
 - `get_page`: obtiene una pagina por `page_id`.
+- `create_page`: crea una pagina bajo `parent_page_id` o `parent_database_id`, requiere confirmacion.
 - `update_page_properties`: actualiza propiedades, requiere confirmacion.
 
 Nota: Codex Desktop ya tiene acceso Notion por MCP, pero ese acceso vive en esta sesion de Codex, no dentro del servidor local de Kim Live. Para que Kim Live opere Notion sola, se necesita token de integracion Notion o un worker remoto con acceso MCP.

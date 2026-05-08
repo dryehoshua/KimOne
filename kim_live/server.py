@@ -61,6 +61,8 @@ API_BRIDGE_SPEC = BIFROST / "docs" / "kim_live_api_bridge_spec.md"
 RUNTIME_API_BRIDGE_SPEC = RUNTIME_CONTEXT / "kim_live_api_bridge_spec.md"
 API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
+CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
+RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
@@ -76,7 +78,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.7"
+APP_VERSION = "1.4.8"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1157,12 +1159,25 @@ def api_bridge_config_status(live=False):
         "clickup": {
             "configured": clickup_configured,
             "write_requires_confirmation": True,
-            "capabilities": ["status", "inventory", "list_tasks", "get_task", "create_task", "update_task", "comment_task"],
+            "capabilities": [
+                "status",
+                "inventory",
+                "list_spaces",
+                "list_folders",
+                "list_lists",
+                "list_tasks",
+                "get_task",
+                "create_folder",
+                "create_list",
+                "create_task",
+                "update_task",
+                "comment_task",
+            ],
         },
         "notion": {
             "configured": notion_configured,
             "write_requires_confirmation": True,
-            "capabilities": ["status", "search", "get_page", "update_page_properties"],
+            "capabilities": ["status", "search", "get_page", "create_page", "update_page_properties"],
             "note": (
                 "Kim Live necesita un token de integracion Notion en Keychain para operar autonomamente. "
                 "Codex Desktop tambien tiene acceso Notion por MCP, pero ese acceso no vive dentro del servidor local."
@@ -1266,6 +1281,122 @@ def normalize_clickup_task(task):
     }
 
 
+def normalize_clickup_space(space, team=None):
+    team = team or {}
+    return {
+        "id": space.get("id"),
+        "name": space.get("name"),
+        "team_id": team.get("id"),
+        "team_name": team.get("name"),
+        "private": space.get("private"),
+        "multiple_assignees": space.get("multiple_assignees"),
+        "archived": space.get("archived"),
+    }
+
+
+def normalize_clickup_list(item):
+    folder = item.get("folder") or {}
+    space = item.get("space") or {}
+    return {
+        "id": item.get("id"),
+        "name": item.get("name"),
+        "content": item.get("content"),
+        "task_count": item.get("task_count"),
+        "archived": item.get("archived"),
+        "folder_id": folder.get("id") if isinstance(folder, dict) else None,
+        "folder_name": folder.get("name") if isinstance(folder, dict) else None,
+        "space_id": space.get("id") if isinstance(space, dict) else None,
+        "space_name": space.get("name") if isinstance(space, dict) else None,
+    }
+
+
+def normalize_clickup_folder(folder):
+    return {
+        "id": folder.get("id"),
+        "name": folder.get("name"),
+        "hidden": folder.get("hidden"),
+        "archived": folder.get("archived"),
+        "task_count": folder.get("task_count"),
+        "lists": [normalize_clickup_list(item) for item in folder.get("lists", [])],
+    }
+
+
+def clickup_list_spaces(parameters=None):
+    parameters = parameters or {}
+    raw_team_id = str(parameters.get("team_id") or "").strip()
+    if raw_team_id:
+        teams = [{"id": raw_team_id, "name": parameters.get("team_name")}]
+    else:
+        teams = clickup_request("/team").get("teams", [])
+    spaces = []
+    failures = []
+    for team in teams:
+        team_id = str(team.get("id") or "").strip()
+        if not team_id:
+            continue
+        try:
+            payload = clickup_request(
+                f"/team/{urllib.parse.quote(team_id)}/space",
+                params={"archived": str(bool(parameters.get("archived", False))).lower()},
+            )
+            spaces.extend(normalize_clickup_space(space, team) for space in payload.get("spaces", []))
+        except Exception as exc:
+            failures.append({"team_id": team_id, "team_name": team.get("name"), "error": brief(str(exc), 260)})
+    snapshot = {"updated_at": now_iso(), "spaces": spaces, "failures": failures}
+    write_json_file(CLICKUP_STRUCTURE_JSON, snapshot)
+    write_json_file(RUNTIME_CLICKUP_STRUCTURE_JSON, snapshot)
+    return spaces, failures
+
+
+def clickup_find_space(parameters):
+    space_id = str(parameters.get("space_id") or "").strip()
+    if space_id:
+        return {"id": space_id, "name": parameters.get("space_name")}
+    space_name = str(parameters.get("space_name") or parameters.get("space") or "").strip().lower()
+    if not space_name:
+        raise ValueError("Falta space_id o space_name para ubicar el Space de ClickUp.")
+    spaces, _failures = clickup_list_spaces(parameters)
+    exact = [space for space in spaces if str(space.get("name") or "").strip().lower() == space_name]
+    if exact:
+        return exact[0]
+    partial = [space for space in spaces if space_name in str(space.get("name") or "").strip().lower()]
+    if len(partial) == 1:
+        return partial[0]
+    available = ", ".join(space.get("name") or space.get("id") for space in spaces[:12])
+    raise ValueError(f"No encontre un Space unico para '{space_name}'. Disponibles: {available}")
+
+
+def clickup_list_folders_for_space(space_id, archived=False):
+    payload = clickup_request(
+        f"/space/{urllib.parse.quote(str(space_id))}/folder",
+        params={"archived": str(bool(archived)).lower()},
+    )
+    return [normalize_clickup_folder(folder) for folder in payload.get("folders", [])]
+
+
+def clickup_find_folder(parameters):
+    folder_id = str(parameters.get("folder_id") or "").strip()
+    if folder_id:
+        return {"id": folder_id, "name": parameters.get("folder_name")}
+    folder_name = str(parameters.get("folder_name") or parameters.get("folder") or "").strip().lower()
+    if not folder_name:
+        raise ValueError("Falta folder_id o folder_name para ubicar el Folder de ClickUp.")
+    space = clickup_find_space(parameters)
+    folders = clickup_list_folders_for_space(space["id"], archived=bool(parameters.get("archived", False)))
+    exact = [folder for folder in folders if str(folder.get("name") or "").strip().lower() == folder_name]
+    if exact:
+        exact[0]["space_id"] = space["id"]
+        exact[0]["space_name"] = space.get("name")
+        return exact[0]
+    partial = [folder for folder in folders if folder_name in str(folder.get("name") or "").strip().lower()]
+    if len(partial) == 1:
+        partial[0]["space_id"] = space["id"]
+        partial[0]["space_name"] = space.get("name")
+        return partial[0]
+    available = ", ".join(folder.get("name") or folder.get("id") for folder in folders[:12])
+    raise ValueError(f"No encontre un Folder unico para '{folder_name}'. Disponibles: {available}")
+
+
 def clickup_snapshot_tasks(limit=20):
     data, source = load_json_any([CLICKUP_TASKS_JSON, RUNTIME_CLICKUP_TASKS_JSON])
     if not data:
@@ -1285,6 +1416,50 @@ def clickup_snapshot_tasks(limit=20):
         for item in tasks
     ]
     return {"ok": True, "mode": "snapshot", "source": str(source), "tasks": rows, "count": data.get("task_count", len(rows))}
+
+
+def notion_rich_text(text):
+    return [{"type": "text", "text": {"content": str(text or "")[:2000]}}]
+
+
+def notion_children_from_content(content):
+    blocks = []
+    for chunk in re.split(r"\n\s*\n", str(content or "").strip())[:30]:
+        clean = chunk.strip()
+        if not clean:
+            continue
+        blocks.append(
+            {
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {"rich_text": notion_rich_text(clean)},
+            }
+        )
+    return blocks
+
+
+def build_notion_create_page_payload(parameters):
+    title = str(parameters.get("title") or parameters.get("name") or "").strip()
+    if not title:
+        raise ValueError("Falta title para crear pagina en Notion.")
+    parent_page_id = str(parameters.get("parent_page_id") or "").strip()
+    parent_database_id = str(parameters.get("parent_database_id") or parameters.get("database_id") or "").strip()
+    if parent_page_id:
+        parent = {"type": "page_id", "page_id": parent_page_id}
+        properties = {"title": {"title": notion_rich_text(title)}}
+    elif parent_database_id:
+        title_property = str(parameters.get("title_property") or "Name").strip()
+        parent = {"type": "database_id", "database_id": parent_database_id}
+        properties = {title_property: {"title": notion_rich_text(title)}}
+    else:
+        raise ValueError("Falta parent_page_id o parent_database_id; Notion exige un padre para crear paginas.")
+    payload = {"parent": parent, "properties": properties}
+    children = notion_children_from_content(parameters.get("content") or parameters.get("body") or "")
+    if children:
+        payload["children"] = children
+    if parameters.get("icon"):
+        payload["icon"] = {"type": "emoji", "emoji": str(parameters.get("icon"))[:2]}
+    return payload
 
 
 def confirmation_preview(provider, action, summary, parameters):
@@ -1313,6 +1488,55 @@ def run_clickup_bridge(action, parameters, confirm=False):
             "action": action,
             "teams": [{"id": team.get("id"), "name": team.get("name")} for team in teams],
         }
+    if action in {"list_spaces", "spaces"}:
+        spaces, failures = clickup_list_spaces(parameters)
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "spaces": spaces,
+            "failures": failures,
+            "count": len(spaces),
+        }
+    if action in {"list_folders", "folders"}:
+        space = clickup_find_space(parameters)
+        folders = clickup_list_folders_for_space(space["id"], archived=bool(parameters.get("archived", False)))
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "space": space,
+            "folders": folders,
+            "count": len(folders),
+        }
+    if action in {"list_lists", "lists"}:
+        folder_id = str(parameters.get("folder_id") or "").strip()
+        folder = None
+        if not folder_id and (parameters.get("folder_name") or parameters.get("folder")):
+            folder = clickup_find_folder(parameters)
+            folder_id = str(folder["id"])
+        if folder_id:
+            payload = clickup_request(
+                f"/folder/{urllib.parse.quote(folder_id)}/list",
+                params={"archived": str(bool(parameters.get("archived", False))).lower()},
+            )
+            scope = {"folder_id": folder_id, "folder_name": folder.get("name") if folder else parameters.get("folder_name")}
+        else:
+            space = clickup_find_space(parameters)
+            payload = clickup_request(
+                f"/space/{urllib.parse.quote(str(space['id']))}/list",
+                params={"archived": str(bool(parameters.get("archived", False))).lower()},
+            )
+            scope = {"space_id": space["id"], "space_name": space.get("name"), "folderless": True}
+        lists = [normalize_clickup_list(item) for item in payload.get("lists", [])]
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "scope": scope,
+            "lists": lists,
+            "count": len(lists),
+        }
     if action in {"list_tasks", "tasks"}:
         list_id = str(parameters.get("list_id") or "").strip()
         limit = int(parameters.get("limit") or 20)
@@ -1339,6 +1563,60 @@ def run_clickup_bridge(action, parameters, confirm=False):
             raise ValueError("Falta task_id para leer tarea de ClickUp.")
         task = clickup_request(f"/task/{urllib.parse.quote(task_id)}")
         return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "raw": task}
+    if action == "create_folder":
+        space = clickup_find_space(parameters)
+        name = str(parameters.get("name") or parameters.get("folder_name") or "").strip()
+        if not name:
+            raise ValueError("Falta name para crear Folder en ClickUp.")
+        payload = {"name": name}
+        if not confirm:
+            return confirmation_preview(
+                "clickup",
+                action,
+                f"Crear Folder '{name}' en Space {space.get('name') or space.get('id')}.",
+                {"space_id": space["id"], **payload},
+            )
+        folder = clickup_request(f"/space/{urllib.parse.quote(str(space['id']))}/folder", method="POST", payload=payload)
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "folder": normalize_clickup_folder(folder),
+            "confirmed": True,
+        }
+    if action == "create_list":
+        name = str(parameters.get("name") or parameters.get("list_name") or "").strip()
+        if not name:
+            raise ValueError("Falta name para crear List en ClickUp.")
+        payload = {"name": name}
+        for key in ["content", "due_date", "due_date_time", "priority", "assignee", "status"]:
+            if parameters.get(key) not in (None, ""):
+                payload[key] = parameters.get(key)
+        folder_id = str(parameters.get("folder_id") or "").strip()
+        folder = None
+        if not folder_id and (parameters.get("folder_name") or parameters.get("folder")):
+            folder = clickup_find_folder(parameters)
+            folder_id = str(folder["id"])
+        if folder_id:
+            endpoint = f"/folder/{urllib.parse.quote(folder_id)}/list"
+            scope = {"folder_id": folder_id, "folder_name": folder.get("name") if folder else parameters.get("folder_name")}
+            summary = f"Crear List '{name}' dentro del Folder {scope.get('folder_name') or folder_id}."
+        else:
+            space = clickup_find_space(parameters)
+            endpoint = f"/space/{urllib.parse.quote(str(space['id']))}/list"
+            scope = {"space_id": space["id"], "space_name": space.get("name"), "folderless": True}
+            summary = f"Crear List '{name}' directa en el Space {space.get('name') or space.get('id')}."
+        if not confirm:
+            return confirmation_preview("clickup", action, summary, {**scope, **payload})
+        created = clickup_request(endpoint, method="POST", payload=payload)
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "list": normalize_clickup_list(created),
+            "scope": scope,
+            "confirmed": True,
+        }
     if action == "create_task":
         list_id = str(parameters.get("list_id") or "").strip()
         name = str(parameters.get("name") or "").strip()
@@ -1416,6 +1694,19 @@ def run_notion_bridge(action, parameters, confirm=False):
             raise ValueError("Falta page_id para leer pagina de Notion.")
         page = notion_request(f"/pages/{urllib.parse.quote(page_id)}")
         return {"ok": True, "provider": "notion", "action": action, "page": page}
+    if action == "create_page":
+        payload = build_notion_create_page_payload(parameters)
+        title = str(parameters.get("title") or parameters.get("name") or "").strip()
+        parent = payload.get("parent", {})
+        if not confirm:
+            return confirmation_preview(
+                "notion",
+                action,
+                f"Crear pagina '{title}' bajo {parent.get('type')} {parent.get(parent.get('type'), '')}.",
+                payload,
+            )
+        page = notion_request("/pages", method="POST", payload=payload)
+        return {"ok": True, "provider": "notion", "action": action, "page": page, "confirmed": True}
     if action == "update_page_properties":
         page_id = str(parameters.get("page_id") or "").strip()
         properties = parameters.get("properties") or {}
@@ -1654,11 +1945,13 @@ def realtime_session_config():
                 "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
                 "en la conversacion activa como contexto. "
                 "No digas que ves la camara, la pantalla o el iframe de TradingView si no recibiste "
-                "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot y analiza "
+                "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot con EMAs "
+                "personalizadas cuando el doctor las pida, incluyendo EMA34 por temporalidad, y analiza "
                 "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
-                "Para ClickUp o Notion, usa kim_api_bridge: puedes leer estado en vivo; para crear, "
-                "actualizar o comentar, primero prepara la operacion con confirm=false, pide confirmacion "
-                "explicita al doctor y solo despues llama la herramienta con confirm=true. "
+                "Para ClickUp o Notion, usa kim_api_bridge: si faltan IDs de ClickUp, primero lista "
+                "spaces, folders o lists antes de crear. Puedes preparar folders/lists/tareas de ClickUp "
+                "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
+                "doctor y luego confirm=true. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
@@ -1712,9 +2005,10 @@ def realtime_session_config():
                             "action": {
                                 "type": "string",
                                 "description": (
-                                    "Accion. ClickUp: status, inventory, list_tasks, get_task, "
+                                    "Accion. ClickUp: status, inventory, list_spaces, list_folders, "
+                                    "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
-                                    "get_page, update_page_properties."
+                                    "get_page, create_page, update_page_properties."
                                 ),
                             },
                             "parameters": {
@@ -1743,6 +2037,11 @@ def realtime_session_config():
                             "interval": {
                                 "type": "string",
                                 "description": "Temporalidad: 15, 60, 240, D o W.",
+                            },
+                            "ema_periods": {
+                                "type": "array",
+                                "items": {"type": "integer"},
+                                "description": "Periodos EMA a calcular, por ejemplo [20,34,50].",
                             },
                         },
                     },
@@ -1852,7 +2151,30 @@ def round_opt(value, digits=2):
     return round(float(value), digits)
 
 
-def market_snapshot(symbol, interval):
+def sanitize_ema_periods(periods):
+    if periods is None or periods == "":
+        raw = [20, 34, 50]
+    elif isinstance(periods, str):
+        raw = re.split(r"[,;\s]+", periods.strip())
+    elif isinstance(periods, (list, tuple)):
+        raw = periods
+    else:
+        raw = [periods]
+    clean = []
+    for value in raw:
+        try:
+            period = int(value)
+        except (TypeError, ValueError):
+            continue
+        if 2 <= period <= 300 and period not in clean:
+            clean.append(period)
+    for baseline in [20, 34, 50]:
+        if baseline not in clean:
+            clean.append(baseline)
+    return sorted(clean)
+
+
+def market_snapshot(symbol, interval, ema_periods=None):
     normalized = (symbol or "BINANCE:BTCUSDT").strip().upper().replace(" ", "")
     if ":" in normalized:
         exchange, ticker = normalized.split(":", 1)
@@ -1861,7 +2183,9 @@ def market_snapshot(symbol, interval):
     if exchange != "BINANCE":
         raise ValueError("Por ahora el snapshot cuantitativo soporta simbolos BINANCE, por ejemplo BINANCE:BTCUSDT.")
     binance_interval = interval_to_binance(interval)
-    query = urllib.parse.urlencode({"symbol": ticker, "interval": binance_interval, "limit": 160})
+    periods = sanitize_ema_periods(ema_periods)
+    limit = min(1000, max(200, max(periods) * 5))
+    query = urllib.parse.urlencode({"symbol": ticker, "interval": binance_interval, "limit": limit})
     request = urllib.request.Request(
         f"https://api.binance.com/api/v3/klines?{query}",
         headers={"User-Agent": "KimLive/1.4"},
@@ -1880,8 +2204,13 @@ def market_snapshot(symbol, interval):
     lows = [float(item[3]) for item in candles]
     volumes = [float(item[5]) for item in candles]
     last_close = closes[-1]
-    ema20 = ema(closes[-80:], 20)
-    ema50 = ema(closes[-120:], 50)
+    ema_values = {}
+    for period in periods:
+        lookback = min(len(closes), max(period * 5, period + 20))
+        ema_values[period] = ema(closes[-lookback:], period)
+    ema20 = ema_values.get(20)
+    ema34 = ema_values.get(34)
+    ema50 = ema_values.get(50)
     rsi14 = rsi(closes[-80:], 14)
     support20 = min(lows[-20:])
     resistance20 = max(highs[-20:])
@@ -1902,7 +2231,10 @@ def market_snapshot(symbol, interval):
         "candles": len(candles),
         "last_close": round_opt(last_close, 4),
         "trend": trend,
+        "ema_periods": periods,
+        "emas": {str(period): round_opt(value, 4) for period, value in ema_values.items()},
         "ema20": round_opt(ema20, 4),
+        "ema34": round_opt(ema34, 4),
         "ema50": round_opt(ema50, 4),
         "rsi14": round_opt(rsi14, 2),
         "support20": round_opt(support20, 4),
@@ -1917,7 +2249,7 @@ def market_snapshot(symbol, interval):
     }
     snapshot["summary"] = (
         f"{snapshot['symbol']} {snapshot['interval']}: cierre {snapshot['last_close']}, "
-        f"tendencia {snapshot['trend']}, RSI14 {snapshot['rsi14']}, "
+        f"tendencia {snapshot['trend']}, EMA34 {snapshot['ema34']}, RSI14 {snapshot['rsi14']}, "
         f"soporte 20v {snapshot['support20']}, resistencia 20v {snapshot['resistance20']}, "
         f"volumen relativo {snapshot['volume_ratio']}x."
     )
@@ -2159,7 +2491,7 @@ class Handler(BaseHTTPRequestHandler):
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/market-snapshot":
-                snapshot = market_snapshot(body.get("symbol", ""), body.get("interval", "D"))
+                snapshot = market_snapshot(body.get("symbol", ""), body.get("interval", "D"), body.get("ema_periods"))
                 write_json(self, {"ok": True, "snapshot": snapshot})
                 return
             if parsed.path == "/api/store-openai-key":

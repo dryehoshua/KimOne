@@ -1475,8 +1475,8 @@
       $("marketNote").textContent = snapshot.summary || "Snapshot listo para Kim.";
     }
 
-    async function getMarketSnapshot(symbol, interval) {
-      const data = await post("/api/market-snapshot", {symbol, interval});
+    async function getMarketSnapshot(symbol, interval, emaPeriods = [20, 34, 50]) {
+      const data = await post("/api/market-snapshot", {symbol, interval, ema_periods: emaPeriods});
       renderMarketSnapshot(data.snapshot);
       return data.snapshot;
     }
@@ -1502,11 +1502,14 @@
     async function runMarketSnapshotTool(args = {}, callId = null) {
       const symbol = normalizeTradingViewSymbol(args.symbol || $("marketSymbol").value);
       const interval = args.interval || $("marketInterval").value || "D";
+      const emaPeriods = Array.isArray(args.ema_periods)
+        ? args.ema_periods
+        : (Array.isArray(args.emaPeriods) ? args.emaPeriods : [20, 34, 50]);
       $("marketSymbol").value = symbol;
       $("marketNote").textContent = "Consultando datos de mercado para Kim...";
       setStatus("Consultando mercado...", "working");
       try {
-        const snapshot = await getMarketSnapshot(symbol, interval);
+        const snapshot = await getMarketSnapshot(symbol, interval, emaPeriods);
         if (callId) sendRealtimeToolOutput(callId, snapshot);
         return snapshot;
       } catch (error) {
