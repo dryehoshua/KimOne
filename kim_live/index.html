@@ -1368,12 +1368,9 @@
 
     function realtimeResponse(instructions = null) {
       const message = {
-        type: "response.create",
-        response: {
-          modalities: ["audio"]
-        }
+        type: "response.create"
       };
-      if (instructions) message.response.instructions = instructions;
+      if (instructions) message.response = {instructions};
       return message;
     }
 
