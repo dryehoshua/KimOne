@@ -1777,6 +1777,34 @@
       }
     }
 
+    async function runPortfolioTool(args, callId = null) {
+      const action = (args.action || "status").trim().toLowerCase();
+      $("apiBridgeState").textContent = "portfolio / " + action;
+      setStatus("Guardando en portafolio BIFROST...", "working");
+      startApiTone();
+      try {
+        const data = await post("/api/portfolio", {
+          action,
+          parameters: args.parameters || {}
+        });
+        const result = data.result;
+        appendMessage("Codex", "Portafolio BIFROST actualizado.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        $("apiBridgeState").textContent = "Portafolio guardado";
+        sendRealtimeToolOutput(callId, result);
+        refreshMemoryState();
+        return result;
+      } catch (error) {
+        $("apiBridgeState").textContent = "Error portafolio";
+        const payload = {error: error.message, action};
+        appendMessage("Codex", "No pude guardar en portafolio: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        stopApiTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
     async function handleRealtimeToolCall(data) {
       const callId = data.call_id || data.callId || data.item?.call_id;
       const name = data.name || data.item?.name;
@@ -1800,6 +1828,9 @@
       }
       if (name === "kim_market_snapshot") {
         await runMarketSnapshotTool(args, callId);
+      }
+      if (name === "kim_portfolio_record") {
+        await runPortfolioTool(args, callId);
       }
     }
 

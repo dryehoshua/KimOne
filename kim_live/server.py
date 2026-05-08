@@ -13,11 +13,13 @@ import base64
 import datetime as dt
 import hashlib
 import html
+import importlib.util
 import io
 import json
 import mimetypes
 import pathlib
 import re
+import shutil
 import subprocess
 import tempfile
 import urllib.parse
@@ -63,6 +65,7 @@ API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
+PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
@@ -78,7 +81,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.8"
+APP_VERSION = "1.4.9"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1759,6 +1762,153 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     return result
 
 
+def copy_tree_files(src, dst):
+    if not src.exists():
+        return {"copied": [], "failed": []}
+    copied = []
+    failed = []
+    for path in src.rglob("*"):
+        target = dst / path.relative_to(src)
+        if path.is_dir():
+            try:
+                target.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                failed.append({"path": str(target), "error": brief(str(exc), 180)})
+        else:
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
+                copied.append(str(target))
+            except OSError as exc:
+                failed.append({"path": str(target), "error": brief(str(exc), 180)})
+    return {"copied": copied, "failed": failed}
+
+
+def configure_portfolio_module(module):
+    runtime_root = RUNTIME_MEMORY_ROOT / "portfolios"
+    bifrost_root = MEMORY_ROOT / "portfolios"
+    if not (runtime_root / "portfolio_ledger.sqlite").exists() and (bifrost_root / "portfolio_ledger.sqlite").exists():
+        copy_tree_files(bifrost_root, runtime_root)
+    module.ROOT = runtime_root
+    module.DB_PATH = runtime_root / "portfolio_ledger.sqlite"
+    module.CLIENT_PATH = (
+        runtime_root
+        / "ignis_stock_financials"
+        / "clientes"
+        / "manejo_de_portafolios"
+        / "sr_eli_2026"
+    )
+    module.AUDIT_DIR = runtime_root / "audit"
+    return runtime_root, bifrost_root
+
+
+def sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root):
+    sync = copy_tree_files(runtime_root, bifrost_root)
+    return {
+        "runtime_root": str(runtime_root),
+        "bifrost_root": str(bifrost_root),
+        "copied_files": len(sync["copied"]),
+        "failed_files": sync["failed"][:5],
+    }
+
+
+def portfolio_cli(action, parameters=None):
+    action = (action or "status").strip().lower()
+    parameters = parameters or {}
+    spec = importlib.util.spec_from_file_location("kim_portfolio_db", PORTFOLIO_TOOL)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    runtime_root, bifrost_root = configure_portfolio_module(module)
+
+    def ns(**values):
+        return type("PortfolioArgs", (), values)()
+
+    if action == "status":
+        try:
+            result = module.status_json()
+        except Exception as exc:
+            if "no such table" not in str(exc).lower():
+                raise
+            result = module.init_db()
+    elif action == "init":
+        result = module.init_db()
+    elif action in {"record_consultation", "record_market_consultation"}:
+        snapshot = parameters.get("snapshot_json")
+        if isinstance(snapshot, (dict, list)):
+            snapshot = json.dumps(snapshot, ensure_ascii=False)
+        result = module.record_consultation(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                consulted_at=parameters.get("consulted_at"),
+                symbol=parameters.get("symbol"),
+                interval=parameters.get("interval"),
+                question=parameters.get("question"),
+                snapshot_json=snapshot,
+                analysis=parameters.get("analysis"),
+                decision=parameters.get("decision"),
+                is_final=bool(parameters.get("is_final")),
+                source_call_id=parameters.get("source_call_id"),
+            )
+        )
+    elif action == "record_final_change":
+        if not parameters.get("summary"):
+            raise ValueError("Falta summary para registrar un cambio final.")
+        result = module.record_final_change(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                decided_at=parameters.get("decided_at"),
+                change_type=parameters.get("change_type") or "rebalance",
+                summary=parameters.get("summary"),
+                rationale=parameters.get("rationale"),
+                related_consultation_id=parameters.get("related_consultation_id"),
+                executed=bool(parameters.get("executed")),
+                execution_ref=parameters.get("execution_ref"),
+            )
+        )
+    elif action == "add_transaction":
+        if not parameters.get("symbol") or not parameters.get("side"):
+            raise ValueError("Faltan symbol y side para registrar transaccion.")
+        result = module.add_transaction(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                occurred_at=parameters.get("occurred_at"),
+                symbol=parameters.get("symbol"),
+                side=str(parameters.get("side")).upper(),
+                quantity=parameters.get("quantity"),
+                price=parameters.get("price"),
+                gross_amount=parameters.get("gross_amount"),
+                fees=parameters.get("fees") or 0,
+                currency=parameters.get("currency") or "USD",
+                status=parameters.get("status") or "draft",
+                source=parameters.get("source") or "kim_live",
+                notes=parameters.get("notes"),
+            )
+        )
+    elif action == "set_position":
+        if not parameters.get("symbol") or parameters.get("quantity") in (None, ""):
+            raise ValueError("Faltan symbol y quantity para registrar posicion.")
+        result = module.set_position(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                symbol=parameters.get("symbol"),
+                quantity=parameters.get("quantity"),
+                average_cost=parameters.get("average_cost"),
+                currency=parameters.get("currency") or "USD",
+                source=parameters.get("source") or "kim_live",
+                notes=parameters.get("notes"),
+                updated_at=parameters.get("updated_at"),
+            )
+        )
+    else:
+        raise ValueError("Accion de portafolio no soportada.")
+    result["sync"] = sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root)
+    result["runtime_database"] = str(module.DB_PATH)
+    result["bifrost_database"] = str(bifrost_root / "portfolio_ledger.sqlite")
+    append_memory("portfolio_action", {"action": action, "result": brief(json.dumps(result, ensure_ascii=False), 1200)})
+    append_daily_note(f"Kim portfolio: {action}; ok={result.get('ok')}; db={result.get('database')}")
+    return result
+
+
 def context_brief(limit=9000):
     parts = [
         "Identidad: Dr. Yehoshua trabaja con Kim como interfaz verbal y Codex como ejecutor.",
@@ -1952,6 +2102,9 @@ def realtime_session_config():
                 "spaces, folders o lists antes de crear. Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
                 "doctor y luego confirm=true. "
+                "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
+                "como record_consultation; solo registra record_final_change o add_transaction cuando el "
+                "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
@@ -2044,6 +2197,29 @@ def realtime_session_config():
                                 "description": "Periodos EMA a calcular, por ejemplo [20,34,50].",
                             },
                         },
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_portfolio_record",
+                    "description": "Registra consultas, cambios finales, transacciones o posiciones del portafolio Sr. Eli 2026 en BIFROST local.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "description": "status, init, record_consultation, record_final_change, add_transaction o set_position.",
+                            },
+                            "parameters": {
+                                "type": "object",
+                                "description": (
+                                    "Campos de la accion. record_consultation acepta symbol, interval, question, "
+                                    "snapshot_json, analysis, decision, is_final. record_final_change requiere summary. "
+                                    "add_transaction requiere symbol y side."
+                                ),
+                            },
+                        },
+                        "required": ["action"],
                     },
                 },
             ],
@@ -2488,6 +2664,10 @@ class Handler(BaseHTTPRequestHandler):
                     session_id=body.get("session_id", ""),
                     transcript=body.get("transcript", ""),
                 )
+                write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/portfolio":
+                result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/market-snapshot":
