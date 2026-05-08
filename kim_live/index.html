@@ -1082,6 +1082,22 @@
       return data;
     }
 
+    function clientLog(stage, detail = {}) {
+      try {
+        const payload = JSON.stringify({stage, detail});
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/client-log", new Blob([payload], {type: "application/json"}));
+          return;
+        }
+        fetch("/api/client-log", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: payload,
+          keepalive: true
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
     function formatBytes(bytes) {
       const value = Number(bytes || 0);
       if (value < 1024) return value + " B";
@@ -1560,6 +1576,7 @@
       }
       if (data.type === "error") {
         const detail = data.error?.message || data.message || "error";
+        clientLog("realtime_event_error", data.error || data);
         setStatus("Realtime: " + detail, "idle");
         appendMessage("Kim", "Realtime devolvio un error: " + detail, "kim", false);
       }
@@ -1574,6 +1591,11 @@
         throw new Error("Este navegador no permite abrir el microfono aqui.");
       }
       cleanupRealtime();
+      clientLog("realtime_start", {
+        href: window.location.href,
+        secure: window.isSecureContext,
+        userAgent: navigator.userAgent
+      });
       setStatus("Pidiendo permiso de microfono...", "working");
       try {
         rtcStream = await navigator.mediaDevices.getUserMedia({
@@ -1583,7 +1605,11 @@
             autoGainControl: true
           }
         });
+        clientLog("microphone_opened", {
+          tracks: rtcStream.getTracks().map((track) => ({kind: track.kind, label: track.label, state: track.readyState}))
+        });
       } catch (error) {
+        clientLog("microphone_error", {name: error.name, message: error.message});
         const hint = error.name === "NotAllowedError"
           ? "Permiso de microfono bloqueado. Revisa Safari > Ajustes de este sitio web > Microfono."
           : "No pude abrir el microfono local.";
@@ -1594,52 +1620,60 @@
       rtcChannel = rtcPeer.createDataChannel("oai-events");
       rtcChannel.addEventListener("message", handleRealtimeEvent);
       rtcChannel.addEventListener("open", () => {
+        clientLog("data_channel_open");
         setStatus("Realtime conectado. Ya puedes hablar.", "listening");
         rtcChannel.send(JSON.stringify(realtimeResponse("Saluda al doctor en una frase corta y confirma que Kim Live esta lista.")));
       });
       rtcChannel.addEventListener("close", () => {
+        clientLog("data_channel_close");
         if (conversationActive) setStatus("Realtime se desconecto.", "idle");
       });
       rtcChannel.addEventListener("error", () => {
+        clientLog("data_channel_error");
         setStatus("Realtime tuvo un error en el canal de datos.", "idle");
       });
       rtcPeer.addEventListener("connectionstatechange", () => {
         if (!rtcPeer) return;
+        clientLog("peer_connection_state", {state: rtcPeer.connectionState});
         if (rtcPeer.connectionState === "connected") setStatus("Llamada Realtime activa.", "listening");
         if (["failed", "disconnected", "closed"].includes(rtcPeer.connectionState)) {
           setStatus("WebRTC: " + rtcPeer.connectionState, "idle");
         }
       });
       rtcPeer.addEventListener("iceconnectionstatechange", () => {
+        clientLog("ice_connection_state", {state: rtcPeer?.iceConnectionState});
         if (rtcPeer?.iceConnectionState === "failed") setStatus("WebRTC ICE fallo.", "idle");
       });
       rtcPeer.addEventListener("icecandidateerror", (event) => {
+        clientLog("ice_candidate_error", {code: event.errorCode, text: event.errorText});
         appendMessage("Kim", "Aviso WebRTC ICE: " + (event.errorText || event.errorCode || "sin detalle"), "kim", false);
       });
       rtcPeer.addEventListener("track", async (event) => {
+        clientLog("remote_track", {streams: event.streams.length});
         remoteAudio.srcObject = event.streams[0];
         try {
           await remoteAudio.play();
         } catch (_) {
+          clientLog("remote_audio_play_blocked");
           setStatus("Audio recibido; si Safari lo bloqueo, haz clic en la pagina y vuelve a hablar.", "speaking");
         }
       });
       rtcStream.getTracks().forEach((track) => rtcPeer.addTrack(track, rtcStream));
       const offer = await rtcPeer.createOffer();
       await rtcPeer.setLocalDescription(offer);
-      setStatus("Solicitando respuesta SDP de OpenAI...", "working");
-      const ephemeralKey = await getRealtimeToken();
-      const answerResponse = await fetch("https://api.openai.com/v1/realtime/calls", {
+      clientLog("local_offer_created", {sdpLength: offer.sdp.length});
+      setStatus("Solicitando respuesta SDP desde Kim Live local...", "working");
+      const answerResponse = await fetch("/api/realtime-call", {
         method: "POST",
         headers: {
-          "Authorization": "Bearer " + ephemeralKey,
           "Content-Type": "application/sdp"
         },
         body: offer.sdp
       });
       const answerSdp = await answerResponse.text();
+      clientLog("server_sdp_response", {ok: answerResponse.ok, status: answerResponse.status, length: answerSdp.length});
       if (!answerResponse.ok) {
-        throw new Error("OpenAI Realtime SDP fallo (" + answerResponse.status + "): " + answerSdp.slice(0, 600));
+        throw new Error("Kim Live no pudo abrir Realtime (" + answerResponse.status + "): " + answerSdp.slice(0, 600));
       }
       await rtcPeer.setRemoteDescription({
         type: "answer",

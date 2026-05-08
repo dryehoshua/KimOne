@@ -76,7 +76,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.4"
+APP_VERSION = "1.4.5"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -115,6 +115,16 @@ def write_json(handler, payload, status=200):
     data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
+def write_text(handler, text, status=200, content_type="text/plain; charset=utf-8"):
+    data = (text or "").encode("utf-8")
+    handler.send_response(status)
+    handler.send_header("Content-Type", content_type)
+    handler.send_header("Cache-Control", "no-store")
     handler.send_header("Content-Length", str(len(data)))
     handler.end_headers()
     handler.wfile.write(data)
@@ -1771,6 +1781,47 @@ def openai_json(path, payload=None, method="GET"):
     return json.loads(raw or "{}")
 
 
+def multipart_field(boundary, name, value, content_type=None):
+    header = f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\""
+    if content_type:
+        header += f"\r\nContent-Type: {content_type}"
+    return (header + "\r\n\r\n" + value + "\r\n").encode("utf-8")
+
+
+def openai_realtime_call(offer_sdp):
+    boundary = "----kimrealtime" + hashlib.sha256(f"{len(offer_sdp)}{now_iso()}".encode()).hexdigest()[:24]
+    session = json.dumps(realtime_session_config()["session"], ensure_ascii=False)
+    data = b"".join(
+        [
+            multipart_field(boundary, "sdp", offer_sdp, "application/sdp"),
+            multipart_field(boundary, "session", session, "application/json"),
+            f"--{boundary}--\r\n".encode("utf-8"),
+        ]
+    )
+    request = urllib.request.Request(
+        f"{OPENAI_API_BASE}/realtime/calls",
+        data=data,
+        headers={
+            "Authorization": f"Bearer {load_openai_key()}",
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "OpenAI-Safety-Identifier": "dr-yehoshua-kim-live-local",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=90) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        message = raw
+        try:
+            parsed = json.loads(raw)
+            message = parsed.get("error", {}).get("message") or raw
+        except json.JSONDecodeError:
+            pass
+        raise RuntimeError(f"OpenAI Realtime SDP error {exc.code}: {message}") from exc
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -1778,6 +1829,7 @@ class Handler(BaseHTTPRequestHandler):
             data = (APP_DIR / "index.html").read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             self.wfile.write(data)
@@ -1875,6 +1927,30 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/upload-memory-file":
                 analysis = parse_upload(self)
                 write_json(self, {"ok": True, "analysis": analysis})
+                return
+            if parsed.path == "/api/realtime-call":
+                length = int(self.headers.get("Content-Length", "0") or "0")
+                offer_sdp = self.rfile.read(length).decode("utf-8", errors="replace")
+                if not offer_sdp.startswith("v=0"):
+                    write_text(self, "SDP invalido recibido por Kim Live.", status=400)
+                    return
+                answer_sdp = openai_realtime_call(offer_sdp)
+                append_memory(
+                    "realtime_call_started",
+                    {"model": REALTIME_MODEL, "voice": REALTIME_VOICE, "transport": "unified"},
+                )
+                write_text(self, answer_sdp, content_type="application/sdp")
+                return
+            if parsed.path == "/api/client-log":
+                body = read_body(self)
+                append_memory(
+                    "client_log",
+                    {
+                        "stage": brief(body.get("stage", ""), 80),
+                        "detail": brief(json.dumps(body.get("detail", {}), ensure_ascii=False), 1200),
+                    },
+                )
+                write_json(self, {"ok": True})
                 return
             body = read_body(self)
             if parsed.path == "/api/say":
