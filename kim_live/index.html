@@ -246,6 +246,60 @@
       border-bottom: 1px solid var(--line);
     }
 
+    .device-panel {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .device-panel label {
+      color: #475467;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.2;
+    }
+
+    .device-panel select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 8px 9px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .device-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .level-meter {
+      height: 8px;
+      border-radius: 999px;
+      background: #e5eaf0;
+      overflow: hidden;
+    }
+
+    .level-meter span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: var(--teal);
+      transition: width 80ms linear;
+    }
+
+    .device-state {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
     button {
       appearance: none;
       border: 1px solid #cbd5dc;
@@ -379,6 +433,43 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafb;
+    }
+
+    .view-tab {
+      width: auto;
+      min-height: 34px;
+      padding: 7px 10px;
+      border-color: transparent;
+      background: transparent;
+      font-size: 13px;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .view-tab.active {
+      background: #ffffff;
+      border-color: #cbd5dc;
+      color: var(--teal-dark);
+    }
+
+    .workspace[data-view="chat"] .market-desk {
+      display: none;
+    }
+
+    .workspace[data-view="markets"] .chat-log,
+    .workspace[data-view="markets"] .composer,
+    .workspace[data-view="markets"] .assistant-tools,
+    .workspace[data-view="markets"] .compiler {
+      display: none;
     }
 
     .workspace-meta {
@@ -635,16 +726,17 @@
     }
 
     .market-desk {
-      border-top: 1px solid var(--line);
       background: #ffffff;
       padding: 12px 14px;
       display: grid;
       gap: 10px;
+      min-height: 0;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
     }
 
     .market-toolbar {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) 118px 112px 132px;
+      grid-template-columns: minmax(180px, 1fr) 118px 112px 150px;
       gap: 8px;
       align-items: end;
     }
@@ -694,6 +786,19 @@
       color: #667085;
       font-size: 12px;
       line-height: 1.35;
+    }
+
+    .market-snapshot {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      background: #fbfcfd;
+      color: #344054;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 10px;
+      min-height: 64px;
+      max-height: 150px;
+      overflow: auto;
+      white-space: pre-wrap;
     }
 
     .conversation-list {
@@ -889,6 +994,18 @@
           </span>
           Terminar conversacion
         </button>
+        <div class="device-panel" aria-label="Microfono">
+          <label for="micSelect">Microfono</label>
+          <select id="micSelect">
+            <option value="">Sistema / predeterminado</option>
+          </select>
+          <div class="device-actions">
+            <button class="secondary inline-button" id="refreshMics" type="button">Actualizar</button>
+            <button class="secondary inline-button" id="testMic" type="button">Probar nivel</button>
+          </div>
+          <div class="level-meter" aria-hidden="true"><span id="micLevel"></span></div>
+          <span class="device-state" id="micState">Selecciona el microfono real si Kim no te escucha.</span>
+        </div>
         <button class="secondary" id="save">
           <span class="button-icon">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -937,11 +1054,15 @@
       </section>
     </aside>
 
-    <section class="panel workspace" aria-label="Conversacion">
+    <section class="panel workspace" id="workspace" data-view="chat" aria-label="Conversacion">
       <div class="workspace-header">
         <div>
           <h2 id="threadHeading">Kim Live Conversations</h2>
           <p class="workspace-meta" id="threadMeta">Registro con hablantes identificados para convertirlo en memoria o tarea.</p>
+        </div>
+        <div class="view-tabs" aria-label="Vista">
+          <button class="view-tab active" id="chatTab" type="button">Chat</button>
+          <button class="view-tab" id="marketsTab" type="button">Mercados</button>
         </div>
         <span class="pill" id="sessionState">Sesion lista</span>
       </div>
@@ -975,14 +1096,15 @@
             </select>
           </div>
           <button class="secondary compact-button" id="loadTradingView">Cargar</button>
-          <button class="primary compact-button" id="sendChartContext">Mandar a Kim</button>
+          <button class="primary compact-button" id="sendChartContext">Analizar con Kim</button>
         </div>
         <div class="market-chart">
           <div class="tradingview-widget-container">
             <div id="tradingviewChart"></div>
           </div>
         </div>
-        <div class="market-note" id="marketNote">TradingView muestra el grafico. Para analisis visual profundo, adjunta una captura del grafico a Kim.</div>
+        <div class="market-snapshot" id="marketSnapshot">Sin snapshot cuantitativo todavia.</div>
+        <div class="market-note" id="marketNote">TradingView queda en esta pestana. Kim puede analizar datos OHLCV con Analizar con Kim; para lectura visual exacta de velas, adjunta captura.</div>
       </section>
 
       <section class="assistant-tools" aria-label="Herramientas de Kim">
@@ -1052,6 +1174,8 @@
     let apiToneContext = null;
     let apiToneTimer = null;
     let tradingViewScriptPromise = null;
+    let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
+    let micTestStream = null;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -1096,6 +1220,95 @@
           keepalive: true
         }).catch(() => {});
       } catch (_) {}
+    }
+
+    function audioConstraints() {
+      const audio = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      };
+      if (selectedMicDeviceId) audio.deviceId = {exact: selectedMicDeviceId};
+      return {audio};
+    }
+
+    async function refreshMicrophones() {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter((device) => device.kind === "audioinput");
+        const select = $("micSelect");
+        const current = selectedMicDeviceId;
+        select.innerHTML = "<option value=\"\">Sistema / predeterminado</option>";
+        inputs.forEach((device, index) => {
+          const option = document.createElement("option");
+          option.value = device.deviceId;
+          option.textContent = device.label || ("Microfono " + (index + 1));
+          select.appendChild(option);
+        });
+        if (current && inputs.some((device) => device.deviceId === current)) {
+          select.value = current;
+        } else {
+          selectedMicDeviceId = "";
+          localStorage.removeItem("kimLiveMicDeviceId");
+          select.value = "";
+        }
+        $("micState").textContent = inputs.length
+          ? "Microfono activo: " + (select.options[select.selectedIndex]?.textContent || "Sistema")
+          : "No encontre microfonos. Revisa permisos del navegador.";
+      } catch (error) {
+        $("micState").textContent = "No pude listar microfonos: " + error.message;
+      }
+    }
+
+    async function testMicrophoneLevel() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        $("micState").textContent = "Este navegador no permite probar microfono.";
+        return;
+      }
+      $("testMic").disabled = true;
+      $("micState").textContent = "Probando microfono: habla ahora...";
+      try {
+        if (micTestStream) micTestStream.getTracks().forEach((track) => track.stop());
+        micTestStream = await navigator.mediaDevices.getUserMedia(audioConstraints());
+        await refreshMicrophones();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const context = new AudioContextClass();
+        const source = context.createMediaStreamSource(micTestStream);
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.fftSize);
+        let peak = 0;
+        const started = performance.now();
+        const tick = () => {
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (const value of data) {
+            const centered = value - 128;
+            sum += centered * centered;
+          }
+          const rms = Math.sqrt(sum / data.length) / 128;
+          peak = Math.max(peak, rms);
+          $("micLevel").style.width = Math.min(100, Math.round(rms * 360)) + "%";
+          if (performance.now() - started < 3500) {
+            requestAnimationFrame(tick);
+          } else {
+            micTestStream.getTracks().forEach((track) => track.stop());
+            micTestStream = null;
+            context.close();
+            $("micLevel").style.width = "0%";
+            $("micState").textContent = peak > 0.035
+              ? "Microfono con senal. Usa Conversar."
+              : "No detecte suficiente senal. Cambia el microfono en la lista.";
+            $("testMic").disabled = false;
+          }
+        };
+        tick();
+      } catch (error) {
+        $("micState").textContent = "No pude probar microfono: " + error.message;
+        $("testMic").disabled = false;
+      }
     }
 
     function formatBytes(bytes) {
@@ -1251,16 +1464,25 @@
           studies: ["RSI@tv-basicstudies"],
           container_id: "tradingviewChart"
         });
-        $("marketNote").textContent = "Grafico activo: " + symbol + " / " + interval + ". Para que Kim lea las velas, adjunta captura o dicta tus observaciones.";
+        $("marketNote").textContent = "Grafico activo: " + symbol + " / " + interval + ". Usa Analizar con Kim para enviar datos OHLCV e indicadores.";
       } catch (error) {
         $("marketNote").textContent = error.message;
       }
     }
 
-    function sendChartContextToKim() {
-      const symbol = normalizeTradingViewSymbol($("marketSymbol").value);
-      const interval = $("marketInterval").value || "D";
-      const text = "Grafico TradingView activo: " + symbol + " en temporalidad " + interval + ". Quiero analizar tendencia, soporte, resistencia, volumen visible, momentum, escenarios, invalidacion y riesgo. Si necesitas ver el grafico, te adjunto una captura.";
+    function renderMarketSnapshot(snapshot) {
+      $("marketSnapshot").textContent = JSON.stringify(snapshot, null, 2);
+      $("marketNote").textContent = snapshot.summary || "Snapshot listo para Kim.";
+    }
+
+    async function getMarketSnapshot(symbol, interval) {
+      const data = await post("/api/market-snapshot", {symbol, interval});
+      renderMarketSnapshot(data.snapshot);
+      return data.snapshot;
+    }
+
+    function sendSnapshotToRealtime(snapshot, instruction = null) {
+      const text = "Snapshot cuantitativo de mercado para analizar con Kim:\n" + JSON.stringify(snapshot, null, 2);
       appendMessage("Dr. Yehoshua", text, "user");
       if (rtcChannel && rtcChannel.readyState === "open") {
         rtcChannel.send(JSON.stringify({
@@ -1271,7 +1493,42 @@
             content: [{type: "input_text", text}]
           }
         }));
-        rtcChannel.send(JSON.stringify({type: "response.create"}));
+        rtcChannel.send(JSON.stringify(realtimeResponse(instruction || "Analiza el snapshot con tendencia, soportes, resistencias, momentum, volumen, escenarios, invalidacion y riesgo. Aclara que no estas viendo el iframe; estas analizando datos.")));
+      } else {
+        setStatus("Snapshot listo. Pulsa Conversar para que Kim lo analice en voz.", "idle");
+      }
+    }
+
+    async function runMarketSnapshotTool(args = {}, callId = null) {
+      const symbol = normalizeTradingViewSymbol(args.symbol || $("marketSymbol").value);
+      const interval = args.interval || $("marketInterval").value || "D";
+      $("marketSymbol").value = symbol;
+      $("marketNote").textContent = "Consultando datos de mercado para Kim...";
+      setStatus("Consultando mercado...", "working");
+      try {
+        const snapshot = await getMarketSnapshot(symbol, interval);
+        if (callId) sendRealtimeToolOutput(callId, snapshot);
+        return snapshot;
+      } catch (error) {
+        const payload = {error: error.message, symbol, interval};
+        $("marketNote").textContent = error.message;
+        if (callId) sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
+    async function sendChartContextToKim() {
+      const symbol = normalizeTradingViewSymbol($("marketSymbol").value);
+      const interval = $("marketInterval").value || "D";
+      try {
+        const snapshot = await runMarketSnapshotTool({symbol, interval});
+        if (!snapshot.error) {
+          sendSnapshotToRealtime(snapshot);
+        }
+      } catch (error) {
+        $("marketNote").textContent = error.message;
       }
     }
 
@@ -1538,6 +1795,9 @@
       if (name === "kim_api_bridge") {
         await runApiBridgeTool(args, callId);
       }
+      if (name === "kim_market_snapshot") {
+        await runMarketSnapshotTool(args, callId);
+      }
     }
 
     function handleRealtimeEvent(event) {
@@ -1595,16 +1855,16 @@
       });
       setStatus("Pidiendo permiso de microfono...", "working");
       try {
-        rtcStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
+        rtcStream = await navigator.mediaDevices.getUserMedia(audioConstraints());
         clientLog("microphone_opened", {
+          selectedDeviceId: selectedMicDeviceId || "default",
           tracks: rtcStream.getTracks().map((track) => ({kind: track.kind, label: track.label, state: track.readyState}))
         });
+        await refreshMicrophones();
+        const label = rtcStream.getAudioTracks()[0]?.label || $("micSelect").options[$("micSelect").selectedIndex]?.textContent || "Sistema";
+        $("micState").textContent = /virtual|ideashare/i.test(label)
+          ? "Kim esta usando " + label + ". Si no te escucha, cambia a un microfono fisico."
+          : "Kim esta escuchando por: " + label;
       } catch (error) {
         clientLog("microphone_error", {name: error.name, message: error.message});
         const hint = error.name === "NotAllowedError"
@@ -1903,6 +2163,34 @@
     $("marketSymbol").addEventListener("keydown", (event) => {
       if (event.key === "Enter") loadTradingViewChart();
     });
+    $("chatTab").onclick = () => {
+      $("workspace").dataset.view = "chat";
+      $("chatTab").classList.add("active");
+      $("marketsTab").classList.remove("active");
+    };
+    $("marketsTab").onclick = () => {
+      $("workspace").dataset.view = "markets";
+      $("marketsTab").classList.add("active");
+      $("chatTab").classList.remove("active");
+      loadTradingViewChart();
+    };
+    $("refreshMics").onclick = refreshMicrophones;
+    $("testMic").onclick = testMicrophoneLevel;
+    $("micSelect").addEventListener("change", () => {
+      selectedMicDeviceId = $("micSelect").value;
+      if (selectedMicDeviceId) {
+        localStorage.setItem("kimLiveMicDeviceId", selectedMicDeviceId);
+      } else {
+        localStorage.removeItem("kimLiveMicDeviceId");
+      }
+      const label = $("micSelect").options[$("micSelect").selectedIndex]?.textContent || "Sistema";
+      $("micState").textContent = conversationActive
+        ? "Microfono cambiado a " + label + ". Termina e inicia Conversar para usarlo."
+        : "Microfono seleccionado: " + label;
+    });
+    if (navigator.mediaDevices?.addEventListener) {
+      navigator.mediaDevices.addEventListener("devicechange", refreshMicrophones);
+    }
     transcript.addEventListener("input", updateLineCount);
 
     fetch("/api/status")
@@ -1933,7 +2221,7 @@
       });
 
     $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
-    loadTradingViewChart();
+    refreshMicrophones();
     loadConversations();
     updateLineCount();
   </script>

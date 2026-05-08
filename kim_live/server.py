@@ -76,7 +76,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.6"
+APP_VERSION = "1.4.7"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1653,6 +1653,9 @@ def realtime_session_config():
                 "Si el doctor pide redactar una carta, propuesta, reporte o documento, llama "
                 "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
                 "en la conversacion activa como contexto. "
+                "No digas que ves la camara, la pantalla o el iframe de TradingView si no recibiste "
+                "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot y analiza "
+                "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
                 "Para ClickUp o Notion, usa kim_api_bridge: puedes leer estado en vivo; para crear, "
                 "actualizar o comentar, primero prepara la operacion con confirm=false, pide confirmacion "
                 "explicita al doctor y solo despues llama la herramienta con confirm=true. "
@@ -1726,6 +1729,24 @@ def realtime_session_config():
                         "required": ["provider", "action"],
                     },
                 },
+                {
+                    "type": "function",
+                    "name": "kim_market_snapshot",
+                    "description": "Obtiene datos OHLCV e indicadores cuantitativos del mercado activo para analizar tendencia, soportes, resistencias, momentum, volumen y riesgo.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "symbol": {
+                                "type": "string",
+                                "description": "Simbolo TradingView/Binance, por ejemplo BINANCE:BTCUSDT.",
+                            },
+                            "interval": {
+                                "type": "string",
+                                "description": "Temporalidad: 15, 60, 240, D o W.",
+                            },
+                        },
+                    },
+                },
             ],
             "tool_choice": "auto",
             "audio": {
@@ -1779,6 +1800,129 @@ def openai_json(path, payload=None, method="GET"):
             pass
         raise RuntimeError(f"OpenAI API error {exc.code}: {message}") from exc
     return json.loads(raw or "{}")
+
+
+def interval_to_binance(value):
+    mapping = {
+        "15": "15m",
+        "60": "1h",
+        "240": "4h",
+        "D": "1d",
+        "W": "1w",
+    }
+    return mapping.get(str(value or "D").upper(), "1d")
+
+
+def ema(values, period):
+    if not values:
+        return None
+    alpha = 2 / (period + 1)
+    current = values[0]
+    for value in values[1:]:
+        current = value * alpha + current * (1 - alpha)
+    return current
+
+
+def rsi(values, period=14):
+    if len(values) <= period:
+        return None
+    gains = []
+    losses = []
+    for index in range(1, len(values)):
+        delta = values[index] - values[index - 1]
+        gains.append(max(delta, 0))
+        losses.append(abs(min(delta, 0)))
+    avg_gain = sum(gains[-period:]) / period
+    avg_loss = sum(losses[-period:]) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return 100 - (100 / (1 + rs))
+
+
+def pct_change(values, periods):
+    if len(values) <= periods or values[-periods - 1] == 0:
+        return None
+    return ((values[-1] / values[-periods - 1]) - 1) * 100
+
+
+def round_opt(value, digits=2):
+    if value is None:
+        return None
+    return round(float(value), digits)
+
+
+def market_snapshot(symbol, interval):
+    normalized = (symbol or "BINANCE:BTCUSDT").strip().upper().replace(" ", "")
+    if ":" in normalized:
+        exchange, ticker = normalized.split(":", 1)
+    else:
+        exchange, ticker = "BINANCE", normalized
+    if exchange != "BINANCE":
+        raise ValueError("Por ahora el snapshot cuantitativo soporta simbolos BINANCE, por ejemplo BINANCE:BTCUSDT.")
+    binance_interval = interval_to_binance(interval)
+    query = urllib.parse.urlencode({"symbol": ticker, "interval": binance_interval, "limit": 160})
+    request = urllib.request.Request(
+        f"https://api.binance.com/api/v3/klines?{query}",
+        headers={"User-Agent": "KimLive/1.4"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            candles = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Binance error {exc.code}: {brief(raw, 400)}") from exc
+    if not isinstance(candles, list) or len(candles) < 30:
+        raise RuntimeError("No recibi suficientes velas para analizar el mercado.")
+    closes = [float(item[4]) for item in candles]
+    highs = [float(item[2]) for item in candles]
+    lows = [float(item[3]) for item in candles]
+    volumes = [float(item[5]) for item in candles]
+    last_close = closes[-1]
+    ema20 = ema(closes[-80:], 20)
+    ema50 = ema(closes[-120:], 50)
+    rsi14 = rsi(closes[-80:], 14)
+    support20 = min(lows[-20:])
+    resistance20 = max(highs[-20:])
+    support50 = min(lows[-50:])
+    resistance50 = max(highs[-50:])
+    avg_volume20 = sum(volumes[-20:]) / 20
+    current_volume = volumes[-1]
+    trend = "lateral"
+    if ema20 and ema50:
+        if last_close > ema20 > ema50:
+            trend = "alcista"
+        elif last_close < ema20 < ema50:
+            trend = "bajista"
+    snapshot = {
+        "symbol": f"{exchange}:{ticker}",
+        "interval": interval or "D",
+        "provider": "binance_klines",
+        "candles": len(candles),
+        "last_close": round_opt(last_close, 4),
+        "trend": trend,
+        "ema20": round_opt(ema20, 4),
+        "ema50": round_opt(ema50, 4),
+        "rsi14": round_opt(rsi14, 2),
+        "support20": round_opt(support20, 4),
+        "resistance20": round_opt(resistance20, 4),
+        "support50": round_opt(support50, 4),
+        "resistance50": round_opt(resistance50, 4),
+        "change_5": round_opt(pct_change(closes, 5), 2),
+        "change_20": round_opt(pct_change(closes, 20), 2),
+        "current_volume": round_opt(current_volume, 4),
+        "avg_volume20": round_opt(avg_volume20, 4),
+        "volume_ratio": round_opt(current_volume / avg_volume20 if avg_volume20 else None, 2),
+    }
+    snapshot["summary"] = (
+        f"{snapshot['symbol']} {snapshot['interval']}: cierre {snapshot['last_close']}, "
+        f"tendencia {snapshot['trend']}, RSI14 {snapshot['rsi14']}, "
+        f"soporte 20v {snapshot['support20']}, resistencia 20v {snapshot['resistance20']}, "
+        f"volumen relativo {snapshot['volume_ratio']}x."
+    )
+    append_memory("market_snapshot", snapshot)
+    return snapshot
 
 
 def multipart_field(boundary, name, value, content_type=None):
@@ -2013,6 +2157,10 @@ class Handler(BaseHTTPRequestHandler):
                     transcript=body.get("transcript", ""),
                 )
                 write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/market-snapshot":
+                snapshot = market_snapshot(body.get("symbol", ""), body.get("interval", "D"))
+                write_json(self, {"ok": True, "snapshot": snapshot})
                 return
             if parsed.path == "/api/store-openai-key":
                 store_openai_key(body.get("api_key", ""))
