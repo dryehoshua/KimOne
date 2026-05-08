@@ -1337,11 +1337,28 @@
 
     async function getRealtimeToken() {
       const response = await fetch("/api/realtime-token");
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = JSON.parse(raw || "{}");
+      } catch (_) {
+        throw new Error("El servidor local no devolvio JSON al crear Realtime: " + raw.slice(0, 220));
+      }
       if (!response.ok || !data.value) {
         throw new Error(data.error || "No pude crear el secreto efimero de Realtime.");
       }
       return data.value;
+    }
+
+    function realtimeResponse(instructions = null) {
+      const message = {
+        type: "response.create",
+        response: {
+          modalities: ["audio"]
+        }
+      };
+      if (instructions) message.response.instructions = instructions;
+      return message;
     }
 
     function cleanupRealtime() {
@@ -1386,13 +1403,7 @@
           output: JSON.stringify(output)
         }
       }));
-      rtcChannel.send(JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: "Usa el resultado de la herramienta y responde al doctor de forma breve, con fuentes si aplica."
-        }
-      }));
+      rtcChannel.send(JSON.stringify(realtimeResponse("Usa el resultado de la herramienta y responde al doctor de forma breve, con fuentes si aplica.")));
     }
 
     async function runResearchTool(query, callId = null) {
@@ -1548,43 +1559,76 @@
         handleRealtimeToolCall(data);
       }
       if (data.type === "error") {
-        setStatus("Realtime: " + (data.error?.message || "error"), "idle");
+        const detail = data.error?.message || data.message || "error";
+        setStatus("Realtime: " + detail, "idle");
+        appendMessage("Kim", "Realtime devolvio un error: " + detail, "kim", false);
       }
     }
 
     async function startRealtime() {
+      const localHostnames = ["127.0.0.1", "localhost", "::1"];
+      if (window.location.protocol !== "https:" && !localHostnames.includes(window.location.hostname)) {
+        throw new Error("El navegador bloqueo el microfono porque esta pagina no es segura. Abre Kim Live desde http://127.0.0.1:8765 en esta Mac, o usa HTTPS si entras por IP local.");
+      }
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Este navegador no permite abrir el microfono aqui.");
       }
       cleanupRealtime();
-      setStatus("Preparando llamada Realtime...", "working");
-      const ephemeralKey = await getRealtimeToken();
+      setStatus("Pidiendo permiso de microfono...", "working");
+      try {
+        rtcStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+      } catch (error) {
+        const hint = error.name === "NotAllowedError"
+          ? "Permiso de microfono bloqueado. Revisa Safari > Ajustes de este sitio web > Microfono."
+          : "No pude abrir el microfono local.";
+        throw new Error(hint + " Detalle: " + (error.message || error.name || "sin detalle"));
+      }
+      setStatus("Creando conexion WebRTC...", "working");
       rtcPeer = new RTCPeerConnection();
       rtcChannel = rtcPeer.createDataChannel("oai-events");
       rtcChannel.addEventListener("message", handleRealtimeEvent);
       rtcChannel.addEventListener("open", () => {
         setStatus("Realtime conectado. Ya puedes hablar.", "listening");
-        rtcChannel.send(JSON.stringify({
-          type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-            instructions: "Saluda al doctor en una frase corta y confirma que Kim Live esta lista."
-          }
-        }));
+        rtcChannel.send(JSON.stringify(realtimeResponse("Saluda al doctor en una frase corta y confirma que Kim Live esta lista.")));
       });
-      rtcPeer.addEventListener("track", (event) => {
+      rtcChannel.addEventListener("close", () => {
+        if (conversationActive) setStatus("Realtime se desconecto.", "idle");
+      });
+      rtcChannel.addEventListener("error", () => {
+        setStatus("Realtime tuvo un error en el canal de datos.", "idle");
+      });
+      rtcPeer.addEventListener("connectionstatechange", () => {
+        if (!rtcPeer) return;
+        if (rtcPeer.connectionState === "connected") setStatus("Llamada Realtime activa.", "listening");
+        if (["failed", "disconnected", "closed"].includes(rtcPeer.connectionState)) {
+          setStatus("WebRTC: " + rtcPeer.connectionState, "idle");
+        }
+      });
+      rtcPeer.addEventListener("iceconnectionstatechange", () => {
+        if (rtcPeer?.iceConnectionState === "failed") setStatus("WebRTC ICE fallo.", "idle");
+      });
+      rtcPeer.addEventListener("icecandidateerror", (event) => {
+        appendMessage("Kim", "Aviso WebRTC ICE: " + (event.errorText || event.errorCode || "sin detalle"), "kim", false);
+      });
+      rtcPeer.addEventListener("track", async (event) => {
         remoteAudio.srcObject = event.streams[0];
-      });
-      rtcStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
+        try {
+          await remoteAudio.play();
+        } catch (_) {
+          setStatus("Audio recibido; si Safari lo bloqueo, haz clic en la pagina y vuelve a hablar.", "speaking");
         }
       });
       rtcStream.getTracks().forEach((track) => rtcPeer.addTrack(track, rtcStream));
       const offer = await rtcPeer.createOffer();
       await rtcPeer.setLocalDescription(offer);
+      setStatus("Solicitando respuesta SDP de OpenAI...", "working");
+      const ephemeralKey = await getRealtimeToken();
       const answerResponse = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         headers: {
@@ -1593,13 +1637,15 @@
         },
         body: offer.sdp
       });
+      const answerSdp = await answerResponse.text();
       if (!answerResponse.ok) {
-        throw new Error(await answerResponse.text());
+        throw new Error("OpenAI Realtime SDP fallo (" + answerResponse.status + "): " + answerSdp.slice(0, 600));
       }
       await rtcPeer.setRemoteDescription({
         type: "answer",
-        sdp: await answerResponse.text()
+        sdp: answerSdp
       });
+      setStatus("Llamada Realtime lista. Habla ahora.", "listening");
     }
 
     function startDictationFallback() {
@@ -1640,6 +1686,7 @@
         } catch (fallbackError) {
           conversationActive = false;
           $("conversationToggle").disabled = false;
+          appendMessage("Kim", "No pude iniciar Realtime ni dictado local.\nRealtime: " + error.message + "\nDictado: " + fallbackError.message, "kim", false);
           setStatus("No pude iniciar voz: " + error.message, "idle");
         }
       }
@@ -1666,13 +1713,7 @@
             content: [{type: "input_text", text}]
           }
         }));
-        rtcChannel.send(JSON.stringify({
-          type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-            instructions: "Responde al texto pegado por el doctor. Si contiene un link o pide investigacion, usa la herramienta de busqueda."
-          }
-        }));
+        rtcChannel.send(JSON.stringify(realtimeResponse("Responde al texto pegado por el doctor. Si contiene un link o pide investigacion, usa la herramienta de busqueda.")));
       } else {
         setStatus("Texto agregado al compilado. Pulsa Conversar para que Kim responda en vivo.", "idle");
       }
