@@ -48,6 +48,7 @@ DEFAULT_WATCHLIST = [
     ("WLDUSDT", "WLD", "crypto", "BINANCE", "USDT"),
     ("APTUSDT", "APT", "crypto", "BINANCE", "USDT"),
     ("PEPEUSDT", "PEPE", "crypto", "BINANCE", "USDT"),
+    ("TRUMPUSDT", "TRUMP", "crypto", "BINANCE", "USDT"),
 ]
 
 
@@ -375,6 +376,91 @@ def status_json():
     }
 
 
+def portfolio_summary_json():
+    init_db()
+    conn = connect()
+    with conn:
+        final_rows = conn.execute(
+            """
+            SELECT symbol, side, quantity, price, gross_amount, currency, occurred_at, notes
+            FROM transactions
+            WHERE portfolio_id = ? AND status = 'final'
+            ORDER BY occurred_at, created_at
+            """,
+            (DEFAULT_PORTFOLIO_ID,),
+        ).fetchall()
+        draft_rows = conn.execute(
+            """
+            SELECT symbol, side, quantity, price, gross_amount, currency, occurred_at, source, notes
+            FROM transactions
+            WHERE portfolio_id = ? AND status = 'draft'
+            ORDER BY occurred_at, created_at
+            """,
+            (DEFAULT_PORTFOLIO_ID,),
+        ).fetchall()
+        position_rows = conn.execute(
+            """
+            SELECT symbol, quantity, average_cost, currency, updated_at, notes
+            FROM positions
+            WHERE portfolio_id = ?
+            ORDER BY symbol
+            """,
+            (DEFAULT_PORTFOLIO_ID,),
+        ).fetchall()
+    final_transactions = [
+        {
+            "symbol": row[0],
+            "side": row[1],
+            "quantity": row[2],
+            "price": row[3],
+            "gross_amount": row[4],
+            "currency": row[5],
+            "occurred_at": row[6],
+            "notes": row[7],
+        }
+        for row in final_rows
+    ]
+    draft_transactions = [
+        {
+            "symbol": row[0],
+            "side": row[1],
+            "quantity": row[2],
+            "price": row[3],
+            "gross_amount": row[4],
+            "currency": row[5],
+            "occurred_at": row[6],
+            "source": row[7],
+            "notes": row[8],
+        }
+        for row in draft_rows
+    ]
+    positions = [
+        {
+            "symbol": row[0],
+            "quantity": row[1],
+            "average_cost": row[2],
+            "currency": row[3],
+            "updated_at": row[4],
+            "notes": row[5],
+        }
+        for row in position_rows
+    ]
+    invested = sum(float(row["gross_amount"] or 0) for row in final_transactions if row["side"] == "BUY")
+    pending_credit = sum(float(row["gross_amount"] or 0) for row in draft_transactions if row["side"] == "BUY")
+    return {
+        "ok": True,
+        "portfolio_id": DEFAULT_PORTFOLIO_ID,
+        "database": str(DB_PATH),
+        "final_transaction_count": len(final_transactions),
+        "draft_transaction_count": len(draft_transactions),
+        "active_invested_usd": invested,
+        "pending_credit_usd": pending_credit,
+        "positions": positions,
+        "final_transactions": final_transactions,
+        "draft_transactions": draft_transactions,
+    }
+
+
 def record_consultation(args):
     init_db()
     item = {
@@ -435,17 +521,78 @@ def record_final_change(args):
     return {"ok": True, "record": item, "database": str(DB_PATH)}
 
 
+def apply_final_transaction_to_position(conn, item):
+    if item["status"] != "final" or item["side"] not in {"BUY", "SELL"}:
+        return None
+    quantity = float(item["quantity"] or 0)
+    if quantity <= 0:
+        return None
+    current = conn.execute(
+        """
+        SELECT id, quantity, average_cost, currency, notes
+        FROM positions
+        WHERE portfolio_id = ? AND symbol = ?
+        """,
+        (item["portfolio_id"], item["symbol"]),
+    ).fetchone()
+    old_qty = float(current[1]) if current else 0.0
+    old_avg = float(current[2]) if current and current[2] is not None else None
+    if item["side"] == "BUY":
+        new_qty = old_qty + quantity
+        if item["price"] is not None:
+            old_cost = old_qty * (old_avg if old_avg is not None else float(item["price"]))
+            new_cost = quantity * float(item["price"])
+            new_avg = (old_cost + new_cost) / new_qty if new_qty else float(item["price"])
+        else:
+            new_avg = old_avg
+    else:
+        new_qty = max(0.0, old_qty - quantity)
+        new_avg = old_avg
+    position = {
+        "id": current[0] if current else new_id("pos"),
+        "portfolio_id": item["portfolio_id"],
+        "symbol": item["symbol"],
+        "quantity": new_qty,
+        "average_cost": new_avg,
+        "currency": item["currency"],
+        "source": f"transaction:{item['id']}",
+        "notes": f"Auto position update from final {item['side']} transaction.",
+        "updated_at": now(),
+    }
+    conn.execute(
+        """
+        INSERT INTO positions (id, portfolio_id, symbol, quantity, average_cost, currency, source, notes, updated_at)
+        VALUES (:id, :portfolio_id, :symbol, :quantity, :average_cost, :currency, :source, :notes, :updated_at)
+        ON CONFLICT(portfolio_id, symbol) DO UPDATE SET
+          quantity=excluded.quantity,
+          average_cost=excluded.average_cost,
+          currency=excluded.currency,
+          source=excluded.source,
+          notes=excluded.notes,
+          updated_at=excluded.updated_at
+        """,
+        position,
+    )
+    write_jsonl(CLIENT_PATH / "positions.jsonl", position)
+    return position
+
+
 def add_transaction(args):
     init_db()
+    price = args.price
+    gross_amount = args.gross_amount
+    quantity = args.quantity
+    if quantity is None and price not in (None, 0) and gross_amount not in (None, ""):
+        quantity = float(gross_amount) / float(price)
     item = {
         "id": new_id("tx"),
         "portfolio_id": args.portfolio_id,
         "occurred_at": args.occurred_at or now(),
         "symbol": args.symbol.upper(),
         "side": args.side.upper(),
-        "quantity": args.quantity,
-        "price": args.price,
-        "gross_amount": args.gross_amount,
+        "quantity": quantity,
+        "price": price,
+        "gross_amount": gross_amount,
         "fees": args.fees or 0,
         "currency": args.currency,
         "status": args.status,
@@ -470,9 +617,10 @@ def add_transaction(args):
             """,
             item,
         )
+        position = apply_final_transaction_to_position(conn, item)
         audit(conn, "add_transaction", item)
     write_jsonl(CLIENT_PATH / "transactions.jsonl", item)
-    return {"ok": True, "record": item, "database": str(DB_PATH)}
+    return {"ok": True, "record": item, "position": position, "database": str(DB_PATH)}
 
 
 def set_position(args):
@@ -529,6 +677,9 @@ def build_parser():
 
     status_parser = sub.add_parser("status", help="Show ledger status")
     status_parser.set_defaults(func=lambda _args: status_json())
+
+    summary_parser = sub.add_parser("summary", help="Show portfolio summary")
+    summary_parser.set_defaults(func=lambda _args: portfolio_summary_json())
 
     consult = sub.add_parser("record-consultation", help="Record a market consultation")
     consult.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)

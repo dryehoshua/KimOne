@@ -1805,6 +1805,30 @@
       }
     }
 
+    async function runMemoryRouterTool(args, callId = null) {
+      const text = args.text || transcript.value || "";
+      const action = (args.action || "classify").trim().toLowerCase();
+      $("apiBridgeState").textContent = "memory / " + action;
+      try {
+        const data = await post("/api/memory-router", {
+          action,
+          text,
+          session_id: sessionId
+        });
+        const result = data.result;
+        appendMessage("Codex", "Memoria enroutada: " + result.route.domain + "\n" + JSON.stringify(result.route, null, 2).slice(0, 1400), "codex", false);
+        $("apiBridgeState").textContent = "Memoria: " + result.route.domain;
+        sendRealtimeToolOutput(callId, result);
+        refreshMemoryState();
+        return result;
+      } catch (error) {
+        const payload = {error: error.message, action};
+        appendMessage("Codex", "No pude clasificar memoria: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      }
+    }
+
     async function handleRealtimeToolCall(data) {
       const callId = data.call_id || data.callId || data.item?.call_id;
       const name = data.name || data.item?.name;
@@ -1831,6 +1855,9 @@
       }
       if (name === "kim_portfolio_record") {
         await runPortfolioTool(args, callId);
+      }
+      if (name === "kim_memory_router") {
+        await runMemoryRouterTool(args, callId);
       }
     }
 

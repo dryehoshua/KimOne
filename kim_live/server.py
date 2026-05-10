@@ -66,6 +66,8 @@ RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
+MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
+RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
@@ -81,7 +83,7 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.4.9"
+APP_VERSION = "1.5.0"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -787,6 +789,7 @@ def save_call_record(body):
         "research_sources": research_sources,
         "chars": len(text),
     }
+    entry["memory_route"] = memory_router("save_call", text, session_id=session_id, call_entry=entry)["route"]
     append_jsonl_any([CALL_INDEX, RUNTIME_CALL_INDEX], entry)
     return call_path, entry
 
@@ -1787,10 +1790,14 @@ def copy_tree_files(src, dst):
 def configure_portfolio_module(module):
     runtime_root = RUNTIME_MEMORY_ROOT / "portfolios"
     bifrost_root = MEMORY_ROOT / "portfolios"
-    if not (runtime_root / "portfolio_ledger.sqlite").exists() and (bifrost_root / "portfolio_ledger.sqlite").exists():
+    runtime_db = runtime_root / "portfolio_ledger.sqlite"
+    bifrost_db = bifrost_root / "portfolio_ledger.sqlite"
+    if bifrost_db.exists() and (
+        not runtime_db.exists() or bifrost_db.stat().st_mtime > runtime_db.stat().st_mtime
+    ):
         copy_tree_files(bifrost_root, runtime_root)
     module.ROOT = runtime_root
-    module.DB_PATH = runtime_root / "portfolio_ledger.sqlite"
+    module.DB_PATH = runtime_db
     module.CLIENT_PATH = (
         runtime_root
         / "ignis_stock_financials"
@@ -1815,6 +1822,14 @@ def sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root):
 def portfolio_cli(action, parameters=None):
     action = (action or "status").strip().lower()
     parameters = parameters or {}
+    mutating_action = action in {
+        "init",
+        "record_consultation",
+        "record_market_consultation",
+        "record_final_change",
+        "add_transaction",
+        "set_position",
+    }
     spec = importlib.util.spec_from_file_location("kim_portfolio_db", PORTFOLIO_TOOL)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -1830,6 +1845,8 @@ def portfolio_cli(action, parameters=None):
             if "no such table" not in str(exc).lower():
                 raise
             result = module.init_db()
+    elif action == "summary":
+        result = module.portfolio_summary_json()
     elif action == "init":
         result = module.init_db()
     elif action in {"record_consultation", "record_market_consultation"}:
@@ -1901,12 +1918,160 @@ def portfolio_cli(action, parameters=None):
         )
     else:
         raise ValueError("Accion de portafolio no soportada.")
-    result["sync"] = sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root)
+    result["sync"] = (
+        sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root)
+        if mutating_action
+        else {
+            "runtime_root": str(runtime_root),
+            "bifrost_root": str(bifrost_root),
+            "copied_files": 0,
+            "failed_files": [],
+            "skipped": "read_only_action",
+        }
+    )
     result["runtime_database"] = str(module.DB_PATH)
     result["bifrost_database"] = str(bifrost_root / "portfolio_ledger.sqlite")
     append_memory("portfolio_action", {"action": action, "result": brief(json.dumps(result, ensure_ascii=False), 1200)})
     append_daily_note(f"Kim portfolio: {action}; ok={result.get('ok')}; db={result.get('database')}")
     return result
+
+
+MEMORY_DOMAIN_KEYWORDS = {
+    "ignis_portfolio": [
+        "ignis",
+        "sr eli",
+        "señor eli",
+        "senor eli",
+        "eli",
+        "portafolio",
+        "portfolio",
+        "usdt",
+        "ftt",
+        "xrp",
+        "ada",
+        "cardano",
+        "doge",
+        "lunc",
+        "pepe",
+        "avax",
+        "trump",
+        "dot",
+        "compra",
+        "venta",
+        "orden",
+        "fondeado",
+        "credito",
+        "crédito",
+        "ganancia",
+        "perdida",
+        "pérdida",
+    ],
+    "tasks_ops": [
+        "tarea",
+        "pendiente",
+        "clickup",
+        "asigna",
+        "ejecuta",
+        "seguimiento",
+        "neorgana",
+        "equibio",
+        "tesca",
+        "forever homes",
+    ],
+    "crm_clients": [
+        "cliente",
+        "prospecto",
+        "pipedrive",
+        "inversionista",
+        "follow-up",
+        "correo",
+        "email",
+        "llamada cliente",
+    ],
+    "remote_voice": [
+        "twilio",
+        "telefono",
+        "teléfono",
+        "llamada",
+        "celular",
+        "url",
+        "aws",
+        "nube",
+        "zoom",
+    ],
+}
+
+
+def classify_memory_text(text):
+    normalized = (text or "").lower()
+    scores = {}
+    for domain, keywords in MEMORY_DOMAIN_KEYWORDS.items():
+        scores[domain] = sum(1 for keyword in keywords if keyword in normalized)
+    ranked = [item for item in sorted(scores.items(), key=lambda item: item[1], reverse=True) if item[1] > 0]
+    domain = ranked[0][0] if ranked else "general"
+    confidence = min(0.98, 0.35 + (ranked[0][1] * 0.08)) if ranked else 0.35
+    sources = {
+        "general": [
+            str(CONTEXT_MEMORY),
+            str(CALL_INDEX),
+            str(MEMORY_INBOX),
+        ],
+        "ignis_portfolio": [
+            str(MEMORY_ROOT / "portfolios" / "portfolio_ledger.sqlite"),
+            str(RUNTIME_MEMORY_ROOT / "portfolios" / "portfolio_ledger.sqlite"),
+            str(MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"),
+            str(MEMORY_CALLS),
+        ],
+        "tasks_ops": [
+            str(CLICKUP_TASKS_JSON),
+            str(CLICKUP_TASKS_MARKDOWN),
+            str(API_BRIDGE_LOG),
+        ],
+        "crm_clients": [
+            str(MEMORY_CONTEXT_DIR / "pipedrive_context_latest.json"),
+            str(CONTEXT_MEMORY),
+        ],
+        "remote_voice": [
+            str(BIFROST / "docs" / "kim_0033_aws_remote_execution_plan.md"),
+            str(CONTEXT_MEMORY),
+        ],
+    }
+    save_policy = {
+        "ignis_portfolio": "Guardar en portfolio ledger si hay consulta, orden, posicion, cambio final o snapshot; tambien guardar llamada en calls.",
+        "tasks_ops": "Guardar como tarea o contexto operativo; ClickUp es espejo/API cuando funcione.",
+        "crm_clients": "Guardar como contexto CRM/PipeDrive y memoria general.",
+        "remote_voice": "Guardar como decision/arquitectura de acceso remoto.",
+        "general": "Guardar en memoria contextual general.",
+    }
+    return {
+        "domain": domain,
+        "confidence": round(confidence, 2),
+        "scores": scores,
+        "ranked": ranked,
+        "sources": sources.get(domain, sources["general"]),
+        "save_policy": save_policy.get(domain, save_policy["general"]),
+    }
+
+
+def memory_router(action="classify", text="", session_id="", call_entry=None):
+    route = classify_memory_text(text)
+    payload = {
+        "at": now_iso(),
+        "action": action or "classify",
+        "session_id": session_id,
+        "route": route,
+        "call_path": (call_entry or {}).get("path"),
+        "text_excerpt": brief(text, 900),
+    }
+    if route["domain"] == "ignis_portfolio":
+        try:
+            payload["portfolio"] = portfolio_cli("summary", {})
+        except Exception as exc:
+            payload["portfolio_error"] = brief(str(exc), 300)
+        portfolio_route_log = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "conversation_routes.jsonl"
+        append_jsonl_any([portfolio_route_log, RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026_conversation_routes.jsonl"], payload)
+    append_jsonl_any([MEMORY_ROUTER_LOG, RUNTIME_MEMORY_ROUTER_LOG], payload)
+    return payload
 
 
 def context_brief(limit=9000):
@@ -2105,6 +2270,8 @@ def realtime_session_config():
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
+                "Para preguntas de memoria o contexto, usa kim_memory_router para decidir si debes consultar "
+                "portafolio, tareas, clientes/CRM, voz remota o memoria general. No intentes cargar todo BIFROST. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
@@ -2202,13 +2369,13 @@ def realtime_session_config():
                 {
                     "type": "function",
                     "name": "kim_portfolio_record",
-                    "description": "Registra consultas, cambios finales, transacciones o posiciones del portafolio Sr. Eli 2026 en BIFROST local.",
+                    "description": "Registra o consulta el portafolio Sr. Eli 2026 en BIFROST local.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "description": "status, init, record_consultation, record_final_change, add_transaction o set_position.",
+                                "description": "status, summary, init, record_consultation, record_final_change, add_transaction o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -2220,6 +2387,25 @@ def realtime_session_config():
                             },
                         },
                         "required": ["action"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_memory_router",
+                    "description": "Clasifica una pregunta o conversacion y devuelve la fuente de memoria correcta para responder o guardar.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "description": "classify o retrieve.",
+                            },
+                            "text": {
+                                "type": "string",
+                                "description": "Pregunta, instruccion o resumen de conversacion a clasificar.",
+                            },
+                        },
+                        "required": ["text"],
                     },
                 },
             ],
@@ -2668,6 +2854,14 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/portfolio":
                 result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
+                write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/memory-router":
+                result = memory_router(
+                    body.get("action", "classify"),
+                    body.get("text", ""),
+                    session_id=body.get("session_id", ""),
+                )
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/market-snapshot":
