@@ -69,6 +69,7 @@ RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.jso
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
 MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
 RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
+TWILIO_MEDIA_WS_URL_FILE = RUNTIME_CONTEXT / "twilio_media_ws_url.txt"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
@@ -2272,6 +2273,17 @@ def twilio_public_base(handler):
     return f"{proto}://{host}"
 
 
+def twilio_media_ws_url(handler, params=None):
+    try:
+        configured = TWILIO_MEDIA_WS_URL_FILE.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        configured = ""
+    if configured:
+        return configured
+    base = twilio_public_base(handler)
+    return base.replace("https://", "wss://").replace("http://", "ws://") + "/twilio/media"
+
+
 def phone_session_id(params):
     sid = params.get("CallSid") or params.get("call_sid")
     if sid:
@@ -2378,22 +2390,22 @@ def twilio_voice_twiml(handler, params=None):
     session_id = phone_session_id(params)
     caller = params.get("From", "")
     called = params.get("To", "")
+    media_ws = twilio_media_ws_url(handler, params)
     append_memory(
         "phone_call_started",
-        {"session_id": session_id, "caller": caller, "called": called, "transport": "twilio_gather"},
+        {
+            "session_id": session_id,
+            "caller": caller,
+            "called": called,
+            "transport": "twilio_media_streams",
+            "media_ws_url": media_ws,
+        },
     )
-    gather_action = f"{base}/twilio/gather"
-    greeting = (
-        "Hola doctor, soy Kim Live. Ya estoy conectada al numero de prueba. "
-        "Esta version telefonica escucha instrucciones breves, responde con GPT y las guarda en BIFROST. "
-        "Dime que necesitas."
-    )
+    query = urllib.parse.urlencode({"callSid": params.get("CallSid", ""), "from": caller, "to": called})
+    separator = "&" if "?" in media_ws else "?"
+    stream_url = media_ws + separator + query
     return twiml_response(
-        f'<Gather input="speech" language="es-MX" speechTimeout="auto" timeout="7" '
-        f'action="{twiml_escape(gather_action)}" method="POST">'
-        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(greeting)}</Say>'
-        "</Gather>"
-        '<Say language="es-MX" voice="Polly.Mia">No alcance a escucharte. Puedes volver a marcarme cuando quieras.</Say>'
+        f'<Connect><Stream url="{twiml_escape(stream_url)}" /></Connect>'
     )
 
 
