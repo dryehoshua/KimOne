@@ -47,6 +47,7 @@ RESEARCH_SOURCE_CACHE = MEMORY_CONTEXT_DIR / "research_sources_latest.json"
 RUNTIME_CALLS = RUNTIME_MEMORY_ROOT / "calls"
 RUNTIME_UPLOADS = RUNTIME_MEMORY_ROOT / "uploads"
 RUNTIME_RESEARCH = RUNTIME_MEMORY_ROOT / "research"
+RUNTIME_PHONE_CALLS = RUNTIME_MEMORY_ROOT / "phone_calls"
 RUNTIME_MEMORY_ANALYTICS = RUNTIME_CONTEXT / "memory_analytics_latest.json"
 RUNTIME_UPLOAD_INDEX = RUNTIME_CONTEXT / "uploaded_files_index.json"
 RUNTIME_CALL_INDEX = RUNTIME_CONTEXT / "call_index.jsonl"
@@ -83,7 +84,8 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
-APP_VERSION = "1.5.0"
+PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
+APP_VERSION = "1.5.1"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -118,6 +120,16 @@ def read_body(handler):
     return json.loads(raw or "{}")
 
 
+def read_form(handler):
+    length = int(handler.headers.get("Content-Length", "0") or "0")
+    raw = handler.rfile.read(length).decode("utf-8", errors="replace") if length else ""
+    content_type = handler.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        return json.loads(raw or "{}")
+    parsed = urllib.parse.parse_qs(raw, keep_blank_values=True)
+    return {key: values[-1] if values else "" for key, values in parsed.items()}
+
+
 def write_json(handler, payload, status=200):
     data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     handler.send_response(status)
@@ -135,6 +147,10 @@ def write_text(handler, text, status=200, content_type="text/plain; charset=utf-
     handler.send_header("Content-Length", str(len(data)))
     handler.end_headers()
     handler.wfile.write(data)
+
+
+def write_xml(handler, text, status=200):
+    write_text(handler, text, status=status, content_type="text/xml; charset=utf-8")
 
 
 def append_memory(kind, payload):
@@ -2242,6 +2258,165 @@ def load_openai_key():
     return key
 
 
+def twiml_escape(value):
+    return html.escape(str(value or ""), quote=False)
+
+
+def twiml_response(inner):
+    return '<?xml version="1.0" encoding="UTF-8"?><Response>' + inner + "</Response>"
+
+
+def twilio_public_base(handler):
+    proto = handler.headers.get("X-Forwarded-Proto") or "https"
+    host = handler.headers.get("X-Forwarded-Host") or handler.headers.get("Host") or "localhost"
+    return f"{proto}://{host}"
+
+
+def phone_session_id(params):
+    sid = params.get("CallSid") or params.get("call_sid")
+    if sid:
+        return re.sub(r"[^A-Za-z0-9_-]+", "-", f"PHONE-{sid}")
+    return "PHONE-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def kim_phone_reply(user_text, caller="", called="", session_id=""):
+    clean = (user_text or "").strip()
+    if not clean:
+        return "No alcance a escuchar la instruccion. Repitemela en una frase breve, por favor."
+    route = memory_router("classify", clean, session_id=session_id)
+    prompt = (
+        "Eres Kim Live hablando por telefono con Dr Yehoshua. "
+        "Responde en espanol mexicano, con una frase breve y accionable, idealmente menor a 45 palabras. "
+        "Si la instruccion requiere trabajo largo, confirma que la guardaras para ejecucion en Kim Live/Codex. "
+        "No inventes que ya hiciste acciones externas si solo las estas recibiendo por telefono.\n\n"
+        f"Caller: {caller}\nCalled: {called}\nSession: {session_id}\n"
+        f"Ruta de memoria detectada: {route.get('route', {}).get('domain')}\n\n"
+        f"Usuario dijo:\n{clean}"
+    )
+    try:
+        response, model = openai_response_with_fallback(
+            PHONE_REPLY_MODEL_CANDIDATES,
+            {"input": prompt, "max_output_tokens": 180},
+        )
+        reply = output_text_from_response(response)
+        if not reply:
+            raise RuntimeError("Respuesta vacia.")
+    except Exception as exc:
+        reply = (
+            "Te escuche. Guardo esta instruccion en memoria local y la revisamos en Kim Live. "
+            "Hubo un problema generando respuesta inteligente en este momento."
+        )
+        append_memory("phone_reply_error", {"session_id": session_id, "error": brief(str(exc), 500)})
+    append_memory(
+        "phone_turn",
+        {
+            "session_id": session_id,
+            "caller": caller,
+            "called": called,
+            "user_text": clean,
+            "reply": reply,
+        },
+    )
+    append_daily_note(f"Kim telefono: {brief(clean, 140)} -> {brief(reply, 180)}")
+    return brief(reply, 680)
+
+
+def append_twilio_call_record(params, user_text="", reply_text=""):
+    session_id = phone_session_id(params)
+    caller = params.get("From", "")
+    called = params.get("To", "")
+    call_sid = params.get("CallSid", "")
+    started = params.get("Timestamp") or now_iso()
+    text = (
+        "Canal: Twilio phone call\n"
+        f"CallSid: {call_sid}\n"
+        f"From: {caller}\n"
+        f"To: {called}\n\n"
+        "Dr. Yehoshua: "
+        + ((user_text or "").strip() or "(sin voz capturada)")
+        + "\n"
+        "Kim: "
+        + ((reply_text or "").strip() or "(sin respuesta todavia)")
+    )
+    try:
+        return save_call_record(
+            {
+                "session_id": session_id,
+                "text": text,
+                "started_at": started,
+                "title": f"Twilio phone call {caller or 'unknown'}",
+            }
+        )
+    except Exception as exc:
+        phone_dir = RUNTIME_PHONE_CALLS / today()
+        phone_dir.mkdir(parents=True, exist_ok=True)
+        path = phone_dir / f"{session_id}.jsonl"
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "at": now_iso(),
+                        "session_id": session_id,
+                        "call_sid": call_sid,
+                        "from": caller,
+                        "to": called,
+                        "user_text": user_text,
+                        "reply": reply_text,
+                        "save_error": brief(str(exc), 500),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+        append_memory("twilio_call_record_fallback", {"session_id": session_id, "path": str(path)})
+        return path, None
+
+
+def twilio_voice_twiml(handler, params=None):
+    params = params or {}
+    base = twilio_public_base(handler)
+    session_id = phone_session_id(params)
+    caller = params.get("From", "")
+    called = params.get("To", "")
+    append_memory(
+        "phone_call_started",
+        {"session_id": session_id, "caller": caller, "called": called, "transport": "twilio_gather"},
+    )
+    gather_action = f"{base}/twilio/gather"
+    greeting = (
+        "Hola doctor, soy Kim Live. Ya estoy conectada al numero de prueba. "
+        "Esta version telefonica escucha instrucciones breves, responde con GPT y las guarda en BIFROST. "
+        "Dime que necesitas."
+    )
+    return twiml_response(
+        f'<Gather input="speech" language="es-MX" speechTimeout="auto" timeout="7" '
+        f'action="{twiml_escape(gather_action)}" method="POST">'
+        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(greeting)}</Say>'
+        "</Gather>"
+        '<Say language="es-MX" voice="Polly.Mia">No alcance a escucharte. Puedes volver a marcarme cuando quieras.</Say>'
+    )
+
+
+def twilio_gather_twiml(handler, params):
+    base = twilio_public_base(handler)
+    session_id = phone_session_id(params)
+    user_text = params.get("SpeechResult", "")
+    caller = params.get("From", "")
+    called = params.get("To", "")
+    reply = kim_phone_reply(user_text, caller=caller, called=called, session_id=session_id)
+    append_twilio_call_record(params, user_text=user_text, reply_text=reply)
+    action = f"{base}/twilio/gather"
+    again = "Puedes decir otra instruccion, o colgar si terminamos."
+    return twiml_response(
+        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(reply)}</Say>'
+        f'<Gather input="speech" language="es-MX" speechTimeout="auto" timeout="6" '
+        f'action="{twiml_escape(action)}" method="POST">'
+        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(again)}</Say>'
+        "</Gather>"
+        '<Say language="es-MX" voice="Polly.Mia">Listo doctor. Corto la llamada y dejo memoria local.</Say>'
+    )
+
+
 def realtime_session_config():
     local_context = context_brief()
     return {
@@ -2696,6 +2871,13 @@ class Handler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if parsed.path == "/twilio/voice":
+            params = {key: values[-1] for key, values in urllib.parse.parse_qs(parsed.query).items()}
+            write_xml(self, twilio_voice_twiml(self, params))
+            return
+        if parsed.path == "/twilio/health":
+            write_json(self, {"ok": True, "service": "kim_twilio", "version": APP_VERSION})
+            return
         if parsed.path == "/api/openai-status":
             model = openai_json(f"/models/{REALTIME_MODEL}")
             write_json(
@@ -2762,6 +2944,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         try:
+            if parsed.path == "/twilio/voice":
+                params = read_form(self)
+                write_xml(self, twilio_voice_twiml(self, params))
+                return
+            if parsed.path == "/twilio/gather":
+                params = read_form(self)
+                write_xml(self, twilio_gather_twiml(self, params))
+                return
             if parsed.path == "/api/upload-memory-file":
                 analysis = parse_upload(self)
                 write_json(self, {"ok": True, "analysis": analysis})
