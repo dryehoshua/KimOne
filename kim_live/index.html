@@ -505,6 +505,13 @@
       gap: 6px;
     }
 
+    .message-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
     .message.user {
       border-color: #c7d2fe;
       background: #f7f8ff;
@@ -536,6 +543,21 @@
       line-height: 1.45;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
+    }
+
+    .copy-message {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: #344054;
+      padding: 6px;
+    }
+
+    .copy-message svg {
+      width: 16px;
+      height: 16px;
     }
 
     .tool-surface {
@@ -1225,7 +1247,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.3</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.4</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1718,9 +1740,24 @@
       if (!safe) return null;
       const message = document.createElement("article");
       message.className = "message " + type;
-      message.innerHTML = "<div class=\"message-speaker\"></div><div class=\"message-text\"></div>";
+      message.innerHTML = "<div class=\"message-head\"><div class=\"message-speaker\"></div><button class=\"copy-message\" type=\"button\" title=\"Copiar mensaje\" aria-label=\"Copiar mensaje\"><svg viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M8 8h10v12H8zM6 16H4V4h12v2\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg></button></div><div class=\"message-text\"></div>";
       message.querySelector(".message-speaker").textContent = speaker;
       message.querySelector(".message-text").textContent = safe;
+      const copyButton = message.querySelector(".copy-message");
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(safe);
+          copyButton.title = "Copiado";
+          window.setTimeout(() => { copyButton.title = "Copiar mensaje"; }, 1200);
+        } catch (_) {
+          const fallback = document.createElement("textarea");
+          fallback.value = safe;
+          document.body.appendChild(fallback);
+          fallback.select();
+          document.execCommand("copy");
+          fallback.remove();
+        }
+      });
       chatLog.appendChild(message);
       chatLog.scrollTop = chatLog.scrollHeight;
       if (includeCompiled) appendCompiled(speaker, safe);
@@ -1780,8 +1817,8 @@
       $("marketNote").textContent = snapshot.summary || "Snapshot listo para Kim.";
     }
 
-    async function getMarketSnapshot(symbol, interval, emaPeriods = [20, 34, 50]) {
-      const data = await post("/api/market-snapshot", {symbol, interval, ema_periods: emaPeriods});
+    async function getMarketSnapshot(symbol, interval, emaPeriods = [20, 34, 50], providers = ["binance", "coinmarketcap", "coingecko"]) {
+      const data = await post("/api/market-snapshot", {symbol, interval, ema_periods: emaPeriods, providers});
       renderMarketSnapshot(data.snapshot);
       return data.snapshot;
     }
@@ -1810,11 +1847,14 @@
       const emaPeriods = Array.isArray(args.ema_periods)
         ? args.ema_periods
         : (Array.isArray(args.emaPeriods) ? args.emaPeriods : [20, 34, 50]);
+      const providers = Array.isArray(args.providers) && args.providers.length
+        ? args.providers
+        : ["binance", "coinmarketcap", "coingecko"];
       $("marketSymbol").value = symbol;
       $("marketNote").textContent = "Consultando datos de mercado para Kim...";
       setStatus("Consultando mercado...", "working");
       try {
-        const snapshot = await getMarketSnapshot(symbol, interval, emaPeriods);
+        const snapshot = await getMarketSnapshot(symbol, interval, emaPeriods, providers);
         if (callId) sendRealtimeToolOutput(callId, snapshot);
         return snapshot;
       } catch (error) {
@@ -2564,8 +2604,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.3");
-        $("appVersion").textContent = "v" + (data.version || "1.5.3");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.4");
+        $("appVersion").textContent = "v" + (data.version || "1.5.4");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";

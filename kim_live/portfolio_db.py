@@ -623,6 +623,138 @@ def add_transaction(args):
     return {"ok": True, "record": item, "position": position, "database": str(DB_PATH)}
 
 
+def cancel_transaction(args):
+    init_db()
+    portfolio_id = args.portfolio_id or DEFAULT_PORTFOLIO_ID
+    transaction_id = getattr(args, "transaction_id", None)
+    symbol = (getattr(args, "symbol", None) or "").upper()
+    status = getattr(args, "status", None) or "draft"
+    reason = getattr(args, "reason", None) or "Cancelado por instruccion del doctor."
+    conn = connect()
+    with conn:
+        if transaction_id:
+            row = conn.execute(
+                """
+                SELECT id, portfolio_id, symbol, side, quantity, price, gross_amount, fees, currency, status, source, notes, occurred_at, created_at
+                FROM transactions
+                WHERE id = ? AND portfolio_id = ?
+                """,
+                (transaction_id, portfolio_id),
+            ).fetchone()
+        else:
+            if not symbol:
+                raise ValueError("Falta symbol o transaction_id para cancelar transaccion.")
+            row = conn.execute(
+                """
+                SELECT id, portfolio_id, symbol, side, quantity, price, gross_amount, fees, currency, status, source, notes, occurred_at, created_at
+                FROM transactions
+                WHERE portfolio_id = ? AND symbol = ? AND status = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (portfolio_id, symbol, status),
+            ).fetchone()
+        if not row:
+            raise ValueError("No encontre transaccion para cancelar.")
+        if row[9] == "void":
+            record = {
+                "id": row[0],
+                "portfolio_id": row[1],
+                "symbol": row[2],
+                "status": row[9],
+                "notes": row[11],
+            }
+            return {"ok": True, "record": record, "already_void": True, "database": str(DB_PATH)}
+        updated_notes = (row[11] or "").strip()
+        updated_notes = (updated_notes + "\n" if updated_notes else "") + f"VOID {now()}: {reason}"
+        conn.execute(
+            "UPDATE transactions SET status = 'void', notes = ? WHERE id = ?",
+            (updated_notes, row[0]),
+        )
+        record = {
+            "id": row[0],
+            "portfolio_id": row[1],
+            "symbol": row[2],
+            "side": row[3],
+            "quantity": row[4],
+            "price": row[5],
+            "gross_amount": row[6],
+            "fees": row[7],
+            "currency": row[8],
+            "status": "void",
+            "previous_status": row[9],
+            "source": row[10],
+            "notes": updated_notes,
+            "occurred_at": row[12],
+            "created_at": row[13],
+            "voided_at": now(),
+            "void_reason": reason,
+        }
+        audit(conn, "cancel_transaction", record)
+    write_jsonl(CLIENT_PATH / "transactions.jsonl", record)
+    return {"ok": True, "record": record, "database": str(DB_PATH)}
+
+
+def replace_draft_order(args):
+    init_db()
+    portfolio_id = args.portfolio_id or DEFAULT_PORTFOLIO_ID
+    old_symbol = (args.old_symbol or "").upper()
+    new_symbol = (args.new_symbol or args.symbol or "").upper()
+    if not old_symbol or not new_symbol:
+        raise ValueError("Faltan old_symbol y new_symbol para reemplazar orden pendiente.")
+    gross_amount = args.gross_amount
+    price = args.price
+    if gross_amount is None:
+        raise ValueError("Falta gross_amount para la nueva orden.")
+    if price in (None, 0, ""):
+        raise ValueError("Falta price para la nueva orden.")
+    reason = args.reason or f"Reemplazo de orden pendiente {old_symbol} -> {new_symbol}."
+    cancelled = cancel_transaction(
+        argparse.Namespace(
+            portfolio_id=portfolio_id,
+            transaction_id=getattr(args, "old_transaction_id", None),
+            symbol=old_symbol,
+            status="draft",
+            reason=reason,
+        )
+    )
+    new_order = add_transaction(
+        argparse.Namespace(
+            portfolio_id=portfolio_id,
+            occurred_at=args.occurred_at or now(),
+            symbol=new_symbol,
+            side="BUY",
+            quantity=getattr(args, "quantity", None),
+            price=price,
+            gross_amount=gross_amount,
+            fees=getattr(args, "fees", 0) or 0,
+            currency=args.currency or "USD",
+            status=args.status or "draft",
+            source=args.source or "kim_live_replace_order",
+            notes=args.notes or reason,
+        )
+    )
+    change = record_final_change(
+        argparse.Namespace(
+            portfolio_id=portfolio_id,
+            decided_at=args.decided_at or now(),
+            change_type="replace_pending_order",
+            summary=args.summary or f"Se cancelo {old_symbol} pendiente y se sustituyo por {new_symbol} por {gross_amount} USD a {price}.",
+            rationale=args.rationale or reason,
+            related_consultation_id=getattr(args, "related_consultation_id", None),
+            executed=0,
+            execution_ref=new_order["record"]["id"],
+        )
+    )
+    return {
+        "ok": True,
+        "cancelled": cancelled["record"],
+        "replacement": new_order["record"],
+        "final_change": change["record"],
+        "database": str(DB_PATH),
+    }
+
+
 def set_position(args):
     init_db()
     item = {
@@ -719,6 +851,35 @@ def build_parser():
     tx.add_argument("--source", default="manual")
     tx.add_argument("--notes", default=None)
     tx.set_defaults(func=add_transaction)
+
+    cancel = sub.add_parser("cancel-transaction", help="Mark a transaction as void")
+    cancel.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)
+    cancel.add_argument("--transaction-id", default=None)
+    cancel.add_argument("--symbol", default=None)
+    cancel.add_argument("--status", default="draft")
+    cancel.add_argument("--reason", default=None)
+    cancel.set_defaults(func=cancel_transaction)
+
+    replace = sub.add_parser("replace-draft-order", help="Cancel one draft order and create a replacement")
+    replace.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)
+    replace.add_argument("--old-symbol", required=True)
+    replace.add_argument("--old-transaction-id", default=None)
+    replace.add_argument("--new-symbol", required=True)
+    replace.add_argument("--occurred-at", default=None)
+    replace.add_argument("--decided-at", default=None)
+    replace.add_argument("--quantity", type=float, default=None)
+    replace.add_argument("--price", type=float, required=True)
+    replace.add_argument("--gross-amount", type=float, required=True)
+    replace.add_argument("--fees", type=float, default=0)
+    replace.add_argument("--currency", default="USD")
+    replace.add_argument("--status", default="draft", choices=["draft", "final", "void"])
+    replace.add_argument("--source", default="kim_live_replace_order")
+    replace.add_argument("--notes", default=None)
+    replace.add_argument("--summary", default=None)
+    replace.add_argument("--rationale", default=None)
+    replace.add_argument("--reason", default=None)
+    replace.add_argument("--related-consultation-id", default=None)
+    replace.set_defaults(func=replace_draft_order)
 
     pos = sub.add_parser("set-position", help="Set current position")
     pos.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)

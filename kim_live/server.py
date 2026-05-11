@@ -67,6 +67,8 @@ API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
+MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
+RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
 MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
 RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
@@ -80,6 +82,7 @@ NOTION_KEYCHAIN_SERVICE = "codex.notion.integration_token"
 GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
+COINMARKETCAP_KEYCHAIN_SERVICE = "codex.coinmarketcap.api_key"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
 HOST = "127.0.0.1"
 PORT = 8765
@@ -95,13 +98,38 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.3"
+APP_VERSION = "1.5.4"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
+MARKET_PRICE_MAX_AGE_SECONDS = 15 * 60
+MARKET_PRICE_SPREAD_LIMIT_PCT = 2.0
+COINGECKO_IDS_BY_SYMBOL = {
+    "ADA": "cardano",
+    "APT": "aptos",
+    "AVAX": "avalanche-2",
+    "BTC": "bitcoin",
+    "DENT": "dent",
+    "DOGE": "dogecoin",
+    "DOT": "polkadot",
+    "ETH": "ethereum",
+    "FTT": "ftx-token",
+    "HBAR": "hedera-hashgraph",
+    "ICP": "internet-computer",
+    "LUNC": "terra-luna",
+    "ONDO": "ondo-finance",
+    "PEPE": "pepe",
+    "SHIB": "shiba-inu",
+    "TRUMP": "official-trump",
+    "TRX": "tron",
+    "WLD": "worldcoin-wld",
+    "XLM": "stellar",
+    "XRP": "ripple",
+    "ZEC": "zcash",
+}
 
 
 def today():
@@ -2146,6 +2174,8 @@ def portfolio_cli(action, parameters=None):
         "record_market_consultation",
         "record_final_change",
         "add_transaction",
+        "cancel_transaction",
+        "replace_draft_order",
         "set_position",
     }
     spec = importlib.util.spec_from_file_location("kim_portfolio_db", PORTFOLIO_TOOL)
@@ -2203,6 +2233,9 @@ def portfolio_cli(action, parameters=None):
     elif action == "add_transaction":
         if not parameters.get("symbol") or not parameters.get("side"):
             raise ValueError("Faltan symbol y side para registrar transaccion.")
+        gross_amount = parameters.get("gross_amount")
+        if gross_amount in (None, ""):
+            gross_amount = parameters.get("amount") or parameters.get("usd_amount")
         result = module.add_transaction(
             ns(
                 portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
@@ -2211,12 +2244,49 @@ def portfolio_cli(action, parameters=None):
                 side=str(parameters.get("side")).upper(),
                 quantity=parameters.get("quantity"),
                 price=parameters.get("price"),
-                gross_amount=parameters.get("gross_amount"),
+                gross_amount=gross_amount,
                 fees=parameters.get("fees") or 0,
                 currency=parameters.get("currency") or "USD",
                 status=parameters.get("status") or "draft",
                 source=parameters.get("source") or "kim_live",
                 notes=parameters.get("notes"),
+            )
+        )
+    elif action == "cancel_transaction":
+        result = module.cancel_transaction(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                transaction_id=parameters.get("transaction_id") or parameters.get("id"),
+                symbol=parameters.get("symbol"),
+                status=parameters.get("status") or "draft",
+                reason=parameters.get("reason") or parameters.get("notes"),
+            )
+        )
+    elif action == "replace_draft_order":
+        gross_amount = parameters.get("gross_amount")
+        if gross_amount in (None, ""):
+            gross_amount = parameters.get("amount") or parameters.get("usd_amount")
+        result = module.replace_draft_order(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                old_symbol=parameters.get("old_symbol") or parameters.get("cancel_symbol"),
+                old_transaction_id=parameters.get("old_transaction_id"),
+                new_symbol=parameters.get("new_symbol") or parameters.get("symbol"),
+                symbol=parameters.get("symbol"),
+                occurred_at=parameters.get("occurred_at"),
+                decided_at=parameters.get("decided_at"),
+                quantity=parameters.get("quantity"),
+                price=parameters.get("price"),
+                gross_amount=gross_amount,
+                fees=parameters.get("fees") or 0,
+                currency=parameters.get("currency") or "USD",
+                status=parameters.get("status") or "draft",
+                source=parameters.get("source") or "kim_live_replace_order",
+                notes=parameters.get("notes"),
+                summary=parameters.get("summary"),
+                rationale=parameters.get("rationale"),
+                reason=parameters.get("reason"),
+                related_consultation_id=parameters.get("related_consultation_id"),
             )
         )
     elif action == "set_position":
@@ -2810,6 +2880,11 @@ def realtime_session_config():
                 "Si necesitas datos actuales, investigacion externa o verificacion en internet, "
                 "di brevemente que vas a buscar y llama la herramienta kim_research_web. "
                 "Cuando uses investigacion web, conserva fuentes para anexarlas al reporte de llamada. "
+                "Para reportes del Sr. Eli o cualquier reporte a cliente, NO uses precios recordados, "
+                "precios de reportes anteriores ni cierres historicos como si fueran actuales. Antes de "
+                "redactar cifras de precio actual llama kim_market_snapshot y solo usa current_price si "
+                "current_price_validation.approved_for_client_report=true. Si no hay al menos dos fuentes "
+                "frescas en rango, di que el precio no quedo validado y pide verificacion manual. "
                 "Si el doctor pide redactar una carta, propuesta, reporte o documento, llama "
                 "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
                 "en la conversacion activa como contexto. "
@@ -2826,6 +2901,8 @@ def realtime_session_config():
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
+                "Para cancelar o sustituir una orden pendiente, usa replace_draft_order o cancel_transaction; "
+                "no intentes simular una cancelacion creando varias notas sueltas. "
                 "Para preguntas de memoria o contexto, usa kim_memory_router para decidir si debes consultar "
                 "portafolio, tareas, clientes/CRM, voz remota o memoria general. No intentes cargar todo BIFROST. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
@@ -2903,7 +2980,7 @@ def realtime_session_config():
                 {
                     "type": "function",
                     "name": "kim_market_snapshot",
-                    "description": "Obtiene datos OHLCV e indicadores cuantitativos del mercado activo para analizar tendencia, soportes, resistencias, momentum, volumen y riesgo.",
+                    "description": "Obtiene datos OHLCV, precio actual validado por multiples fuentes e indicadores cuantitativos del mercado activo para reportes y analisis.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -2920,6 +2997,11 @@ def realtime_session_config():
                                 "items": {"type": "integer"},
                                 "description": "Periodos EMA a calcular, por ejemplo [20,34,50].",
                             },
+                            "providers": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Fuentes de precio a comparar: binance, coinmarketcap, coingecko.",
+                            },
                         },
                     },
                 },
@@ -2932,14 +3014,15 @@ def realtime_session_config():
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "description": "status, summary, init, record_consultation, record_final_change, add_transaction o set_position.",
+                                "description": "status, summary, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
                                 "description": (
                                     "Campos de la accion. record_consultation acepta symbol, interval, question, "
                                     "snapshot_json, analysis, decision, is_final. record_final_change requiere summary. "
-                                    "add_transaction requiere symbol y side."
+                                    "add_transaction requiere symbol y side. cancel_transaction acepta transaction_id o symbol. "
+                                    "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount."
                                 ),
                             },
                         },
@@ -3070,6 +3153,233 @@ def round_opt(value, digits=2):
     return round(float(value), digits)
 
 
+def price_digits(value):
+    if value is None:
+        return 4
+    magnitude = abs(float(value))
+    if magnitude >= 100:
+        return 2
+    if magnitude >= 1:
+        return 4
+    if magnitude >= 0.01:
+        return 6
+    if magnitude >= 0.0001:
+        return 8
+    return 12
+
+
+def round_price(value):
+    if value is None:
+        return None
+    return round(float(value), price_digits(value))
+
+
+def format_price(value):
+    if value is None:
+        return None
+    digits = price_digits(value)
+    text = f"{float(value):.{digits}f}"
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def utc_now():
+    return dt.datetime.now(dt.timezone.utc)
+
+
+def epoch_seconds(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = dt.datetime.fromisoformat(text)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=dt.timezone.utc)
+        return parsed.timestamp()
+    except ValueError:
+        return None
+
+
+def normalize_crypto_ticker(symbol):
+    normalized = (symbol or "BINANCE:BTCUSDT").strip().upper().replace(" ", "")
+    if ":" in normalized:
+        exchange, ticker = normalized.split(":", 1)
+    else:
+        exchange, ticker = "BINANCE", normalized
+    quote = "USD"
+    base = ticker
+    for candidate in ["USDT", "USDC", "BUSD", "USD"]:
+        if ticker.endswith(candidate) and len(ticker) > len(candidate):
+            base = ticker[: -len(candidate)]
+            quote = "USD" if candidate in {"USDT", "USDC", "BUSD"} else candidate
+            break
+    return exchange, ticker, base, quote
+
+
+def provider_price(name, price, fetched_at=None, updated_at=None, stale_after=MARKET_PRICE_MAX_AGE_SECONDS, extra=None):
+    fetched_epoch = epoch_seconds(fetched_at) or utc_now().timestamp()
+    updated_epoch = epoch_seconds(updated_at) or fetched_epoch
+    age_seconds = max(0, utc_now().timestamp() - updated_epoch)
+    return {
+        "provider": name,
+        "price": float(price),
+        "price_display": format_price(price),
+        "fetched_at": dt.datetime.fromtimestamp(fetched_epoch, tz=dt.timezone.utc).isoformat(),
+        "updated_at": dt.datetime.fromtimestamp(updated_epoch, tz=dt.timezone.utc).isoformat(),
+        "age_seconds": round_opt(age_seconds, 1),
+        "fresh": age_seconds <= stale_after,
+        **(extra or {}),
+    }
+
+
+def fetch_binance_spot_price(ticker):
+    payload = api_json_request(
+        "https://api.binance.com",
+        "/api/v3/ticker/price",
+        {},
+        params={"symbol": ticker},
+        timeout=20,
+    )
+    price = payload.get("price")
+    if price is None:
+        raise RuntimeError("Binance no devolvio precio spot.")
+    return provider_price("binance_spot", price, extra={"symbol": ticker})
+
+
+def fetch_coingecko_price(base):
+    coin_id = COINGECKO_IDS_BY_SYMBOL.get(base)
+    if not coin_id:
+        raise RuntimeError(f"No tengo CoinGecko API ID para {base}.")
+    payload = api_json_request(
+        "https://api.coingecko.com",
+        "/api/v3/simple/price",
+        {},
+        params={
+            "ids": coin_id,
+            "vs_currencies": "usd",
+            "include_last_updated_at": "true",
+            "precision": "full",
+        },
+        timeout=20,
+    )
+    item = payload.get(coin_id) or {}
+    price = item.get("usd")
+    if price is None:
+        raise RuntimeError(f"CoinGecko no devolvio precio USD para {coin_id}.")
+    return provider_price(
+        "coingecko",
+        price,
+        updated_at=item.get("last_updated_at"),
+        stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
+        extra={"coin_id": coin_id, "symbol": base},
+    )
+
+
+def fetch_coinmarketcap_price(base):
+    api_key = load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False)
+    if not api_key:
+        raise RuntimeError("Falta API key de CoinMarketCap en Keychain.")
+    payload = api_json_request(
+        "https://pro-api.coinmarketcap.com",
+        "/v3/cryptocurrency/quotes/latest",
+        {"X-CMC_PRO_API_KEY": api_key},
+        params={"symbol": base, "convert": "USD"},
+        timeout=20,
+    )
+    data = payload.get("data") or {}
+    row = {}
+    if isinstance(data, list):
+        matches = [item for item in data if str(item.get("symbol", "")).upper() == base]
+        row = (matches or data or [{}])[0]
+    elif isinstance(data, dict):
+        rows = data.get(base) or data.get(base.upper())
+        if isinstance(rows, list):
+            row = rows[0] if rows else {}
+        elif isinstance(rows, dict):
+            row = rows
+        else:
+            values = list(data.values())
+            row = values[0] if values and isinstance(values[0], dict) else {}
+    quote = (row.get("quote") or {}).get("USD") or {}
+    price = quote.get("price")
+    if price is None:
+        raise RuntimeError(f"CoinMarketCap no devolvio precio USD para {base}.")
+    return provider_price(
+        "coinmarketcap",
+        price,
+        updated_at=quote.get("last_updated") or row.get("last_updated"),
+        stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
+        extra={"symbol": base, "cmc_id": row.get("id"), "name": row.get("name")},
+    )
+
+
+def validate_market_prices(symbol, providers=None):
+    exchange, ticker, base, quote = normalize_crypto_ticker(symbol)
+    requested = providers or ["binance", "coinmarketcap", "coingecko"]
+    provider_calls = {
+        "binance": lambda: fetch_binance_spot_price(ticker),
+        "coinmarketcap": lambda: fetch_coinmarketcap_price(base),
+        "coingecko": lambda: fetch_coingecko_price(base),
+    }
+    prices = []
+    failures = []
+    for provider in requested:
+        key = str(provider or "").strip().lower()
+        call = provider_calls.get(key)
+        if not call:
+            failures.append({"provider": key, "error": "Proveedor no soportado."})
+            continue
+        try:
+            prices.append(call())
+        except Exception as exc:
+            failures.append({"provider": key, "error": brief(str(exc), 260)})
+    fresh_prices = [item for item in prices if item.get("fresh") and item.get("price") is not None]
+    values = [float(item["price"]) for item in fresh_prices]
+    min_price = min(values) if values else None
+    max_price = max(values) if values else None
+    reference = sum(values) / len(values) if values else None
+    spread_pct = ((max_price - min_price) / reference * 100) if reference and min_price is not None else None
+    approved = len(fresh_prices) >= 2 and (spread_pct is not None and spread_pct <= MARKET_PRICE_SPREAD_LIMIT_PCT)
+    status = "validated" if approved else "needs_review"
+    if len(fresh_prices) < 2:
+        status = "insufficient_fresh_sources"
+    elif spread_pct is not None and spread_pct > MARKET_PRICE_SPREAD_LIMIT_PCT:
+        status = "provider_spread_too_wide"
+    validation = {
+        "ok": bool(prices),
+        "symbol": f"{exchange}:{ticker}",
+        "base": base,
+        "quote": quote,
+        "checked_at": utc_now().isoformat(),
+        "max_age_seconds": MARKET_PRICE_MAX_AGE_SECONDS,
+        "spread_limit_pct": MARKET_PRICE_SPREAD_LIMIT_PCT,
+        "providers": prices,
+        "failures": failures,
+        "fresh_provider_count": len(fresh_prices),
+        "reference_price": round_opt(reference, 12),
+        "reference_price_display": format_price(reference),
+        "min_price": round_opt(min_price, 12),
+        "min_price_display": format_price(min_price),
+        "max_price": round_opt(max_price, 12),
+        "max_price_display": format_price(max_price),
+        "spread_pct": round_opt(spread_pct, 4),
+        "status": status,
+        "approved_for_client_report": approved,
+        "client_report_rule": (
+            "Usar este precio en reportes del Sr. Eli solo si approved_for_client_report=true; "
+            "si es false, reportar que el precio no quedo validado y pedir verificacion manual."
+        ),
+    }
+    append_jsonl_any([MARKET_PRICE_VALIDATION_LOG, RUNTIME_MARKET_PRICE_VALIDATION_LOG], validation)
+    append_memory("market_price_validation", validation)
+    return validation
+
+
 def sanitize_ema_periods(periods):
     if periods is None or periods == "":
         raw = [20, 34, 50]
@@ -3093,12 +3403,8 @@ def sanitize_ema_periods(periods):
     return sorted(clean)
 
 
-def market_snapshot(symbol, interval, ema_periods=None):
-    normalized = (symbol or "BINANCE:BTCUSDT").strip().upper().replace(" ", "")
-    if ":" in normalized:
-        exchange, ticker = normalized.split(":", 1)
-    else:
-        exchange, ticker = "BINANCE", normalized
+def market_snapshot(symbol, interval, ema_periods=None, providers=None):
+    exchange, ticker, _base, _quote = normalize_crypto_ticker(symbol)
     if exchange != "BINANCE":
         raise ValueError("Por ahora el snapshot cuantitativo soporta simbolos BINANCE, por ejemplo BINANCE:BTCUSDT.")
     binance_interval = interval_to_binance(interval)
@@ -3143,23 +3449,36 @@ def market_snapshot(symbol, interval, ema_periods=None):
             trend = "alcista"
         elif last_close < ema20 < ema50:
             trend = "bajista"
+    validation = validate_market_prices(f"{exchange}:{ticker}", providers=providers)
     snapshot = {
         "symbol": f"{exchange}:{ticker}",
         "interval": interval or "D",
         "provider": "binance_klines",
         "candles": len(candles),
-        "last_close": round_opt(last_close, 4),
+        "last_close": round_price(last_close),
+        "last_close_display": format_price(last_close),
+        "current_price": validation.get("reference_price"),
+        "current_price_display": validation.get("reference_price_display"),
+        "current_price_validation": validation,
         "trend": trend,
         "ema_periods": periods,
-        "emas": {str(period): round_opt(value, 4) for period, value in ema_values.items()},
-        "ema20": round_opt(ema20, 4),
-        "ema34": round_opt(ema34, 4),
-        "ema50": round_opt(ema50, 4),
+        "emas": {str(period): round_price(value) for period, value in ema_values.items()},
+        "ema_displays": {str(period): format_price(value) for period, value in ema_values.items()},
+        "ema20": round_price(ema20),
+        "ema34": round_price(ema34),
+        "ema50": round_price(ema50),
+        "ema20_display": format_price(ema20),
+        "ema34_display": format_price(ema34),
+        "ema50_display": format_price(ema50),
         "rsi14": round_opt(rsi14, 2),
-        "support20": round_opt(support20, 4),
-        "resistance20": round_opt(resistance20, 4),
-        "support50": round_opt(support50, 4),
-        "resistance50": round_opt(resistance50, 4),
+        "support20": round_price(support20),
+        "support20_display": format_price(support20),
+        "resistance20": round_price(resistance20),
+        "resistance20_display": format_price(resistance20),
+        "support50": round_price(support50),
+        "support50_display": format_price(support50),
+        "resistance50": round_price(resistance50),
+        "resistance50_display": format_price(resistance50),
         "change_5": round_opt(pct_change(closes, 5), 2),
         "change_20": round_opt(pct_change(closes, 20), 2),
         "current_volume": round_opt(current_volume, 4),
@@ -3167,10 +3486,12 @@ def market_snapshot(symbol, interval, ema_periods=None):
         "volume_ratio": round_opt(current_volume / avg_volume20 if avg_volume20 else None, 2),
     }
     snapshot["summary"] = (
-        f"{snapshot['symbol']} {snapshot['interval']}: cierre {snapshot['last_close']}, "
-        f"tendencia {snapshot['trend']}, EMA34 {snapshot['ema34']}, RSI14 {snapshot['rsi14']}, "
-        f"soporte 20v {snapshot['support20']}, resistencia 20v {snapshot['resistance20']}, "
-        f"volumen relativo {snapshot['volume_ratio']}x."
+        f"{snapshot['symbol']} {snapshot['interval']}: precio validado {snapshot['current_price_display']}, "
+        f"cierre vela {snapshot['last_close_display']}, "
+        f"tendencia {snapshot['trend']}, EMA34 {snapshot['ema34_display']}, RSI14 {snapshot['rsi14']}, "
+        f"soporte 20v {snapshot['support20_display']}, resistencia 20v {snapshot['resistance20_display']}, "
+        f"volumen relativo {snapshot['volume_ratio']}x, validacion precio "
+        f"{validation.get('status')} con {validation.get('fresh_provider_count')} fuentes frescas."
     )
     append_memory("market_snapshot", snapshot)
     return snapshot
@@ -3447,7 +3768,16 @@ class Handler(BaseHTTPRequestHandler):
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/portfolio":
-                result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
+                try:
+                    result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
+                except Exception as exc:
+                    result = {
+                        "ok": False,
+                        "action": body.get("action", "status"),
+                        "error": str(exc),
+                        "message": "No pude guardar en portafolio; revisa campos requeridos y usa replace_draft_order para sustituciones.",
+                    }
+                    append_memory("portfolio_error", result)
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/memory-router":
@@ -3459,7 +3789,12 @@ class Handler(BaseHTTPRequestHandler):
                 write_json(self, {"ok": True, "result": result})
                 return
             if parsed.path == "/api/market-snapshot":
-                snapshot = market_snapshot(body.get("symbol", ""), body.get("interval", "D"), body.get("ema_periods"))
+                snapshot = market_snapshot(
+                    body.get("symbol", ""),
+                    body.get("interval", "D"),
+                    body.get("ema_periods"),
+                    providers=body.get("providers"),
+                )
                 write_json(self, {"ok": True, "snapshot": snapshot})
                 return
             if parsed.path == "/api/store-openai-key":
