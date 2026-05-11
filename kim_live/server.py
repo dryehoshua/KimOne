@@ -19,6 +19,7 @@ import json
 import mimetypes
 import pathlib
 import re
+import secrets
 import shutil
 import subprocess
 import tempfile
@@ -76,17 +77,25 @@ TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_k
 OPENAI_KEYCHAIN_SERVICE = "codex.openai.api_key"
 CLICKUP_KEYCHAIN_SERVICE = "codex.clickup.personal_token"
 NOTION_KEYCHAIN_SERVICE = "codex.notion.integration_token"
+GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
+GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
+GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
 HOST = "127.0.0.1"
 PORT = 8765
 OPENAI_API_BASE = "https://api.openai.com/v1"
 CLICKUP_API_BASE = "https://api.clickup.com/api/v2"
 NOTION_API_BASE = "https://api.notion.com/v1"
+GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
+GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+GMAIL_OAUTH_STATE_FILE = RUNTIME_CONTEXT / "google_gmail_oauth_state.json"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.2"
+APP_VERSION = "1.5.3"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -287,6 +296,28 @@ def load_keychain_secret(service, required=True):
         detail = (exc.stderr or exc.stdout or "").strip()
         raise ValueError(f"No encontre credencial en Keychain para {service}.") from ValueError(detail)
     return completed.stdout.strip()
+
+
+def store_keychain_secret(service, value):
+    secret = (value or "").strip()
+    if not secret:
+        raise ValueError(f"No puedo guardar {service}: valor vacio.")
+    subprocess.run(
+        [
+            "security",
+            "add-generic-password",
+            "-a",
+            KEYCHAIN_ACCOUNT,
+            "-s",
+            service,
+            "-w",
+            secret,
+            "-U",
+        ],
+        check=True,
+        timeout=60,
+    )
+    return True
 
 
 def text_tokens(text):
@@ -1178,6 +1209,8 @@ def clickup_task_names_context(limit=3200, max_items=35):
 def api_bridge_config_status(live=False):
     clickup_configured = bool(load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE, required=False))
     notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
+    gmail_configured = gmail_oauth_configured()
+    gmail_has_refresh = gmail_authorized()
     status = {
         "clickup": {
             "configured": clickup_configured,
@@ -1206,6 +1239,15 @@ def api_bridge_config_status(live=False):
                 "Codex Desktop tambien tiene acceso Notion por MCP, pero ese acceso no vive dentro del servidor local."
             ),
         },
+        "gmail": {
+            "configured": gmail_configured,
+            "authorized": gmail_has_refresh,
+            "write_requires_confirmation": True,
+            "scope": GMAIL_READONLY_SCOPE,
+            "capabilities": ["status", "auth_url", "profile", "list_messages", "get_message"],
+            "auth_url": "https://kim.aipeople.app/oauth/google/start",
+            "mode": "readonly",
+        },
     }
     if live and clickup_configured:
         try:
@@ -1228,12 +1270,14 @@ def api_bridge_config_status(live=False):
         except Exception as exc:
             status["notion"]["live_ok"] = False
             status["notion"]["error"] = brief(str(exc), 220)
+    if live and gmail_configured:
+        status["gmail"].update(gmail_status(live=gmail_has_refresh))
     return status
 
 
 def api_json_request(base_url, path, headers, method="GET", payload=None, params=None, timeout=90):
     params = params or {}
-    query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None})
+    query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None}, doseq=True)
     url = base_url + path + (f"?{query}" if query else "")
     data = None
     req_headers = dict(headers)
@@ -1289,6 +1333,222 @@ def notion_request(path, method="GET", payload=None, params=None):
         payload=payload,
         params=params,
     )
+
+
+def oauth_form_request(url, payload, timeout=90):
+    data = urllib.parse.urlencode(payload).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        message = raw
+        try:
+            parsed = json.loads(raw)
+            message = parsed.get("error_description") or parsed.get("error") or raw
+        except json.JSONDecodeError:
+            pass
+        raise RuntimeError(f"OAuth error {exc.code}: {message}") from exc
+    return json.loads(raw or "{}")
+
+
+def gmail_oauth_configured():
+    return bool(load_keychain_secret(GMAIL_CLIENT_ID_KEYCHAIN_SERVICE, required=False)) and bool(
+        load_keychain_secret(GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE, required=False)
+    )
+
+
+def gmail_authorized():
+    return bool(load_keychain_secret(GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE, required=False))
+
+
+def gmail_exchange_code(code, redirect_uri):
+    client_id = load_keychain_secret(GMAIL_CLIENT_ID_KEYCHAIN_SERVICE)
+    client_secret = load_keychain_secret(GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE)
+    token = oauth_form_request(
+        GOOGLE_OAUTH_TOKEN_URL,
+        {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        },
+    )
+    refresh_token = token.get("refresh_token")
+    if refresh_token:
+        store_keychain_secret(GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE, refresh_token)
+    return token
+
+
+def gmail_access_token():
+    client_id = load_keychain_secret(GMAIL_CLIENT_ID_KEYCHAIN_SERVICE)
+    client_secret = load_keychain_secret(GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE)
+    refresh_token = load_keychain_secret(GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE)
+    token = oauth_form_request(
+        GOOGLE_OAUTH_TOKEN_URL,
+        {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        },
+    )
+    access_token = token.get("access_token")
+    if not access_token:
+        raise RuntimeError("Google no devolvio access_token al refrescar Gmail.")
+    return access_token
+
+
+def gmail_request(path, method="GET", payload=None, params=None):
+    return api_json_request(
+        GMAIL_API_BASE,
+        path,
+        {"Authorization": f"Bearer {gmail_access_token()}"},
+        method=method,
+        payload=payload,
+        params=params,
+    )
+
+
+def gmail_status(live=False):
+    status = {
+        "configured": gmail_oauth_configured(),
+        "authorized": gmail_authorized(),
+        "write_requires_confirmation": True,
+        "scope": GMAIL_READONLY_SCOPE,
+        "capabilities": ["status", "auth_url", "profile", "list_messages", "get_message"],
+        "auth_url": "https://kim.aipeople.app/oauth/google/start",
+        "mode": "readonly",
+    }
+    if live and status["authorized"]:
+        try:
+            status["profile"] = gmail_request("/users/me/profile")
+            status["live_ok"] = True
+        except Exception as exc:
+            status["live_ok"] = False
+            status["error"] = brief(str(exc), 220)
+    return status
+
+
+def gmail_header(headers, name):
+    wanted = (name or "").lower()
+    for header in headers or []:
+        if str(header.get("name") or "").lower() == wanted:
+            return header.get("value") or ""
+    return ""
+
+
+def gmail_decode_body(data):
+    if not data:
+        return ""
+    padded = data + "=" * (-len(data) % 4)
+    try:
+        return base64.urlsafe_b64decode(padded.encode("utf-8")).decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def gmail_extract_text_from_payload(payload):
+    if not payload:
+        return ""
+    mime = payload.get("mimeType") or ""
+    body = payload.get("body") or {}
+    if mime.startswith("text/plain") and body.get("data"):
+        return gmail_decode_body(body.get("data"))
+    parts = payload.get("parts") or []
+    plain = []
+    html_parts = []
+    for part in parts:
+        text = gmail_extract_text_from_payload(part)
+        if not text:
+            continue
+        if (part.get("mimeType") or "").startswith("text/html"):
+            html_parts.append(text)
+        else:
+            plain.append(text)
+    if plain:
+        return "\n\n".join(plain)
+    if html_parts:
+        clean = re.sub(r"<(br|p|div|li|tr|h[1-6])[^>]*>", "\n", "\n".join(html_parts), flags=re.I)
+        clean = re.sub(r"<[^>]+>", " ", clean)
+        return html.unescape(re.sub(r"\s+\n", "\n", re.sub(r"[ \t]+", " ", clean))).strip()
+    return ""
+
+
+def gmail_normalize_message(message, include_body=False):
+    payload = message.get("payload") or {}
+    headers = payload.get("headers") or []
+    row = {
+        "id": message.get("id"),
+        "thread_id": message.get("threadId"),
+        "label_ids": message.get("labelIds") or [],
+        "snippet": message.get("snippet"),
+        "from": gmail_header(headers, "From"),
+        "to": gmail_header(headers, "To"),
+        "subject": gmail_header(headers, "Subject"),
+        "date": gmail_header(headers, "Date"),
+    }
+    if include_body:
+        row["body_text"] = brief(gmail_extract_text_from_payload(payload), 6000)
+    return row
+
+
+def gmail_list_messages(parameters):
+    parameters = parameters or {}
+    max_results = min(max(int(parameters.get("max_results") or parameters.get("limit") or 10), 1), 25)
+    params = {
+        "maxResults": max_results,
+        "q": str(parameters.get("query") or parameters.get("q") or "").strip() or None,
+        "includeSpamTrash": str(bool(parameters.get("include_spam_trash", False))).lower(),
+    }
+    label_ids = parameters.get("label_ids") or parameters.get("labelIds")
+    if isinstance(label_ids, str) and label_ids.strip():
+        params["labelIds"] = label_ids.strip()
+    result = gmail_request("/users/me/messages", params=params)
+    messages = []
+    for item in (result.get("messages") or [])[:max_results]:
+        msg = gmail_request(
+            f"/users/me/messages/{urllib.parse.quote(item['id'])}",
+            params={
+                "format": "metadata",
+                "metadataHeaders": ["From", "To", "Subject", "Date"],
+            },
+        )
+        messages.append(gmail_normalize_message(msg, include_body=False))
+    return {
+        "ok": True,
+        "provider": "gmail",
+        "action": "list_messages",
+        "query": params.get("q") or "",
+        "count": len(messages),
+        "messages": messages,
+        "next_page_token": result.get("nextPageToken"),
+    }
+
+
+def gmail_get_message(parameters):
+    parameters = parameters or {}
+    message_id = str(parameters.get("message_id") or parameters.get("id") or "").strip()
+    if not message_id:
+        raise ValueError("Falta message_id para leer correo Gmail.")
+    fmt = "full" if parameters.get("include_body", True) else "metadata"
+    params = {"format": fmt}
+    if fmt == "metadata":
+        params["metadataHeaders"] = ["From", "To", "Subject", "Date"]
+    message = gmail_request(f"/users/me/messages/{urllib.parse.quote(message_id)}", params=params)
+    return {
+        "ok": True,
+        "provider": "gmail",
+        "action": "get_message",
+        "message": gmail_normalize_message(message, include_body=(fmt == "full")),
+    }
 
 
 def normalize_clickup_task(task):
@@ -1743,6 +2003,45 @@ def run_notion_bridge(action, parameters, confirm=False):
     raise ValueError(f"Accion Notion no soportada: {action}")
 
 
+def run_gmail_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "gmail", "action": action, "status": gmail_status(live=True)}
+    if action in {"auth_url", "authorize", "connect"}:
+        return {
+            "ok": True,
+            "provider": "gmail",
+            "action": action,
+            "auth_url": "https://kim.aipeople.app/oauth/google/start",
+            "message": "Abre auth_url y autoriza Gmail. Despues Kim podra leer correos en modo solo lectura.",
+        }
+    if not gmail_oauth_configured():
+        return {
+            "ok": False,
+            "provider": "gmail",
+            "action": action,
+            "configured": False,
+            "message": "Faltan client_id/client_secret de Google Gmail en Keychain.",
+        }
+    if not gmail_authorized():
+        return {
+            "ok": False,
+            "provider": "gmail",
+            "action": action,
+            "authorized": False,
+            "auth_url": "https://kim.aipeople.app/oauth/google/start",
+            "message": "Gmail esta configurado pero falta autorizacion OAuth del doctor.",
+        }
+    if action in {"profile", "get_profile"}:
+        return {"ok": True, "provider": "gmail", "action": action, "profile": gmail_request("/users/me/profile")}
+    if action in {"list_messages", "list_emails", "inbox", "search"}:
+        return gmail_list_messages(parameters)
+    if action in {"get_message", "read_message", "read_email"}:
+        return gmail_get_message(parameters)
+    raise ValueError(f"Accion Gmail no soportada: {action}")
+
+
 def record_api_bridge_action(provider, action, parameters, result, session_id="", transcript=""):
     event = {
         "at": now_iso(),
@@ -1775,8 +2074,10 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_clickup_bridge(action, parameters, confirm=confirm)
     elif provider == "notion":
         result = run_notion_bridge(action, parameters, confirm=confirm)
+    elif provider in {"gmail", "google_mail", "email"}:
+        result = run_gmail_bridge(action, parameters, confirm=confirm)
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail o all/status.")
     record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
     result["action_log"] = record
     return result
@@ -2284,6 +2585,72 @@ def twilio_media_ws_url(handler, params=None):
     return base.replace("https://", "wss://").replace("http://", "ws://") + "/twilio/media"
 
 
+def gmail_oauth_redirect_uri(handler):
+    return twilio_public_base(handler).rstrip("/") + "/oauth/google/callback"
+
+
+def gmail_oauth_start_url(handler):
+    if not gmail_oauth_configured():
+        raise ValueError("Faltan client_id/client_secret de Gmail en Keychain.")
+    state = secrets.token_urlsafe(32)
+    redirect_uri = gmail_oauth_redirect_uri(handler)
+    write_json_file(GMAIL_OAUTH_STATE_FILE, {"state": state, "redirect_uri": redirect_uri, "created_at": now_iso()})
+    params = {
+        "client_id": load_keychain_secret(GMAIL_CLIENT_ID_KEYCHAIN_SERVICE),
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": GMAIL_READONLY_SCOPE,
+        "access_type": "offline",
+        "prompt": "consent",
+        "include_granted_scopes": "true",
+        "state": state,
+    }
+    return GOOGLE_OAUTH_AUTH_URL + "?" + urllib.parse.urlencode(params)
+
+
+def gmail_oauth_callback(handler, parsed):
+    params = urllib.parse.parse_qs(parsed.query)
+    if params.get("error"):
+        error = html.escape((params.get("error_description") or params.get("error") or ["OAuth cancelado"])[0])
+        write_text(
+            handler,
+            f"<h1>Gmail no autorizado</h1><p>{error}</p>",
+            status=400,
+            content_type="text/html; charset=utf-8",
+        )
+        return
+    code = (params.get("code") or [""])[0]
+    state = (params.get("state") or [""])[0]
+    expected, _ = load_json_any([GMAIL_OAUTH_STATE_FILE])
+    expected = expected or {}
+    if not code or not state or state != expected.get("state"):
+        write_text(
+            handler,
+            "<h1>Gmail OAuth invalido</h1><p>El estado OAuth no coincide. Vuelve a iniciar autorizacion desde Kim Live.</p>",
+            status=400,
+            content_type="text/html; charset=utf-8",
+        )
+        return
+    redirect_uri = expected.get("redirect_uri") or gmail_oauth_redirect_uri(handler)
+    token = gmail_exchange_code(code, redirect_uri)
+    has_refresh = bool(token.get("refresh_token")) or gmail_authorized()
+    append_memory("gmail_oauth_authorized", {"authorized": has_refresh, "scope": GMAIL_READONLY_SCOPE})
+    append_daily_note("KIM-0040 Gmail OAuth autorizado en modo solo lectura.")
+    profile = {}
+    if has_refresh:
+        try:
+            profile = gmail_request("/users/me/profile")
+        except Exception as exc:
+            profile = {"error": brief(str(exc), 220)}
+    write_text(
+        handler,
+        "<h1>Gmail conectado con Kim Live</h1>"
+        "<p>Autorizacion completada en modo solo lectura. Ya puedes volver a Kim Live y pedirle a Kim que lea correos.</p>"
+        f"<pre>{html.escape(json.dumps(profile, ensure_ascii=False, indent=2))}</pre>",
+        content_type="text/html; charset=utf-8",
+    )
+
+
 def phone_session_id(params):
     sid = params.get("CallSid") or params.get("call_sid")
     if sid:
@@ -2453,7 +2820,9 @@ def realtime_session_config():
                 "Para ClickUp o Notion, usa kim_api_bridge: si faltan IDs de ClickUp, primero lista "
                 "spaces, folders o lists antes de crear. Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
-                "doctor y luego confirm=true. "
+                "doctor y luego confirm=true. Para Gmail/correo, usa kim_api_bridge en modo solo lectura "
+                "con provider gmail: status, profile, list_messages o get_message. Si falta autorizacion "
+                "OAuth, entrega el link de autorizacion y no inventes correos. "
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
@@ -2499,7 +2868,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion y lee Gmail desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -2507,7 +2876,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion o all.",
+                                "description": "Proveedor: clickup, notion, gmail o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -2515,7 +2884,8 @@ def realtime_session_config():
                                     "Accion. ClickUp: status, inventory, list_spaces, list_folders, "
                                     "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
-                                    "get_page, create_page, update_page_properties."
+                                    "get_page, create_page, update_page_properties. Gmail: status, auth_url, "
+                                    "profile, list_messages, get_message."
                                 ),
                             },
                             "parameters": {
@@ -2867,6 +3237,25 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        if parsed.path == "/oauth/google/start":
+            try:
+                url = gmail_oauth_start_url(self)
+            except Exception as exc:
+                write_text(
+                    self,
+                    f"<h1>No pude iniciar Gmail OAuth</h1><p>{html.escape(str(exc))}</p>",
+                    status=500,
+                    content_type="text/html; charset=utf-8",
+                )
+                return
+            self.send_response(302)
+            self.send_header("Location", url)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
+        if parsed.path == "/oauth/google/callback":
+            gmail_oauth_callback(self, parsed)
+            return
         if parsed.path == "/api/status":
             write_json(
                 self,
@@ -2907,6 +3296,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/api/api-bridge/status":
             write_json(self, {"ok": True, "status": api_bridge_config_status(live=True)})
+            return
+        if parsed.path == "/api/gmail/status":
+            write_json(self, {"ok": True, "status": gmail_status(live=True)})
             return
         if parsed.path == "/api/conversations":
             entries = list(reversed(load_call_entries(limit=80)))

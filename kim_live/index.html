@@ -1225,7 +1225,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.2</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.3</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1413,7 +1413,7 @@
           </div>
           <div class="capability">
             <span>APIs</span>
-            <strong id="apiBridgeState">ClickUp / Notion con confirmacion</strong>
+            <strong id="apiBridgeState">ClickUp / Notion / Gmail</strong>
           </div>
           <div class="capability">
             <span>Sesion</span>
@@ -2564,8 +2564,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.2");
-        $("appVersion").textContent = "v" + (data.version || "1.5.2");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.3");
+        $("appVersion").textContent = "v" + (data.version || "1.5.3");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
@@ -2578,9 +2578,12 @@
         const bridge = data.api_bridge || {};
         const clickupReady = bridge.clickup && bridge.clickup.configured;
         const notionReady = bridge.notion && bridge.notion.configured;
+        const gmailReady = bridge.gmail && bridge.gmail.authorized;
         $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
         $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
-        $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave") + " / Notion " + (notionReady ? "listo" : "sin llave");
+        $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave")
+          + " / Notion " + (notionReady ? "listo" : "sin llave")
+          + " / Gmail " + (gmailReady ? "autorizado" : "pendiente");
       })
       .catch(() => {
         $("contextStatus").textContent = "Contexto no disponible";
