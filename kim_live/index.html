@@ -931,7 +931,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">1.4</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.1</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -2257,8 +2257,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.4");
-        $("appVersion").textContent = "v" + (data.version || "1.4");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.1");
+        $("appVersion").textContent = "v" + (data.version || "1.5.1");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";

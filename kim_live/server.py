@@ -2737,7 +2737,7 @@ def market_snapshot(symbol, interval, ema_periods=None):
     query = urllib.parse.urlencode({"symbol": ticker, "interval": binance_interval, "limit": limit})
     request = urllib.request.Request(
         f"https://api.binance.com/api/v3/klines?{query}",
-        headers={"User-Agent": "KimLive/1.4"},
+        headers={"User-Agent": f"KimLive/{APP_VERSION}"},
         method="GET",
     )
     try:
