@@ -29,9 +29,14 @@
       box-sizing: border-box;
     }
 
+    html {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       height: 100vh;
+      height: 100dvh;
       min-height: 720px;
       overflow: hidden;
       background:
@@ -317,6 +322,7 @@
       justify-content: flex-start;
       gap: 10px;
       text-align: left;
+      -webkit-tap-highlight-color: transparent;
     }
 
     button:hover {
@@ -870,25 +876,188 @@
 
     @media (max-width: 880px) {
       body {
+        display: block;
         height: auto;
         min-height: 100vh;
+        min-height: 100dvh;
         overflow: auto;
       }
 
+      header {
+        min-height: 0;
+        padding: 10px 12px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      header .pill {
+        max-width: min(48vw, 320px);
+        min-height: 30px;
+        white-space: normal;
+        text-align: right;
+      }
+
       main {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .panel {
+        box-shadow: 0 10px 24px rgba(32, 33, 36, 0.07);
+      }
+
+      .control-panel {
+        display: grid;
+        grid-template-rows: auto auto;
+        overflow: visible;
+      }
+
+      .kim-stage {
+        padding: 12px;
+        gap: 10px;
+      }
+
+      .portrait-wrap {
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .portrait,
+      .portrait svg {
+        width: 88px;
+        height: 88px;
+      }
+
+      .status {
+        min-height: 0;
+        font-size: 12px;
+      }
+
+      .voice-meter {
+        height: 58px;
+      }
+
+      .mic-button {
+        width: 48px;
+        height: 48px;
+      }
+
+      .mic-button svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .actions button {
+        min-height: 42px;
+        padding: 8px 7px;
+        justify-content: center;
+        text-align: center;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        line-height: 1.15;
+      }
+
+      .actions .button-icon {
+        width: 19px;
+        height: 19px;
+        flex-basis: 19px;
+      }
+
+      .actions .button-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      #conversationToggle,
+      #endConversation {
+        flex-direction: row;
+        font-size: 14px;
+      }
+
+      .device-panel {
+        grid-column: 1 / -1;
+        padding: 9px;
+      }
+
+      .device-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .context-box,
+      .thread-list {
+        display: none;
       }
 
       .workspace {
-        min-height: 680px;
+        min-height: calc(100dvh - 24px);
+        grid-template-rows: auto minmax(320px, 1fr) auto auto auto;
+        overflow: visible;
+      }
+
+      .workspace-header {
+        padding: 12px;
+        align-items: stretch;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .workspace-meta {
+        font-size: 12px;
+      }
+
+      .view-tabs {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .view-tab {
+        width: 100%;
+      }
+
+      #sessionState {
+        width: 100%;
+        justify-content: flex-start;
+        white-space: normal;
+      }
+
+      .chat-log {
+        min-height: 320px;
+        max-height: 55dvh;
+        padding: 12px;
+      }
+
+      .message {
+        max-width: 100%;
       }
 
       .assistant-tools {
         grid-template-columns: 1fr;
+        padding: 10px;
       }
 
       .composer {
         grid-template-columns: 1fr;
+        padding: 10px;
+      }
+
+      .composer textarea {
+        max-height: 92px;
       }
 
       .capability-row {
@@ -898,31 +1067,156 @@
       .market-toolbar {
         grid-template-columns: 1fr 1fr;
       }
+
+      .market-toolbar .field:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .market-desk {
+        padding: 10px;
+        min-height: calc(100dvh - 150px);
+      }
+
+      .market-chart {
+        min-height: 420px;
+        height: 56dvh;
+      }
+
+      .market-snapshot {
+        max-height: 120px;
+      }
+
+      .compiler {
+        display: none;
+      }
+
+      footer {
+        display: none;
+      }
     }
 
     @media (max-width: 560px) {
       header {
-        align-items: flex-start;
-        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .eyebrow {
+        display: none;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      header .pill {
+        max-width: 52vw;
+        font-size: 12px;
+        padding: 6px 8px;
       }
 
       main {
-        padding: 12px;
+        padding: 8px;
+        gap: 8px;
       }
 
       .portrait-wrap {
-        grid-template-columns: 96px minmax(0, 1fr);
+        grid-template-columns: 74px minmax(0, 1fr);
       }
 
       .portrait,
       .portrait svg {
-        width: 96px;
-        height: 96px;
+        width: 74px;
+        height: 74px;
       }
 
-      .capability-row,
+      .kim-stage {
+        padding: 10px;
+      }
+
+      .voice-meter {
+        height: 52px;
+      }
+
+      .actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 8px;
+        gap: 7px;
+      }
+
+      .actions button {
+        min-height: 40px;
+        padding: 7px 5px;
+        font-size: 11px;
+      }
+
+      #conversationToggle,
+      #endConversation {
+        font-size: 12px;
+      }
+
+      .workspace {
+        min-height: calc(100dvh - 16px);
+      }
+
+      .workspace-header {
+        padding: 10px;
+      }
+
+      .workspace-meta {
+        display: none;
+      }
+
+      .chat-log {
+        min-height: 300px;
+        max-height: 58dvh;
+      }
+
+      .message-text {
+        font-size: 14px;
+      }
+
+      .capability-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .drop-zone {
+        min-height: 78px;
+      }
+
+      .market-toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .market-toolbar .field:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .market-chart {
+        min-height: 380px;
+        height: 54dvh;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .device-panel {
+        grid-column: 1 / -1;
+      }
+
       .market-toolbar {
         grid-template-columns: 1fr;
+      }
+
+      .market-toolbar .field:first-child {
+        grid-column: auto;
+      }
+
+      .market-chart {
+        min-height: 340px;
       }
     }
   </style>
@@ -931,7 +1225,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.1</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.2</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -992,7 +1286,7 @@
               <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </span>
-          Terminar conversacion
+          Terminar
         </button>
         <div class="device-panel" aria-label="Microfono">
           <label for="micSelect">Microfono</label>
@@ -1013,7 +1307,7 @@
               <path d="M8 4v6h8M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </span>
-          Guardar en memoria
+          Guardar
         </button>
         <button class="secondary" id="draftDocument">
           <span class="button-icon">
@@ -1022,7 +1316,7 @@
               <path d="M14 3v5h4M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </span>
-          Redactar documento
+          Documento
         </button>
         <button class="danger" id="execute">
           <span class="button-icon">
@@ -1030,7 +1324,7 @@
               <path d="M5 12h10M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          Convertir en tarea y ejecutar
+          Ejecutar tarea
         </button>
       </section>
 
@@ -1188,6 +1482,17 @@
       status.textContent = text;
       $("sessionState").textContent = text.length > 42 ? text.slice(0, 41) + "..." : text;
       if (state) document.body.dataset.voiceState = state;
+    }
+
+    function isMobileLayout() {
+      return window.matchMedia("(max-width: 880px)").matches;
+    }
+
+    function focusWorkspaceOnMobile() {
+      if (!isMobileLayout()) return;
+      window.setTimeout(() => {
+        $("workspace").scrollIntoView({block: "start", behavior: "smooth"});
+      }, 80);
     }
 
     function updateLineCount() {
@@ -2228,12 +2533,14 @@
       $("workspace").dataset.view = "chat";
       $("chatTab").classList.add("active");
       $("marketsTab").classList.remove("active");
+      focusWorkspaceOnMobile();
     };
     $("marketsTab").onclick = () => {
       $("workspace").dataset.view = "markets";
       $("marketsTab").classList.add("active");
       $("chatTab").classList.remove("active");
       loadTradingViewChart();
+      focusWorkspaceOnMobile();
     };
     $("refreshMics").onclick = refreshMicrophones;
     $("testMic").onclick = testMicrophoneLevel;
@@ -2257,8 +2564,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.1");
-        $("appVersion").textContent = "v" + (data.version || "1.5.1");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.2");
+        $("appVersion").textContent = "v" + (data.version || "1.5.2");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
