@@ -107,7 +107,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.5"
+APP_VERSION = "1.5.6"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1931,12 +1931,31 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
     mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
     preview = hostinger_email_preview(parameters, mailbox)
     if not confirm:
-        return confirmation_preview(
+        execution_parameters = {
+            "mailbox": mailbox,
+            "to": preview["to"],
+            "cc": preview["cc"],
+            "bcc": preview["bcc"],
+            "subject": preview["subject"],
+            "body": str(parameters.get("body") or parameters.get("text") or ""),
+        }
+        for key in ["html", "in_reply_to", "references"]:
+            if parameters.get(key):
+                execution_parameters[key] = parameters.get(key)
+        prepared = confirmation_preview(
             "hostinger_mail",
             "reply_email" if reply else "send_email",
             f"Enviar correo desde {mailbox} a {', '.join(preview['to'])}: {preview['subject']}",
-            preview,
+            execution_parameters,
         )
+        prepared["preview"] = preview
+        prepared["confirm_payload"] = {
+            "provider": "hostinger_mail",
+            "action": "reply_email" if reply else "send_email",
+            "parameters": execution_parameters,
+            "confirm": True,
+        }
+        return prepared
     msg = EmailMessage()
     msg["From"] = mailbox
     msg["To"] = ", ".join(preview["to"])
@@ -1984,8 +2003,12 @@ def hostinger_draft_email(parameters, reply=False):
         "provider": "hostinger_mail",
         "action": "draft_reply" if reply else "draft_email",
         "mailbox": mailbox,
-        "draft": preview,
-        "message": "Borrador preparado. Para enviarlo, llama send_email con confirm=true.",
+        "draft": {
+            **preview,
+            "body": str(parameters.get("body") or parameters.get("text") or ""),
+            **({"html": parameters.get("html")} if parameters.get("html") else {}),
+        },
+        "message": "Borrador preparado. Si el doctor pidio enviar, usa send_email primero con confirm=false y luego con confirm=true tras confirmacion explicita.",
     }
 
 
@@ -3333,7 +3356,8 @@ def realtime_session_config():
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
                 "doctor y luego confirm=true. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
                 "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
-                "draft_reply, send_email o reply_email. Enviar correo siempre requiere confirm=false, "
+                "draft_reply, send_email o reply_email. Si el doctor dice mandar, enviar, responder o confirmar envio, "
+                "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
                 "entrega el link de autorizacion y no inventes correos. "
