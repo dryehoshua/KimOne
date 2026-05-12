@@ -107,7 +107,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.6"
+APP_VERSION = "1.5.7"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1317,6 +1317,7 @@ def api_bridge_config_status(live=False):
             "mode": "readonly",
         },
         "hostinger_mail": hostinger_status,
+        "templates": api_bridge_templates(),
     }
     if live and clickup_configured:
         try:
@@ -1756,6 +1757,27 @@ def strip_html_text(value):
     return clean.strip()
 
 
+def first_value(mapping, *keys, default=""):
+    if not isinstance(mapping, dict):
+        return default
+    for key in keys:
+        value = mapping.get(key)
+        if value not in (None, ""):
+            return value
+    return default
+
+
+def merge_missing(target, updates):
+    for key, value in (updates or {}).items():
+        if value not in (None, "") and target.get(key) in (None, ""):
+            target[key] = value
+    return target
+
+
+def generated_title(prefix="Kim"):
+    return f"{prefix} {now_iso()}"
+
+
 def hostinger_extract_body(message):
     plain_parts = []
     html_parts = []
@@ -1905,11 +1927,11 @@ def normalize_email_recipients(value):
 
 
 def hostinger_email_preview(parameters, mailbox):
-    to = normalize_email_recipients(parameters.get("to"))
-    cc = normalize_email_recipients(parameters.get("cc"))
-    bcc = normalize_email_recipients(parameters.get("bcc"))
-    subject = str(parameters.get("subject") or "").strip()
-    body = str(parameters.get("body") or parameters.get("text") or "").strip()
+    to = normalize_email_recipients(first_value(parameters, "to", "recipient", "recipients", "email", "client_email", "destinatario"))
+    cc = normalize_email_recipients(first_value(parameters, "cc", "copy"))
+    bcc = normalize_email_recipients(first_value(parameters, "bcc", "blind_copy"))
+    subject = str(first_value(parameters, "subject", "title", "name", "asunto") or "").strip()
+    body = str(first_value(parameters, "body", "text", "content", "message", "description", "cuerpo") or "").strip()
     if not to:
         raise ValueError("Falta destinatario to para enviar correo.")
     if not subject:
@@ -1926,9 +1948,42 @@ def hostinger_email_preview(parameters, mailbox):
     }
 
 
+def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
+    data = dict(parameters or {})
+    mailbox = mailbox or str(data.get("mailbox") or data.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    message_id = str(first_value(data, "message_id", "uid", "id", "reply_to_message_id") or "").strip()
+    original = None
+    if reply and message_id:
+        try:
+            original = hostinger_get_message({"mailbox": mailbox, "message_id": message_id}).get("message") or {}
+        except Exception as exc:
+            data["template_warning"] = f"No pude leer mensaje original {message_id}: {brief(str(exc), 180)}"
+    if original:
+        if not normalize_email_recipients(data.get("to")):
+            data["to"] = original.get("from")
+        subject = str(first_value(data, "subject", "title", "name", "asunto") or "").strip()
+        if not subject:
+            original_subject = str(original.get("subject") or "").strip()
+            data["subject"] = original_subject if original_subject.lower().startswith("re:") else f"Re: {original_subject or 'Respuesta de Tesca Elements'}"
+        merge_missing(
+            data,
+            {
+                "in_reply_to": original.get("message_id"),
+                "references": " ".join(part for part in [original.get("references"), original.get("message_id")] if part),
+            },
+        )
+    if not str(first_value(data, "subject", "title", "name", "asunto") or "").strip():
+        data["subject"] = "Respuesta de Tesca Elements" if reply else "Seguimiento Tesca Elements"
+    body = str(first_value(data, "body", "text", "content", "message", "description", "cuerpo") or "").strip()
+    if body and not data.get("body"):
+        data["body"] = body
+    return data
+
+
 def hostinger_send_email(parameters, confirm=False, reply=False):
     parameters = parameters or {}
     mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     if not confirm:
         execution_parameters = {
@@ -1937,7 +1992,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
             "cc": preview["cc"],
             "bcc": preview["bcc"],
             "subject": preview["subject"],
-            "body": str(parameters.get("body") or parameters.get("text") or ""),
+            "body": str(first_value(parameters, "body", "text", "content", "message", "description", "cuerpo") or ""),
         }
         for key in ["html", "in_reply_to", "references"]:
             if parameters.get(key):
@@ -1966,7 +2021,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
         msg["In-Reply-To"] = str(parameters.get("in_reply_to"))
     if parameters.get("references"):
         msg["References"] = str(parameters.get("references"))
-    body = str(parameters.get("body") or parameters.get("text") or "")
+    body = str(first_value(parameters, "body", "text", "content", "message", "description", "cuerpo") or "")
     html_body = parameters.get("html")
     msg.set_content(body or strip_html_text(str(html_body or "")))
     if html_body:
@@ -1997,6 +2052,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
 def hostinger_draft_email(parameters, reply=False):
     parameters = parameters or {}
     mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     return {
         "ok": True,
@@ -2005,7 +2061,7 @@ def hostinger_draft_email(parameters, reply=False):
         "mailbox": mailbox,
         "draft": {
             **preview,
-            "body": str(parameters.get("body") or parameters.get("text") or ""),
+            "body": str(first_value(parameters, "body", "text", "content", "message", "description", "cuerpo") or ""),
             **({"html": parameters.get("html")} if parameters.get("html") else {}),
         },
         "message": "Borrador preparado. Si el doctor pidio enviar, usa send_email primero con confirm=false y luego con confirm=true tras confirmacion explicita.",
@@ -2128,6 +2184,13 @@ def clickup_find_space(parameters):
     partial = [space for space in spaces if space_name in str(space.get("name") or "").strip().lower()]
     if len(partial) == 1:
         return partial[0]
+    team_matches = [space for space in spaces if str(space.get("team_name") or "").strip().lower() == space_name]
+    if team_matches:
+        available = ", ".join(space.get("name") or space.get("id") for space in team_matches[:20])
+        raise ValueError(
+            f"'{parameters.get('space_name') or parameters.get('space')}' es un workspace/equipo de ClickUp, no un Space. "
+            f"Usa space_name con uno de estos Spaces: {available}"
+        )
     available = ", ".join(space.get("name") or space.get("id") for space in spaces[:12])
     raise ValueError(f"No encontre un Space unico para '{space_name}'. Disponibles: {available}")
 
@@ -2161,6 +2224,86 @@ def clickup_find_folder(parameters):
         return partial[0]
     available = ", ".join(folder.get("name") or folder.get("id") for folder in folders[:12])
     raise ValueError(f"No encontre un Folder unico para '{folder_name}'. Disponibles: {available}")
+
+
+def clickup_list_all_lists_for_space(space_id, archived=False):
+    lists = []
+    folderless = clickup_request(
+        f"/space/{urllib.parse.quote(str(space_id))}/list",
+        params={"archived": str(bool(archived)).lower()},
+    )
+    lists.extend(normalize_clickup_list(item) for item in folderless.get("lists", []))
+    for folder in clickup_list_folders_for_space(space_id, archived=archived):
+        for item in folder.get("lists", []):
+            row = dict(item)
+            row["folder_id"] = folder.get("id")
+            row["folder_name"] = folder.get("name")
+            lists.append(row)
+    return lists
+
+
+def clickup_find_list(parameters):
+    list_id = str(parameters.get("list_id") or "").strip()
+    if list_id:
+        return {"id": list_id, "name": parameters.get("list_name") or parameters.get("list")}
+    list_name = str(first_value(parameters, "list_name", "list", "target_list") or "").strip().lower()
+    if not list_name:
+        raise ValueError("Falta list_id o list_name para ubicar List en ClickUp.")
+    folder_id = str(parameters.get("folder_id") or "").strip()
+    if folder_id:
+        payload = clickup_request(
+            f"/folder/{urllib.parse.quote(folder_id)}/list",
+            params={"archived": str(bool(parameters.get("archived", False))).lower()},
+        )
+        lists = [normalize_clickup_list(item) for item in payload.get("lists", [])]
+    elif parameters.get("folder_name") or parameters.get("folder"):
+        folder = clickup_find_folder(parameters)
+        lists = folder.get("lists", [])
+    else:
+        space = clickup_find_space(parameters)
+        lists = clickup_list_all_lists_for_space(space["id"], archived=bool(parameters.get("archived", False)))
+    exact = [item for item in lists if str(item.get("name") or "").strip().lower() == list_name]
+    if exact:
+        return exact[0]
+    partial = [item for item in lists if list_name in str(item.get("name") or "").strip().lower()]
+    if len(partial) == 1:
+        return partial[0]
+    available = ", ".join(item.get("name") or item.get("id") for item in lists[:20])
+    raise ValueError(f"No encontre una List unica para '{list_name}'. Disponibles: {available}")
+
+
+def clickup_task_name(parameters):
+    name = str(first_value(parameters, "name", "title", "subject", "task_name", "task", "asunto") or "").strip()
+    if name:
+        return name
+    source = str(first_value(parameters, "description", "body", "content", "message", "notes", "summary") or "").strip()
+    return brief(source, 90) if source else generated_title("Tarea Kim")
+
+
+def clickup_task_description(parameters):
+    return str(first_value(parameters, "description", "body", "content", "message", "notes", "summary", "text") or "").strip()
+
+
+def clickup_resolve_task_list(parameters, confirm=False):
+    list_id = str(parameters.get("list_id") or "").strip()
+    if list_id:
+        return list_id, {"list_id": list_id, "source": "provided"}, []
+    try:
+        found = clickup_find_list(parameters)
+        return str(found["id"]), {"list": found, "source": "matched"}, []
+    except Exception as exc:
+        lookup_error = brief(str(exc), 220)
+    space = clickup_find_space(parameters)
+    list_name = str(first_value(parameters, "list_name", "list", "target_list") or "Kim Inbox").strip() or "Kim Inbox"
+    if not confirm:
+        return "", {"space": space, "list_name": list_name, "source": "planned_create", "lookup_error": lookup_error}, [
+            f"Crear lista '{list_name}' directa en Space {space.get('name') or space.get('id')} antes de crear la tarea."
+        ]
+    created = clickup_request(f"/space/{urllib.parse.quote(str(space['id']))}/list", method="POST", payload={"name": list_name})
+    normalized = normalize_clickup_list(created)
+    return str(created.get("id")), {"list": normalized, "source": "created", "lookup_error": lookup_error}, [
+        f"Lista '{list_name}' creada en Space {space.get('name') or space.get('id')}."
+    ]
 
 
 def clickup_snapshot_tasks(limit=20):
@@ -2205,11 +2348,13 @@ def notion_children_from_content(content):
 
 
 def build_notion_create_page_payload(parameters):
-    title = str(parameters.get("title") or parameters.get("name") or "").strip()
+    parameters = dict(parameters or {})
+    title = str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or "").strip()
     if not title:
-        raise ValueError("Falta title para crear pagina en Notion.")
-    parent_page_id = str(parameters.get("parent_page_id") or "").strip()
-    parent_database_id = str(parameters.get("parent_database_id") or parameters.get("database_id") or "").strip()
+        source_text = str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or "").strip()
+        title = brief(source_text, 80) if source_text else generated_title("Nota Kim")
+    parent_page_id = str(first_value(parameters, "parent_page_id", "page_id", "parent_id", "notion_page_id") or "").strip()
+    parent_database_id = str(first_value(parameters, "parent_database_id", "database_id", "parent_database", "notion_database_id") or "").strip()
     if parent_page_id:
         parent = {"type": "page_id", "page_id": parent_page_id}
         properties = {"title": {"title": notion_rich_text(title)}}
@@ -2220,7 +2365,7 @@ def build_notion_create_page_payload(parameters):
     else:
         raise ValueError("Falta parent_page_id o parent_database_id; Notion exige un padre para crear paginas.")
     payload = {"parent": parent, "properties": properties}
-    children = notion_children_from_content(parameters.get("content") or parameters.get("body") or "")
+    children = notion_children_from_content(first_value(parameters, "content", "body", "text", "message", "description", "summary") or "")
     if children:
         payload["children"] = children
     if parameters.get("icon"):
@@ -2228,7 +2373,8 @@ def build_notion_create_page_payload(parameters):
     return payload
 
 
-def confirmation_preview(provider, action, summary, parameters):
+def confirmation_preview(provider, action, summary, parameters, execution_parameters=None):
+    execution_parameters = execution_parameters if execution_parameters is not None else parameters
     return {
         "ok": True,
         "requires_confirmation": True,
@@ -2236,7 +2382,184 @@ def confirmation_preview(provider, action, summary, parameters):
         "action": action,
         "summary": summary,
         "parameters": parameters,
+        "confirm_payload": {
+            "provider": provider,
+            "action": action,
+            "parameters": execution_parameters,
+            "confirm": True,
+        },
         "message": "Operacion preparada. Kim debe pedir confirmacion explicita antes de ejecutar con confirm=true.",
+    }
+
+
+def api_bridge_templates():
+    return {
+        "hostinger_mail": {
+            "send_email": {
+                "required": ["to", "subject", "body"],
+                "aliases": {
+                    "to": ["recipient", "email", "client_email", "destinatario"],
+                    "subject": ["title", "name", "asunto"],
+                    "body": ["text", "content", "message", "description", "cuerpo"],
+                },
+                "example": {
+                    "provider": "hostinger_mail",
+                    "action": "send_email",
+                    "parameters": {
+                        "to": "cliente@example.com",
+                        "subject": "Seguimiento Tesca Elements",
+                        "body": "Mensaje completo.",
+                    },
+                    "confirm": False,
+                },
+                "rule": "Si el doctor dice manda/envia, usa send_email, no draft_email. Luego usa confirm_payload con confirm=true.",
+            },
+            "reply_email": {
+                "required": ["message_id", "body"],
+                "aliases": {
+                    "message_id": ["uid", "id", "reply_to_message_id"],
+                    "body": ["text", "content", "message", "description", "cuerpo"],
+                    "subject": ["title", "name", "asunto"],
+                },
+                "defaults": {
+                    "to": "se toma del From del mensaje original",
+                    "subject": "Re: asunto original",
+                    "in_reply_to": "Message-ID original",
+                },
+            },
+        },
+        "clickup": {
+            "create_task": {
+                "required": ["space_name or list_id", "name"],
+                "aliases": {
+                    "name": ["title", "subject", "task_name", "task", "asunto"],
+                    "description": ["body", "content", "message", "notes", "summary", "text"],
+                    "list_name": ["list", "target_list"],
+                    "space_name": ["space", "workspace", "team_space"],
+                },
+                "defaults": {
+                    "name": "se genera desde description o 'Tarea Kim <timestamp>'",
+                    "list_name": "Kim Inbox si hay space_name y no se indica lista",
+                },
+                "rule": "space_name debe ser un Space real, no el workspace/equipo. Si el doctor dice Tesca Elements, primero lista spaces y elige Neorgana, Equibio, Client Follow-up, etc. Si falta list_id pero hay space_name, el bridge busca list_name o prepara crear la lista antes de la tarea.",
+            },
+            "create_list": {
+                "required": ["space_name", "name"],
+                "aliases": {
+                    "name": ["list_name", "list", "title", "subject", "project"],
+                    "space_name": ["space", "workspace"],
+                },
+            },
+            "create_folder": {
+                "required": ["space_name", "name"],
+                "aliases": {
+                    "name": ["folder_name", "folder", "title", "client", "client_name", "project"],
+                    "space_name": ["space", "workspace"],
+                },
+            },
+        },
+        "notion": {
+            "create_page": {
+                "required": ["parent_page_id or parent_database_id", "title"],
+                "aliases": {
+                    "title": ["name", "subject", "asunto", "page_title"],
+                    "content": ["body", "text", "message", "description", "summary"],
+                    "parent_page_id": ["page_id", "parent_id", "notion_page_id"],
+                    "parent_database_id": ["database_id", "parent_database", "notion_database_id"],
+                },
+                "defaults": {
+                    "title": "se genera desde content o 'Nota Kim <timestamp>'",
+                    "title_property": "Name para bases de datos",
+                },
+                "rule": "Si falta parent, Kim debe buscar/leer el destino antes de crear; si falta title, el bridge lo genera.",
+            },
+        },
+    }
+
+
+def api_bridge_self_test():
+    tests = []
+
+    def run_case(name, func):
+        try:
+            result = func()
+            tests.append({"name": name, "ok": bool(result.get("ok", True)), "result": result})
+        except Exception as exc:
+            tests.append({"name": name, "ok": False, "error": brief(str(exc), 500)})
+
+    run_case(
+        "templates_available",
+        lambda: {"ok": True, "providers": sorted(api_bridge_templates().keys())},
+    )
+    run_case(
+        "hostinger_send_alias_dry_run",
+        lambda: run_hostinger_mail_bridge(
+            "send_email",
+            {
+                "recipient": "doctoryehoshua@gmail.com",
+                "title": "Kim API template dry run",
+                "content": "Dry run sin envio real.",
+            },
+            confirm=False,
+        ),
+    )
+    run_case(
+        "hostinger_reply_template_dry_run",
+        lambda: run_hostinger_mail_bridge(
+            "reply_email",
+            {
+                "message_id": (hostinger_list_messages({"limit": 1}).get("messages") or [{"uid": "1"}])[0]["uid"],
+                "content": "Dry run de respuesta con message_id.",
+            },
+            confirm=False,
+        ),
+    )
+    run_case(
+        "notion_title_alias_dry_run",
+        lambda: run_notion_bridge(
+            "create_page",
+            {
+                "parent_page_id": "test-parent",
+                "subject": "Prueba template Notion",
+                "body": "Dry run sin escritura.",
+            },
+            confirm=False,
+        ),
+    )
+    run_case(
+        "clickup_task_template_dry_run",
+        lambda: run_clickup_bridge(
+            "create_task",
+            {
+                "space_name": "Neorgana",
+                "list_name": "Kim API Dry Run",
+                "title": "Prueba template ClickUp",
+                "content": "Dry run sin crear lista ni tarea.",
+            },
+            confirm=False,
+        ),
+    )
+    run_case(
+        "clickup_workspace_guardrail",
+        lambda: run_clickup_bridge(
+            "create_task",
+            {
+                "space_name": "Tesca Elements",
+                "list_name": "Nueva",
+                "title": "Debe explicar workspace vs Space",
+                "content": "Dry run de guardrail.",
+            },
+            confirm=False,
+        ),
+    )
+    ok = all(item.get("ok") for item in tests[:-1]) and not tests[-1].get("ok")
+    return {
+        "ok": ok,
+        "provider": "all",
+        "action": "self_test",
+        "mode": "dry_run_no_write",
+        "tests": tests,
+        "message": "Self-test de templates ejecutado desde Kim API bridge; no se enviaron correos ni se crearon objetos.",
     }
 
 
@@ -2331,9 +2654,9 @@ def run_clickup_bridge(action, parameters, confirm=False):
         return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "raw": task}
     if action == "create_folder":
         space = clickup_find_space(parameters)
-        name = str(parameters.get("name") or parameters.get("folder_name") or "").strip()
+        name = str(first_value(parameters, "name", "folder_name", "folder", "title", "client", "client_name", "project") or "").strip()
         if not name:
-            raise ValueError("Falta name para crear Folder en ClickUp.")
+            name = generated_title("Folder Kim")
         payload = {"name": name}
         if not confirm:
             return confirmation_preview(
@@ -2351,9 +2674,9 @@ def run_clickup_bridge(action, parameters, confirm=False):
             "confirmed": True,
         }
     if action == "create_list":
-        name = str(parameters.get("name") or parameters.get("list_name") or "").strip()
+        name = str(first_value(parameters, "name", "list_name", "list", "title", "subject", "project") or "").strip()
         if not name:
-            raise ValueError("Falta name para crear List en ClickUp.")
+            name = generated_title("List Kim")
         payload = {"name": name}
         for key in ["content", "due_date", "due_date_time", "priority", "assignee", "status"]:
             if parameters.get(key) not in (None, ""):
@@ -2384,18 +2707,45 @@ def run_clickup_bridge(action, parameters, confirm=False):
             "confirmed": True,
         }
     if action == "create_task":
-        list_id = str(parameters.get("list_id") or "").strip()
-        name = str(parameters.get("name") or "").strip()
-        if not list_id or not name:
-            raise ValueError("Faltan list_id y name para crear tarea en ClickUp.")
+        name = clickup_task_name(parameters)
+        list_id, list_scope, planned_steps = clickup_resolve_task_list(parameters, confirm=confirm)
         payload = {"name": name}
+        description = clickup_task_description(parameters)
+        if description:
+            payload["description"] = description
         for key in ["description", "status", "priority", "due_date", "due_date_time"]:
             if parameters.get(key) not in (None, ""):
                 payload[key] = parameters.get(key)
         if not confirm:
-            return confirmation_preview("clickup", action, f"Crear tarea '{name}' en lista {list_id}.", payload)
+            execution_parameters = dict(parameters)
+            execution_parameters.update({"name": name})
+            if description and not execution_parameters.get("description"):
+                execution_parameters["description"] = description
+            if list_id:
+                execution_parameters["list_id"] = list_id
+            elif list_scope.get("list_name"):
+                execution_parameters["list_name"] = list_scope["list_name"]
+                execution_parameters["space_id"] = (list_scope.get("space") or {}).get("id")
+                execution_parameters["space_name"] = (list_scope.get("space") or {}).get("name")
+            preview = {"payload": payload, "list_id": list_id, "list_scope": list_scope, "planned_steps": planned_steps}
+            target = list_id or f"nueva lista {list_scope.get('list_name')}"
+            return confirmation_preview(
+                "clickup",
+                action,
+                f"Crear tarea '{name}' en {target}.",
+                preview,
+                execution_parameters=execution_parameters,
+            )
         task = clickup_request(f"/list/{urllib.parse.quote(list_id)}/task", method="POST", payload=payload)
-        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "confirmed": True}
+        return {
+            "ok": True,
+            "provider": "clickup",
+            "action": action,
+            "task": normalize_clickup_task(task),
+            "list_scope": list_scope,
+            "planned_steps": planned_steps,
+            "confirmed": True,
+        }
     if action == "update_task":
         task_id = str(parameters.get("task_id") or "").strip()
         fields = dict(parameters.get("fields") or {})
@@ -2462,7 +2812,9 @@ def run_notion_bridge(action, parameters, confirm=False):
         return {"ok": True, "provider": "notion", "action": action, "page": page}
     if action == "create_page":
         payload = build_notion_create_page_payload(parameters)
-        title = str(parameters.get("title") or parameters.get("name") or "").strip()
+        title = str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or "").strip()
+        if not title:
+            title = brief(str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or ""), 80) or "Nota Kim"
         parent = payload.get("parent", {})
         if not confirm:
             return confirmation_preview(
@@ -2470,6 +2822,7 @@ def run_notion_bridge(action, parameters, confirm=False):
                 action,
                 f"Crear pagina '{title}' bajo {parent.get('type')} {parent.get(parent.get('type'), '')}.",
                 payload,
+                execution_parameters=parameters,
             )
         page = notion_request("/pages", method="POST", payload=payload)
         return {"ok": True, "provider": "notion", "action": action, "page": page, "confirmed": True}
@@ -2551,7 +2904,11 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     provider = (provider or "").strip().lower()
     action = (action or "").strip().lower()
     parameters = parameters or {}
-    if provider in {"status", "all"} or action in {"status_all", "bridge_status"}:
+    if action in {"templates", "template_catalog", "schemas"}:
+        result = {"ok": True, "provider": provider or "all", "action": action, "templates": api_bridge_templates()}
+    elif action in {"self_test", "test_templates", "template_self_test"}:
+        result = api_bridge_self_test()
+    elif provider in {"status", "all"} or action in {"status_all", "bridge_status"}:
         result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
     elif provider == "clickup":
         result = run_clickup_bridge(action, parameters, confirm=confirm)
@@ -2969,6 +3326,11 @@ def context_brief(limit=9000):
     api_spec = read_text_tail_any([API_BRIDGE_SPEC, RUNTIME_API_BRIDGE_SPEC], 1600)
     if api_spec:
         parts.append("Kim API bridge:\n" + api_spec)
+    parts.append(
+        "Kim API templates obligatorios: usa kim_api_bridge action=templates si dudas del formato. "
+        "Correo Hostinger usa send_email/reply_email para enviar; ClickUp create_task acepta title/subject/body y resuelve list_id desde space_name/list_name; "
+        "Notion create_page acepta subject/title/body y genera title si falta."
+    )
     text = "\n\n".join(parts)
     if len(text) > limit:
         return text[:limit].rstrip() + "\n...[contexto truncado]..."
@@ -3351,13 +3713,17 @@ def realtime_session_config():
                 "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot con EMAs "
                 "personalizadas cuando el doctor las pida, incluyendo EMA34 por temporalidad, y analiza "
                 "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
-                "Para ClickUp o Notion, usa kim_api_bridge: si faltan IDs de ClickUp, primero lista "
-                "spaces, folders o lists antes de crear. Puedes preparar folders/lists/tareas de ClickUp "
+                "Para ClickUp, Notion o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
+                "para probar plantillas sin escribir ni enviar, llama action=self_test. "
+                "y usa el template exacto. Si faltan IDs de ClickUp, primero lista spaces/folders/lists o pasa "
+                "space_name/list_name; el bridge puede resolver list_id o preparar crear una lista con confirmacion. "
+                "Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
                 "doctor y luego confirm=true. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
                 "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
                 "draft_reply, send_email o reply_email. Si el doctor dice mandar, enviar, responder o confirmar envio, "
-                "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. Enviar correo siempre requiere confirm=false, "
+                "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. "
+                "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
                 "entrega el link de autorizacion y no inventes correos. "
@@ -3424,7 +3790,7 @@ def realtime_session_config():
                                     "Accion. ClickUp: status, inventory, list_spaces, list_folders, "
                                     "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
-                                    "get_page, create_page, update_page_properties. Gmail: status, auth_url, "
+                                    "get_page, create_page, update_page_properties. Templates: templates, self_test. Gmail: status, auth_url, "
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_messages, "
                                     "search_messages, get_message, draft_email, draft_reply, send_email, reply_email."
                                 ),
