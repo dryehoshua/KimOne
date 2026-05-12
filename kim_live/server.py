@@ -11,8 +11,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import cgi
 import base64
 import datetime as dt
+from email import policy
+from email.header import decode_header, make_header
+from email.message import EmailMessage
+from email.parser import BytesParser
+from email.utils import getaddresses
 import hashlib
 import html
+import imaplib
 import importlib.util
 import io
 import json
@@ -21,6 +27,7 @@ import pathlib
 import re
 import secrets
 import shutil
+import smtplib
 import subprocess
 import tempfile
 import urllib.parse
@@ -69,6 +76,8 @@ CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
 RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
+HOSTINGER_MAIL_LOG = MEMORY_CONTEXT_DIR / "hostinger_mail_actions.jsonl"
+RUNTIME_HOSTINGER_MAIL_LOG = RUNTIME_CONTEXT / "hostinger_mail_actions.jsonl"
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
 MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
 RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
@@ -98,13 +107,18 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.4"
+APP_VERSION = "1.5.5"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
+DEFAULT_HOSTINGER_MAILBOX = "business@tescaelements.com"
+HOSTINGER_IMAP_HOST = "imap.hostinger.com"
+HOSTINGER_IMAP_PORT = 993
+HOSTINGER_SMTP_HOST = "smtp.hostinger.com"
+HOSTINGER_SMTP_PORT = 465
 MARKET_PRICE_MAX_AGE_SECONDS = 15 * 60
 MARKET_PRICE_SPREAD_LIMIT_PCT = 2.0
 COINGECKO_IDS_BY_SYMBOL = {
@@ -323,6 +337,31 @@ def load_keychain_secret(service, required=True):
             return ""
         detail = (exc.stderr or exc.stdout or "").strip()
         raise ValueError(f"No encontre credencial en Keychain para {service}.") from ValueError(detail)
+    return completed.stdout.strip()
+
+
+def load_keychain_secret_for_account(service, account, required=True):
+    try:
+        completed = subprocess.run(
+            [
+                "security",
+                "find-generic-password",
+                "-a",
+                account,
+                "-s",
+                service,
+                "-w",
+            ],
+            text=True,
+            capture_output=True,
+            timeout=60,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        if not required:
+            return ""
+        detail = (exc.stderr or exc.stdout or "").strip()
+        raise ValueError(f"No encontre credencial en Keychain para {service}/{account}.") from ValueError(detail)
     return completed.stdout.strip()
 
 
@@ -1239,6 +1278,7 @@ def api_bridge_config_status(live=False):
     notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
     gmail_configured = gmail_oauth_configured()
     gmail_has_refresh = gmail_authorized()
+    hostinger_status = hostinger_mail_status(live=False)
     status = {
         "clickup": {
             "configured": clickup_configured,
@@ -1276,6 +1316,7 @@ def api_bridge_config_status(live=False):
             "auth_url": "https://kim.aipeople.app/oauth/google/start",
             "mode": "readonly",
         },
+        "hostinger_mail": hostinger_status,
     }
     if live and clickup_configured:
         try:
@@ -1300,6 +1341,8 @@ def api_bridge_config_status(live=False):
             status["notion"]["error"] = brief(str(exc), 220)
     if live and gmail_configured:
         status["gmail"].update(gmail_status(live=gmail_has_refresh))
+    if live:
+        status["hostinger_mail"].update(hostinger_mail_status(live=True))
     return status
 
 
@@ -1577,6 +1620,395 @@ def gmail_get_message(parameters):
         "action": "get_message",
         "message": gmail_normalize_message(message, include_body=(fmt == "full")),
     }
+
+
+def hostinger_mail_slug(mailbox):
+    return re.sub(r"[^a-z0-9]+", "_", str(mailbox or "").strip().lower()).strip("_")
+
+
+def hostinger_mail_password_service(mailbox):
+    return f"codex.hostinger_mail.{hostinger_mail_slug(mailbox)}.password"
+
+
+def hostinger_mail_config(mailbox=None):
+    account = str(mailbox or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    if not account:
+        account = DEFAULT_HOSTINGER_MAILBOX
+    return {
+        "account": account,
+        "imap_host": HOSTINGER_IMAP_HOST,
+        "imap_port": HOSTINGER_IMAP_PORT,
+        "smtp_host": HOSTINGER_SMTP_HOST,
+        "smtp_port": HOSTINGER_SMTP_PORT,
+        "password_service": hostinger_mail_password_service(account),
+    }
+
+
+def hostinger_mail_password(mailbox=None):
+    config = hostinger_mail_config(mailbox)
+    account = config["account"]
+    services = [
+        config["password_service"],
+        f"codex.hostinger_mail.{account}.password",
+    ]
+    for service in services:
+        secret = load_keychain_secret_for_account(service, account, required=False)
+        if secret:
+            return secret
+    for service in services:
+        secret = load_keychain_secret(service, required=False)
+        if secret:
+            return secret
+    raise ValueError(f"No encontre password Hostinger para {account} en Keychain.")
+
+
+def hostinger_mail_configured(mailbox=None):
+    try:
+        return bool(hostinger_mail_password(mailbox))
+    except Exception:
+        return False
+
+
+def hostinger_mail_status(live=False, mailbox=None):
+    config = hostinger_mail_config(mailbox)
+    configured = hostinger_mail_configured(config["account"])
+    status = {
+        "configured": configured,
+        "authorized": configured,
+        "mailboxes": [config["account"]],
+        "default_mailbox": config["account"],
+        "imap": f"{config['imap_host']}:{config['imap_port']}",
+        "smtp": f"{config['smtp_host']}:{config['smtp_port']}",
+        "write_requires_confirmation": True,
+        "capabilities": [
+            "status",
+            "list_messages",
+            "search_messages",
+            "get_message",
+            "draft_email",
+            "draft_reply",
+            "send_email",
+            "reply_email",
+        ],
+        "mode": "imap_smtp",
+    }
+    if live and configured:
+        try:
+            with hostinger_imap_connection(config["account"], readonly=True) as mail:
+                mail.select("INBOX", readonly=True)
+                typ, data = mail.uid("search", None, "ALL")
+                ids = data[0].split() if typ == "OK" and data else []
+                status["live_ok"] = True
+                status["inbox_count"] = len(ids)
+        except Exception as exc:
+            status["live_ok"] = False
+            status["error"] = brief(str(exc), 220)
+    return status
+
+
+class HostingerImapSession:
+    def __init__(self, mailbox):
+        self.config = hostinger_mail_config(mailbox)
+        self.mail = None
+
+    def __enter__(self):
+        self.mail = imaplib.IMAP4_SSL(
+            self.config["imap_host"],
+            self.config["imap_port"],
+            timeout=25,
+        )
+        self.mail.login(self.config["account"], hostinger_mail_password(self.config["account"]))
+        return self.mail
+
+    def __exit__(self, exc_type, exc, tb):
+        if not self.mail:
+            return False
+        try:
+            self.mail.close()
+        except Exception:
+            pass
+        try:
+            self.mail.logout()
+        except Exception:
+            pass
+        return False
+
+
+def hostinger_imap_connection(mailbox=None, readonly=True):
+    return HostingerImapSession(mailbox or DEFAULT_HOSTINGER_MAILBOX)
+
+
+def decode_mail_header(value):
+    if not value:
+        return ""
+    try:
+        return str(make_header(decode_header(value)))
+    except Exception:
+        return str(value)
+
+
+def strip_html_text(value):
+    clean = re.sub(r"<(br|p|div|li|tr|h[1-6])[^>]*>", "\n", value or "", flags=re.I)
+    clean = re.sub(r"<[^>]+>", " ", clean)
+    clean = html.unescape(clean)
+    clean = re.sub(r"[ \t]+", " ", clean)
+    clean = re.sub(r"\n\s+\n", "\n\n", clean)
+    return clean.strip()
+
+
+def hostinger_extract_body(message):
+    plain_parts = []
+    html_parts = []
+    if message.is_multipart():
+        for part in message.walk():
+            content_type = part.get_content_type()
+            disposition = str(part.get_content_disposition() or "").lower()
+            if disposition == "attachment":
+                continue
+            try:
+                payload = part.get_content()
+            except Exception:
+                payload = ""
+            if not isinstance(payload, str):
+                continue
+            if content_type == "text/plain":
+                plain_parts.append(payload)
+            elif content_type == "text/html":
+                html_parts.append(strip_html_text(payload))
+    else:
+        try:
+            payload = message.get_content()
+        except Exception:
+            payload = ""
+        if isinstance(payload, str):
+            if message.get_content_type() == "text/html":
+                html_parts.append(strip_html_text(payload))
+            else:
+                plain_parts.append(payload)
+    text = "\n\n".join(part.strip() for part in plain_parts if part and part.strip())
+    if not text:
+        text = "\n\n".join(part.strip() for part in html_parts if part and part.strip())
+    return brief(text, 9000)
+
+
+def hostinger_normalize_message(uid, message, include_body=False):
+    row = {
+        "id": str(uid),
+        "uid": str(uid),
+        "from": decode_mail_header(message.get("From", "")),
+        "to": decode_mail_header(message.get("To", "")),
+        "cc": decode_mail_header(message.get("Cc", "")),
+        "subject": decode_mail_header(message.get("Subject", "")),
+        "date": decode_mail_header(message.get("Date", "")),
+        "message_id": decode_mail_header(message.get("Message-ID", "")),
+        "in_reply_to": decode_mail_header(message.get("In-Reply-To", "")),
+        "references": decode_mail_header(message.get("References", "")),
+    }
+    if include_body:
+        row["body_text"] = hostinger_extract_body(message)
+    return row
+
+
+def imap_search_criteria(parameters):
+    parameters = parameters or {}
+    if parameters.get("raw_criteria"):
+        raw = parameters.get("raw_criteria")
+        if isinstance(raw, list):
+            return [str(item) for item in raw]
+        return [str(raw)]
+    criteria = ["UNSEEN" if parameters.get("unread") else "ALL"]
+    sender = str(parameters.get("from") or parameters.get("sender") or "").strip()
+    subject = str(parameters.get("subject") or "").strip()
+    since = str(parameters.get("since") or parameters.get("since_date") or "").strip()
+    before = str(parameters.get("before") or parameters.get("before_date") or "").strip()
+    keyword = str(parameters.get("query") or parameters.get("q") or "").strip()
+    if sender:
+        criteria.extend(["FROM", f'"{sender}"'])
+    if subject:
+        criteria.extend(["SUBJECT", f'"{subject}"'])
+    if since:
+        criteria.extend(["SINCE", since])
+    if before:
+        criteria.extend(["BEFORE", before])
+    if keyword:
+        criteria.extend(["TEXT", f'"{keyword}"'])
+    return criteria
+
+
+def hostinger_fetch_message(mail, uid, include_body=False):
+    fetch_mode = "(BODY.PEEK[])" if include_body else "(BODY.PEEK[HEADER])"
+    typ, data = mail.uid("fetch", str(uid), fetch_mode)
+    if typ != "OK" or not data:
+        raise RuntimeError(f"IMAP no devolvio mensaje {uid}.")
+    raw = b""
+    for item in data:
+        if isinstance(item, tuple):
+            raw += item[1]
+    if not raw:
+        raise RuntimeError(f"Mensaje {uid} sin contenido.")
+    message = BytesParser(policy=policy.default).parsebytes(raw)
+    return hostinger_normalize_message(uid, message, include_body=include_body)
+
+
+def hostinger_list_messages(parameters):
+    parameters = parameters or {}
+    mailbox = str(parameters.get("mailbox") or parameters.get("account") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
+    limit = min(max(int(parameters.get("max_results") or parameters.get("limit") or 10), 1), 50)
+    with hostinger_imap_connection(mailbox, readonly=True) as mail:
+        mail.select(folder, readonly=True)
+        typ, data = mail.uid("search", None, *imap_search_criteria(parameters))
+        if typ != "OK":
+            raise RuntimeError("IMAP search fallo.")
+        ids = data[0].split() if data else []
+        selected = list(reversed(ids[-limit:]))
+        messages = [hostinger_fetch_message(mail, uid.decode("ascii"), include_body=False) for uid in selected]
+    return {
+        "ok": True,
+        "provider": "hostinger_mail",
+        "action": "list_messages",
+        "mailbox": mailbox,
+        "folder": folder,
+        "count": len(messages),
+        "total_matches": len(ids),
+        "messages": messages,
+    }
+
+
+def hostinger_get_message(parameters):
+    parameters = parameters or {}
+    mailbox = str(parameters.get("mailbox") or parameters.get("account") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
+    uid = str(parameters.get("message_id") or parameters.get("uid") or parameters.get("id") or "").strip()
+    if not uid:
+        raise ValueError("Falta message_id/uid para leer correo Hostinger.")
+    with hostinger_imap_connection(mailbox, readonly=True) as mail:
+        mail.select(folder, readonly=True)
+        message = hostinger_fetch_message(mail, uid, include_body=True)
+    return {
+        "ok": True,
+        "provider": "hostinger_mail",
+        "action": "get_message",
+        "mailbox": mailbox,
+        "folder": folder,
+        "message": message,
+    }
+
+
+def normalize_email_recipients(value):
+    if isinstance(value, list):
+        raw = ", ".join(str(item) for item in value)
+    else:
+        raw = str(value or "")
+    addresses = [addr for _name, addr in getaddresses([raw]) if addr]
+    return addresses
+
+
+def hostinger_email_preview(parameters, mailbox):
+    to = normalize_email_recipients(parameters.get("to"))
+    cc = normalize_email_recipients(parameters.get("cc"))
+    bcc = normalize_email_recipients(parameters.get("bcc"))
+    subject = str(parameters.get("subject") or "").strip()
+    body = str(parameters.get("body") or parameters.get("text") or "").strip()
+    if not to:
+        raise ValueError("Falta destinatario to para enviar correo.")
+    if not subject:
+        raise ValueError("Falta subject para enviar correo.")
+    if not body and not parameters.get("html"):
+        raise ValueError("Falta body/text para enviar correo.")
+    return {
+        "from": mailbox,
+        "to": to,
+        "cc": cc,
+        "bcc": bcc,
+        "subject": subject,
+        "body_preview": brief(body or strip_html_text(str(parameters.get("html") or "")), 600),
+    }
+
+
+def hostinger_send_email(parameters, confirm=False, reply=False):
+    parameters = parameters or {}
+    mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    preview = hostinger_email_preview(parameters, mailbox)
+    if not confirm:
+        return confirmation_preview(
+            "hostinger_mail",
+            "reply_email" if reply else "send_email",
+            f"Enviar correo desde {mailbox} a {', '.join(preview['to'])}: {preview['subject']}",
+            preview,
+        )
+    msg = EmailMessage()
+    msg["From"] = mailbox
+    msg["To"] = ", ".join(preview["to"])
+    if preview["cc"]:
+        msg["Cc"] = ", ".join(preview["cc"])
+    msg["Subject"] = preview["subject"]
+    if parameters.get("in_reply_to"):
+        msg["In-Reply-To"] = str(parameters.get("in_reply_to"))
+    if parameters.get("references"):
+        msg["References"] = str(parameters.get("references"))
+    body = str(parameters.get("body") or parameters.get("text") or "")
+    html_body = parameters.get("html")
+    msg.set_content(body or strip_html_text(str(html_body or "")))
+    if html_body:
+        msg.add_alternative(str(html_body), subtype="html")
+    config = hostinger_mail_config(mailbox)
+    recipients = preview["to"] + preview["cc"] + preview["bcc"]
+    with smtplib.SMTP_SSL(config["smtp_host"], config["smtp_port"], timeout=25) as server:
+        server.login(mailbox, hostinger_mail_password(mailbox))
+        refused = server.send_message(msg, from_addr=mailbox, to_addrs=recipients)
+    result = {
+        "ok": not bool(refused),
+        "provider": "hostinger_mail",
+        "action": "reply_email" if reply else "send_email",
+        "mailbox": mailbox,
+        "to": preview["to"],
+        "cc": preview["cc"],
+        "bcc_count": len(preview["bcc"]),
+        "subject": preview["subject"],
+        "refused": refused,
+        "confirmed": True,
+        "sent_at": now_iso(),
+    }
+    append_jsonl_any([HOSTINGER_MAIL_LOG, RUNTIME_HOSTINGER_MAIL_LOG], result)
+    append_memory("hostinger_mail_sent", result)
+    return result
+
+
+def hostinger_draft_email(parameters, reply=False):
+    parameters = parameters or {}
+    mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    preview = hostinger_email_preview(parameters, mailbox)
+    return {
+        "ok": True,
+        "provider": "hostinger_mail",
+        "action": "draft_reply" if reply else "draft_email",
+        "mailbox": mailbox,
+        "draft": preview,
+        "message": "Borrador preparado. Para enviarlo, llama send_email con confirm=true.",
+    }
+
+
+def run_hostinger_mail_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "hostinger_mail", "action": action, "status": hostinger_mail_status(live=True)}
+    if action in {"list_mailboxes", "mailboxes"}:
+        return {"ok": True, "provider": "hostinger_mail", "action": action, "mailboxes": [DEFAULT_HOSTINGER_MAILBOX]}
+    if action in {"list_messages", "list_emails", "inbox", "search", "search_messages"}:
+        return hostinger_list_messages(parameters)
+    if action in {"get_message", "read_message", "read_email"}:
+        return hostinger_get_message(parameters)
+    if action in {"draft_email", "draft"}:
+        return hostinger_draft_email(parameters, reply=False)
+    if action in {"draft_reply"}:
+        return hostinger_draft_email(parameters, reply=True)
+    if action in {"send_email", "send"}:
+        return hostinger_send_email(parameters, confirm=confirm, reply=False)
+    if action in {"reply_email", "reply"}:
+        return hostinger_send_email(parameters, confirm=confirm, reply=True)
+    raise ValueError(f"Accion Hostinger Mail no soportada: {action}")
 
 
 def normalize_clickup_task(task):
@@ -2102,10 +2534,14 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_clickup_bridge(action, parameters, confirm=confirm)
     elif provider == "notion":
         result = run_notion_bridge(action, parameters, confirm=confirm)
-    elif provider in {"gmail", "google_mail", "email"}:
+    elif provider in {"hostinger", "hostinger_mail", "tesca_mail", "business_mail", "imap", "smtp"}:
+        result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"email", "mail", "correo"} and hostinger_mail_configured():
+        result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail o all/status.")
     record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
     result["action_log"] = record
     return result
@@ -2895,9 +3331,12 @@ def realtime_session_config():
                 "Para ClickUp o Notion, usa kim_api_bridge: si faltan IDs de ClickUp, primero lista "
                 "spaces, folders o lists antes de crear. Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
-                "doctor y luego confirm=true. Para Gmail/correo, usa kim_api_bridge en modo solo lectura "
-                "con provider gmail: status, profile, list_messages o get_message. Si falta autorizacion "
-                "OAuth, entrega el link de autorizacion y no inventes correos. "
+                "doctor y luego confirm=true. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
+                "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
+                "draft_reply, send_email o reply_email. Enviar correo siempre requiere confirm=false, "
+                "confirmacion explicita del doctor y luego confirm=true. Para Gmail, usa provider gmail en modo "
+                "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
+                "entrega el link de autorizacion y no inventes correos. "
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
@@ -2945,7 +3384,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion y lee Gmail desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion, lee Gmail y maneja correo Hostinger desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -2953,7 +3392,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, gmail o all.",
+                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -2962,7 +3401,8 @@ def realtime_session_config():
                                     "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
                                     "get_page, create_page, update_page_properties. Gmail: status, auth_url, "
-                                    "profile, list_messages, get_message."
+                                    "profile, list_messages, get_message. Hostinger Mail: status, list_messages, "
+                                    "search_messages, get_message, draft_email, draft_reply, send_email, reply_email."
                                 ),
                             },
                             "parameters": {

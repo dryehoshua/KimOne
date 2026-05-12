@@ -1247,7 +1247,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.4</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.5</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -2604,8 +2604,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.4");
-        $("appVersion").textContent = "v" + (data.version || "1.5.4");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.5");
+        $("appVersion").textContent = "v" + (data.version || "1.5.5");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
@@ -2619,11 +2619,13 @@
         const clickupReady = bridge.clickup && bridge.clickup.configured;
         const notionReady = bridge.notion && bridge.notion.configured;
         const gmailReady = bridge.gmail && bridge.gmail.authorized;
+        const hostingerReady = bridge.hostinger_mail && bridge.hostinger_mail.configured;
         $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
         $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
         $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave")
           + " / Notion " + (notionReady ? "listo" : "sin llave")
-          + " / Gmail " + (gmailReady ? "autorizado" : "pendiente");
+          + " / Gmail " + (gmailReady ? "autorizado" : "pendiente")
+          + " / Hostinger " + (hostingerReady ? "listo" : "pendiente");
       })
       .catch(() => {
         $("contextStatus").textContent = "Contexto no disponible";
