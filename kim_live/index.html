@@ -578,6 +578,52 @@
       text-transform: uppercase;
     }
 
+    .confirm-panel {
+      border: 1px solid #f3b25b;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff9ef;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .confirm-panel[hidden] {
+      display: none;
+    }
+
+    .confirm-copy {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .confirm-copy span {
+      color: #9a5a08;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .confirm-copy strong,
+    .confirm-copy small {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .confirm-copy strong {
+      color: #2f2415;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .confirm-copy small {
+      color: #6f5a3c;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1247,7 +1293,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.7</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.8</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1442,6 +1488,15 @@
             <strong id="sessionIdLabel">CALL</strong>
           </div>
         </div>
+        <div class="confirm-panel" id="confirmPanel" hidden>
+          <div class="confirm-copy">
+            <span>Accion preparada</span>
+            <strong id="confirmTitle">Sin accion pendiente</strong>
+            <small id="confirmDetails">Kim preparara cambios de correo, ClickUp o Notion aqui.</small>
+          </div>
+          <button class="primary inline-button" id="confirmApiAction" type="button">Confirmar accion</button>
+          <button class="secondary inline-button" id="clearApiAction" type="button">Descartar</button>
+        </div>
         <div class="drop-zone" id="dropZone" tabindex="0">
           <strong>Arrastra archivos aqui para que Kim los lea</strong>
           <span id="uploadResults">Se guardan en BIFROST, se resumen y entran al contexto de esta conversacion.</span>
@@ -1483,6 +1538,7 @@
     let kimDraftBubble = null;
     let activeUploadedFiles = [];
     let activeResearchSources = [];
+    let pendingApiAction = null;
     const completedToolCalls = new Set();
     let workingToneContext = null;
     let workingToneOscillator = null;
@@ -1531,6 +1587,35 @@
       const data = await response.json();
       if (!data.ok) throw new Error(data.error || "Error");
       return data;
+    }
+
+    function renderPendingApiAction(action) {
+      pendingApiAction = action || null;
+      const panel = $("confirmPanel");
+      if (!pendingApiAction) {
+        panel.hidden = true;
+        $("confirmTitle").textContent = "Sin accion pendiente";
+        $("confirmDetails").textContent = "Kim preparara cambios de correo, ClickUp o Notion aqui.";
+        $("confirmApiAction").disabled = true;
+        return;
+      }
+      const provider = pendingApiAction.provider || "api";
+      const actionName = pendingApiAction.action || "accion";
+      $("confirmTitle").textContent = pendingApiAction.summary || (provider + " / " + actionName);
+      $("confirmDetails").textContent = provider + " / " + actionName + " · " + (pendingApiAction.id || "sin ID");
+      $("confirmApiAction").disabled = false;
+      panel.hidden = false;
+    }
+
+    function capturePreparedApiAction(result) {
+      if (!result || !result.requires_confirmation || !result.prepared_action_id) return;
+      renderPendingApiAction({
+        id: result.prepared_action_id,
+        provider: result.provider,
+        action: result.action,
+        summary: result.summary || "Accion lista para confirmar.",
+        preview: result.preview || null
+      });
     }
 
     function clientLog(stage, detail = {}) {
@@ -2107,6 +2192,8 @@
           : (result.confirmed ? "Accion confirmada por la API." : "Consulta API completada.");
         appendMessage("Codex", message + "\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
         $("apiBridgeState").textContent = result.confirmed ? "Cambio confirmado" : (result.requires_confirmation ? "Esperando confirmacion" : "Consulta completada");
+        capturePreparedApiAction(result);
+        if (result.confirmed && result.prepared_action_id) renderPendingApiAction(null);
         sendRealtimeToolOutput(callId, result);
         refreshMemoryState();
         return result;
@@ -2535,6 +2622,40 @@
       $("draftDocument").disabled = false;
     };
 
+    $("confirmApiAction").onclick = async () => {
+      if (!pendingApiAction || !pendingApiAction.id) return;
+      $("confirmApiAction").disabled = true;
+      setStatus("Confirmando accion API...", "working");
+      startApiTone();
+      try {
+        const data = await post("/api/api-bridge", {
+          provider: "all",
+          action: "confirm_prepared",
+          parameters: {prepared_action_id: pendingApiAction.id},
+          confirm: true,
+          transcript: transcript.value,
+          session_id: sessionId
+        });
+        const result = data.result;
+        appendMessage("Codex", "Accion confirmada.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        $("apiBridgeState").textContent = "Cambio confirmado";
+        renderPendingApiAction(null);
+        refreshMemoryState();
+      } catch (error) {
+        $("apiBridgeState").textContent = "Error al confirmar";
+        appendMessage("Codex", "No pude confirmar la accion: " + error.message, "codex", false);
+        $("confirmApiAction").disabled = false;
+      } finally {
+        stopApiTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    };
+
+    $("clearApiAction").onclick = () => {
+      renderPendingApiAction(null);
+      $("apiBridgeState").textContent = "Accion descartada en pantalla";
+    };
+
     $("execute").onclick = async () => {
       const text = transcript.value.trim();
       if (!text) {
@@ -2604,8 +2725,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.7");
-        $("appVersion").textContent = "v" + (data.version || "1.5.7");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.8");
+        $("appVersion").textContent = "v" + (data.version || "1.5.8");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";

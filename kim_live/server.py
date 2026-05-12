@@ -72,6 +72,8 @@ API_BRIDGE_SPEC = BIFROST / "docs" / "kim_live_api_bridge_spec.md"
 RUNTIME_API_BRIDGE_SPEC = RUNTIME_CONTEXT / "kim_live_api_bridge_spec.md"
 API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
+API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
+RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -107,7 +109,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.7"
+APP_VERSION = "1.5.8"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -2327,6 +2329,42 @@ def clickup_snapshot_tasks(limit=20):
     return {"ok": True, "mode": "snapshot", "source": str(source), "tasks": rows, "count": data.get("task_count", len(rows))}
 
 
+def clickup_task_id_from_url(value):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    match = re.search(r"/t/([A-Za-z0-9_-]+)", text)
+    return match.group(1) if match else ""
+
+
+def clickup_find_task(parameters):
+    task_id = str(first_value(parameters, "task_id", "id", "clickup_task_id") or "").strip()
+    if task_id:
+        return task_id, {"source": "provided", "task_id": task_id}
+    task_id = clickup_task_id_from_url(first_value(parameters, "task_url", "url", "link"))
+    if task_id:
+        return task_id, {"source": "url", "task_id": task_id}
+    task_name = str(first_value(parameters, "task_name", "task", "name", "title", "subject") or "").strip().lower()
+    if not task_name:
+        raise ValueError("Falta task_id, task_url o task_name para ubicar la tarea de ClickUp.")
+    list_id = str(parameters.get("list_id") or "").strip()
+    if not list_id:
+        found = clickup_find_list(parameters)
+        list_id = str(found["id"])
+    payload = clickup_request(
+        f"/list/{urllib.parse.quote(list_id)}/task",
+        params={"include_closed": "true", "subtasks": "true", "page": 0},
+    )
+    tasks = [normalize_clickup_task(task) for task in payload.get("tasks", [])]
+    exact = [task for task in tasks if str(task.get("name") or "").strip().lower() == task_name]
+    partial = [task for task in tasks if task_name in str(task.get("name") or "").strip().lower()]
+    matches = exact or partial
+    if len(matches) == 1 and matches[0].get("id"):
+        return str(matches[0]["id"]), {"source": "name_lookup", "list_id": list_id, "task": matches[0]}
+    available = ", ".join(task.get("name") or task.get("id") for task in tasks[:20])
+    raise ValueError(f"No encontre una tarea unica para '{task_name}'. Disponibles en la lista: {available}")
+
+
 def notion_rich_text(text):
     return [{"type": "text", "text": {"content": str(text or "")[:2000]}}]
 
@@ -2392,8 +2430,178 @@ def confirmation_preview(provider, action, summary, parameters, execution_parame
     }
 
 
+def load_prepared_action_state():
+    merged = {}
+    latest_updated = ""
+    for path in [API_PREPARED_ACTIONS, RUNTIME_API_PREPARED_ACTIONS]:
+        data = read_json_file(path, None)
+        if not isinstance(data, dict):
+            continue
+        latest_updated = max(latest_updated, str(data.get("updated_at") or ""))
+        for item in data.get("actions") or []:
+            if not isinstance(item, dict):
+                continue
+            action_id = str(item.get("id") or "").strip()
+            if action_id:
+                merged[action_id] = item
+    if not merged:
+        return {"updated_at": now_iso(), "actions": []}
+    actions = sorted(merged.values(), key=lambda item: str(item.get("prepared_at") or item.get("resolved_at") or ""))
+    return {"updated_at": latest_updated or now_iso(), "actions": actions}
+
+
+def save_prepared_action_state(state):
+    state["updated_at"] = now_iso()
+    state["actions"] = list(state.get("actions") or [])[-120:]
+    write_json_file_both(API_PREPARED_ACTIONS, RUNTIME_API_PREPARED_ACTIONS, state)
+    return state
+
+
+def store_prepared_action(result, session_id="", transcript=""):
+    confirm_payload = result.get("confirm_payload") if isinstance(result, dict) else None
+    if not confirm_payload:
+        return None
+    state = load_prepared_action_state()
+    action_id = "ACT-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper()
+    item = {
+        "id": action_id,
+        "status": "prepared",
+        "prepared_at": now_iso(),
+        "session_id": session_id,
+        "provider": confirm_payload.get("provider") or result.get("provider"),
+        "action": confirm_payload.get("action") or result.get("action"),
+        "summary": result.get("summary") or "",
+        "confirm_payload": confirm_payload,
+        "preview": result.get("preview"),
+        "transcript_excerpt": brief(transcript, 900),
+    }
+    state["actions"].append(item)
+    save_prepared_action_state(state)
+    return item
+
+
+def pending_prepared_actions(session_id=""):
+    actions = load_prepared_action_state().get("actions", [])
+    rows = [item for item in actions if item.get("status") == "prepared"]
+    if session_id:
+        scoped = [item for item in rows if item.get("session_id") == session_id]
+        if scoped:
+            rows = scoped
+    rows = rows[-12:]
+    return [
+        {
+            "id": item.get("id"),
+            "prepared_at": item.get("prepared_at"),
+            "session_id": item.get("session_id"),
+            "provider": item.get("provider"),
+            "action": item.get("action"),
+            "summary": item.get("summary"),
+            "preview": item.get("preview"),
+        }
+        for item in rows
+    ]
+
+
+def find_prepared_action(action_id="", session_id=""):
+    actions = load_prepared_action_state().get("actions", [])
+    if action_id:
+        for item in reversed(actions):
+            if str(item.get("id")) == str(action_id):
+                return item
+        raise ValueError(f"No encontre accion preparada {action_id}.")
+    candidates = [item for item in actions if item.get("status") == "prepared"]
+    if session_id:
+        scoped = [item for item in candidates if item.get("session_id") == session_id]
+        if scoped:
+            candidates = scoped
+    if not candidates:
+        raise ValueError("No hay acciones preparadas pendientes de confirmar.")
+    return candidates[-1]
+
+
+def mark_prepared_action(action_id, status, result=None):
+    state = load_prepared_action_state()
+    for item in state.get("actions", []):
+        if str(item.get("id")) == str(action_id):
+            item["status"] = status
+            item["resolved_at"] = now_iso()
+            if result is not None:
+                item["result_summary"] = brief(json.dumps(result, ensure_ascii=False), 1200)
+            save_prepared_action_state(state)
+            return item
+    return None
+
+
+def execute_prepared_action(action_id="", session_id="", transcript=""):
+    item = find_prepared_action(action_id, session_id=session_id)
+    payload = item.get("confirm_payload") or {}
+    if item.get("status") != "prepared":
+        raise ValueError(f"La accion {item.get('id')} ya no esta pendiente; estado={item.get('status')}.")
+    result = run_api_bridge(
+        payload.get("provider", ""),
+        payload.get("action", ""),
+        payload.get("parameters") or {},
+        confirm=True,
+        session_id=session_id or item.get("session_id", ""),
+        transcript=transcript,
+    )
+    mark_prepared_action(item.get("id"), "confirmed" if result.get("ok") else "failed", result)
+    result["prepared_action_id"] = item.get("id")
+    result["prepared_action_status"] = "confirmed" if result.get("ok") else "failed"
+    return result
+
+
+def agent_action_defaults(action, parameters):
+    data = dict(parameters or {})
+    action = (action or "").strip().lower()
+    if action in {"send_email", "send_mail", "email", "correo", "enviar_correo", "mandar_correo"}:
+        if not first_value(data, "subject", "title", "name", "asunto"):
+            data["subject"] = generated_title("Seguimiento Tesca")
+        if not first_value(data, "body", "text", "content", "message", "description", "cuerpo"):
+            data["body"] = data.get("notes") or "Mensaje enviado desde Kim Live."
+        return "hostinger_mail", "send_email", data
+    if action in {"reply_email", "reply", "responder_correo"}:
+        return "hostinger_mail", "reply_email", data
+    if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
+        if not first_value(data, "name", "title", "subject", "task_name", "task", "asunto"):
+            data["name"] = generated_title("Tarea Kim")
+        if not first_value(data, "space_name", "space", "workspace", "team_space") and not data.get("list_id"):
+            data["space_name"] = "Neorgana"
+            data["list_name"] = first_value(data, "list_name", "list", "target_list", default="Kim Inbox") or "Kim Inbox"
+            data["routing_note"] = "Default operativo KIM-0047: sin destino explicito, Kim usa Neorgana / Kim Inbox."
+        return "clickup", "create_task", data
+    if action in {"update_task", "change_task", "cambiar_tarea", "actualizar_tarea"}:
+        return "clickup", "update_task", data
+    if action in {"comment_task", "comentario_tarea", "comentar_tarea"}:
+        return "clickup", "comment_task", data
+    if action in {"create_page", "note", "nota", "notion_note", "crear_nota"}:
+        if not first_value(data, "title", "name", "subject", "asunto", "page_title"):
+            data["title"] = generated_title("Nota Kim")
+        return "notion", "create_page", data
+    return "", action, data
+
+
 def api_bridge_templates():
     return {
+        "agent_action": {
+            "description": "Accion de alto nivel para que Kim escriba por API sin reconstruir JSON complicado.",
+            "actions": ["send_email", "reply_email", "create_task", "update_task", "comment_task", "create_page"],
+            "confirmation": "Toda escritura devuelve prepared_action_id. El doctor confirma con action=confirm_prepared o el boton del frontend.",
+            "examples": [
+                {
+                    "provider": "all",
+                    "action": "send_email",
+                    "parameters": {"to": "doctor@example.com", "subject": "Seguimiento", "body": "Mensaje completo."},
+                    "confirm": False,
+                },
+                {
+                    "provider": "all",
+                    "action": "create_task",
+                    "parameters": {"space_name": "Neorgana", "list_name": "Kim Inbox", "title": "Llamar cliente", "body": "Notas de la tarea."},
+                    "confirm": False,
+                },
+            ],
+        },
         "hostinger_mail": {
             "send_email": {
                 "required": ["to", "subject", "body"],
@@ -2747,7 +2955,7 @@ def run_clickup_bridge(action, parameters, confirm=False):
             "confirmed": True,
         }
     if action == "update_task":
-        task_id = str(parameters.get("task_id") or "").strip()
+        task_id, task_scope = clickup_find_task(parameters)
         fields = dict(parameters.get("fields") or {})
         for key in ["name", "description", "status", "priority", "due_date", "due_date_time"]:
             if parameters.get(key) not in (None, ""):
@@ -2755,19 +2963,19 @@ def run_clickup_bridge(action, parameters, confirm=False):
         if not task_id or not fields:
             raise ValueError("Faltan task_id y fields para actualizar tarea en ClickUp.")
         if not confirm:
-            return confirmation_preview("clickup", action, f"Actualizar tarea {task_id}.", {"task_id": task_id, "fields": fields})
+            return confirmation_preview("clickup", action, f"Actualizar tarea {task_id}.", {"task_id": task_id, "fields": fields, "task_scope": task_scope})
         task = clickup_request(f"/task/{urllib.parse.quote(task_id)}", method="PUT", payload=fields)
-        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "confirmed": True}
+        return {"ok": True, "provider": "clickup", "action": action, "task": normalize_clickup_task(task), "task_scope": task_scope, "confirmed": True}
     if action == "comment_task":
-        task_id = str(parameters.get("task_id") or "").strip()
-        comment_text = str(parameters.get("comment_text") or parameters.get("text") or "").strip()
+        task_id, task_scope = clickup_find_task(parameters)
+        comment_text = str(first_value(parameters, "comment_text", "text", "body", "content", "message", "description") or "").strip()
         if not task_id or not comment_text:
             raise ValueError("Faltan task_id y comment_text para comentar tarea en ClickUp.")
         payload = {"comment_text": comment_text}
         if not confirm:
-            return confirmation_preview("clickup", action, f"Comentar tarea {task_id}.", {"task_id": task_id, "comment_text": comment_text})
+            return confirmation_preview("clickup", action, f"Comentar tarea {task_id}.", {"task_id": task_id, "comment_text": comment_text, "task_scope": task_scope})
         comment = clickup_request(f"/task/{urllib.parse.quote(task_id)}/comment", method="POST", payload=payload)
-        return {"ok": True, "provider": "clickup", "action": action, "comment": comment, "confirmed": True}
+        return {"ok": True, "provider": "clickup", "action": action, "comment": comment, "task_scope": task_scope, "confirmed": True}
     raise ValueError(f"Accion ClickUp no soportada: {action}")
 
 
@@ -2908,7 +3116,20 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = {"ok": True, "provider": provider or "all", "action": action, "templates": api_bridge_templates()}
     elif action in {"self_test", "test_templates", "template_self_test"}:
         result = api_bridge_self_test()
-    elif provider in {"status", "all"} or action in {"status_all", "bridge_status"}:
+    elif action in {"pending_actions", "prepared_actions", "acciones_pendientes"}:
+        result = {
+            "ok": True,
+            "provider": "all",
+            "action": "pending_actions",
+            "actions": pending_prepared_actions(session_id=session_id),
+        }
+    elif action in {"confirm_prepared", "execute_prepared", "confirm_last", "confirm_action", "confirmar_accion"}:
+        result = execute_prepared_action(
+            action_id=str(first_value(parameters, "prepared_action_id", "action_id", "id") or "").strip(),
+            session_id=session_id,
+            transcript=transcript,
+        )
+    elif action in {"status", "status_all", "bridge_status"} or provider == "status" or (provider == "all" and not action):
         result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
     elif provider == "clickup":
         result = run_clickup_bridge(action, parameters, confirm=confirm)
@@ -2920,8 +3141,27 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"all", "auto", "kim", "agent"}:
+        target_provider, target_action, target_parameters = agent_action_defaults(action, parameters)
+        if not target_provider:
+            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task o create_page.")
+        result = run_api_bridge(
+            target_provider,
+            target_action,
+            target_parameters,
+            confirm=confirm,
+            session_id=session_id,
+            transcript=transcript,
+        )
+        result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
+        return result
     else:
         raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail o all/status.")
+    if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
+        prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
+        if prepared:
+            result["prepared_action_id"] = prepared["id"]
+            result["prepared_action_status"] = prepared["status"]
     record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
     result["action_log"] = record
     return result
@@ -3717,14 +3957,18 @@ def realtime_session_config():
                 "para probar plantillas sin escribir ni enviar, llama action=self_test. "
                 "y usa el template exacto. Si faltan IDs de ClickUp, primero lista spaces/folders/lists o pasa "
                 "space_name/list_name; el bridge puede resolver list_id o preparar crear una lista con confirmacion. "
+                "Si el doctor te pide actuar de forma directa, puedes usar provider=all con action send_email, "
+                "create_task, update_task, comment_task o create_page; el servidor enruta a la API correcta. "
+                "No digas que falta subject/title/list_id sin haber llamado la herramienta: el bridge genera "
+                "subjects/titles por defecto y crea/prepara Kim Inbox cuando falta lista. "
                 "Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
-                "doctor y luego confirm=true. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
+                "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
                 "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
                 "draft_reply, send_email o reply_email. Si el doctor dice mandar, enviar, responder o confirmar envio, "
                 "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
-                "confirmacion explicita del doctor y luego confirm=true. Para Gmail, usa provider gmail en modo "
+                "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
                 "entrega el link de autorizacion y no inventes correos. "
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
