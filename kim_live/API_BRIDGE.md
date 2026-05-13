@@ -13,6 +13,8 @@ Update 2026-05-12 / Kim Live 1.5.11: se agrega autorizacion ligera para acciones
 
 Update 2026-05-13 / Kim Live 1.5.12: se agrega el buzon `business@aipeople.io`, se actualiza el PIN en Keychain, y las acciones preparadas confirmadas se eliminan del cache para evitar dobles ejecuciones por clic repetido.
 
+Update 2026-05-13 / Kim Live 1.5.13: el bridge de Hostinger agrega automaticamente la firma acordada de Kim Yan a `draft_email`, `draft_reply`, `send_email` y `reply_email`, salvo que Kim pase `no_signature=true` o una `signature` personalizada.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -202,6 +204,8 @@ Envio:
 
 - Si falta `subject`, el bridge genera uno por marca: AI People o Tesca Elements.
 - `from_name` acepta `sender_name`, `display_name` o `nombre_remitente`; si falta, usa un nombre visible por marca.
+- Firma automatica: `Kim Yan` / `Augmented Intelligence Assistant, created by Dr. Yehoshua`.
+- Para usar otra firma, pasar `signature`/`firma`; para omitirla, pasar `no_signature=true`.
 
 Acciones de higiene de correo:
 

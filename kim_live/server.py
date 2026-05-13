@@ -112,7 +112,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.12"
+APP_VERSION = "1.5.13"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -153,6 +153,7 @@ HOSTINGER_MAILBOX_DISPLAY_NAMES = {
     "business@tescaelements.com": "Tesca Elements",
     "ceo@tescaelements.com": "Dr. Yehoshua Rodriguez | Tesca Elements",
 }
+KIM_EMAIL_SIGNATURE = "Kim Yan\nAugmented Intelligence Assistant, created by Dr. Yehoshua"
 SECURITY_AUTHORIZATIONS = MEMORY_CONTEXT_DIR / "kim_security_authorizations.json"
 RUNTIME_SECURITY_AUTHORIZATIONS = RUNTIME_CONTEXT / "kim_security_authorizations.json"
 SECURITY_AUTH_TTL_SECONDS = 15 * 60
@@ -2045,6 +2046,68 @@ def hostinger_display_name(mailbox=None, parameters=None):
     return HOSTINGER_MAILBOX_DISPLAY_NAMES.get(resolve_hostinger_mailbox(mailbox), "")
 
 
+def boolish(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "si", "on"}
+
+
+def hostinger_signature_disabled(parameters=None):
+    return boolish(
+        first_value(
+            parameters or {},
+            "no_signature",
+            "omit_signature",
+            "skip_signature",
+            "sin_firma",
+            "omitir_firma",
+            default=False,
+        )
+    )
+
+
+def hostinger_signature_text(parameters=None):
+    if hostinger_signature_disabled(parameters):
+        return ""
+    custom = first_value(parameters or {}, "signature", "firma", "email_signature", "email_firma", default="")
+    if isinstance(custom, bool):
+        custom = ""
+    custom = str(custom or "").strip()
+    if custom.lower() in {"none", "no", "sin firma", "omit", "omitir"}:
+        return ""
+    return custom or KIM_EMAIL_SIGNATURE
+
+
+def hostinger_body_has_signature(value):
+    normalized = strip_html_text(str(value or "")).lower()
+    return (
+        "kim yan" in normalized
+        or "augmented intelligence assistant" in normalized
+        or "created by dr. yehoshua" in normalized
+    )
+
+
+def hostinger_apply_signature_to_text(value, parameters=None):
+    body = str(value or "").rstrip()
+    signature = hostinger_signature_text(parameters)
+    if not signature or hostinger_body_has_signature(body):
+        return body
+    separator = "\n\n-- \n" if body else ""
+    return f"{body}{separator}{signature}"
+
+
+def hostinger_apply_signature_to_html(value, parameters=None):
+    html_body = str(value or "").rstrip()
+    signature = hostinger_signature_text(parameters)
+    if not signature or hostinger_body_has_signature(html_body):
+        return html_body
+    signature_html = "<br>".join(html.escape(line) for line in signature.splitlines())
+    block = f"<br><br><p>--<br>{signature_html}</p>"
+    return f"{html_body}{block}" if html_body else f"<p>{signature_html}</p>"
+
+
 def decode_mail_header(value):
     if not value:
         return ""
@@ -2442,8 +2505,12 @@ def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
     if not str(first_value(data, "subject", "title", "name", "asunto") or "").strip():
         data["subject"] = hostinger_default_subject(mailbox, reply=reply)
     body = str(first_value(data, "body", "text", "content", "message", "description", "cuerpo") or "").strip()
-    if body and not data.get("body"):
-        data["body"] = body
+    if body:
+        data["body"] = hostinger_apply_signature_to_text(body, data)
+    elif data.get("html"):
+        data["body"] = hostinger_apply_signature_to_text(strip_html_text(str(data.get("html") or "")), data)
+    if data.get("html"):
+        data["html"] = hostinger_apply_signature_to_html(data.get("html"), data)
     return data
 
 
@@ -3145,10 +3212,13 @@ def api_bridge_templates():
                     "to": ["recipient", "email", "client_email", "destinatario"],
                     "subject": ["title", "name", "asunto"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
+                    "signature": ["firma", "email_signature", "email_firma"],
+                    "no_signature": ["omit_signature", "skip_signature", "sin_firma", "omitir_firma"],
                 },
                 "defaults": {
                     "from_name": HOSTINGER_MAILBOX_DISPLAY_NAMES,
                     "subject": "Se genera por marca: AI People o Tesca Elements.",
+                    "signature": KIM_EMAIL_SIGNATURE,
                 },
                 "example": {
                     "provider": "hostinger_mail",
@@ -3160,7 +3230,7 @@ def api_bridge_templates():
                     },
                     "confirm": False,
                 },
-                "rule": "Si el doctor dice manda/envia, usa send_email, no draft_email. Luego usa confirm_payload con confirm=true.",
+                "rule": "Si el doctor dice manda/envia, usa send_email, no draft_email. El servidor agrega firma Kim Yan automaticamente salvo no_signature=true. Luego usa confirm_payload con confirm=true.",
             },
             "switch_mailbox": {
                 "required": ["mailbox"],
@@ -3177,11 +3247,14 @@ def api_bridge_templates():
                     "message_id": ["uid", "id", "reply_to_message_id"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
                     "subject": ["title", "name", "asunto"],
+                    "signature": ["firma", "email_signature", "email_firma"],
+                    "no_signature": ["omit_signature", "skip_signature", "sin_firma", "omitir_firma"],
                 },
                 "defaults": {
                     "to": "se toma del From del mensaje original",
                     "subject": "Re: asunto original",
                     "in_reply_to": "Message-ID original",
+                    "signature": KIM_EMAIL_SIGNATURE,
                 },
             },
             "message_hygiene": {
@@ -4597,6 +4670,8 @@ def realtime_session_config():
                 "draft_reply, send_email, reply_email, switch_mailbox, list_folders, mark_spam, move_to_trash o archive_email. "
                 "Si el doctor dice mandar, enviar, responder o confirmar envio, "
                 "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. "
+                "Todo correo Hostinger se firma automaticamente como Kim Yan, Augmented Intelligence Assistant, created by Dr. Yehoshua; "
+                "si el doctor pide una firma distinta, pasa parameters.signature; si pide omitirla, pasa no_signature=true. "
                 "Puede mandar desde founder@aipeople.io, founder@aipeople.work, business@tescaelements.com o "
                 "ceo@tescaelements.com; si el doctor dice founder, aipeople, business, ceo o tesca, pasa ese alias "
                 "en parameters.mailbox o parameters.from. Si el doctor pide cambiar de buzon, usa switch_mailbox y luego conserva "
