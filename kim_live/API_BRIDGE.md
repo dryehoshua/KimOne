@@ -11,6 +11,8 @@ Update 2026-05-12 / Kim Live 1.5.8: se agrega un modelo persistente de acciones 
 
 Update 2026-05-12 / Kim Live 1.5.11: se agrega autorizacion ligera para acciones sensibles. Lectura y busqueda siguen sin friccion; ejecutar `confirm_prepared` o cualquier `confirm=true` requiere una frase de autorizacion o PIN guardado en macOS Keychain. La frase/PIN no se escribe en logs ni en memoria.
 
+Update 2026-05-13 / Kim Live 1.5.12: se agrega el buzon `business@aipeople.io`, se actualiza el PIN en Keychain, y las acciones preparadas confirmadas se eliminan del cache para evitar dobles ejecuciones por clic repetido.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -179,6 +181,7 @@ Buzones activos:
 
 - `founder@aipeople.io`
 - `founder@aipeople.work`
+- `business@aipeople.io`
 - `business@tescaelements.com`
 - `ceo@tescaelements.com`
 
@@ -186,6 +189,7 @@ Kim puede seleccionar remitente con `mailbox`, `from`, `account`, `sender`, `sel
 
 - `founder`, `aipeople`, `ai people`, `aipeople.io`
 - `work`, `aipeople.work`
+- `business aipeople`, `business ai people`, `aipeople business`, `business io`
 - `business`, `tesca business`
 - `ceo`, `tesca`, `tesca ceo`
 

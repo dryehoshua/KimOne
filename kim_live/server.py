@@ -112,7 +112,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.11"
+APP_VERSION = "1.5.12"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -123,6 +123,7 @@ DEFAULT_HOSTINGER_MAILBOX = "founder@aipeople.io"
 HOSTINGER_MAILBOXES = [
     DEFAULT_HOSTINGER_MAILBOX,
     "founder@aipeople.work",
+    "business@aipeople.io",
     "business@tescaelements.com",
     "ceo@tescaelements.com",
 ]
@@ -134,6 +135,11 @@ HOSTINGER_MAILBOX_ALIASES = {
     "aipeople.io": DEFAULT_HOSTINGER_MAILBOX,
     "work": "founder@aipeople.work",
     "aipeople.work": "founder@aipeople.work",
+    "business aipeople": "business@aipeople.io",
+    "business ai people": "business@aipeople.io",
+    "aipeople business": "business@aipeople.io",
+    "ai people business": "business@aipeople.io",
+    "business io": "business@aipeople.io",
     "business": "business@tescaelements.com",
     "tesca business": "business@tescaelements.com",
     "ceo": "ceo@tescaelements.com",
@@ -143,6 +149,7 @@ HOSTINGER_MAILBOX_ALIASES = {
 HOSTINGER_MAILBOX_DISPLAY_NAMES = {
     DEFAULT_HOSTINGER_MAILBOX: "Dr. Yehoshua Rodriguez | AI People",
     "founder@aipeople.work": "Dr. Yehoshua Rodriguez | AI People",
+    "business@aipeople.io": "AI People",
     "business@tescaelements.com": "Tesca Elements",
     "ceo@tescaelements.com": "Dr. Yehoshua Rodriguez | Tesca Elements",
 }
@@ -2919,27 +2926,35 @@ def confirmation_preview(provider, action, summary, parameters, execution_parame
 
 def load_prepared_action_state():
     merged = {}
+    cleared_ids = set()
     latest_updated = ""
+    sources = []
     for path in [API_PREPARED_ACTIONS, RUNTIME_API_PREPARED_ACTIONS]:
         data = read_json_file(path, None)
         if not isinstance(data, dict):
             continue
+        sources.append(data)
         latest_updated = max(latest_updated, str(data.get("updated_at") or ""))
+        for action_id in data.get("cleared_action_ids") or []:
+            if str(action_id or "").strip():
+                cleared_ids.add(str(action_id))
+    for data in sources:
         for item in data.get("actions") or []:
             if not isinstance(item, dict):
                 continue
             action_id = str(item.get("id") or "").strip()
-            if action_id:
+            if action_id and action_id not in cleared_ids:
                 merged[action_id] = item
     if not merged:
-        return {"updated_at": now_iso(), "actions": []}
+        return {"updated_at": latest_updated or now_iso(), "actions": [], "cleared_action_ids": sorted(cleared_ids)[-240:]}
     actions = sorted(merged.values(), key=lambda item: str(item.get("prepared_at") or item.get("resolved_at") or ""))
-    return {"updated_at": latest_updated or now_iso(), "actions": actions}
+    return {"updated_at": latest_updated or now_iso(), "actions": actions, "cleared_action_ids": sorted(cleared_ids)[-240:]}
 
 
 def save_prepared_action_state(state):
     state["updated_at"] = now_iso()
     state["actions"] = list(state.get("actions") or [])[-120:]
+    state["cleared_action_ids"] = list(dict.fromkeys(str(item) for item in (state.get("cleared_action_ids") or []) if str(item))) [-240:]
     write_json_file_both(API_PREPARED_ACTIONS, RUNTIME_API_PREPARED_ACTIONS, state)
     return state
 
@@ -2971,9 +2986,7 @@ def pending_prepared_actions(session_id=""):
     actions = load_prepared_action_state().get("actions", [])
     rows = [item for item in actions if item.get("status") == "prepared"]
     if session_id:
-        scoped = [item for item in rows if item.get("session_id") == session_id]
-        if scoped:
-            rows = scoped
+        rows = [item for item in rows if item.get("session_id") == session_id]
     rows = rows[-12:]
     return [
         {
@@ -3019,6 +3032,18 @@ def mark_prepared_action(action_id, status, result=None):
     return None
 
 
+def clear_prepared_action(action_id):
+    state = load_prepared_action_state()
+    before = len(state.get("actions", []))
+    state["actions"] = [item for item in state.get("actions", []) if str(item.get("id")) != str(action_id)]
+    state.setdefault("cleared_action_ids", []).append(str(action_id))
+    if len(state.get("actions", [])) != before:
+        save_prepared_action_state(state)
+        return True
+    save_prepared_action_state(state)
+    return False
+
+
 def execute_prepared_action(action_id="", session_id="", transcript=""):
     item = find_prepared_action(action_id, session_id=session_id)
     payload = item.get("confirm_payload") or {}
@@ -3033,6 +3058,8 @@ def execute_prepared_action(action_id="", session_id="", transcript=""):
         transcript=transcript,
     )
     mark_prepared_action(item.get("id"), "confirmed" if result.get("ok") else "failed", result)
+    if result.get("ok"):
+        clear_prepared_action(item.get("id"))
     result["prepared_action_id"] = item.get("id")
     result["prepared_action_status"] = "confirmed" if result.get("ok") else "failed"
     return result
