@@ -109,14 +109,34 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.8"
+APP_VERSION = "1.5.10"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
-DEFAULT_HOSTINGER_MAILBOX = "business@tescaelements.com"
+DEFAULT_HOSTINGER_MAILBOX = "founder@aipeople.io"
+HOSTINGER_MAILBOXES = [
+    DEFAULT_HOSTINGER_MAILBOX,
+    "founder@aipeople.work",
+    "business@tescaelements.com",
+    "ceo@tescaelements.com",
+]
+HOSTINGER_MAILBOX_ALIASES = {
+    "founder": DEFAULT_HOSTINGER_MAILBOX,
+    "founder ai people": DEFAULT_HOSTINGER_MAILBOX,
+    "aipeople": DEFAULT_HOSTINGER_MAILBOX,
+    "ai people": DEFAULT_HOSTINGER_MAILBOX,
+    "aipeople.io": DEFAULT_HOSTINGER_MAILBOX,
+    "work": "founder@aipeople.work",
+    "aipeople.work": "founder@aipeople.work",
+    "business": "business@tescaelements.com",
+    "tesca business": "business@tescaelements.com",
+    "ceo": "ceo@tescaelements.com",
+    "tesca": "ceo@tescaelements.com",
+    "tesca ceo": "ceo@tescaelements.com",
+}
 HOSTINGER_IMAP_HOST = "imap.hostinger.com"
 HOSTINGER_IMAP_PORT = 993
 HOSTINGER_SMTP_HOST = "smtp.hostinger.com"
@@ -1629,14 +1649,35 @@ def hostinger_mail_slug(mailbox):
     return re.sub(r"[^a-z0-9]+", "_", str(mailbox or "").strip().lower()).strip("_")
 
 
+def hostinger_known_mailboxes():
+    seen = {}
+    for mailbox in HOSTINGER_MAILBOXES:
+        account = str(mailbox or "").strip().lower()
+        if account:
+            seen[account] = True
+    return list(seen.keys())
+
+
+def resolve_hostinger_mailbox(mailbox=None):
+    value = str(mailbox or "").strip().lower()
+    if not value:
+        return DEFAULT_HOSTINGER_MAILBOX
+    normalized = re.sub(r"[\s_-]+", " ", value).strip()
+    if value in HOSTINGER_MAILBOX_ALIASES:
+        return HOSTINGER_MAILBOX_ALIASES[value]
+    if normalized in HOSTINGER_MAILBOX_ALIASES:
+        return HOSTINGER_MAILBOX_ALIASES[normalized]
+    if "@" in value:
+        return value
+    return DEFAULT_HOSTINGER_MAILBOX
+
+
 def hostinger_mail_password_service(mailbox):
     return f"codex.hostinger_mail.{hostinger_mail_slug(mailbox)}.password"
 
 
 def hostinger_mail_config(mailbox=None):
-    account = str(mailbox or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
-    if not account:
-        account = DEFAULT_HOSTINGER_MAILBOX
+    account = resolve_hostinger_mailbox(mailbox)
     return {
         "account": account,
         "imap_host": HOSTINGER_IMAP_HOST,
@@ -1672,28 +1713,15 @@ def hostinger_mail_configured(mailbox=None):
         return False
 
 
-def hostinger_mail_status(live=False, mailbox=None):
+def hostinger_single_mail_status(live=False, mailbox=None):
     config = hostinger_mail_config(mailbox)
     configured = hostinger_mail_configured(config["account"])
     status = {
         "configured": configured,
         "authorized": configured,
-        "mailboxes": [config["account"]],
-        "default_mailbox": config["account"],
+        "mailbox": config["account"],
         "imap": f"{config['imap_host']}:{config['imap_port']}",
         "smtp": f"{config['smtp_host']}:{config['smtp_port']}",
-        "write_requires_confirmation": True,
-        "capabilities": [
-            "status",
-            "list_messages",
-            "search_messages",
-            "get_message",
-            "draft_email",
-            "draft_reply",
-            "send_email",
-            "reply_email",
-        ],
-        "mode": "imap_smtp",
     }
     if live and configured:
         try:
@@ -1707,6 +1735,44 @@ def hostinger_mail_status(live=False, mailbox=None):
             status["live_ok"] = False
             status["error"] = brief(str(exc), 220)
     return status
+
+
+def hostinger_mail_status(live=False, mailbox=None):
+    selected = resolve_hostinger_mailbox(mailbox)
+    accounts = []
+    for account in hostinger_known_mailboxes():
+        accounts.append(hostinger_single_mail_status(live=(live and account == selected), mailbox=account))
+    selected_status = next((item for item in accounts if item.get("mailbox") == selected), hostinger_single_mail_status(live=live, mailbox=selected))
+    return {
+        "configured": any(item.get("configured") for item in accounts),
+        "authorized": bool(selected_status.get("authorized")),
+        "mailboxes": hostinger_known_mailboxes(),
+        "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
+        "selected_mailbox": selected,
+        "aliases": HOSTINGER_MAILBOX_ALIASES,
+        "imap": f"{HOSTINGER_IMAP_HOST}:{HOSTINGER_IMAP_PORT}",
+        "smtp": f"{HOSTINGER_SMTP_HOST}:{HOSTINGER_SMTP_PORT}",
+        "write_requires_confirmation": True,
+        "capabilities": [
+            "status",
+            "list_mailboxes",
+            "list_folders",
+            "list_messages",
+            "search_messages",
+            "get_message",
+            "draft_email",
+            "draft_reply",
+            "send_email",
+            "reply_email",
+            "move_message",
+            "mark_spam",
+            "move_to_trash",
+            "archive_message",
+        ],
+        "mode": "imap_smtp",
+        "accounts": accounts,
+        **{key: value for key, value in selected_status.items() if key in {"live_ok", "inbox_count", "error"}},
+    }
 
 
 class HostingerImapSession:
@@ -1757,6 +1823,25 @@ def strip_html_text(value):
     clean = re.sub(r"[ \t]+", " ", clean)
     clean = re.sub(r"\n\s+\n", "\n\n", clean)
     return clean.strip()
+
+
+def parse_imap_folder_line(line):
+    raw = line.decode("utf-8", errors="replace") if isinstance(line, bytes) else str(line or "")
+    flags_match = re.match(r"\(([^)]*)\)", raw)
+    flags = flags_match.group(1).split() if flags_match else []
+    name = ""
+    quoted = re.search(r'"([^"]+)"\s*$', raw)
+    if quoted:
+        name = quoted.group(1)
+    else:
+        parts = raw.rsplit(" ", 1)
+        name = parts[-1].strip() if parts else raw.strip()
+    return {"name": name.strip('"'), "flags": flags, "raw": raw}
+
+
+def imap_folder_arg(name):
+    safe = str(name or "").replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{safe}"'
 
 
 def first_value(mapping, *keys, default=""):
@@ -1874,9 +1959,126 @@ def hostinger_fetch_message(mail, uid, include_body=False):
     return hostinger_normalize_message(uid, message, include_body=include_body)
 
 
+def hostinger_list_folders(parameters):
+    parameters = parameters or {}
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    with hostinger_imap_connection(mailbox, readonly=True) as mail:
+        typ, data = mail.list()
+    if typ != "OK":
+        raise RuntimeError("IMAP list fallo.")
+    folders = [parse_imap_folder_line(line) for line in (data or [])]
+    return {
+        "ok": True,
+        "provider": "hostinger_mail",
+        "action": "list_folders",
+        "mailbox": mailbox,
+        "folders": folders,
+    }
+
+
+def hostinger_folder_for_purpose(mailbox, purpose, explicit=""):
+    explicit = str(explicit or "").strip()
+    if explicit:
+        return explicit
+    folders = hostinger_list_folders({"mailbox": mailbox}).get("folders") or []
+    purpose = str(purpose or "").strip().lower()
+    needles = {
+        "spam": ["\\junk", "junk", "spam", "correo no deseado"],
+        "trash": ["\\trash", "trash", "deleted", "papelera"],
+        "archive": ["archive", "archivo"],
+    }.get(purpose, [])
+    for folder in folders:
+        haystack = " ".join(folder.get("flags") or []).lower() + " " + str(folder.get("name") or "").lower()
+        if any(needle in haystack for needle in needles):
+            return folder.get("name")
+    raise ValueError(f"No encontre carpeta destino para {purpose} en {mailbox}. Usa list_folders o pasa target_folder.")
+
+
+def normalize_message_ids(parameters):
+    raw = first_value(parameters, "message_ids", "uids", "ids", "message_id", "uid", "id")
+    if isinstance(raw, list):
+        values = raw
+    else:
+        values = re.split(r"[,\s]+", str(raw or ""))
+    ids = [str(value).strip() for value in values if str(value).strip()]
+    if not ids:
+        raise ValueError("Falta message_id/uid para mover correo.")
+    return ids
+
+
+def hostinger_move_message(parameters, confirm=False, purpose="custom"):
+    parameters = parameters or {}
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    source_folder = str(first_value(parameters, "folder", "source_folder", default="INBOX") or "INBOX").strip()
+    message_ids = normalize_message_ids(parameters)
+    target_folder = hostinger_folder_for_purpose(
+        mailbox,
+        purpose,
+        explicit=first_value(parameters, "target_folder", "destination_folder", "to_folder"),
+    )
+    action_name = {
+        "spam": "mark_spam",
+        "trash": "move_to_trash",
+        "archive": "archive_message",
+    }.get(purpose, "move_message")
+    execution_parameters = {
+        "mailbox": mailbox,
+        "folder": source_folder,
+        "message_ids": message_ids,
+        "target_folder": target_folder,
+    }
+    if not confirm:
+        return confirmation_preview(
+            "hostinger_mail",
+            action_name,
+            f"Mover {len(message_ids)} correo(s) de {mailbox}/{source_folder} a {target_folder}.",
+            execution_parameters,
+        )
+    moved = []
+    failed = []
+    method = "MOVE"
+    with hostinger_imap_connection(mailbox, readonly=False) as mail:
+        mail.select(source_folder, readonly=False)
+        target_arg = imap_folder_arg(target_folder)
+        for uid in message_ids:
+            typ, data = mail.uid("MOVE", uid, target_arg)
+            if typ != "OK":
+                method = "COPY_DELETE_EXPUNGE"
+                copy_typ, copy_data = mail.uid("COPY", uid, target_arg)
+                if copy_typ == "OK":
+                    store_typ, _store_data = mail.uid("STORE", uid, "+FLAGS", "(\\Deleted)")
+                    if store_typ == "OK":
+                        moved.append(uid)
+                    else:
+                        failed.append({"uid": uid, "error": f"STORE fallo: {store_typ}"})
+                else:
+                    failed.append({"uid": uid, "error": f"MOVE/COPY fallo: {typ}; {copy_typ}", "data": brief(str(data or copy_data), 180)})
+            else:
+                moved.append(uid)
+        if method == "COPY_DELETE_EXPUNGE" and moved:
+            mail.expunge()
+    result = {
+        "ok": not failed,
+        "provider": "hostinger_mail",
+        "action": action_name,
+        "mailbox": mailbox,
+        "source_folder": source_folder,
+        "target_folder": target_folder,
+        "message_ids": message_ids,
+        "moved": moved,
+        "failed": failed,
+        "method": method,
+        "confirmed": True,
+        "moved_at": now_iso(),
+    }
+    append_jsonl_any([HOSTINGER_MAIL_LOG, RUNTIME_HOSTINGER_MAIL_LOG], result)
+    append_memory("hostinger_mail_moved", result)
+    return result
+
+
 def hostinger_list_messages(parameters):
     parameters = parameters or {}
-    mailbox = str(parameters.get("mailbox") or parameters.get("account") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
     folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
     limit = min(max(int(parameters.get("max_results") or parameters.get("limit") or 10), 1), 50)
     with hostinger_imap_connection(mailbox, readonly=True) as mail:
@@ -1901,7 +2103,7 @@ def hostinger_list_messages(parameters):
 
 def hostinger_get_message(parameters):
     parameters = parameters or {}
-    mailbox = str(parameters.get("mailbox") or parameters.get("account") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
     folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
     uid = str(parameters.get("message_id") or parameters.get("uid") or parameters.get("id") or "").strip()
     if not uid:
@@ -1952,7 +2154,7 @@ def hostinger_email_preview(parameters, mailbox):
 
 def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
     data = dict(parameters or {})
-    mailbox = mailbox or str(data.get("mailbox") or data.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    mailbox = resolve_hostinger_mailbox(mailbox or first_value(data, "mailbox", "from", "account", "sender"))
     message_id = str(first_value(data, "message_id", "uid", "id", "reply_to_message_id") or "").strip()
     original = None
     if reply and message_id:
@@ -1984,7 +2186,7 @@ def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
 
 def hostinger_send_email(parameters, confirm=False, reply=False):
     parameters = parameters or {}
-    mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "from", "account", "sender"))
     parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     if not confirm:
@@ -2053,7 +2255,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
 
 def hostinger_draft_email(parameters, reply=False):
     parameters = parameters or {}
-    mailbox = str(parameters.get("mailbox") or parameters.get("from") or DEFAULT_HOSTINGER_MAILBOX).strip().lower()
+    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "from", "account", "sender"))
     parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     return {
@@ -2074,13 +2276,38 @@ def run_hostinger_mail_bridge(action, parameters, confirm=False):
     action = (action or "").strip().lower()
     parameters = parameters or {}
     if action in {"status", "me"}:
-        return {"ok": True, "provider": "hostinger_mail", "action": action, "status": hostinger_mail_status(live=True)}
+        return {
+            "ok": True,
+            "provider": "hostinger_mail",
+            "action": action,
+            "status": hostinger_mail_status(
+                live=True,
+                mailbox=first_value(parameters, "mailbox", "account", "from", "sender"),
+            ),
+        }
     if action in {"list_mailboxes", "mailboxes"}:
-        return {"ok": True, "provider": "hostinger_mail", "action": action, "mailboxes": [DEFAULT_HOSTINGER_MAILBOX]}
+        return {
+            "ok": True,
+            "provider": "hostinger_mail",
+            "action": action,
+            "mailboxes": hostinger_known_mailboxes(),
+            "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
+            "aliases": HOSTINGER_MAILBOX_ALIASES,
+        }
+    if action in {"list_folders", "folders"}:
+        return hostinger_list_folders(parameters)
     if action in {"list_messages", "list_emails", "inbox", "search", "search_messages"}:
         return hostinger_list_messages(parameters)
     if action in {"get_message", "read_message", "read_email"}:
         return hostinger_get_message(parameters)
+    if action in {"move_message", "move_email", "move_to_folder"}:
+        return hostinger_move_message(parameters, confirm=confirm, purpose="custom")
+    if action in {"mark_spam", "mark_as_spam", "spam", "junk", "move_to_spam"}:
+        return hostinger_move_message(parameters, confirm=confirm, purpose="spam")
+    if action in {"move_to_trash", "trash_email", "delete_email", "delete_message", "basura", "eliminar_correo"}:
+        return hostinger_move_message(parameters, confirm=confirm, purpose="trash")
+    if action in {"archive_message", "archive_email", "archive", "archivar"}:
+        return hostinger_move_message(parameters, confirm=confirm, purpose="archive")
     if action in {"draft_email", "draft"}:
         return hostinger_draft_email(parameters, reply=False)
     if action in {"draft_reply"}:
@@ -2562,6 +2789,12 @@ def agent_action_defaults(action, parameters):
         return "hostinger_mail", "send_email", data
     if action in {"reply_email", "reply", "responder_correo"}:
         return "hostinger_mail", "reply_email", data
+    if action in {"mark_spam", "spam", "junk", "correo_basura", "mover_spam"}:
+        return "hostinger_mail", "mark_spam", data
+    if action in {"move_to_trash", "delete_email", "trash_email", "eliminar_correo", "basura"}:
+        return "hostinger_mail", "move_to_trash", data
+    if action in {"archive_email", "archive_message", "archivar_correo"}:
+        return "hostinger_mail", "archive_message", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
         if not first_value(data, "name", "title", "subject", "task_name", "task", "asunto"):
             data["name"] = generated_title("Tarea Kim")
@@ -2585,7 +2818,17 @@ def api_bridge_templates():
     return {
         "agent_action": {
             "description": "Accion de alto nivel para que Kim escriba por API sin reconstruir JSON complicado.",
-            "actions": ["send_email", "reply_email", "create_task", "update_task", "comment_task", "create_page"],
+            "actions": [
+                "send_email",
+                "reply_email",
+                "mark_spam",
+                "move_to_trash",
+                "archive_email",
+                "create_task",
+                "update_task",
+                "comment_task",
+                "create_page",
+            ],
             "confirmation": "Toda escritura devuelve prepared_action_id. El doctor confirma con action=confirm_prepared o el boton del frontend.",
             "examples": [
                 {
@@ -2605,7 +2848,11 @@ def api_bridge_templates():
         "hostinger_mail": {
             "send_email": {
                 "required": ["to", "subject", "body"],
+                "mailboxes": hostinger_known_mailboxes(),
+                "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
+                "mailbox_aliases": HOSTINGER_MAILBOX_ALIASES,
                 "aliases": {
+                    "mailbox": ["from", "account", "sender"],
                     "to": ["recipient", "email", "client_email", "destinatario"],
                     "subject": ["title", "name", "asunto"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
@@ -2625,6 +2872,7 @@ def api_bridge_templates():
             "reply_email": {
                 "required": ["message_id", "body"],
                 "aliases": {
+                    "mailbox": ["from", "account", "sender"],
                     "message_id": ["uid", "id", "reply_to_message_id"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
                     "subject": ["title", "name", "asunto"],
@@ -2634,6 +2882,16 @@ def api_bridge_templates():
                     "subject": "Re: asunto original",
                     "in_reply_to": "Message-ID original",
                 },
+            },
+            "message_hygiene": {
+                "actions": ["list_folders", "move_message", "mark_spam", "move_to_trash", "archive_message"],
+                "required": ["mailbox", "message_id or message_ids"],
+                "aliases": {
+                    "mailbox": ["from", "account", "sender"],
+                    "message_ids": ["uids", "ids", "message_id", "uid", "id"],
+                    "target_folder": ["destination_folder", "to_folder"],
+                },
+                "rule": "Mover correos a Junk/Trash/Archive siempre requiere confirm=false, confirmacion del doctor y luego confirm_prepared. No hay borrado permanente automatico.",
             },
         },
         "clickup": {
@@ -3958,15 +4216,21 @@ def realtime_session_config():
                 "y usa el template exacto. Si faltan IDs de ClickUp, primero lista spaces/folders/lists o pasa "
                 "space_name/list_name; el bridge puede resolver list_id o preparar crear una lista con confirmacion. "
                 "Si el doctor te pide actuar de forma directa, puedes usar provider=all con action send_email, "
-                "create_task, update_task, comment_task o create_page; el servidor enruta a la API correcta. "
+                "create_task, update_task, comment_task, create_page, mark_spam, move_to_trash o archive_email; "
+                "el servidor enruta a la API correcta. "
                 "No digas que falta subject/title/list_id sin haber llamado la herramienta: el bridge genera "
                 "subjects/titles por defecto y crea/prepara Kim Inbox cuando falta lista. "
                 "Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
-                "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Para correo institucional Hostinger/Tesca, usa kim_api_bridge "
+                "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Para correo institucional Hostinger, usa kim_api_bridge "
                 "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
                 "draft_reply, send_email o reply_email. Si el doctor dice mandar, enviar, responder o confirmar envio, "
                 "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. "
+                "Puede mandar desde founder@aipeople.io, founder@aipeople.work, business@tescaelements.com o "
+                "ceo@tescaelements.com; si el doctor dice founder, aipeople, business, ceo o tesca, pasa ese alias "
+                "en parameters.mailbox o parameters.from. "
+                "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
+                "o move_to_trash; no borres permanentemente. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
@@ -4035,8 +4299,9 @@ def realtime_session_config():
                                     "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
                                     "get_page, create_page, update_page_properties. Templates: templates, self_test. Gmail: status, auth_url, "
-                                    "profile, list_messages, get_message. Hostinger Mail: status, list_messages, "
-                                    "search_messages, get_message, draft_email, draft_reply, send_email, reply_email."
+                                    "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
+                                    "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
+                                    "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message."
                                 ),
                             },
                             "parameters": {

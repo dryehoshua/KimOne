@@ -157,3 +157,31 @@ Ejemplo:
   "confirm": false
 }
 ```
+
+## Hostinger multi-buzon
+
+Default desde 2026-05-12: `founder@aipeople.io`.
+
+Buzones activos:
+
+- `founder@aipeople.io`
+- `founder@aipeople.work`
+- `business@tescaelements.com`
+- `ceo@tescaelements.com`
+
+Kim puede seleccionar remitente con `mailbox`, `from`, `account` o `sender`. Aliases disponibles:
+
+- `founder`, `aipeople`, `ai people`, `aipeople.io`
+- `work`, `aipeople.work`
+- `business`, `tesca business`
+- `ceo`, `tesca`, `tesca ceo`
+
+Acciones de higiene de correo:
+
+- `list_folders`: lista carpetas IMAP.
+- `mark_spam`: mueve UID(s) a Junk/Spam.
+- `move_to_trash`: mueve UID(s) a Trash/Papelera.
+- `archive_message`: mueve UID(s) a Archive si existe.
+- `move_message`: mueve UID(s) a una carpeta indicada en `target_folder`.
+
+Todas requieren preparacion y confirmacion. No hay borrado permanente automatico.
