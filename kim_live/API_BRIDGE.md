@@ -9,6 +9,8 @@ Preparar a Kim Live para leer y modificar informacion viva de ClickUp y Notion d
 
 Update 2026-05-12 / Kim Live 1.5.8: se agrega un modelo persistente de acciones preparadas. Cuando una escritura devuelve `requires_confirmation`, el servidor guarda el `confirm_payload` como `prepared_action_id`; el frontend puede confirmarlo con boton, y Kim tambien puede confirmarlo con `provider=all`, `action=confirm_prepared`.
 
+Update 2026-05-12 / Kim Live 1.5.11: se agrega autorizacion ligera para acciones sensibles. Lectura y busqueda siguen sin friccion; ejecutar `confirm_prepared` o cualquier `confirm=true` requiere una frase de autorizacion o PIN guardado en macOS Keychain. La frase/PIN no se escribe en logs ni en memoria.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -19,6 +21,8 @@ Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritu
 4. Ejecutar la accion con `confirm=true`.
 5. Esperar respuesta de la API.
 6. Guardar evidencia en memoria y responder si la API confirmo o fallo.
+
+Desde 1.5.11, si el servidor responde `requires_security_phrase=true`, Kim debe pedir al doctor la frase de autorizacion o PIN y volver a confirmar. La autorizacion dura 15 minutos por sesion. No repetir ni guardar la frase en documentos, memorias o tareas.
 
 Desde 1.5.8, Kim debe preferir confirmar asi:
 
@@ -50,6 +54,15 @@ Entrada:
     }
   },
   "confirm": false
+}
+```
+
+Para revisar el estado del candado:
+
+```json
+{
+  "provider": "all",
+  "action": "security_status"
 }
 ```
 
@@ -169,12 +182,22 @@ Buzones activos:
 - `business@tescaelements.com`
 - `ceo@tescaelements.com`
 
-Kim puede seleccionar remitente con `mailbox`, `from`, `account` o `sender`. Aliases disponibles:
+Kim puede seleccionar remitente con `mailbox`, `from`, `account`, `sender`, `selected_mailbox` o `active_mailbox`. Aliases disponibles:
 
 - `founder`, `aipeople`, `ai people`, `aipeople.io`
 - `work`, `aipeople.work`
 - `business`, `tesca business`
 - `ceo`, `tesca`, `tesca ceo`
+
+Acciones multi-buzon:
+
+- `list_mailboxes`: lista buzones activos y aliases.
+- `switch_mailbox`: cambia/declara el buzon activo. Kim debe conservar `selected_mailbox` en la siguiente lectura, envio o limpieza.
+
+Envio:
+
+- Si falta `subject`, el bridge genera uno por marca: AI People o Tesca Elements.
+- `from_name` acepta `sender_name`, `display_name` o `nombre_remitente`; si falta, usa un nombre visible por marca.
 
 Acciones de higiene de correo:
 

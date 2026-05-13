@@ -1293,7 +1293,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.10</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.11</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -2637,6 +2637,12 @@
           session_id: sessionId
         });
         const result = data.result;
+        if (result && result.requires_security_phrase) {
+          appendMessage("Codex", "Falta autorizacion de seguridad. Di la frase o escribe el PIN y vuelve a confirmar.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+          $("apiBridgeState").textContent = "Falta frase/PIN";
+          $("confirmApiAction").disabled = false;
+          return;
+        }
         appendMessage("Codex", "Accion confirmada.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
         $("apiBridgeState").textContent = "Cambio confirmado";
         renderPendingApiAction(null);
@@ -2725,8 +2731,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.10");
-        $("appVersion").textContent = "v" + (data.version || "1.5.10");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.11");
+        $("appVersion").textContent = "v" + (data.version || "1.5.11");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";

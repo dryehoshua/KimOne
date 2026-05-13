@@ -15,7 +15,7 @@ from email import policy
 from email.header import decode_header, make_header
 from email.message import EmailMessage
 from email.parser import BytesParser
-from email.utils import getaddresses
+from email.utils import formataddr, getaddresses
 import hashlib
 import html
 import imaplib
@@ -30,6 +30,7 @@ import shutil
 import smtplib
 import subprocess
 import tempfile
+import unicodedata
 import urllib.parse
 import urllib.error
 import urllib.request
@@ -94,6 +95,8 @@ GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
 COINMARKETCAP_KEYCHAIN_SERVICE = "codex.coinmarketcap.api_key"
+SECURITY_VOICE_PHRASE_KEYCHAIN_SERVICE = "codex.kim.security.voice_phrase"
+SECURITY_PIN_KEYCHAIN_SERVICE = "codex.kim.security.pin"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
 HOST = "127.0.0.1"
 PORT = 8765
@@ -109,7 +112,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.10"
+APP_VERSION = "1.5.11"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -137,6 +140,17 @@ HOSTINGER_MAILBOX_ALIASES = {
     "tesca": "ceo@tescaelements.com",
     "tesca ceo": "ceo@tescaelements.com",
 }
+HOSTINGER_MAILBOX_DISPLAY_NAMES = {
+    DEFAULT_HOSTINGER_MAILBOX: "Dr. Yehoshua Rodriguez | AI People",
+    "founder@aipeople.work": "Dr. Yehoshua Rodriguez | AI People",
+    "business@tescaelements.com": "Tesca Elements",
+    "ceo@tescaelements.com": "Dr. Yehoshua Rodriguez | Tesca Elements",
+}
+SECURITY_AUTHORIZATIONS = MEMORY_CONTEXT_DIR / "kim_security_authorizations.json"
+RUNTIME_SECURITY_AUTHORIZATIONS = RUNTIME_CONTEXT / "kim_security_authorizations.json"
+SECURITY_AUTH_TTL_SECONDS = 15 * 60
+SECURITY_SECRET_CACHE_SECONDS = 60
+SECURITY_SECRET_CACHE = {"loaded_at": 0.0, "items": [], "loaded_once": False}
 HOSTINGER_IMAP_HOST = "imap.hostinger.com"
 HOSTINGER_IMAP_PORT = 993
 HOSTINGER_SMTP_HOST = "smtp.hostinger.com"
@@ -407,6 +421,196 @@ def store_keychain_secret(service, value):
         timeout=60,
     )
     return True
+
+
+def normalize_security_text(value):
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    return text
+
+
+def security_secret_candidates(force=False):
+    now_ts = dt.datetime.now(dt.timezone.utc).timestamp()
+    if not force and SECURITY_SECRET_CACHE.get("loaded_once"):
+        return list(SECURITY_SECRET_CACHE.get("items") or [])
+    candidates = []
+    phrase = load_keychain_secret(SECURITY_VOICE_PHRASE_KEYCHAIN_SERVICE, required=False)
+    if phrase:
+        candidates.append({"method": "voice_phrase", "value": phrase})
+    pin = load_keychain_secret(SECURITY_PIN_KEYCHAIN_SERVICE, required=False)
+    if pin:
+        candidates.append({"method": "pin", "value": pin})
+    SECURITY_SECRET_CACHE["loaded_at"] = now_ts
+    SECURITY_SECRET_CACHE["items"] = candidates
+    SECURITY_SECRET_CACHE["loaded_once"] = True
+    return candidates
+
+
+def security_status(session_id=""):
+    candidates = security_secret_candidates()
+    active = security_authorization_is_active(session_id) if session_id else False
+    return {
+        "configured": bool(candidates),
+        "authorized": bool(active),
+        "methods": [item["method"] for item in candidates],
+        "ttl_seconds": SECURITY_AUTH_TTL_SECONDS,
+        "scope": "confirm_prepared y confirm=true para escrituras/API sensibles",
+    }
+
+
+def load_security_authorizations():
+    merged = {}
+    latest_updated = ""
+    for path in [SECURITY_AUTHORIZATIONS, RUNTIME_SECURITY_AUTHORIZATIONS]:
+        data = read_json_file(path, None)
+        if not isinstance(data, dict):
+            continue
+        latest_updated = max(latest_updated, str(data.get("updated_at") or ""))
+        for session_id, item in (data.get("sessions") or {}).items():
+            if isinstance(item, dict):
+                merged[str(session_id)] = item
+    return {"updated_at": latest_updated or now_iso(), "sessions": merged}
+
+
+def save_security_authorizations(state):
+    now_ts = dt.datetime.now(dt.timezone.utc).timestamp()
+    sessions = {}
+    for session_id, item in (state.get("sessions") or {}).items():
+        if float(item.get("expires_at_ts") or 0) > now_ts:
+            sessions[str(session_id)] = item
+    state = {"updated_at": now_iso(), "sessions": sessions}
+    write_json_file_both(SECURITY_AUTHORIZATIONS, RUNTIME_SECURITY_AUTHORIZATIONS, state)
+    return state
+
+
+def security_session_key(session_id=""):
+    value = str(session_id or "local").strip() or "local"
+    return re.sub(r"[^A-Za-z0-9_.:-]+", "-", value)[:140]
+
+
+def security_authorization_is_active(session_id=""):
+    state = load_security_authorizations()
+    item = (state.get("sessions") or {}).get(security_session_key(session_id))
+    if not item:
+        return False
+    return float(item.get("expires_at_ts") or 0) > dt.datetime.now(dt.timezone.utc).timestamp()
+
+
+def authorize_security_session(session_id="", method="voice_phrase"):
+    now = dt.datetime.now(dt.timezone.utc)
+    expires = now + dt.timedelta(seconds=SECURITY_AUTH_TTL_SECONDS)
+    state = load_security_authorizations()
+    state.setdefault("sessions", {})[security_session_key(session_id)] = {
+        "authorized_at": now_iso(),
+        "expires_at": expires.isoformat(),
+        "expires_at_ts": expires.timestamp(),
+        "method": method,
+    }
+    save_security_authorizations(state)
+    append_memory(
+        "security_authorized",
+        {"session_id": security_session_key(session_id), "method": method, "expires_at": expires.isoformat()},
+    )
+    return {"authorized": True, "method": method, "expires_at": expires.isoformat()}
+
+
+def security_authorization_from_input(parameters=None, transcript=""):
+    parameters = parameters or {}
+    texts = [(transcript or "")[-800:]]
+    for key in [
+        "authorization_phrase",
+        "security_phrase",
+        "voice_phrase",
+        "frase_autorizacion",
+        "authorization_pin",
+        "security_pin",
+        "pin",
+    ]:
+        if parameters.get(key):
+            texts.append(str(parameters.get(key)))
+    normalized_inputs = [normalize_security_text(text) for text in texts if str(text or "").strip()]
+    compact_inputs = [re.sub(r"\s+", "", item) for item in normalized_inputs]
+    for candidate in security_secret_candidates():
+        secret = normalize_security_text(candidate.get("value"))
+        if not secret:
+            continue
+        compact_secret = re.sub(r"\s+", "", secret)
+        for normalized, compact in zip(normalized_inputs, compact_inputs):
+            if secret and secret in normalized:
+                return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
+            if compact_secret and compact_secret in compact:
+                return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
+    return {"authorized": False}
+
+
+def api_action_requires_security(provider, action, confirm=False):
+    action = (action or "").strip().lower()
+    if action in {"confirm_prepared", "execute_prepared", "confirm_last", "confirm_action", "confirmar_accion"}:
+        return True
+    return bool(confirm)
+
+
+def ensure_api_security(provider, action, parameters=None, confirm=False, session_id="", transcript=""):
+    if not api_action_requires_security(provider, action, confirm=confirm):
+        return {"authorized": True, "required": False}
+    if security_authorization_is_active(session_id):
+        return {"authorized": True, "required": True, "cached": True}
+    probe_parameters = dict(parameters or {})
+    probe_parameters["session_id"] = session_id
+    auth = security_authorization_from_input(probe_parameters, transcript=transcript)
+    if auth.get("authorized"):
+        auth["required"] = True
+        return auth
+    status = security_status(session_id=session_id)
+    return {
+        "authorized": False,
+        "required": True,
+        "configured": status["configured"],
+        "methods": status["methods"],
+        "ttl_seconds": status["ttl_seconds"],
+    }
+
+
+SENSITIVE_LOG_KEYS = {
+    "api_key",
+    "authorization",
+    "authorization_phrase",
+    "authorization_pin",
+    "auth_token",
+    "client_secret",
+    "password",
+    "pin",
+    "security_phrase",
+    "security_pin",
+    "secret",
+    "token",
+    "voice_phrase",
+}
+
+
+def sanitize_for_log(value):
+    if isinstance(value, dict):
+        clean = {}
+        for key, item in value.items():
+            if str(key).lower() in SENSITIVE_LOG_KEYS:
+                clean[key] = "[redacted]"
+            else:
+                clean[key] = sanitize_for_log(item)
+        return clean
+    if isinstance(value, list):
+        return [sanitize_for_log(item) for item in value]
+    return value
+
+
+def sanitize_text_for_log(value):
+    text = str(value or "")
+    clean = text
+    for candidate in security_secret_candidates():
+        secret = str(candidate.get("value") or "").strip()
+        if secret:
+            clean = re.sub(re.escape(secret), "[redacted]", clean, flags=re.I)
+    return clean
 
 
 def text_tokens(text):
@@ -1339,6 +1543,7 @@ def api_bridge_config_status(live=False):
             "mode": "readonly",
         },
         "hostinger_mail": hostinger_status,
+        "security": security_status(),
         "templates": api_bridge_templates(),
     }
     if live and clickup_configured:
@@ -1756,6 +1961,7 @@ def hostinger_mail_status(live=False, mailbox=None):
         "capabilities": [
             "status",
             "list_mailboxes",
+            "switch_mailbox",
             "list_folders",
             "list_messages",
             "search_messages",
@@ -1805,6 +2011,31 @@ class HostingerImapSession:
 
 def hostinger_imap_connection(mailbox=None, readonly=True):
     return HostingerImapSession(mailbox or DEFAULT_HOSTINGER_MAILBOX)
+
+
+def hostinger_mailbox_from_parameters(parameters=None):
+    return resolve_hostinger_mailbox(
+        first_value(parameters or {}, "mailbox", "account", "from", "sender", "selected_mailbox", "active_mailbox")
+    )
+
+
+def hostinger_default_subject(mailbox=None, reply=False):
+    account = resolve_hostinger_mailbox(mailbox)
+    if "aipeople" in account:
+        return "Respuesta AI People" if reply else "Seguimiento AI People"
+    if "tescaelements" in account:
+        return "Respuesta Tesca Elements" if reply else "Seguimiento Tesca Elements"
+    return "Respuesta" if reply else "Seguimiento"
+
+
+def hostinger_display_name(mailbox=None, parameters=None):
+    explicit = str(
+        first_value(parameters or {}, "from_name", "sender_name", "display_name", "nombre_remitente")
+        or ""
+    ).strip()
+    if explicit:
+        return explicit
+    return HOSTINGER_MAILBOX_DISPLAY_NAMES.get(resolve_hostinger_mailbox(mailbox), "")
 
 
 def decode_mail_header(value):
@@ -1961,7 +2192,7 @@ def hostinger_fetch_message(mail, uid, include_body=False):
 
 def hostinger_list_folders(parameters):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     with hostinger_imap_connection(mailbox, readonly=True) as mail:
         typ, data = mail.list()
     if typ != "OK":
@@ -2008,7 +2239,7 @@ def normalize_message_ids(parameters):
 
 def hostinger_move_message(parameters, confirm=False, purpose="custom"):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     source_folder = str(first_value(parameters, "folder", "source_folder", default="INBOX") or "INBOX").strip()
     message_ids = normalize_message_ids(parameters)
     target_folder = hostinger_folder_for_purpose(
@@ -2078,7 +2309,7 @@ def hostinger_move_message(parameters, confirm=False, purpose="custom"):
 
 def hostinger_list_messages(parameters):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
     limit = min(max(int(parameters.get("max_results") or parameters.get("limit") or 10), 1), 50)
     with hostinger_imap_connection(mailbox, readonly=True) as mail:
@@ -2101,9 +2332,27 @@ def hostinger_list_messages(parameters):
     }
 
 
+def hostinger_switch_mailbox(parameters):
+    parameters = parameters or {}
+    mailbox = hostinger_mailbox_from_parameters(parameters)
+    result = {
+        "ok": True,
+        "provider": "hostinger_mail",
+        "action": "switch_mailbox",
+        "selected_mailbox": mailbox,
+        "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
+        "mailboxes": hostinger_known_mailboxes(),
+        "aliases": HOSTINGER_MAILBOX_ALIASES,
+        "message": f"Mailbox activo cambiado a {mailbox}. Las siguientes consultas deben usar selected_mailbox o mailbox={mailbox}.",
+    }
+    append_memory("hostinger_mail_switched", result)
+    append_jsonl_any([HOSTINGER_MAIL_LOG, RUNTIME_HOSTINGER_MAIL_LOG], result)
+    return result
+
+
 def hostinger_get_message(parameters):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "account", "from", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     folder = str(parameters.get("folder") or "INBOX").strip() or "INBOX"
     uid = str(parameters.get("message_id") or parameters.get("uid") or parameters.get("id") or "").strip()
     if not uid:
@@ -2136,6 +2385,8 @@ def hostinger_email_preview(parameters, mailbox):
     bcc = normalize_email_recipients(first_value(parameters, "bcc", "blind_copy"))
     subject = str(first_value(parameters, "subject", "title", "name", "asunto") or "").strip()
     body = str(first_value(parameters, "body", "text", "content", "message", "description", "cuerpo") or "").strip()
+    from_name = hostinger_display_name(mailbox, parameters)
+    from_header = formataddr((from_name, mailbox)) if from_name else mailbox
     if not to:
         raise ValueError("Falta destinatario to para enviar correo.")
     if not subject:
@@ -2144,6 +2395,8 @@ def hostinger_email_preview(parameters, mailbox):
         raise ValueError("Falta body/text para enviar correo.")
     return {
         "from": mailbox,
+        "from_name": from_name,
+        "from_header": from_header,
         "to": to,
         "cc": cc,
         "bcc": bcc,
@@ -2154,7 +2407,9 @@ def hostinger_email_preview(parameters, mailbox):
 
 def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
     data = dict(parameters or {})
-    mailbox = resolve_hostinger_mailbox(mailbox or first_value(data, "mailbox", "from", "account", "sender"))
+    mailbox = resolve_hostinger_mailbox(
+        mailbox or first_value(data, "mailbox", "from", "account", "sender", "selected_mailbox", "active_mailbox")
+    )
     message_id = str(first_value(data, "message_id", "uid", "id", "reply_to_message_id") or "").strip()
     original = None
     if reply and message_id:
@@ -2168,7 +2423,8 @@ def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
         subject = str(first_value(data, "subject", "title", "name", "asunto") or "").strip()
         if not subject:
             original_subject = str(original.get("subject") or "").strip()
-            data["subject"] = original_subject if original_subject.lower().startswith("re:") else f"Re: {original_subject or 'Respuesta de Tesca Elements'}"
+            fallback = hostinger_default_subject(mailbox, reply=True)
+            data["subject"] = original_subject if original_subject.lower().startswith("re:") else f"Re: {original_subject or fallback}"
         merge_missing(
             data,
             {
@@ -2177,7 +2433,7 @@ def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
             },
         )
     if not str(first_value(data, "subject", "title", "name", "asunto") or "").strip():
-        data["subject"] = "Respuesta de Tesca Elements" if reply else "Seguimiento Tesca Elements"
+        data["subject"] = hostinger_default_subject(mailbox, reply=reply)
     body = str(first_value(data, "body", "text", "content", "message", "description", "cuerpo") or "").strip()
     if body and not data.get("body"):
         data["body"] = body
@@ -2186,12 +2442,13 @@ def hostinger_apply_email_template(parameters, mailbox=None, reply=False):
 
 def hostinger_send_email(parameters, confirm=False, reply=False):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "from", "account", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     if not confirm:
         execution_parameters = {
             "mailbox": mailbox,
+            "from_name": preview["from_name"],
             "to": preview["to"],
             "cc": preview["cc"],
             "bcc": preview["bcc"],
@@ -2216,7 +2473,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
         }
         return prepared
     msg = EmailMessage()
-    msg["From"] = mailbox
+    msg["From"] = preview["from_header"]
     msg["To"] = ", ".join(preview["to"])
     if preview["cc"]:
         msg["Cc"] = ", ".join(preview["cc"])
@@ -2240,6 +2497,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
         "provider": "hostinger_mail",
         "action": "reply_email" if reply else "send_email",
         "mailbox": mailbox,
+        "from_name": preview["from_name"],
         "to": preview["to"],
         "cc": preview["cc"],
         "bcc_count": len(preview["bcc"]),
@@ -2255,7 +2513,7 @@ def hostinger_send_email(parameters, confirm=False, reply=False):
 
 def hostinger_draft_email(parameters, reply=False):
     parameters = parameters or {}
-    mailbox = resolve_hostinger_mailbox(first_value(parameters, "mailbox", "from", "account", "sender"))
+    mailbox = hostinger_mailbox_from_parameters(parameters)
     parameters = hostinger_apply_email_template(parameters, mailbox=mailbox, reply=reply)
     preview = hostinger_email_preview(parameters, mailbox)
     return {
@@ -2282,7 +2540,7 @@ def run_hostinger_mail_bridge(action, parameters, confirm=False):
             "action": action,
             "status": hostinger_mail_status(
                 live=True,
-                mailbox=first_value(parameters, "mailbox", "account", "from", "sender"),
+                mailbox=first_value(parameters, "mailbox", "account", "from", "sender", "selected_mailbox", "active_mailbox"),
             ),
         }
     if action in {"list_mailboxes", "mailboxes"}:
@@ -2294,6 +2552,8 @@ def run_hostinger_mail_bridge(action, parameters, confirm=False):
             "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
             "aliases": HOSTINGER_MAILBOX_ALIASES,
         }
+    if action in {"switch_mailbox", "select_mailbox", "set_mailbox", "use_mailbox", "change_mailbox"}:
+        return hostinger_switch_mailbox(parameters)
     if action in {"list_folders", "folders"}:
         return hostinger_list_folders(parameters)
     if action in {"list_messages", "list_emails", "inbox", "search", "search_messages"}:
@@ -2700,7 +2960,7 @@ def store_prepared_action(result, session_id="", transcript=""):
         "summary": result.get("summary") or "",
         "confirm_payload": confirm_payload,
         "preview": result.get("preview"),
-        "transcript_excerpt": brief(transcript, 900),
+        "transcript_excerpt": brief(sanitize_text_for_log(transcript), 900),
     }
     state["actions"].append(item)
     save_prepared_action_state(state)
@@ -2783,7 +3043,7 @@ def agent_action_defaults(action, parameters):
     action = (action or "").strip().lower()
     if action in {"send_email", "send_mail", "email", "correo", "enviar_correo", "mandar_correo"}:
         if not first_value(data, "subject", "title", "name", "asunto"):
-            data["subject"] = generated_title("Seguimiento Tesca")
+            data["subject"] = hostinger_default_subject(hostinger_mailbox_from_parameters(data), reply=False)
         if not first_value(data, "body", "text", "content", "message", "description", "cuerpo"):
             data["body"] = data.get("notes") or "Mensaje enviado desde Kim Live."
         return "hostinger_mail", "send_email", data
@@ -2830,6 +3090,7 @@ def api_bridge_templates():
                 "create_page",
             ],
             "confirmation": "Toda escritura devuelve prepared_action_id. El doctor confirma con action=confirm_prepared o el boton del frontend.",
+            "security": "Desde 1.5.11, ejecutar una accion preparada o confirm=true requiere frase de autorizacion o PIN si estan configurados.",
             "examples": [
                 {
                     "provider": "all",
@@ -2852,10 +3113,15 @@ def api_bridge_templates():
                 "default_mailbox": DEFAULT_HOSTINGER_MAILBOX,
                 "mailbox_aliases": HOSTINGER_MAILBOX_ALIASES,
                 "aliases": {
-                    "mailbox": ["from", "account", "sender"],
+                    "mailbox": ["from", "account", "sender", "selected_mailbox", "active_mailbox"],
+                    "from_name": ["sender_name", "display_name", "nombre_remitente"],
                     "to": ["recipient", "email", "client_email", "destinatario"],
                     "subject": ["title", "name", "asunto"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
+                },
+                "defaults": {
+                    "from_name": HOSTINGER_MAILBOX_DISPLAY_NAMES,
+                    "subject": "Se genera por marca: AI People o Tesca Elements.",
                 },
                 "example": {
                     "provider": "hostinger_mail",
@@ -2869,10 +3135,18 @@ def api_bridge_templates():
                 },
                 "rule": "Si el doctor dice manda/envia, usa send_email, no draft_email. Luego usa confirm_payload con confirm=true.",
             },
+            "switch_mailbox": {
+                "required": ["mailbox"],
+                "aliases": {
+                    "mailbox": ["from", "account", "sender", "selected_mailbox", "active_mailbox"],
+                },
+                "rule": "Usa switch_mailbox cuando el doctor pida cambiar de buzon. Responde con selected_mailbox y luego continua con list_messages, get_message o send_email usando ese buzon.",
+            },
             "reply_email": {
                 "required": ["message_id", "body"],
                 "aliases": {
-                    "mailbox": ["from", "account", "sender"],
+                    "mailbox": ["from", "account", "sender", "selected_mailbox", "active_mailbox"],
+                    "from_name": ["sender_name", "display_name", "nombre_remitente"],
                     "message_id": ["uid", "id", "reply_to_message_id"],
                     "body": ["text", "content", "message", "description", "cuerpo"],
                     "subject": ["title", "name", "asunto"],
@@ -2887,7 +3161,7 @@ def api_bridge_templates():
                 "actions": ["list_folders", "move_message", "mark_spam", "move_to_trash", "archive_message"],
                 "required": ["mailbox", "message_id or message_ids"],
                 "aliases": {
-                    "mailbox": ["from", "account", "sender"],
+                    "mailbox": ["from", "account", "sender", "selected_mailbox", "active_mailbox"],
                     "message_ids": ["uids", "ids", "message_id", "uid", "id"],
                     "target_folder": ["destination_folder", "to_folder"],
                 },
@@ -3353,9 +3627,9 @@ def record_api_bridge_action(provider, action, parameters, result, session_id=""
         "confirmed": bool(result.get("confirmed")) if isinstance(result, dict) else False,
         "requires_confirmation": bool(result.get("requires_confirmation")) if isinstance(result, dict) else False,
         "ok": bool(result.get("ok")) if isinstance(result, dict) else False,
-        "parameters": parameters,
+        "parameters": sanitize_for_log(parameters),
         "result_summary": brief(json.dumps(result, ensure_ascii=False), 900),
-        "transcript_excerpt": brief(transcript, 900),
+        "transcript_excerpt": brief(sanitize_text_for_log(transcript), 900),
     }
     append_jsonl_any([API_BRIDGE_LOG, RUNTIME_API_BRIDGE_LOG], event)
     append_memory("api_bridge_action", event)
@@ -3381,7 +3655,22 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             "action": "pending_actions",
             "actions": pending_prepared_actions(session_id=session_id),
         }
+    elif action in {"security_status", "auth_status", "authorization_status"}:
+        result = {"ok": True, "provider": "all", "action": action, "security": security_status(session_id=session_id)}
     elif action in {"confirm_prepared", "execute_prepared", "confirm_last", "confirm_action", "confirmar_accion"}:
+        security = ensure_api_security(provider, action, parameters, confirm=True, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider or "all",
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
         result = execute_prepared_action(
             action_id=str(first_value(parameters, "prepared_action_id", "action_id", "id") or "").strip(),
             session_id=session_id,
@@ -3390,12 +3679,64 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     elif action in {"status", "status_all", "bridge_status"} or provider == "status" or (provider == "all" and not action):
         result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
     elif provider == "clickup":
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
         result = run_clickup_bridge(action, parameters, confirm=confirm)
     elif provider == "notion":
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
         result = run_notion_bridge(action, parameters, confirm=confirm)
     elif provider in {"hostinger", "hostinger_mail", "tesca_mail", "business_mail", "imap", "smtp"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"email", "mail", "correo"} and hostinger_mail_configured():
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
@@ -4222,13 +4563,17 @@ def realtime_session_config():
                 "subjects/titles por defecto y crea/prepara Kim Inbox cuando falta lista. "
                 "Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
-                "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Para correo institucional Hostinger, usa kim_api_bridge "
+                "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Desde Kim Live 1.5.11, "
+                "si la confirmacion devuelve requires_security_phrase, pide la frase o PIN del doctor y vuelve a confirmar. "
+                "Para correo institucional Hostinger, usa kim_api_bridge "
                 "con provider hostinger_mail: status, list_messages, search_messages, get_message, draft_email, "
-                "draft_reply, send_email o reply_email. Si el doctor dice mandar, enviar, responder o confirmar envio, "
+                "draft_reply, send_email, reply_email, switch_mailbox, list_folders, mark_spam, move_to_trash o archive_email. "
+                "Si el doctor dice mandar, enviar, responder o confirmar envio, "
                 "usa send_email/reply_email; usa draft_email solo cuando pida explicitamente un borrador. "
                 "Puede mandar desde founder@aipeople.io, founder@aipeople.work, business@tescaelements.com o "
                 "ceo@tescaelements.com; si el doctor dice founder, aipeople, business, ceo o tesca, pasa ese alias "
-                "en parameters.mailbox o parameters.from. "
+                "en parameters.mailbox o parameters.from. Si el doctor pide cambiar de buzon, usa switch_mailbox y luego conserva "
+                "selected_mailbox en las siguientes acciones. "
                 "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
                 "o move_to_trash; no borres permanentemente. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
