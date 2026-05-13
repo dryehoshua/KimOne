@@ -75,6 +75,8 @@ API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
 RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
+TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
+RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -95,6 +97,11 @@ GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
 COINMARKETCAP_KEYCHAIN_SERVICE = "codex.coinmarketcap.api_key"
+TWILIO_ACCOUNT_SID_KEYCHAIN_SERVICE = "codex.twilio.account_sid"
+TWILIO_AUTH_TOKEN_KEYCHAIN_SERVICE = "codex.twilio.auth_token"
+TWILIO_API_KEY_SID_KEYCHAIN_SERVICE = "codex.twilio.api_key_sid"
+TWILIO_API_KEY_SECRET_KEYCHAIN_SERVICE = "codex.twilio.api_key_secret"
+TWILIO_DEFAULT_FROM_NUMBER_KEYCHAIN_SERVICE = "codex.twilio.default_from_number"
 SECURITY_VOICE_PHRASE_KEYCHAIN_SERVICE = "codex.kim.security.voice_phrase"
 SECURITY_PIN_KEYCHAIN_SERVICE = "codex.kim.security.pin"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
@@ -106,13 +113,14 @@ NOTION_API_BASE = "https://api.notion.com/v1"
 GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
+TWILIO_API_BASE = "https://api.twilio.com/2010-04-01"
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 GMAIL_OAUTH_STATE_FILE = RUNTIME_CONTEXT / "google_gmail_oauth_state.json"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.13"
+APP_VERSION = "1.5.14"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1551,6 +1559,7 @@ def api_bridge_config_status(live=False):
             "mode": "readonly",
         },
         "hostinger_mail": hostinger_status,
+        "twilio": twilio_status(live=False),
         "security": security_status(),
         "templates": api_bridge_templates(),
     }
@@ -1579,6 +1588,7 @@ def api_bridge_config_status(live=False):
         status["gmail"].update(gmail_status(live=gmail_has_refresh))
     if live:
         status["hostinger_mail"].update(hostinger_mail_status(live=True))
+        status["twilio"].update(twilio_status(live=True))
     return status
 
 
@@ -1615,6 +1625,33 @@ def api_json_request(base_url, path, headers, method="GET", payload=None, params
     return json.loads(raw)
 
 
+def form_json_request(base_url, path, headers, method="POST", payload=None, params=None, timeout=90):
+    params = params or {}
+    query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None}, doseq=True)
+    url = base_url + path + (f"?{query}" if query else "")
+    data = None
+    req_headers = dict(headers)
+    if payload is not None:
+        data = urllib.parse.urlencode({key: value for key, value in payload.items() if value is not None}).encode("utf-8")
+        req_headers["Content-Type"] = "application/x-www-form-urlencoded"
+    request = urllib.request.Request(url, data=data, headers=req_headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        message = raw
+        try:
+            parsed = json.loads(raw)
+            message = parsed.get("message") or parsed.get("error") or parsed.get("more_info") or raw
+        except json.JSONDecodeError:
+            pass
+        raise RuntimeError(f"API error {exc.code}: {message}") from exc
+    if not raw:
+        return {}
+    return json.loads(raw)
+
+
 def clickup_request(path, method="GET", payload=None, params=None):
     token = load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE)
     return api_json_request(
@@ -1640,6 +1677,198 @@ def notion_request(path, method="GET", payload=None, params=None):
         payload=payload,
         params=params,
     )
+
+
+def twilio_account_sid(required=True):
+    return load_keychain_secret(TWILIO_ACCOUNT_SID_KEYCHAIN_SERVICE, required=required)
+
+
+def twilio_auth_pair():
+    api_key_sid = load_keychain_secret(TWILIO_API_KEY_SID_KEYCHAIN_SERVICE, required=False)
+    api_key_secret = load_keychain_secret(TWILIO_API_KEY_SECRET_KEYCHAIN_SERVICE, required=False)
+    if api_key_sid and api_key_secret:
+        return api_key_sid, api_key_secret, "api_key"
+    account_sid = twilio_account_sid(required=True)
+    auth_token = load_keychain_secret(TWILIO_AUTH_TOKEN_KEYCHAIN_SERVICE)
+    return account_sid, auth_token, "auth_token"
+
+
+def twilio_default_from_number():
+    return load_keychain_secret(TWILIO_DEFAULT_FROM_NUMBER_KEYCHAIN_SERVICE, required=False) or load_keychain_secret(
+        "codex.twilio.from_number",
+        required=False,
+    )
+
+
+def twilio_headers():
+    username, password, auth_mode = twilio_auth_pair()
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    return {"Authorization": f"Basic {token}", "X-Kim-Twilio-Auth-Mode": auth_mode}
+
+
+def twilio_request(path, method="GET", payload=None, params=None, timeout=12):
+    account_sid = twilio_account_sid(required=True)
+    headers = twilio_headers()
+    headers.pop("X-Kim-Twilio-Auth-Mode", None)
+    base = f"{TWILIO_API_BASE}/Accounts/{urllib.parse.quote(account_sid)}"
+    if method.upper() == "GET":
+        return api_json_request(base, path, headers, method=method, params=params, timeout=timeout)
+    return form_json_request(base, path, headers, method=method, payload=payload, params=params, timeout=timeout)
+
+
+def normalize_phone_number(value):
+    raw = str(value or "").strip()
+    if raw.lower().startswith("whatsapp:"):
+        return "whatsapp:" + normalize_phone_number(raw.split(":", 1)[1])
+    if raw.startswith("+"):
+        return "+" + re.sub(r"\D+", "", raw[1:])
+    digits = re.sub(r"\D+", "", raw)
+    return f"+{digits}" if digits else ""
+
+
+def twilio_number_summary(item):
+    capabilities = item.get("capabilities") or {}
+    return {
+        "sid": item.get("sid"),
+        "phone_number": item.get("phone_number"),
+        "friendly_name": item.get("friendly_name"),
+        "capabilities": {
+            "voice": bool(capabilities.get("voice")),
+            "sms": bool(capabilities.get("sms")),
+            "mms": bool(capabilities.get("mms")),
+        },
+        "voice_url": item.get("voice_url"),
+        "sms_url": item.get("sms_url"),
+    }
+
+
+def twilio_list_numbers(parameters=None):
+    parameters = parameters or {}
+    limit = int(first_value(parameters, "limit", "page_size", default=50) or 50)
+    data = twilio_request("/IncomingPhoneNumbers.json", params={"PageSize": max(1, min(limit, 100))})
+    numbers = [twilio_number_summary(item) for item in data.get("incoming_phone_numbers", [])]
+    default_from = twilio_default_from_number()
+    return {
+        "ok": True,
+        "provider": "twilio",
+        "action": "list_numbers",
+        "default_from_number": default_from,
+        "numbers": numbers,
+        "count": len(numbers),
+    }
+
+
+def twilio_status(live=False):
+    account_sid = twilio_account_sid(required=False)
+    has_auth_token = bool(load_keychain_secret(TWILIO_AUTH_TOKEN_KEYCHAIN_SERVICE, required=False))
+    has_api_key = bool(load_keychain_secret(TWILIO_API_KEY_SID_KEYCHAIN_SERVICE, required=False)) and bool(
+        load_keychain_secret(TWILIO_API_KEY_SECRET_KEYCHAIN_SERVICE, required=False)
+    )
+    status = {
+        "configured": bool(account_sid and (has_auth_token or has_api_key)),
+        "account_sid_suffix": account_sid[-6:] if account_sid else "",
+        "auth_modes": {
+            "auth_token": has_auth_token,
+            "api_key": has_api_key,
+        },
+        "default_from_number": twilio_default_from_number(),
+        "write_requires_confirmation": True,
+        "capabilities": ["status", "list_numbers", "send_sms", "send_whatsapp"],
+    }
+    if live and status["configured"]:
+        try:
+            account = twilio_request(".json")
+            status["account"] = {
+                "status": account.get("status"),
+                "type": account.get("type"),
+                "friendly_name": account.get("friendly_name"),
+            }
+            status["numbers"] = twilio_list_numbers().get("numbers", [])
+            status["live_ok"] = True
+        except Exception as exc:
+            status["live_ok"] = False
+            status["error"] = brief(str(exc), 260)
+    return status
+
+
+def twilio_message_preview(parameters, channel="sms"):
+    to = normalize_phone_number(first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario"))
+    body = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+    from_number = normalize_phone_number(first_value(parameters, "from", "from_number", "sender", default=twilio_default_from_number()))
+    messaging_service_sid = str(first_value(parameters, "messaging_service_sid", "service_sid", default="") or "").strip()
+    if channel == "whatsapp":
+        if to and not to.startswith("whatsapp:"):
+            to = f"whatsapp:{to}"
+        if from_number and not from_number.startswith("whatsapp:"):
+            from_number = f"whatsapp:{from_number}"
+    if not to:
+        raise ValueError("Falta destinatario to para Twilio.")
+    if not body:
+        raise ValueError("Falta body/message para Twilio.")
+    if not from_number and not messaging_service_sid:
+        raise ValueError("Falta from_number o messaging_service_sid para Twilio.")
+    return {
+        "to": to,
+        "from": from_number,
+        "messaging_service_sid": messaging_service_sid,
+        "body_preview": brief(body, 600),
+        "body_length": len(body),
+        "channel": channel,
+    }
+
+
+def twilio_send_message(parameters, confirm=False, channel="sms"):
+    parameters = parameters or {}
+    preview = twilio_message_preview(parameters, channel=channel)
+    payload = {
+        "To": preview["to"],
+        "Body": str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip(),
+    }
+    if preview["messaging_service_sid"]:
+        payload["MessagingServiceSid"] = preview["messaging_service_sid"]
+    else:
+        payload["From"] = preview["from"]
+    action = "send_whatsapp" if channel == "whatsapp" else "send_sms"
+    if not confirm:
+        return confirmation_preview(
+            "twilio",
+            action,
+            f"Enviar {channel.upper()} Twilio a {preview['to']}.",
+            preview,
+            execution_parameters={**parameters, "channel": channel, "from_number": preview["from"]},
+        )
+    result = twilio_request("/Messages.json", method="POST", payload=payload)
+    event = {
+        "ok": True,
+        "provider": "twilio",
+        "action": action,
+        "channel": channel,
+        "sid": result.get("sid"),
+        "status": result.get("status"),
+        "to": result.get("to"),
+        "from": result.get("from"),
+        "error_code": result.get("error_code"),
+        "error_message": result.get("error_message"),
+        "confirmed": True,
+        "sent_at": now_iso(),
+    }
+    append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
+    append_memory("twilio_message_sent", event)
+    return event
+
+
+def run_twilio_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "twilio", "action": action, "status": twilio_status(live=True)}
+    if action in {"list_numbers", "numbers", "incoming_numbers", "phone_numbers"}:
+        return twilio_list_numbers(parameters)
+    if action in {"send_sms", "sms", "text_message", "mensaje_sms"}:
+        return twilio_send_message(parameters, confirm=confirm, channel="sms")
+    if action in {"send_whatsapp", "whatsapp", "whatsapp_message"}:
+        return twilio_send_message(parameters, confirm=confirm, channel="whatsapp")
+    raise ValueError(f"Accion Twilio no soportada: {action}")
 
 
 def oauth_form_request(url, payload, timeout=90):
@@ -3149,6 +3378,10 @@ def agent_action_defaults(action, parameters):
         return "hostinger_mail", "move_to_trash", data
     if action in {"archive_email", "archive_message", "archivar_correo"}:
         return "hostinger_mail", "archive_message", data
+    if action in {"send_sms", "sms", "text_message", "mensaje_sms", "mandar_sms"}:
+        return "twilio", "send_sms", data
+    if action in {"send_whatsapp", "whatsapp", "whatsapp_message", "mandar_whatsapp"}:
+        return "twilio", "send_whatsapp", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
         if not first_value(data, "name", "title", "subject", "task_name", "task", "asunto"):
             data["name"] = generated_title("Tarea Kim")
@@ -3175,6 +3408,8 @@ def api_bridge_templates():
             "actions": [
                 "send_email",
                 "reply_email",
+                "send_sms",
+                "send_whatsapp",
                 "mark_spam",
                 "move_to_trash",
                 "archive_email",
@@ -3198,7 +3433,38 @@ def api_bridge_templates():
                     "parameters": {"space_name": "Neorgana", "list_name": "Kim Inbox", "title": "Llamar cliente", "body": "Notas de la tarea."},
                     "confirm": False,
                 },
+                {
+                    "provider": "all",
+                    "action": "send_sms",
+                    "parameters": {"to": "+525500000000", "body": "Mensaje de prueba de Kim Live."},
+                    "confirm": False,
+                },
             ],
+        },
+        "twilio": {
+            "status": {
+                "rule": "Valida credenciales Twilio, cuenta y numeros sin enviar mensajes.",
+            },
+            "list_numbers": {
+                "rule": "Lista numeros comprados/asignados a la cuenta y sus capacidades voice/sms/mms.",
+            },
+            "send_sms": {
+                "required": ["to", "body"],
+                "aliases": {
+                    "to": ["recipient", "phone", "telefono", "destinatario"],
+                    "from": ["from_number", "sender"],
+                    "body": ["message", "text", "content", "mensaje"],
+                    "messaging_service_sid": ["service_sid"],
+                },
+                "defaults": {
+                    "from": twilio_default_from_number() or "numero Twilio con capacidad SMS",
+                },
+                "rule": "Preparar con confirm=false. Enviar SMS requiere confirmacion explicita y luego confirm_prepared o confirm=true.",
+            },
+            "send_whatsapp": {
+                "required": ["to", "body", "from or messaging_service_sid"],
+                "rule": "Usa formato whatsapp:+numero. Requiere sender WhatsApp aprobado o sandbox Twilio; preparar con confirm=false.",
+            },
         },
         "hostinger_mail": {
             "send_email": {
@@ -3776,7 +4042,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             session_id=session_id,
             transcript=transcript,
         )
-    elif action in {"status", "status_all", "bridge_status"} or provider == "status" or (provider == "all" and not action):
+    elif (action in {"status_all", "bridge_status"} or provider == "status" or (provider in {"", "all"} and action == "status") or (provider == "all" and not action)):
         result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
     elif provider == "clickup":
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
@@ -3840,6 +4106,21 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
+        result = run_twilio_bridge(action, parameters, confirm=confirm)
     elif provider in {"all", "auto", "kim", "agent"}:
         target_provider, target_action, target_parameters = agent_action_defaults(action, parameters)
         if not target_provider:
@@ -3855,7 +4136,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail, twilio o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -4678,6 +4959,9 @@ def realtime_session_config():
                 "selected_mailbox en las siguientes acciones. "
                 "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
                 "o move_to_trash; no borres permanentemente. "
+                "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms o send_whatsapp. "
+                "SMS/WhatsApp siempre se preparan con confirm=false y requieren confirmacion explicita antes de enviar; "
+                "si Twilio responde 401, pide Auth Token correcto o API Key SID que empieza con SK. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
@@ -4729,7 +5013,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion, lee Gmail y maneja correo Hostinger desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion, lee Gmail, maneja correo Hostinger y prepara Twilio SMS/WhatsApp desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -4737,7 +5021,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail o all.",
+                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail, twilio o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -4748,7 +5032,8 @@ def realtime_session_config():
                                     "get_page, create_page, update_page_properties. Templates: templates, self_test. Gmail: status, auth_url, "
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
-                                    "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message."
+                                    "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
+                                    "Twilio: status, list_numbers, send_sms, send_whatsapp."
                                 ),
                             },
                             "parameters": {

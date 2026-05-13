@@ -15,6 +15,8 @@ Update 2026-05-13 / Kim Live 1.5.12: se agrega el buzon `business@aipeople.io`, 
 
 Update 2026-05-13 / Kim Live 1.5.13: el bridge de Hostinger agrega automaticamente la firma acordada de Kim Yan a `draft_email`, `draft_reply`, `send_email` y `reply_email`, salvo que Kim pase `no_signature=true` o una `signature` personalizada.
 
+Update 2026-05-13 / Kim Live 1.5.14: se agrega provider `twilio` para `status`, `list_numbers`, `send_sms` y `send_whatsapp`. Los mensajes se preparan con confirmacion antes de enviarse.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -155,6 +157,8 @@ Kim puede pedir acciones de alto nivel y dejar que el bridge enrute:
 
 - `send_email` -> `hostinger_mail.send_email`
 - `reply_email` -> `hostinger_mail.reply_email`
+- `send_sms` -> `twilio.send_sms`
+- `send_whatsapp` -> `twilio.send_whatsapp`
 - `create_task` -> `clickup.create_task`
 - `update_task` -> `clickup.update_task`
 - `comment_task` -> `clickup.comment_task`
@@ -174,6 +178,32 @@ Ejemplo:
   "confirm": false
 }
 ```
+
+## Twilio
+
+Credenciales en macOS Keychain:
+
+```text
+service: codex.twilio.account_sid
+service: codex.twilio.auth_token
+service: codex.twilio.api_key_sid
+service: codex.twilio.api_key_secret
+service: codex.twilio.default_from_number
+account: dryehoshuapython
+```
+
+Acciones:
+
+- `status`: valida credenciales y cuenta.
+- `list_numbers`: lista numeros entrantes comprados/asignados y capacidades `voice`, `sms`, `mms`.
+- `send_sms`: prepara/envia SMS con `to`, `body` y `from`/`from_number` opcional.
+- `send_whatsapp`: prepara/envia WhatsApp usando formato `whatsapp:+numero`; requiere sender/sandbox aprobado en Twilio.
+
+Reglas:
+
+- No comprar numeros desde Kim Live sin confirmacion humana explicita.
+- `send_sms` y `send_whatsapp` siempre deben iniciar con `confirm=false`; luego el doctor confirma con `confirm_prepared` o el boton.
+- Si Twilio devuelve `401`, el dato pendiente suele ser el Auth Token correcto o un API Key SID que empieza con `SK...`.
 
 ## Hostinger multi-buzon
 
