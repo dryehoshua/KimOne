@@ -91,6 +91,8 @@ TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
 TWILIO_CALL_LOG = MEMORY_CONTEXT_DIR / "twilio_call_actions.jsonl"
 RUNTIME_TWILIO_CALL_LOG = RUNTIME_CONTEXT / "twilio_call_actions.jsonl"
+TWILIO_CALL_CONTEXTS = MEMORY_CONTEXT_DIR / "twilio_call_contexts.json"
+RUNTIME_TWILIO_CALL_CONTEXTS = RUNTIME_CONTEXT / "twilio_call_contexts.json"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -134,7 +136,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.16"
+APP_VERSION = "1.5.17"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -351,6 +353,14 @@ def read_json_file(path, default):
         return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, PermissionError, json.JSONDecodeError):
         return default
+
+
+def read_json_file_any(paths, default):
+    for path in paths:
+        payload = read_json_file(path, None)
+        if payload is not None:
+            return payload
+    return default
 
 
 def append_jsonl(path, payload):
@@ -2222,6 +2232,130 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
     return event
 
 
+def twilio_add_query_param(url, key, value):
+    if not value:
+        return url
+    parsed = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+    query[key] = [str(value)]
+    return urllib.parse.urlunparse(parsed._replace(query=urllib.parse.urlencode(query, doseq=True)))
+
+
+def twilio_call_context_id():
+    return "CTX-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper()
+
+
+def load_twilio_call_context_state():
+    state = read_json_file_any([TWILIO_CALL_CONTEXTS, RUNTIME_TWILIO_CALL_CONTEXTS], {"contexts": {}})
+    if not isinstance(state, dict):
+        state = {"contexts": {}}
+    state.setdefault("contexts", {})
+    return state
+
+
+def save_twilio_call_context_state(state):
+    state["updated_at"] = now_iso()
+    write_json_file_any([TWILIO_CALL_CONTEXTS, RUNTIME_TWILIO_CALL_CONTEXTS], state)
+
+
+def normalize_call_context_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value).strip()
+
+
+def twilio_context_from_parameters(parameters, preview, transcript=""):
+    parameters = parameters or {}
+    transcript = transcript or str(first_value(parameters, "_conversation_transcript", "transcript", default="") or "")
+    explicit = {
+        "contact_name": first_value(parameters, "contact_name", "client_name", "name", "nombre", default=""),
+        "relationship": first_value(parameters, "relationship", "relacion", "role", "rol", default=""),
+        "company": first_value(parameters, "company", "empresa", default=""),
+        "call_context": first_value(parameters, "call_context", "context", "client_context", "contexto", default=""),
+        "objective": first_value(parameters, "objective", "goal", "mission", "objetivo", "mision", default=""),
+        "instructions": first_value(parameters, "instructions", "instruction", "prompt", "instrucciones", default=""),
+        "questions": first_value(parameters, "questions", "preguntas", "ask", "asks", default=""),
+        "message_to_deliver": first_value(parameters, "message_to_deliver", "message", "mensaje", "script", default=""),
+        "report_to_doctor": first_value(parameters, "report_to_doctor", "report", "reporte", "return_with", default=""),
+        "success_criteria": first_value(parameters, "success_criteria", "criterio_exito", "desired_outcome", default=""),
+        "tone": first_value(parameters, "tone", "tono", default="amable, natural y profesional"),
+    }
+    explicit = {key: normalize_call_context_value(value) for key, value in explicit.items()}
+    transcript_excerpt = brief(sanitize_text_for_log(transcript), 3200) if transcript else ""
+    has_context = any(value for value in explicit.values()) or bool(transcript_excerpt)
+    if not has_context:
+        return {}
+    context = {
+        "id": twilio_call_context_id(),
+        "status": "prepared",
+        "created_at": now_iso(),
+        "to": preview.get("to", ""),
+        "from": preview.get("from", ""),
+        "source": "kim_live_twilio",
+        **explicit,
+    }
+    if transcript_excerpt:
+        context["conversation_excerpt"] = transcript_excerpt
+    return context
+
+
+def store_twilio_call_context(context):
+    if not context:
+        return ""
+    state = load_twilio_call_context_state()
+    state["contexts"][context["id"]] = context
+    save_twilio_call_context_state(state)
+    append_memory("twilio_call_context_prepared", {"context_id": context["id"], "to": context.get("to"), "objective": brief(context.get("objective") or context.get("instructions") or context.get("call_context"), 240)})
+    return context["id"]
+
+
+def update_twilio_call_context(context_id="", call_sid="", updates=None):
+    updates = updates or {}
+    state = load_twilio_call_context_state()
+    context = state.get("contexts", {}).get(context_id or "")
+    if not context and call_sid:
+        for item in state.get("contexts", {}).values():
+            if item.get("call_sid") == call_sid:
+                context = item
+                context_id = item.get("id")
+                break
+    if not context:
+        return None
+    context.update({key: value for key, value in updates.items() if value is not None})
+    if call_sid:
+        context["call_sid"] = call_sid
+    context["updated_at"] = now_iso()
+    state["contexts"][context_id] = context
+    save_twilio_call_context_state(state)
+    return context
+
+
+def load_twilio_call_context(call_sid="", context_id=""):
+    state = load_twilio_call_context_state()
+    if context_id and context_id in state.get("contexts", {}):
+        return state["contexts"][context_id]
+    if call_sid:
+        for context in state.get("contexts", {}).values():
+            if context.get("call_sid") == call_sid:
+                return context
+    return {}
+
+
+def complete_twilio_call_context(call_sid="", context_id="", transcript_path="", summary="", status="completed"):
+    return update_twilio_call_context(
+        context_id=context_id,
+        call_sid=call_sid,
+        updates={
+            "status": status,
+            "transcript_path": transcript_path,
+            "summary": brief(summary, 1200),
+            "completed_at": now_iso(),
+        },
+    )
+
+
 def twilio_call_preview(parameters):
     to = normalize_phone_number(first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario"))
     from_number = normalize_phone_number(first_value(parameters, "from", "from_number", "sender", default=twilio_default_from_number()))
@@ -2245,18 +2379,28 @@ def twilio_call_preview(parameters):
 def twilio_start_call(parameters, confirm=False):
     parameters = parameters or {}
     preview = twilio_call_preview(parameters)
+    call_context = twilio_context_from_parameters(parameters, preview)
     if not confirm:
+        preview_with_context = dict(preview)
+        if call_context:
+            preview_with_context["call_context"] = {
+                "contact_name": call_context.get("contact_name"),
+                "objective": brief(call_context.get("objective") or call_context.get("instructions") or call_context.get("call_context"), 500),
+                "report_to_doctor": brief(call_context.get("report_to_doctor"), 300),
+            }
         return confirmation_preview(
             "twilio",
             "call_phone",
             f"Llamar por Twilio a {preview['to']} desde {preview['from']}.",
-            preview,
+            preview_with_context,
             execution_parameters={**parameters, "from_number": preview["from"], "url": preview["url"]},
         )
+    context_id = store_twilio_call_context(call_context)
+    call_url = twilio_add_query_param(preview["url"], "kim_context_id", context_id)
     payload = {
         "To": preview["to"],
         "From": preview["from"],
-        "Url": preview["url"],
+        "Url": call_url,
         "Timeout": str(preview["timeout"]),
     }
     if preview["status_callback"]:
@@ -2272,9 +2416,21 @@ def twilio_start_call(parameters, confirm=False):
         "to": result.get("to"),
         "from": result.get("from"),
         "direction": result.get("direction"),
+        "context_id": context_id,
         "confirmed": True,
         "started_at": now_iso(),
     }
+    if context_id:
+        update_twilio_call_context(
+            context_id=context_id,
+            call_sid=result.get("sid", ""),
+            updates={
+                "status": result.get("status") or "queued",
+                "to": result.get("to") or preview["to"],
+                "from": result.get("from") or preview["from"],
+                "call_url": call_url,
+            },
+        )
     append_jsonl_any([TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG], event)
     append_memory("twilio_call_started", event)
     crm_record_interaction(
@@ -2285,6 +2441,11 @@ def twilio_start_call(parameters, confirm=False):
         status=event.get("status", ""),
         external_sid=event.get("sid", ""),
         metadata=event,
+        contact_hint={
+            "display_name": call_context.get("contact_name") if call_context else "",
+            "company": call_context.get("company") if call_context else "",
+            "notes": call_context.get("relationship") if call_context else "",
+        },
     )
     return event
 
@@ -4142,12 +4303,17 @@ def api_bridge_templates():
                     "to": ["recipient", "phone", "telefono", "destinatario"],
                     "from": ["from_number", "sender"],
                     "url": ["voice_url", "twiml_url"],
+                    "contact_name": ["client_name", "name", "nombre"],
+                    "call_context": ["context", "client_context", "contexto"],
+                    "objective": ["goal", "mission", "objetivo", "mision"],
+                    "questions": ["preguntas", "ask", "asks"],
+                    "report_to_doctor": ["report", "reporte", "return_with"],
                 },
                 "defaults": {
                     "from": twilio_default_from_number() or "numero Twilio con capacidad Voice",
                     "url": "https://kim.aipeople.app/twilio/voice",
                 },
-                "rule": "Preparar con confirm=false. Llamar requiere confirmacion explicita; la conversacion se guarda en BIFROST/MEMORY/calls y BIFROST/CRM.",
+                "rule": "Preparar con confirm=false. Si el doctor pide llamar a una tercera persona, SIEMPRE incluye contact_name, relationship, call_context, objective, questions y report_to_doctor. Llamar requiere confirmacion explicita; la conversacion se guarda en BIFROST/MEMORY/calls y BIFROST/CRM.",
             },
             "schedule_call": {
                 "required": ["to", "due_at or delay_minutes"],
@@ -4818,6 +4984,9 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             return result
         result = run_crm_bridge(action, parameters, confirm=confirm)
     elif provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
+        if action in {"call_phone", "call", "make_call", "llamar", "llamada", "schedule_call", "programar_llamada", "agendar_llamada"} and transcript:
+            parameters = dict(parameters or {})
+            parameters.setdefault("_conversation_transcript", transcript)
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
             result = {
@@ -5587,11 +5756,15 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
 
 
 def twilio_voice_twiml(handler, params=None):
-    params = params or {}
+    params = dict(params or {})
+    query_params = {key: values[-1] for key, values in urllib.parse.parse_qs(urllib.parse.urlparse(handler.path).query).items()}
+    params.update({key: value for key, value in query_params.items() if value and key not in params})
     base = twilio_public_base(handler)
     session_id = phone_session_id(params)
     caller = params.get("From", "")
     called = params.get("To", "")
+    context_id = params.get("kim_context_id", "")
+    call_context = load_twilio_call_context(call_sid=params.get("CallSid", ""), context_id=context_id)
     media_ws = twilio_media_ws_url(handler, params)
     append_memory(
         "phone_call_started",
@@ -5599,6 +5772,8 @@ def twilio_voice_twiml(handler, params=None):
             "session_id": session_id,
             "caller": caller,
             "called": called,
+            "context_id": context_id,
+            "has_call_context": bool(call_context),
             "transport": "twilio_media_streams",
             "media_ws_url": media_ws,
         },
@@ -5607,8 +5782,9 @@ def twilio_voice_twiml(handler, params=None):
         f'<Parameter name="callSid" value="{twiml_escape(params.get("CallSid", ""))}" />'
         f'<Parameter name="from" value="{twiml_escape(caller)}" />'
         f'<Parameter name="to" value="{twiml_escape(called)}" />'
+        f'<Parameter name="kim_context_id" value="{twiml_escape(context_id)}" />'
     )
-    query = urllib.parse.urlencode({"callSid": params.get("CallSid", ""), "from": caller, "to": called})
+    query = urllib.parse.urlencode({"callSid": params.get("CallSid", ""), "from": caller, "to": called, "kim_context_id": context_id})
     separator = "&" if "?" in media_ws else "?"
     stream_url = media_ws + separator + query
     return twiml_response(
@@ -5654,6 +5830,15 @@ def twilio_status_callback(params):
     append_jsonl_any([TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG], event)
     append_memory("twilio_status_callback", event)
     if event.get("call_sid"):
+        update_twilio_call_context(
+            call_sid=event.get("call_sid", ""),
+            updates={
+                "twilio_status": event.get("call_status", ""),
+                "duration": event.get("duration", ""),
+                "error_code": event.get("error_code", ""),
+                "error_message": event.get("error_message", ""),
+            },
+        )
         crm_record_interaction(
             "call_status",
             "callback",
@@ -5756,7 +5941,9 @@ def realtime_session_config():
                 "o move_to_trash; no borres permanentemente. "
                 "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms, send_whatsapp, "
                 "call_phone, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
-                "y requieren confirmacion explicita antes de ejecutar; "
+                "y requieren confirmacion explicita antes de ejecutar. Si llamas a una tercera persona, no basta con to: "
+                "debes pasar contact_name, relationship, call_context, objective, questions/report_to_doctor y cualquier mensaje "
+                "que el doctor quiera transmitir; ese contexto se inyecta al prompt telefonico. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
                 "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
                 "si Twilio responde 401, pide Auth Token correcto o API Key SID que empieza con SK. "

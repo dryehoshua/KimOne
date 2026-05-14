@@ -21,6 +21,8 @@ Update 2026-05-13 / Kim Live 1.5.15: se agregan callbacks `/twilio/status` y `/t
 
 Update 2026-05-13 / Kim Live 1.5.16: se agrega CRM local en `BIFROST/CRM` con SQLite y exportes Markdown, provider `crm`, llamadas Twilio salientes con confirmacion, y agenda local para `schedule_call` / `schedule_sms`.
 
+Update 2026-05-14 / Kim Live 1.5.17: las llamadas Twilio salientes pueden llevar `call_context`, `objective`, `questions`, `report_to_doctor`, `contact_name` y `relationship`. El contexto se guarda como `twilio_call_contexts.json`, viaja como `kim_context_id` en TwiML Media Streams y se inyecta al prompt Realtime para que Kim no salude como si hablara con el doctor cuando llama a terceros.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -190,6 +192,20 @@ Provider `twilio`:
 - `call_phone`: inicia llamada saliente con el webhook de Kim Live.
 - `schedule_call`: guarda llamada programada; el scheduler local la ejecuta al vencer.
 - `schedule_sms`: guarda SMS programado; el scheduler local lo ejecuta al vencer.
+
+Para llamadas a terceros, `call_phone` debe incluir:
+
+```json
+{
+  "to": "+5255...",
+  "contact_name": "Nombre de la persona",
+  "relationship": "cliente, familiar, prospecto, proveedor...",
+  "call_context": "Contexto que Kim debe saber pero no leer literalmente.",
+  "objective": "Objetivo concreto de la llamada.",
+  "questions": ["Pregunta 1", "Pregunta 2"],
+  "report_to_doctor": "Datos que Kim debe traer de regreso."
+}
+```
 
 Las llamadas y SMS quedan enlazados a CRM como interacciones. Las llamadas Realtime tambien guardan transcript en `BIFROST/MEMORY/calls`.
 - `create_task` -> `clickup.create_task`

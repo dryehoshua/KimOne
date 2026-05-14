@@ -38,8 +38,36 @@ def log(message):
     print(message, flush=True)
 
 
-def bridge_session_config(call_sid="", caller="", called=""):
+def bridge_session_config(call_sid="", caller="", called="", call_context=None):
     local_context = kim.context_brief()
+    call_context = call_context or {}
+    if call_context:
+        mission = (
+            "MODO LLAMADA CON CONTEXTO A TERCERO.\n"
+            "La persona que contesta NO necesariamente es el doctor. No la saludes como doctor.\n"
+            "Presentate como Kim, asistente del Dr. Yehoshua, y ejecuta la mision concreta.\n"
+            "No digas que no sabes el contexto; el contexto esta abajo. Haz preguntas claras, escucha la respuesta, "
+            "agradece y cierra con naturalidad. No leas el contexto completo en voz alta: usalo para actuar. "
+            "Al final la llamada se guardara para reportar al doctor.\n\n"
+            f"Destinatario: {call_context.get('contact_name') or called}\n"
+            f"Relacion: {call_context.get('relationship', '')}\n"
+            f"Empresa: {call_context.get('company', '')}\n"
+            f"Contexto: {call_context.get('call_context', '')}\n"
+            f"Objetivo: {call_context.get('objective', '')}\n"
+            f"Mensaje a transmitir: {call_context.get('message_to_deliver', '')}\n"
+            f"Preguntas que debes hacer: {call_context.get('questions', '')}\n"
+            f"Que debes reportar al doctor: {call_context.get('report_to_doctor', '')}\n"
+            f"Criterio de exito: {call_context.get('success_criteria', '')}\n"
+            f"Tono: {call_context.get('tone', '')}\n"
+            f"Extracto de conversacion que origino la llamada: {call_context.get('conversation_excerpt', '')}\n"
+        )
+    else:
+        mission = (
+            "Eres Kim Live hablando por telefono con Dr Yehoshua. "
+            "Escucha instrucciones, conversa breve, y cuando el doctor pida una tarea confirma que queda "
+            "registrada en BIFROST/Kim Live. No uses tono de IVR. Si no puedes ejecutar una accion "
+            "directamente desde la llamada, di claramente que la guardas para ejecucion."
+        )
     return {
         "type": "session.update",
         "session": {
@@ -47,12 +75,9 @@ def bridge_session_config(call_sid="", caller="", called=""):
             "model": kim.REALTIME_MODEL,
             "output_modalities": ["audio"],
             "instructions": (
-                "Eres Kim Live hablando por telefono con Dr Yehoshua. "
                 "Habla en espanol mexicano, femenino, natural y fluido. "
                 "Esta llamada viene por Twilio Media Streams y debe sentirse como Kim Live local. "
-                "Escucha instrucciones, conversa breve, y cuando el doctor pida una tarea confirma que queda "
-                "registrada en BIFROST/Kim Live. No uses tono de IVR. Si no puedes ejecutar una accion "
-                "directamente desde la llamada, di claramente que la guardas para ejecucion.\n\n"
+                f"{mission}\n\n"
                 f"CallSid: {call_sid}\nFrom: {caller}\nTo: {called}\n\n"
                 f"MEMORIA LOCAL BIFROST:\n{local_context}"
             ),
@@ -79,7 +104,20 @@ def bridge_session_config(call_sid="", caller="", called=""):
     }
 
 
-def initial_greeting_event():
+def initial_greeting_event(call_context=None):
+    call_context = call_context or {}
+    if call_context:
+        greeting_instruction = (
+            "Esta llamada es para una tercera persona. Presentate como Kim, asistente del Dr. Yehoshua. "
+            f"La persona objetivo es {call_context.get('contact_name') or 'el destinatario'}. "
+            f"Ejecuta esta mision desde el primer turno: {call_context.get('objective') or call_context.get('instructions') or call_context.get('call_context')}. "
+            "No digas 'hola doctor' salvo que confirmes que quien contesta es el doctor."
+        )
+    else:
+        greeting_instruction = (
+            "Saluda al doctor en español con una frase breve. "
+            "Dile que esta es la version Realtime por telefono y que ya puede hablarte."
+        )
     return {
         "type": "conversation.item.create",
         "item": {
@@ -88,10 +126,7 @@ def initial_greeting_event():
             "content": [
                 {
                     "type": "input_text",
-                    "text": (
-                        "Saluda al doctor en español con una frase breve. "
-                        "Dile que esta es la version Realtime por telefono y que ya puede hablarte."
-                    ),
+                    "text": greeting_instruction,
                 }
             ],
         },
@@ -113,12 +148,22 @@ async def send_mark(twilio_ws, stream_sid, mark_queue):
     mark_queue.append("kim-response")
 
 
-async def save_twilio_realtime_call(session_id, caller, called, transcript, call_sid):
+async def save_twilio_realtime_call(session_id, caller, called, transcript, call_sid, context_id="", call_context=None):
+    call_context = call_context or {}
     text = (
         "Canal: Twilio Media Streams + OpenAI Realtime\n"
         f"CallSid: {call_sid}\n"
         f"From: {caller}\n"
         f"To: {called}\n\n"
+        + (
+            "## Call Context\n"
+            f"- Context ID: {context_id}\n"
+            f"- Contact: {call_context.get('contact_name', '')}\n"
+            f"- Objective: {call_context.get('objective', '')}\n"
+            f"- Report requested: {call_context.get('report_to_doctor', '')}\n\n"
+            if call_context
+            else ""
+        )
         + "\n".join(transcript).strip()
     )
     try:
@@ -127,8 +172,15 @@ async def save_twilio_realtime_call(session_id, caller, called, transcript, call
                 "session_id": session_id,
                 "text": text,
                 "started_at": kim.now_iso(),
-                "title": f"Twilio Realtime call {caller or 'unknown'}",
+                "title": f"Twilio Realtime call {call_context.get('contact_name') or caller or 'unknown'}",
             }
+        )
+        kim.complete_twilio_call_context(
+            call_sid=call_sid or "",
+            context_id=context_id or call_context.get("id", ""),
+            transcript_path=str(call_path),
+            summary=entry.get("summary", ""),
+            status="transcribed",
         )
         kim.crm_record_interaction(
             "call",
@@ -143,6 +195,13 @@ async def save_twilio_realtime_call(session_id, caller, called, transcript, call
                 "source": "twilio_realtime_bridge",
                 "session_id": session_id,
                 "call_number": entry.get("call_number"),
+                "context_id": context_id or call_context.get("id", ""),
+                "call_context": call_context,
+            },
+            contact_hint={
+                "display_name": call_context.get("contact_name", ""),
+                "company": call_context.get("company", ""),
+                "notes": call_context.get("relationship") or call_context.get("call_context", ""),
             },
         )
     except Exception as exc:
@@ -158,6 +217,8 @@ async def handle_media_stream(twilio_ws):
     caller = (query.get("from") or [""])[0]
     called = (query.get("to") or [""])[0]
     call_sid = (query.get("callSid") or [""])[0]
+    context_id = (query.get("kim_context_id") or [""])[0]
+    call_context = kim.load_twilio_call_context(call_sid=call_sid, context_id=context_id)
     session_id = kim.phone_session_id({"CallSid": call_sid}) if call_sid else "PHONE-RT-" + kim.now_iso()
 
     stream_sid = None
@@ -169,7 +230,7 @@ async def handle_media_stream(twilio_ws):
 
     kim.append_memory(
         "twilio_realtime_connected",
-        {"session_id": session_id, "caller": caller, "called": called, "call_sid": call_sid},
+        {"session_id": session_id, "caller": caller, "called": called, "call_sid": call_sid, "context_id": context_id, "has_call_context": bool(call_context)},
     )
     log(f"Twilio connected session={session_id}")
 
@@ -178,12 +239,12 @@ async def handle_media_stream(twilio_ws):
         "OpenAI-Safety-Identifier": "dr-yehoshua-kim-twilio-realtime",
     }
     async with websockets.connect(REALTIME_WS, additional_headers=headers) as openai_ws:
-        await openai_ws.send(json.dumps(bridge_session_config(call_sid=call_sid, caller=caller, called=called)))
-        await openai_ws.send(json.dumps(initial_greeting_event()))
+        await openai_ws.send(json.dumps(bridge_session_config(call_sid=call_sid, caller=caller, called=called, call_context=call_context)))
+        await openai_ws.send(json.dumps(initial_greeting_event(call_context=call_context)))
         await openai_ws.send(json.dumps({"type": "response.create"}))
 
         async def receive_from_twilio():
-            nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id
+            nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id, context_id, call_context
             async for message in twilio_ws:
                 data = json.loads(message)
                 event = data.get("event")
@@ -194,6 +255,9 @@ async def handle_media_stream(twilio_ws):
                     call_sid = start.get("callSid") or custom.get("callSid") or call_sid
                     caller = caller or custom.get("from", "")
                     called = called or custom.get("to", "")
+                    context_id = context_id or custom.get("kim_context_id", "")
+                    if not call_context and (call_sid or context_id):
+                        call_context = kim.load_twilio_call_context(call_sid=call_sid, context_id=context_id)
                     if call_sid and session_id.startswith("PHONE-RT-"):
                         session_id = kim.phone_session_id({"CallSid": call_sid})
                     call = call_sid
@@ -269,7 +333,7 @@ async def handle_media_stream(twilio_ws):
         try:
             await asyncio.gather(receive_from_twilio(), send_to_twilio())
         finally:
-            await save_twilio_realtime_call(session_id, caller, called, transcript, call_sid)
+            await save_twilio_realtime_call(session_id, caller, called, transcript, call_sid, context_id=context_id, call_context=call_context)
             log(f"Saved session={session_id}")
 
 
