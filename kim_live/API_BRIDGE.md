@@ -23,6 +23,8 @@ Update 2026-05-13 / Kim Live 1.5.16: se agrega CRM local en `BIFROST/CRM` con SQ
 
 Update 2026-05-14 / Kim Live 1.5.17: las llamadas Twilio salientes pueden llevar `call_context`, `objective`, `questions`, `report_to_doctor`, `contact_name` y `relationship`. El contexto se guarda como `twilio_call_contexts.json`, viaja como `kim_context_id` en TwiML Media Streams y se inyecta al prompt Realtime para que Kim no salude como si hablara con el doctor cuando llama a terceros.
 
+Update 2026-05-14 / Kim Live 1.5.18: el puente Twilio Realtime espera el evento `start` antes de configurar OpenAI, de modo que `kim_context_id` llegue antes del primer saludo. Se agregan `latest_call` y `call_report` para que Kim Live lea transcripciones y reporte lo ocurrido en llamadas guardadas.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:

@@ -46,6 +46,8 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
             "MODO LLAMADA CON CONTEXTO A TERCERO.\n"
             "La persona que contesta NO necesariamente es el doctor. No la saludes como doctor.\n"
             "Presentate como Kim, asistente del Dr. Yehoshua, y ejecuta la mision concreta.\n"
+            "Tu primera frase debe saludar al destinatario por nombre si lo tienes y decir que eres Kim, "
+            "asistente del Dr. Yehoshua. Nunca arranques con 'hola doctor' en este modo.\n"
             "No digas que no sabes el contexto; el contexto esta abajo. Haz preguntas claras, escucha la respuesta, "
             "agradece y cierra con naturalidad. No leas el contexto completo en voz alta: usalo para actuar. "
             "Al final la llamada se guardara para reportar al doctor.\n\n"
@@ -111,6 +113,7 @@ def initial_greeting_event(call_context=None):
             "Esta llamada es para una tercera persona. Presentate como Kim, asistente del Dr. Yehoshua. "
             f"La persona objetivo es {call_context.get('contact_name') or 'el destinatario'}. "
             f"Ejecuta esta mision desde el primer turno: {call_context.get('objective') or call_context.get('instructions') or call_context.get('call_context')}. "
+            "Primera frase recomendada: 'Hola, soy Kim, asistente del Dr. Yehoshua'. "
             "No digas 'hola doctor' salvo que confirmes que quien contesta es el doctor."
         )
     else:
@@ -239,9 +242,29 @@ async def handle_media_stream(twilio_ws):
         "OpenAI-Safety-Identifier": "dr-yehoshua-kim-twilio-realtime",
     }
     async with websockets.connect(REALTIME_WS, additional_headers=headers) as openai_ws:
-        await openai_ws.send(json.dumps(bridge_session_config(call_sid=call_sid, caller=caller, called=called, call_context=call_context)))
-        await openai_ws.send(json.dumps(initial_greeting_event(call_context=call_context)))
-        await openai_ws.send(json.dumps({"type": "response.create"}))
+        configured = False
+
+        async def configure_openai_session():
+            nonlocal configured
+            if configured:
+                return
+            await openai_ws.send(
+                json.dumps(
+                    bridge_session_config(
+                        call_sid=call_sid,
+                        caller=caller,
+                        called=called,
+                        call_context=call_context,
+                    )
+                )
+            )
+            await openai_ws.send(json.dumps(initial_greeting_event(call_context=call_context)))
+            await openai_ws.send(json.dumps({"type": "response.create"}))
+            configured = True
+            log(
+                "OpenAI session configured "
+                f"call_sid={call_sid or '-'} context_id={context_id or '-'} has_context={bool(call_context)}"
+            )
 
         async def receive_from_twilio():
             nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id, context_id, call_context
@@ -266,8 +289,11 @@ async def handle_media_stream(twilio_ws):
                     response_start_timestamp_twilio = None
                     latest_media_timestamp = 0
                     last_assistant_item = None
+                    await configure_openai_session()
                     log(f"Stream started {stream_sid}")
                 elif event == "media":
+                    if not configured:
+                        await configure_openai_session()
                     latest_media_timestamp = int(data.get("media", {}).get("timestamp") or 0)
                     payload = data.get("media", {}).get("payload")
                     if payload:
