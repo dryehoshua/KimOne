@@ -122,13 +122,28 @@ async def save_twilio_realtime_call(session_id, caller, called, transcript, call
         + "\n".join(transcript).strip()
     )
     try:
-        kim.save_call_record(
+        call_path, entry = kim.save_call_record(
             {
                 "session_id": session_id,
                 "text": text,
                 "started_at": kim.now_iso(),
                 "title": f"Twilio Realtime call {caller or 'unknown'}",
             }
+        )
+        kim.crm_record_interaction(
+            "call",
+            "inbound" if caller and caller != kim.twilio_default_from_number() else "outbound",
+            from_value=caller or "",
+            to_value=called or "",
+            status="transcribed",
+            body=kim.brief(text, 1800),
+            external_sid=call_sid or "",
+            transcript_path=str(call_path),
+            metadata={
+                "source": "twilio_realtime_bridge",
+                "session_id": session_id,
+                "call_number": entry.get("call_number"),
+            },
         )
     except Exception as exc:
         kim.append_memory(
@@ -168,13 +183,20 @@ async def handle_media_stream(twilio_ws):
         await openai_ws.send(json.dumps({"type": "response.create"}))
 
         async def receive_from_twilio():
-            nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item
+            nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id
             async for message in twilio_ws:
                 data = json.loads(message)
                 event = data.get("event")
                 if event == "start":
-                    stream_sid = data.get("start", {}).get("streamSid")
-                    call = data.get("start", {}).get("callSid") or call_sid
+                    start = data.get("start", {})
+                    stream_sid = start.get("streamSid")
+                    custom = start.get("customParameters") or {}
+                    call_sid = start.get("callSid") or custom.get("callSid") or call_sid
+                    caller = caller or custom.get("from", "")
+                    called = called or custom.get("to", "")
+                    if call_sid and session_id.startswith("PHONE-RT-"):
+                        session_id = kim.phone_session_id({"CallSid": call_sid})
+                    call = call_sid
                     if call and not transcript:
                         transcript.append(f"[system] Twilio Media Stream iniciado: {call}")
                     response_start_timestamp_twilio = None

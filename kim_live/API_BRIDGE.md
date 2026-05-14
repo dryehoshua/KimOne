@@ -17,6 +17,10 @@ Update 2026-05-13 / Kim Live 1.5.13: el bridge de Hostinger agrega automaticamen
 
 Update 2026-05-13 / Kim Live 1.5.14: se agrega provider `twilio` para `status`, `list_numbers`, `send_sms` y `send_whatsapp`. Los mensajes se preparan con confirmacion antes de enviarse.
 
+Update 2026-05-13 / Kim Live 1.5.15: se agregan callbacks `/twilio/status` y `/twilio/sms` para guardar retroalimentacion de llamadas, mensajes y respuestas entrantes.
+
+Update 2026-05-13 / Kim Live 1.5.16: se agrega CRM local en `BIFROST/CRM` con SQLite y exportes Markdown, provider `crm`, llamadas Twilio salientes con confirmacion, y agenda local para `schedule_call` / `schedule_sms`.
+
 ## Regla de seguridad
 
 Kim puede leer estado en vivo sin confirmacion adicional. Para cualquier escritura debe seguir este flujo:
@@ -159,6 +163,35 @@ Kim puede pedir acciones de alto nivel y dejar que el bridge enrute:
 - `reply_email` -> `hostinger_mail.reply_email`
 - `send_sms` -> `twilio.send_sms`
 - `send_whatsapp` -> `twilio.send_whatsapp`
+- `call_phone` -> `twilio.call_phone`
+- `schedule_call` -> `twilio.schedule_call`
+- `schedule_sms` -> `twilio.schedule_sms`
+- `save_contact` -> `crm.upsert_contact`
+
+## CRM Local
+
+La base estructurada vive en:
+
+- `BIFROST/CRM/crm.sqlite`
+- `BIFROST/CRM/contacts/by_type/<tipo>/<contacto>.md`
+- `BIFROST/CRM/companies/`
+- `BIFROST/CRM/interactions/`
+- `BIFROST/CRM/schedules/`
+
+Provider `crm`:
+
+- `status`: revisa conteos y ruta de la base.
+- `list_contacts`: busca por nombre, telefono, correo, empresa o tipo.
+- `upsert_contact`: crea o actualiza un contacto. Requiere confirmacion.
+- `record_note`: registra una nota interna. Requiere confirmacion.
+
+Provider `twilio`:
+
+- `call_phone`: inicia llamada saliente con el webhook de Kim Live.
+- `schedule_call`: guarda llamada programada; el scheduler local la ejecuta al vencer.
+- `schedule_sms`: guarda SMS programado; el scheduler local lo ejecuta al vencer.
+
+Las llamadas y SMS quedan enlazados a CRM como interacciones. Las llamadas Realtime tambien guardan transcript en `BIFROST/MEMORY/calls`.
 - `create_task` -> `clickup.create_task`
 - `update_task` -> `clickup.update_task`
 - `comment_task` -> `clickup.comment_task`

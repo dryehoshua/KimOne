@@ -28,8 +28,11 @@ import re
 import secrets
 import shutil
 import smtplib
+import sqlite3
 import subprocess
 import tempfile
+import threading
+import time
 import unicodedata
 import urllib.parse
 import urllib.error
@@ -49,6 +52,15 @@ MEMORY_CONTEXT_DIR = MEMORY_ROOT / "context"
 MEMORY_CALLS = MEMORY_ROOT / "calls"
 MEMORY_UPLOADS = MEMORY_ROOT / "uploads"
 MEMORY_RESEARCH = MEMORY_ROOT / "research"
+CRM_ROOT = BIFROST / "CRM"
+CRM_DB = CRM_ROOT / "crm.sqlite"
+CRM_CONTACTS_DIR = CRM_ROOT / "contacts"
+CRM_COMPANIES_DIR = CRM_ROOT / "companies"
+CRM_INTERACTIONS_DIR = CRM_ROOT / "interactions"
+CRM_SCHEDULES_DIR = CRM_ROOT / "schedules"
+RUNTIME_CRM_ROOT = RUNTIME_CONTEXT / "CRM"
+ACTIVE_CRM_ROOT = None
+ACTIVE_CRM_DB = None
 MEMORY_ANALYTICS = MEMORY_CONTEXT_DIR / "memory_analytics_latest.json"
 UPLOAD_INDEX = MEMORY_CONTEXT_DIR / "uploaded_files_index.json"
 CALL_INDEX = MEMORY_CONTEXT_DIR / "call_index.jsonl"
@@ -77,6 +89,8 @@ API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
 RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
 TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
+TWILIO_CALL_LOG = MEMORY_CONTEXT_DIR / "twilio_call_actions.jsonl"
+RUNTIME_TWILIO_CALL_LOG = RUNTIME_CONTEXT / "twilio_call_actions.jsonl"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -120,7 +134,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.14"
+APP_VERSION = "1.5.16"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -162,6 +176,8 @@ HOSTINGER_MAILBOX_DISPLAY_NAMES = {
     "ceo@tescaelements.com": "Dr. Yehoshua Rodriguez | Tesca Elements",
 }
 KIM_EMAIL_SIGNATURE = "Kim Yan\nAugmented Intelligence Assistant, created by Dr. Yehoshua"
+SCHEDULER_THREAD_STARTED = False
+SCHEDULER_LOCK = threading.Lock()
 SECURITY_AUTHORIZATIONS = MEMORY_CONTEXT_DIR / "kim_security_authorizations.json"
 RUNTIME_SECURITY_AUTHORIZATIONS = RUNTIME_CONTEXT / "kim_security_authorizations.json"
 SECURITY_AUTH_TTL_SECONDS = 15 * 60
@@ -1560,6 +1576,7 @@ def api_bridge_config_status(live=False):
         },
         "hostinger_mail": hostinger_status,
         "twilio": twilio_status(live=False),
+        "crm": crm_status(),
         "security": security_status(),
         "templates": api_bridge_templates(),
     }
@@ -1632,7 +1649,10 @@ def form_json_request(base_url, path, headers, method="POST", payload=None, para
     data = None
     req_headers = dict(headers)
     if payload is not None:
-        data = urllib.parse.urlencode({key: value for key, value in payload.items() if value is not None}).encode("utf-8")
+        data = urllib.parse.urlencode(
+            {key: value for key, value in payload.items() if value is not None},
+            doseq=True,
+        ).encode("utf-8")
         req_headers["Content-Type"] = "application/x-www-form-urlencoded"
     request = urllib.request.Request(url, data=data, headers=req_headers, method=method)
     try:
@@ -1726,6 +1746,338 @@ def normalize_phone_number(value):
     return f"+{digits}" if digits else ""
 
 
+def crm_id(prefix):
+    return prefix + "-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper()
+
+
+def crm_slug(value):
+    text = unicodedata.normalize("NFKD", str(value or "").strip()).encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[^A-Za-z0-9]+", "-", text).strip("-").lower()
+    return text[:80] or "sin-nombre"
+
+
+def active_crm_root():
+    return ACTIVE_CRM_ROOT or CRM_ROOT
+
+
+def active_crm_db():
+    return ACTIVE_CRM_DB or (active_crm_root() / "crm.sqlite")
+
+
+def crm_connect():
+    global ACTIVE_CRM_ROOT, ACTIVE_CRM_DB
+    candidates = [active_crm_root()] if ACTIVE_CRM_ROOT else [CRM_ROOT, RUNTIME_CRM_ROOT]
+    last_error = None
+    for root in candidates:
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+            for folder in [
+                root / "contacts" / "by_type",
+                root / "companies",
+                root / "interactions" / "calls",
+                root / "interactions" / "sms",
+                root / "schedules",
+            ]:
+                folder.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(root / "crm.sqlite")
+            ACTIVE_CRM_ROOT = root
+            ACTIVE_CRM_DB = root / "crm.sqlite"
+            break
+        except (sqlite3.DatabaseError, OSError, PermissionError) as exc:
+            last_error = exc
+            if root == RUNTIME_CRM_ROOT:
+                raise
+    else:
+        raise last_error or RuntimeError("No pude abrir CRM local.")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS companies (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            company_type TEXT DEFAULT '',
+            industry TEXT DEFAULT '',
+            status TEXT DEFAULT 'active',
+            notes TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS contacts (
+            id TEXT PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            phone_e164 TEXT UNIQUE,
+            email TEXT,
+            company_id TEXT,
+            contact_type TEXT DEFAULT 'client',
+            source TEXT DEFAULT 'kim_live',
+            country TEXT DEFAULT '',
+            notes TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(company_id) REFERENCES companies(id)
+        );
+        CREATE TABLE IF NOT EXISTS interactions (
+            id TEXT PRIMARY KEY,
+            contact_id TEXT,
+            company_id TEXT,
+            channel TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            provider TEXT DEFAULT 'twilio',
+            external_sid TEXT DEFAULT '',
+            from_value TEXT DEFAULT '',
+            to_value TEXT DEFAULT '',
+            status TEXT DEFAULT '',
+            body TEXT DEFAULT '',
+            transcript_path TEXT DEFAULT '',
+            metadata_json TEXT DEFAULT '{}',
+            occurred_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(contact_id) REFERENCES contacts(id),
+            FOREIGN KEY(company_id) REFERENCES companies(id)
+        );
+        CREATE TABLE IF NOT EXISTS scheduled_actions (
+            id TEXT PRIMARY KEY,
+            status TEXT NOT NULL DEFAULT 'pending',
+            provider TEXT NOT NULL,
+            action TEXT NOT NULL,
+            due_at TEXT NOT NULL,
+            timezone TEXT DEFAULT 'America/Mexico_City',
+            contact_id TEXT,
+            company_id TEXT,
+            to_value TEXT DEFAULT '',
+            from_value TEXT DEFAULT '',
+            payload_json TEXT NOT NULL,
+            result_json TEXT DEFAULT '',
+            attempts INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            executed_at TEXT DEFAULT '',
+            FOREIGN KEY(contact_id) REFERENCES contacts(id),
+            FOREIGN KEY(company_id) REFERENCES companies(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone_e164);
+        CREATE INDEX IF NOT EXISTS idx_interactions_sid ON interactions(external_sid);
+        CREATE INDEX IF NOT EXISTS idx_scheduled_due ON scheduled_actions(status, due_at);
+        """
+    )
+    conn.commit()
+    return conn
+
+
+def crm_write_readme():
+    root = active_crm_root()
+    root.mkdir(parents=True, exist_ok=True)
+    readme = root / "README.md"
+    if readme.exists():
+        return
+    readme.write_text(
+        "# BIFROST CRM\n\n"
+        "CRM local de Kim Live. La fuente estructurada es `crm.sqlite`.\n\n"
+        "- `contacts/by_type/`: fichas Markdown exportadas por tipo de contacto.\n"
+        "- `companies/`: espacio para expedientes por empresa.\n"
+        "- `interactions/calls/`: llamadas y transcripciones relacionadas.\n"
+        "- `interactions/sms/`: SMS/WhatsApp y respuestas.\n"
+        "- `schedules/`: acciones programadas confirmadas.\n\n"
+        "Regla: Kim puede preparar llamadas/SMS y programarlas, pero las acciones hacia terceros requieren confirmacion explicita.\n",
+        encoding="utf-8",
+    )
+
+
+def crm_company_id(conn, name="", company_type="", industry="", notes=""):
+    clean = str(name or "").strip()
+    if not clean:
+        return None
+    now = now_iso()
+    row = conn.execute("SELECT id FROM companies WHERE lower(name)=lower(?)", (clean,)).fetchone()
+    if row:
+        conn.execute(
+            "UPDATE companies SET company_type=COALESCE(NULLIF(?, ''), company_type), industry=COALESCE(NULLIF(?, ''), industry), notes=COALESCE(NULLIF(?, ''), notes), updated_at=? WHERE id=?",
+            (company_type or "", industry or "", notes or "", now, row["id"]),
+        )
+        return row["id"]
+    company_id = crm_id("CO")
+    conn.execute(
+        "INSERT INTO companies (id, name, company_type, industry, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (company_id, clean, company_type or "", industry or "", notes or "", now, now),
+    )
+    return company_id
+
+
+def crm_export_contact(contact):
+    contact_type = crm_slug(contact.get("contact_type") or "client")
+    folder = active_crm_root() / "contacts" / "by_type" / contact_type
+    folder.mkdir(parents=True, exist_ok=True)
+    label = contact.get("display_name") or contact.get("phone_e164") or contact.get("email") or contact.get("id")
+    path = folder / f"{crm_slug(label)}.md"
+    text = (
+        f"# {label}\n\n"
+        f"- ID: {contact.get('id', '')}\n"
+        f"- Tipo: {contact.get('contact_type', '')}\n"
+        f"- Telefono: {contact.get('phone_e164', '')}\n"
+        f"- Email: {contact.get('email', '')}\n"
+        f"- Empresa ID: {contact.get('company_id', '')}\n"
+        f"- Fuente: {contact.get('source', '')}\n"
+        f"- Actualizado: {contact.get('updated_at', '')}\n\n"
+        f"Notas:\n{contact.get('notes', '')}\n"
+    )
+    path.write_text(text, encoding="utf-8")
+    return str(path)
+
+
+def crm_upsert_contact(parameters=None, source="kim_live"):
+    parameters = parameters or {}
+    phone = normalize_phone_number(first_value(parameters, "phone", "phone_e164", "telefono", "to", "from", "recipient", default=""))
+    email = str(first_value(parameters, "email", "correo", default="") or "").strip()
+    display_name = str(first_value(parameters, "display_name", "name", "nombre", "client_name", "contact_name", default="") or "").strip()
+    if not display_name:
+        display_name = phone or email or "Contacto Kim"
+    contact_type = str(first_value(parameters, "contact_type", "type", "tipo", default="client") or "client").strip().lower()
+    company_name = str(first_value(parameters, "company", "company_name", "empresa", default="") or "").strip()
+    notes = str(first_value(parameters, "notes", "note", "description", "body", default="") or "").strip()
+    country = str(first_value(parameters, "country", "pais", default="") or "").strip()
+    now = now_iso()
+    with crm_connect() as conn:
+        company_id = crm_company_id(
+            conn,
+            company_name,
+            company_type=str(first_value(parameters, "company_type", "tipo_empresa", default="") or ""),
+            industry=str(first_value(parameters, "industry", "industria", default="") or ""),
+        )
+        row = None
+        if phone:
+            row = conn.execute("SELECT * FROM contacts WHERE phone_e164=?", (phone,)).fetchone()
+        if row is None and email:
+            row = conn.execute("SELECT * FROM contacts WHERE lower(email)=lower(?)", (email,)).fetchone()
+        if row:
+            contact_id = row["id"]
+            conn.execute(
+                """
+                UPDATE contacts
+                SET display_name=COALESCE(NULLIF(?, ''), display_name),
+                    phone_e164=COALESCE(NULLIF(?, ''), phone_e164),
+                    email=COALESCE(NULLIF(?, ''), email),
+                    company_id=COALESCE(?, company_id),
+                    contact_type=COALESCE(NULLIF(?, ''), contact_type),
+                    country=COALESCE(NULLIF(?, ''), country),
+                    notes=CASE WHEN ? != '' AND instr(notes, ?) = 0 THEN trim(notes || char(10) || ?) ELSE notes END,
+                    updated_at=?
+                WHERE id=?
+                """,
+                (display_name, phone, email, company_id, contact_type, country, notes, notes, notes, now, contact_id),
+            )
+        else:
+            contact_id = crm_id("CT")
+            conn.execute(
+                """
+                INSERT INTO contacts (id, display_name, phone_e164, email, company_id, contact_type, source, country, notes, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (contact_id, display_name, phone or None, email or None, company_id, contact_type, source, country, notes, now, now),
+            )
+        conn.commit()
+        contact = dict(conn.execute("SELECT * FROM contacts WHERE id=?", (contact_id,)).fetchone())
+    crm_write_readme()
+    contact["markdown_path"] = crm_export_contact(contact)
+    return contact
+
+
+def crm_find_contact_by_phone(phone):
+    phone = normalize_phone_number(phone)
+    if not phone:
+        return None
+    with crm_connect() as conn:
+        row = conn.execute("SELECT * FROM contacts WHERE phone_e164=?", (phone,)).fetchone()
+        return dict(row) if row else None
+
+
+def crm_record_interaction(channel, direction, from_value="", to_value="", status="", body="", external_sid="", transcript_path="", metadata=None, contact_hint=None):
+    metadata = metadata or {}
+    contact_hint = contact_hint or {}
+    counterparty = from_value if direction == "inbound" else to_value
+    contact = crm_find_contact_by_phone(counterparty)
+    if not contact and counterparty:
+        contact = crm_upsert_contact(
+            {
+                "phone": counterparty,
+                "display_name": contact_hint.get("display_name") or counterparty or "Contacto Twilio",
+                "contact_type": contact_hint.get("contact_type") or "client",
+                "company": contact_hint.get("company") or "",
+                "notes": contact_hint.get("notes") or "Contacto creado automaticamente por interaccion Twilio.",
+            },
+            source="twilio",
+        )
+    contact = contact or {}
+    interaction_id = crm_id("IN")
+    now = now_iso()
+    with crm_connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO interactions
+            (id, contact_id, company_id, channel, direction, provider, external_sid, from_value, to_value, status, body, transcript_path, metadata_json, occurred_at, created_at)
+            VALUES (?, ?, ?, ?, ?, 'twilio', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                interaction_id,
+                contact.get("id"),
+                contact.get("company_id"),
+                channel,
+                direction,
+                external_sid or "",
+                from_value or "",
+                to_value or "",
+                status or "",
+                body or "",
+                transcript_path or "",
+                json.dumps(metadata, ensure_ascii=False),
+                metadata.get("occurred_at") or now,
+                now,
+            ),
+        )
+        conn.commit()
+    return {"id": interaction_id, "contact_id": contact.get("id"), "contact": contact}
+
+
+def crm_status():
+    with crm_connect() as conn:
+        crm_write_readme()
+        return {
+            "ok": True,
+            "provider": "crm",
+            "database": str(active_crm_db()),
+            "root": str(active_crm_root()),
+            "preferred_root": str(CRM_ROOT),
+            "fallback_active": active_crm_root() != CRM_ROOT,
+            "contacts": conn.execute("SELECT count(*) AS c FROM contacts").fetchone()["c"],
+            "companies": conn.execute("SELECT count(*) AS c FROM companies").fetchone()["c"],
+            "interactions": conn.execute("SELECT count(*) AS c FROM interactions").fetchone()["c"],
+            "scheduled_actions": conn.execute("SELECT count(*) AS c FROM scheduled_actions").fetchone()["c"],
+        }
+
+
+def crm_list_contacts(parameters=None):
+    parameters = parameters or {}
+    limit = int(first_value(parameters, "limit", default=25) or 25)
+    contact_type = str(first_value(parameters, "contact_type", "type", "tipo", default="") or "").strip().lower()
+    query = str(first_value(parameters, "query", "q", "search", default="") or "").strip().lower()
+    sql = "SELECT * FROM contacts"
+    clauses = []
+    values = []
+    if contact_type:
+        clauses.append("contact_type=?")
+        values.append(contact_type)
+    if query:
+        clauses.append("(lower(display_name) LIKE ? OR phone_e164 LIKE ? OR lower(email) LIKE ?)")
+        like = f"%{query}%"
+        values.extend([like, like, like])
+    if clauses:
+        sql += " WHERE " + " AND ".join(clauses)
+    sql += " ORDER BY updated_at DESC LIMIT ?"
+    values.append(max(1, min(limit, 100)))
+    with crm_connect() as conn:
+        return {"ok": True, "provider": "crm", "action": "list_contacts", "contacts": [dict(row) for row in conn.execute(sql, values).fetchall()]}
+
+
 def twilio_number_summary(item):
     capabilities = item.get("capabilities") or {}
     return {
@@ -1773,7 +2125,7 @@ def twilio_status(live=False):
         },
         "default_from_number": twilio_default_from_number(),
         "write_requires_confirmation": True,
-        "capabilities": ["status", "list_numbers", "send_sms", "send_whatsapp"],
+        "capabilities": ["status", "list_numbers", "send_sms", "send_whatsapp", "call_phone", "schedule_call", "schedule_sms"],
     }
     if live and status["configured"]:
         try:
@@ -1824,6 +2176,9 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
         "To": preview["to"],
         "Body": str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip(),
     }
+    status_callback = str(first_value(parameters, "status_callback", "callback_url", default="https://kim.aipeople.app/twilio/status") or "").strip()
+    if status_callback:
+        payload["StatusCallback"] = status_callback
     if preview["messaging_service_sid"]:
         payload["MessagingServiceSid"] = preview["messaging_service_sid"]
     else:
@@ -1854,7 +2209,238 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
     }
     append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
     append_memory("twilio_message_sent", event)
+    crm_record_interaction(
+        "whatsapp" if channel == "whatsapp" else "sms",
+        "outbound",
+        from_value=event.get("from", ""),
+        to_value=event.get("to", ""),
+        status=event.get("status", ""),
+        body=payload.get("Body", ""),
+        external_sid=event.get("sid", ""),
+        metadata=event,
+    )
     return event
+
+
+def twilio_call_preview(parameters):
+    to = normalize_phone_number(first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario"))
+    from_number = normalize_phone_number(first_value(parameters, "from", "from_number", "sender", default=twilio_default_from_number()))
+    url = str(first_value(parameters, "url", "voice_url", "twiml_url", default="https://kim.aipeople.app/twilio/voice") or "").strip()
+    status_callback = str(first_value(parameters, "status_callback", "callback_url", default="https://kim.aipeople.app/twilio/status") or "").strip()
+    if not to:
+        raise ValueError("Falta destinatario to para llamada Twilio.")
+    if not from_number:
+        raise ValueError("Falta from_number para llamada Twilio.")
+    if not url:
+        raise ValueError("Falta url/voice_url para llamada Twilio.")
+    return {
+        "to": to,
+        "from": from_number,
+        "url": url,
+        "status_callback": status_callback,
+        "timeout": int(first_value(parameters, "timeout", default=35) or 35),
+    }
+
+
+def twilio_start_call(parameters, confirm=False):
+    parameters = parameters or {}
+    preview = twilio_call_preview(parameters)
+    if not confirm:
+        return confirmation_preview(
+            "twilio",
+            "call_phone",
+            f"Llamar por Twilio a {preview['to']} desde {preview['from']}.",
+            preview,
+            execution_parameters={**parameters, "from_number": preview["from"], "url": preview["url"]},
+        )
+    payload = {
+        "To": preview["to"],
+        "From": preview["from"],
+        "Url": preview["url"],
+        "Timeout": str(preview["timeout"]),
+    }
+    if preview["status_callback"]:
+        payload["StatusCallback"] = preview["status_callback"]
+        payload["StatusCallbackEvent"] = ["initiated", "ringing", "answered", "completed"]
+    result = twilio_request("/Calls.json", method="POST", payload=payload)
+    event = {
+        "ok": True,
+        "provider": "twilio",
+        "action": "call_phone",
+        "sid": result.get("sid"),
+        "status": result.get("status"),
+        "to": result.get("to"),
+        "from": result.get("from"),
+        "direction": result.get("direction"),
+        "confirmed": True,
+        "started_at": now_iso(),
+    }
+    append_jsonl_any([TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG], event)
+    append_memory("twilio_call_started", event)
+    crm_record_interaction(
+        "call",
+        "outbound",
+        from_value=event.get("from", ""),
+        to_value=event.get("to", ""),
+        status=event.get("status", ""),
+        external_sid=event.get("sid", ""),
+        metadata=event,
+    )
+    return event
+
+
+def parse_due_at(parameters=None):
+    parameters = parameters or {}
+    for key in ["delay_seconds", "in_seconds", "seconds"]:
+        value = first_value(parameters, key, default="")
+        if value not in (None, ""):
+            return (dt.datetime.now() + dt.timedelta(seconds=int(float(value)))).isoformat(timespec="seconds")
+    for key in ["delay_minutes", "in_minutes", "minutes"]:
+        value = first_value(parameters, key, default="")
+        if value not in (None, ""):
+            return (dt.datetime.now() + dt.timedelta(minutes=float(value))).isoformat(timespec="seconds")
+    raw = str(first_value(parameters, "due_at", "scheduled_at", "run_at", "datetime", "date_time", "cuando", default="") or "").strip()
+    if not raw:
+        date_value = str(first_value(parameters, "date", "fecha", default="") or "").strip()
+        time_value = str(first_value(parameters, "time", "hora", default="") or "").strip()
+        raw = f"{date_value}T{time_value}" if date_value and time_value else date_value
+    if not raw:
+        raise ValueError("Falta due_at/scheduled_at o delay_minutes para programar la accion.")
+    raw = raw.replace("Z", "+00:00")
+    try:
+        parsed = dt.datetime.fromisoformat(raw)
+    except ValueError as exc:
+        raise ValueError("No pude interpretar la fecha/hora programada. Usa ISO, por ejemplo 2026-05-14T09:30:00.") from exc
+    return parsed.isoformat(timespec="seconds")
+
+
+def due_at_is_ready(due_at):
+    parsed = dt.datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
+    now = dt.datetime.now(parsed.tzinfo) if parsed.tzinfo else dt.datetime.now()
+    return parsed <= now
+
+
+def schedule_twilio_action(action, parameters=None, confirm=False):
+    parameters = dict(parameters or {})
+    target_action = "call_phone" if action in {"schedule_call", "programar_llamada", "agendar_llamada"} else "send_sms"
+    due_at = parse_due_at(parameters)
+    if target_action == "call_phone":
+        preview = twilio_call_preview(parameters)
+        summary = f"Programar llamada a {preview['to']} para {due_at}."
+    else:
+        preview = twilio_message_preview(parameters, channel="sms")
+        summary = f"Programar SMS a {preview['to']} para {due_at}."
+    if not confirm:
+        return confirmation_preview(
+            "twilio",
+            action,
+            summary,
+            {**preview, "due_at": due_at, "target_action": target_action},
+            execution_parameters={**parameters, "due_at": due_at, "target_action": target_action},
+        )
+    contact = crm_upsert_contact(
+        {
+            "phone": preview.get("to"),
+            "display_name": first_value(parameters, "contact_name", "name", "client_name", "nombre", default=preview.get("to")),
+            "company": first_value(parameters, "company", "empresa", default=""),
+            "contact_type": first_value(parameters, "contact_type", "tipo", default="client"),
+            "notes": "Contacto asociado a accion Twilio programada.",
+        },
+        source="twilio_schedule",
+    )
+    schedule_id = crm_id("SC")
+    now = now_iso()
+    payload = {**parameters, "due_at": due_at, "target_action": target_action}
+    with crm_connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO scheduled_actions
+            (id, status, provider, action, due_at, timezone, contact_id, company_id, to_value, from_value, payload_json, created_at, updated_at)
+            VALUES (?, 'pending', 'twilio', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                schedule_id,
+                target_action,
+                due_at,
+                str(first_value(parameters, "timezone", "tz", default="America/Mexico_City") or "America/Mexico_City"),
+                contact.get("id"),
+                contact.get("company_id"),
+                preview.get("to"),
+                preview.get("from"),
+                json.dumps(payload, ensure_ascii=False),
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    event = {
+        "ok": True,
+        "provider": "twilio",
+        "action": action,
+        "scheduled_action_id": schedule_id,
+        "target_action": target_action,
+        "due_at": due_at,
+        "contact_id": contact.get("id"),
+        "confirmed": True,
+    }
+    append_memory("twilio_action_scheduled", event)
+    return event
+
+
+def due_scheduled_actions(limit=10):
+    with crm_connect() as conn:
+        rows = [dict(row) for row in conn.execute("SELECT * FROM scheduled_actions WHERE status='pending' ORDER BY due_at ASC LIMIT ?", (limit,)).fetchall()]
+    return [row for row in rows if due_at_is_ready(row["due_at"])]
+
+
+def update_scheduled_action(schedule_id, status, result=None):
+    now = now_iso()
+    with crm_connect() as conn:
+        conn.execute(
+            "UPDATE scheduled_actions SET status=?, result_json=?, attempts=attempts+1, updated_at=?, executed_at=? WHERE id=?",
+            (status, json.dumps(result or {}, ensure_ascii=False), now, now if status in {"done", "failed"} else "", schedule_id),
+        )
+        conn.commit()
+
+
+def execute_scheduled_action(row):
+    payload = json.loads(row.get("payload_json") or "{}")
+    payload["from_number"] = payload.get("from_number") or row.get("from_value") or twilio_default_from_number()
+    if row.get("action") == "call_phone":
+        result = twilio_start_call(payload, confirm=True)
+    elif row.get("action") == "send_sms":
+        result = twilio_send_message(payload, confirm=True, channel="sms")
+    else:
+        raise ValueError(f"Accion programada no soportada: {row.get('action')}")
+    update_scheduled_action(row["id"], "done" if result.get("ok") else "failed", result)
+    return result
+
+
+def scheduler_loop():
+    while True:
+        try:
+            for row in due_scheduled_actions():
+                try:
+                    update_scheduled_action(row["id"], "running", {"started_at": now_iso()})
+                    execute_scheduled_action(row)
+                except Exception as exc:
+                    update_scheduled_action(row["id"], "failed", {"error": brief(str(exc), 800)})
+                    append_memory("scheduled_action_error", {"id": row.get("id"), "error": brief(str(exc), 800)})
+        except Exception as exc:
+            append_memory("scheduler_loop_error", {"error": brief(str(exc), 800)})
+        time.sleep(20)
+
+
+def start_scheduler_once():
+    global SCHEDULER_THREAD_STARTED
+    with SCHEDULER_LOCK:
+        if SCHEDULER_THREAD_STARTED:
+            return
+        crm_write_readme()
+        crm_connect().close()
+        thread = threading.Thread(target=scheduler_loop, daemon=True, name="kim-scheduler")
+        thread.start()
+        SCHEDULER_THREAD_STARTED = True
 
 
 def run_twilio_bridge(action, parameters, confirm=False):
@@ -1868,7 +2454,42 @@ def run_twilio_bridge(action, parameters, confirm=False):
         return twilio_send_message(parameters, confirm=confirm, channel="sms")
     if action in {"send_whatsapp", "whatsapp", "whatsapp_message"}:
         return twilio_send_message(parameters, confirm=confirm, channel="whatsapp")
+    if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
+        return twilio_start_call(parameters, confirm=confirm)
+    if action in {"schedule_call", "programar_llamada", "agendar_llamada", "schedule_sms", "programar_sms", "agendar_sms"}:
+        return schedule_twilio_action(action, parameters, confirm=confirm)
     raise ValueError(f"Accion Twilio no soportada: {action}")
+
+
+def run_crm_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "estado"}:
+        return crm_status()
+    if action in {"list_contacts", "contacts", "clientes", "contactos", "search_contacts"}:
+        return crm_list_contacts(parameters)
+    if action in {"upsert_contact", "create_contact", "save_contact", "guardar_contacto", "crear_contacto"}:
+        preview = {
+            "display_name": first_value(parameters, "display_name", "name", "nombre", "client_name", "contact_name", default=""),
+            "phone": normalize_phone_number(first_value(parameters, "phone", "telefono", "to", "from", default="")),
+            "email": first_value(parameters, "email", "correo", default=""),
+            "company": first_value(parameters, "company", "empresa", default=""),
+            "contact_type": first_value(parameters, "contact_type", "tipo", default="client"),
+        }
+        if not confirm:
+            return confirmation_preview("crm", action, f"Guardar contacto CRM {preview.get('display_name') or preview.get('phone') or preview.get('email')}.", preview, execution_parameters=parameters)
+        contact = crm_upsert_contact(parameters, source="kim_live")
+        return {"ok": True, "provider": "crm", "action": action, "contact": contact, "confirmed": True}
+    if action in {"record_note", "note", "nota"}:
+        body = str(first_value(parameters, "body", "note", "notes", "text", "content", default="") or "").strip()
+        phone = normalize_phone_number(first_value(parameters, "phone", "telefono", "to", "from", default=""))
+        if not body:
+            raise ValueError("Falta body/note para registrar nota CRM.")
+        if not confirm:
+            return confirmation_preview("crm", action, f"Registrar nota CRM para {phone or 'contacto'}.", {"phone": phone, "body": brief(body, 500)}, execution_parameters=parameters)
+        interaction = crm_record_interaction("note", "internal", from_value="kim", to_value=phone, body=body, status="recorded", metadata={"source": "kim_live"})
+        return {"ok": True, "provider": "crm", "action": action, "interaction": interaction, "confirmed": True}
+    raise ValueError(f"Accion CRM no soportada: {action}")
 
 
 def oauth_form_request(url, payload, timeout=90):
@@ -3382,6 +4003,14 @@ def agent_action_defaults(action, parameters):
         return "twilio", "send_sms", data
     if action in {"send_whatsapp", "whatsapp", "whatsapp_message", "mandar_whatsapp"}:
         return "twilio", "send_whatsapp", data
+    if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
+        return "twilio", "call_phone", data
+    if action in {"schedule_call", "programar_llamada", "agendar_llamada"}:
+        return "twilio", "schedule_call", data
+    if action in {"schedule_sms", "programar_sms", "agendar_sms"}:
+        return "twilio", "schedule_sms", data
+    if action in {"save_contact", "create_contact", "upsert_contact", "guardar_contacto", "crear_contacto"}:
+        return "crm", "upsert_contact", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
         if not first_value(data, "name", "title", "subject", "task_name", "task", "asunto"):
             data["name"] = generated_title("Tarea Kim")
@@ -3410,6 +4039,10 @@ def api_bridge_templates():
                 "reply_email",
                 "send_sms",
                 "send_whatsapp",
+                "call_phone",
+                "schedule_call",
+                "schedule_sms",
+                "save_contact",
                 "mark_spam",
                 "move_to_trash",
                 "archive_email",
@@ -3439,7 +4072,45 @@ def api_bridge_templates():
                     "parameters": {"to": "+525500000000", "body": "Mensaje de prueba de Kim Live."},
                     "confirm": False,
                 },
+                {
+                    "provider": "all",
+                    "action": "schedule_call",
+                    "parameters": {"to": "+525500000000", "contact_name": "Cliente", "delay_minutes": 30},
+                    "confirm": False,
+                },
             ],
+        },
+        "crm": {
+            "status": {
+                "rule": "Valida la base local en BIFROST/CRM sin modificar datos.",
+            },
+            "list_contacts": {
+                "optional": ["query", "contact_type", "limit"],
+                "rule": "Consulta clientes/contactos guardados en BIFROST/CRM antes de llamar, mandar SMS o registrar notas.",
+            },
+            "upsert_contact": {
+                "required": ["display_name or phone or email"],
+                "aliases": {
+                    "display_name": ["name", "nombre", "client_name", "contact_name"],
+                    "phone": ["telefono", "to", "mobile", "celular"],
+                    "email": ["correo", "mail"],
+                    "company": ["empresa", "organization", "organizacion"],
+                    "contact_type": ["tipo", "client_type", "categoria"],
+                    "notes": ["nota", "body", "description"],
+                },
+                "defaults": {
+                    "contact_type": "client",
+                },
+                "rule": "Preparar con confirm=false. Guardar o actualizar contactos requiere confirmacion explicita y queda exportado como Markdown en BIFROST/CRM.",
+            },
+            "record_note": {
+                "required": ["body"],
+                "aliases": {
+                    "body": ["note", "nota", "message", "content"],
+                    "phone": ["telefono", "to", "client_phone"],
+                },
+                "rule": "Registra una nota interna asociada al contacto si se conoce telefono o correo.",
+            },
         },
         "twilio": {
             "status": {
@@ -3464,6 +4135,31 @@ def api_bridge_templates():
             "send_whatsapp": {
                 "required": ["to", "body", "from or messaging_service_sid"],
                 "rule": "Usa formato whatsapp:+numero. Requiere sender WhatsApp aprobado o sandbox Twilio; preparar con confirm=false.",
+            },
+            "call_phone": {
+                "required": ["to"],
+                "aliases": {
+                    "to": ["recipient", "phone", "telefono", "destinatario"],
+                    "from": ["from_number", "sender"],
+                    "url": ["voice_url", "twiml_url"],
+                },
+                "defaults": {
+                    "from": twilio_default_from_number() or "numero Twilio con capacidad Voice",
+                    "url": "https://kim.aipeople.app/twilio/voice",
+                },
+                "rule": "Preparar con confirm=false. Llamar requiere confirmacion explicita; la conversacion se guarda en BIFROST/MEMORY/calls y BIFROST/CRM.",
+            },
+            "schedule_call": {
+                "required": ["to", "due_at or delay_minutes"],
+                "aliases": {
+                    "due_at": ["scheduled_at", "run_at", "datetime", "cuando"],
+                    "delay_minutes": ["minutes", "minutos", "en_minutos"],
+                },
+                "rule": "Preparar con confirm=false. Al confirmar, queda en BIFROST/CRM/scheduled_actions y el scheduler local la ejecuta cuando venza.",
+            },
+            "schedule_sms": {
+                "required": ["to", "body", "due_at or delay_minutes"],
+                "rule": "Preparar con confirm=false. Al confirmar, queda programado en la base local CRM.",
             },
         },
         "hostinger_mail": {
@@ -4106,6 +4802,21 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"crm", "bifrost_crm", "clients", "clientes", "contacts", "contactos"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
+        result = run_crm_bridge(action, parameters, confirm=confirm)
     elif provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -4124,7 +4835,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     elif provider in {"all", "auto", "kim", "agent"}:
         target_provider, target_action, target_parameters = agent_action_defaults(action, parameters)
         if not target_provider:
-            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task o create_page.")
+            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task, create_page, call_phone, schedule_call, schedule_sms o save_contact.")
         result = run_api_bridge(
             target_provider,
             target_action,
@@ -4136,7 +4847,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail, twilio o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail, twilio, crm o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -4829,7 +5540,7 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
         + ((reply_text or "").strip() or "(sin respuesta todavia)")
     )
     try:
-        return save_call_record(
+        result = save_call_record(
             {
                 "session_id": session_id,
                 "text": text,
@@ -4837,6 +5548,19 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
                 "title": f"Twilio phone call {caller or 'unknown'}",
             }
         )
+        call_path, _entry = result
+        crm_record_interaction(
+            "call",
+            "inbound" if caller and caller != twilio_default_from_number() else "outbound",
+            from_value=caller,
+            to_value=called,
+            status="transcribed",
+            body=user_text,
+            external_sid=call_sid,
+            transcript_path=str(call_path),
+            metadata={"reply": reply_text, "session_id": session_id},
+        )
+        return result
     except Exception as exc:
         phone_dir = RUNTIME_PHONE_CALLS / today()
         phone_dir.mkdir(parents=True, exist_ok=True)
@@ -4879,11 +5603,16 @@ def twilio_voice_twiml(handler, params=None):
             "media_ws_url": media_ws,
         },
     )
+    stream_params = (
+        f'<Parameter name="callSid" value="{twiml_escape(params.get("CallSid", ""))}" />'
+        f'<Parameter name="from" value="{twiml_escape(caller)}" />'
+        f'<Parameter name="to" value="{twiml_escape(called)}" />'
+    )
     query = urllib.parse.urlencode({"callSid": params.get("CallSid", ""), "from": caller, "to": called})
     separator = "&" if "?" in media_ws else "?"
     stream_url = media_ws + separator + query
     return twiml_response(
-        f'<Connect><Stream url="{twiml_escape(stream_url)}" /></Connect>'
+        f'<Connect><Stream url="{twiml_escape(stream_url)}">{stream_params}</Stream></Connect>'
     )
 
 
@@ -4905,6 +5634,72 @@ def twilio_gather_twiml(handler, params):
         "</Gather>"
         '<Say language="es-MX" voice="Polly.Mia">Listo doctor. Corto la llamada y dejo memoria local.</Say>'
     )
+
+
+def twilio_status_callback(params):
+    event = {
+        "at": now_iso(),
+        "provider": "twilio",
+        "kind": "status_callback",
+        "call_sid": params.get("CallSid", ""),
+        "message_sid": params.get("MessageSid", "") or params.get("SmsSid", ""),
+        "from": params.get("From", ""),
+        "to": params.get("To", ""),
+        "call_status": params.get("CallStatus", ""),
+        "message_status": params.get("MessageStatus", "") or params.get("SmsStatus", ""),
+        "duration": params.get("CallDuration", ""),
+        "error_code": params.get("ErrorCode", ""),
+        "error_message": params.get("ErrorMessage", ""),
+    }
+    append_jsonl_any([TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG], event)
+    append_memory("twilio_status_callback", event)
+    if event.get("call_sid"):
+        crm_record_interaction(
+            "call_status",
+            "callback",
+            from_value=event.get("from", ""),
+            to_value=event.get("to", ""),
+            status=event.get("call_status", ""),
+            external_sid=event.get("call_sid", ""),
+            metadata=event,
+        )
+    if event.get("message_sid"):
+        crm_record_interaction(
+            "sms_status",
+            "callback",
+            from_value=event.get("from", ""),
+            to_value=event.get("to", ""),
+            status=event.get("message_status", ""),
+            external_sid=event.get("message_sid", ""),
+            metadata=event,
+        )
+    return event
+
+
+def twilio_sms_twiml(params):
+    event = {
+        "at": now_iso(),
+        "provider": "twilio",
+        "kind": "inbound_sms",
+        "message_sid": params.get("MessageSid", "") or params.get("SmsSid", ""),
+        "from": params.get("From", ""),
+        "to": params.get("To", ""),
+        "body": params.get("Body", ""),
+        "num_media": params.get("NumMedia", ""),
+    }
+    append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
+    append_memory("twilio_inbound_sms", event)
+    crm_record_interaction(
+        "sms",
+        "inbound",
+        from_value=event.get("from", ""),
+        to_value=event.get("to", ""),
+        status="received",
+        body=event.get("body", ""),
+        external_sid=event.get("message_sid", ""),
+        metadata=event,
+    )
+    return twiml_response("")
 
 
 def realtime_session_config():
@@ -4959,8 +5754,11 @@ def realtime_session_config():
                 "selected_mailbox en las siguientes acciones. "
                 "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
                 "o move_to_trash; no borres permanentemente. "
-                "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms o send_whatsapp. "
-                "SMS/WhatsApp siempre se preparan con confirm=false y requieren confirmacion explicita antes de enviar; "
+                "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms, send_whatsapp, "
+                "call_phone, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
+                "y requieren confirmacion explicita antes de ejecutar; "
+                "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
+                "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
                 "si Twilio responde 401, pide Auth Token correcto o API Key SID que empieza con SK. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
@@ -5013,7 +5811,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion, lee Gmail, maneja correo Hostinger y prepara Twilio SMS/WhatsApp desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion, lee Gmail, maneja correo Hostinger, CRM local y prepara Twilio llamadas/SMS/WhatsApp desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -5021,7 +5819,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail, twilio o all.",
+                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail, twilio, crm o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -5033,7 +5831,8 @@ def realtime_session_config():
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
-                                    "Twilio: status, list_numbers, send_sms, send_whatsapp."
+                                    "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, schedule_call, schedule_sms. "
+                                    "CRM: status, list_contacts, upsert_contact, record_note."
                                 ),
                             },
                             "parameters": {
@@ -5668,6 +6467,11 @@ class Handler(BaseHTTPRequestHandler):
             params = {key: values[-1] for key, values in urllib.parse.parse_qs(parsed.query).items()}
             write_xml(self, twilio_voice_twiml(self, params))
             return
+        if parsed.path == "/twilio/status":
+            params = {key: values[-1] for key, values in urllib.parse.parse_qs(parsed.query).items()}
+            twilio_status_callback(params)
+            write_text(self, "", content_type="text/plain; charset=utf-8")
+            return
         if parsed.path == "/twilio/health":
             write_json(self, {"ok": True, "service": "kim_twilio", "version": APP_VERSION})
             return
@@ -5747,6 +6551,15 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/twilio/gather":
                 params = read_form(self)
                 write_xml(self, twilio_gather_twiml(self, params))
+                return
+            if parsed.path == "/twilio/status":
+                params = read_form(self)
+                twilio_status_callback(params)
+                write_text(self, "", content_type="text/plain; charset=utf-8")
+                return
+            if parsed.path == "/twilio/sms":
+                params = read_form(self)
+                write_xml(self, twilio_sms_twiml(params))
                 return
             if parsed.path == "/api/upload-memory-file":
                 analysis = parse_upload(self)
@@ -5884,6 +6697,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     MEMORY_INBOX.mkdir(parents=True, exist_ok=True)
+    start_scheduler_once()
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Kim Live running at http://{HOST}:{PORT}", flush=True)
     server.serve_forever()
