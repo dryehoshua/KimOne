@@ -53,6 +53,7 @@ MEMORY_CONTEXT_DIR = MEMORY_ROOT / "context"
 MEMORY_CALLS = MEMORY_ROOT / "calls"
 MEMORY_UPLOADS = MEMORY_ROOT / "uploads"
 MEMORY_RESEARCH = MEMORY_ROOT / "research"
+MEMORY_KNOWLEDGE = MEMORY_ROOT / "knowledge"
 CRM_ROOT = BIFROST / "CRM"
 CRM_DB = CRM_ROOT / "crm.sqlite"
 CRM_CONTACTS_DIR = CRM_ROOT / "contacts"
@@ -69,6 +70,7 @@ RESEARCH_SOURCE_CACHE = MEMORY_CONTEXT_DIR / "research_sources_latest.json"
 RUNTIME_CALLS = RUNTIME_MEMORY_ROOT / "calls"
 RUNTIME_UPLOADS = RUNTIME_MEMORY_ROOT / "uploads"
 RUNTIME_RESEARCH = RUNTIME_MEMORY_ROOT / "research"
+RUNTIME_KNOWLEDGE = RUNTIME_MEMORY_ROOT / "knowledge"
 RUNTIME_PHONE_CALLS = RUNTIME_MEMORY_ROOT / "phone_calls"
 RUNTIME_MEMORY_ANALYTICS = RUNTIME_CONTEXT / "memory_analytics_latest.json"
 RUNTIME_UPLOAD_INDEX = RUNTIME_CONTEXT / "uploaded_files_index.json"
@@ -140,7 +142,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.22"
+APP_VERSION = "1.5.23"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1484,11 +1486,177 @@ def conversation_record_from_entry(entry):
     }
 
 
+def transcript_from_markdown(markdown):
+    if "## Transcript" in markdown:
+        return markdown.split("## Transcript", 1)[1].strip()
+    return markdown.strip()
+
+
 def load_conversation(session_id):
     matches = [item for item in load_call_entries(limit=5000) if item.get("session_id") == session_id]
     if not matches:
         raise ValueError("No encontre esa conversacion en memoria.")
     return conversation_record_from_entry(matches[-1])
+
+
+def discover_call_memory_entries(limit=800):
+    entries = []
+    seen_paths = set()
+    seen_keys = set()
+    for item in load_call_entries(limit=10000):
+        path = str(item.get("path") or "")
+        key = path or str(item.get("session_id") or "")
+        if key and key in seen_keys:
+            continue
+        if key:
+            seen_keys.add(key)
+        if path:
+            seen_paths.add(path)
+        entries.append(item)
+    files = []
+    for root in [MEMORY_CALLS, RUNTIME_CALLS]:
+        try:
+            files.extend(root.rglob("*.md"))
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+    files = sorted(files, key=lambda item: item.stat().st_mtime if item.exists() else 0, reverse=True)
+    for path in files[:limit]:
+        path_str = str(path)
+        if path_str in seen_paths:
+            continue
+        seen_paths.add(path_str)
+        session_id = path.stem
+        try:
+            markdown = path.read_text(encoding="utf-8")
+        except (FileNotFoundError, PermissionError, OSError):
+            markdown = ""
+        title = session_id
+        if markdown.startswith("# "):
+            title = markdown.splitlines()[0].lstrip("# ").strip() or session_id
+        entries.append(
+            {
+                "session_id": session_id,
+                "title": title,
+                "path": path_str,
+                "saved_at": dt.datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds"),
+                "summary": "",
+                "topics": [],
+            }
+        )
+    return entries
+
+
+def memory_search_terms(query):
+    normalized = normalize_security_text(query)
+    return [term for term in normalized.split() if len(term) >= 3]
+
+
+def score_memory_text(query, title="", summary="", transcript=""):
+    phrase = normalize_security_text(query)
+    terms = memory_search_terms(query)
+    haystack = normalize_security_text(" ".join([title or "", summary or "", transcript or ""]))
+    if not phrase and not terms:
+        return 1
+    score = 0
+    if phrase and phrase in haystack:
+        score += 12
+    title_norm = normalize_security_text(title)
+    summary_norm = normalize_security_text(summary)
+    for term in terms:
+        if term in title_norm:
+            score += 5
+        if term in summary_norm:
+            score += 3
+        if term in haystack:
+            score += 1
+    return score
+
+
+def transcript_snippet(transcript, query, max_chars=1600):
+    text = (transcript or "").strip()
+    if len(text) <= max_chars:
+        return text
+    lower = text.lower()
+    candidates = []
+    query_lower = str(query or "").strip().lower()
+    if query_lower:
+        candidates.append(query_lower)
+    candidates.extend(re.findall(r"[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]{3,}", str(query or "")))
+    idx = -1
+    for candidate in candidates:
+        idx = lower.find(candidate.lower())
+        if idx >= 0:
+            break
+    if idx < 0:
+        idx = 0
+    start = max(0, idx - max_chars // 3)
+    end = min(len(text), start + max_chars)
+    start = max(0, end - max_chars)
+    prefix = "..." if start > 0 else ""
+    suffix = "..." if end < len(text) else ""
+    return prefix + text[start:end].strip() + suffix
+
+
+def search_memory_transcripts(query="", session_id="", limit=6, max_chars=1600):
+    query = str(query or "").strip()
+    session_id = str(session_id or "").strip()
+    limit = max(1, min(int(limit or 6), 20))
+    max_chars = max(400, min(int(max_chars or 1600), 6000))
+    if session_id:
+        record = load_conversation(session_id)
+        transcript = record.get("transcript") or transcript_from_markdown(record.get("markdown", ""))
+        return {
+            "ok": True,
+            "provider": "memory",
+            "action": "search_transcripts",
+            "query": query,
+            "count": 1,
+            "results": [
+                {
+                    "session_id": record.get("session_id"),
+                    "title": record.get("title"),
+                    "saved_at": record.get("saved_at"),
+                    "path": record.get("path"),
+                    "score": 999,
+                    "summary": record.get("summary", ""),
+                    "snippet": transcript_snippet(transcript, query, max_chars=max_chars),
+                    "chars": len(transcript),
+                }
+            ],
+        }
+    results = []
+    for entry in discover_call_memory_entries():
+        record = conversation_record_from_entry(entry)
+        transcript = record.get("transcript") or transcript_from_markdown(record.get("markdown", ""))
+        if not transcript:
+            continue
+        score = score_memory_text(query, record.get("title", ""), record.get("summary", ""), transcript)
+        if query and score <= 0:
+            continue
+        results.append(
+            {
+                "session_id": record.get("session_id"),
+                "title": record.get("title"),
+                "saved_at": record.get("saved_at"),
+                "path": record.get("path"),
+                "score": score,
+                "summary": record.get("summary", ""),
+                "snippet": transcript_snippet(transcript, query, max_chars=max_chars),
+                "chars": len(transcript),
+            }
+        )
+    results = sorted(results, key=lambda item: (item.get("score", 0), item.get("saved_at") or ""), reverse=True)
+    payload = {
+        "ok": True,
+        "provider": "memory",
+        "action": "search_transcripts",
+        "query": query,
+        "count": len(results[:limit]),
+        "results": results[:limit],
+        "rule": "Usa estos snippets literales como fuente primaria; los resumenes son derivados.",
+    }
+    append_memory("memory_transcript_search", {"query": query, "count": payload["count"], "top_paths": [item.get("path") for item in payload["results"][:3]]})
+    return payload
 
 
 def latest_kim_live_notes(limit=6):
@@ -6308,6 +6476,183 @@ def memory_router(action="classify", text="", session_id="", call_entry=None):
     return payload
 
 
+def knowledge_slug(value):
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^A-Za-z0-9]+", "-", text.lower()).strip("-")
+    return text[:90] or "knowledge"
+
+
+def write_knowledge_card(card, session_id=""):
+    title = str(card.get("title") or "Conocimiento Kim").strip()[:140]
+    domain = knowledge_slug(card.get("domain") or "general")
+    folder = MEMORY_KNOWLEDGE / domain
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        folder = RUNTIME_KNOWLEDGE / domain
+        folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{today()}-{knowledge_slug(title)}.md"
+    content = (
+        f"# {title}\n\n"
+        f"- Dominio: {card.get('domain') or 'general'}\n"
+        f"- Session ID: {session_id}\n"
+        f"- Fuente: transcript literal Kim Live\n"
+        f"- Confianza: {card.get('confidence', '')}\n"
+        f"- Actualizado: {now_iso()}\n\n"
+        "## Sintesis\n\n"
+        f"{str(card.get('content') or card.get('summary') or '').strip()}\n\n"
+        "## Cita Fuente\n\n"
+        f"{str(card.get('source_quote') or '').strip()}\n"
+    )
+    path.write_text(content, encoding="utf-8")
+    return str(path)
+
+
+def review_prompt_for_transcript(text, session_id=""):
+    return (
+        "Eres el bibliotecario operativo de Kim Live. Analiza este transcript literal y decide que debe "
+        "quedar en memoria, CRM local o ClickUp. Responde SOLO JSON valido, sin markdown.\n\n"
+        "Buenas practicas: conserva el transcript como fuente primaria; crea tarjetas de conocimiento "
+        "solo para ideas reutilizables; propone CRM solo cuando haya datos claros de persona/cliente; "
+        "propone tareas solo cuando haya una accion pendiente concreta. No inventes telefonos, correos, "
+        "fechas, nombres ni empresas. Usa confidence 0-1.\n\n"
+        "Schema exacto:\n"
+        "{\n"
+        '  "knowledge_cards": [{"title": "", "domain": "general|tesca|clientes|operaciones|producto|filosofia|finanzas", "content": "", "source_quote": "", "confidence": 0.0}],\n'
+        '  "crm_updates": [{"name": "", "phone": "", "email": "", "company": "", "contact_type": "client|partner|lead|vendor|family|other", "notes": "", "source_quote": "", "confidence": 0.0}],\n'
+        '  "clickup_tasks": [{"title": "", "description": "", "space_name": "", "list_name": "", "source_quote": "", "confidence": 0.0}],\n'
+        '  "warnings": []\n'
+        "}\n\n"
+        "Criterios:\n"
+        "- knowledge_cards: conceptos, metodologias, decisiones de arquitectura, filosofia, instrucciones estables.\n"
+        "- crm_updates: datos de personas/clientes/contactos y relaciones.\n"
+        "- clickup_tasks: pendientes ejecutables para Kim/Codex/proyectos.\n"
+        "- Si una accion requiere confirmacion externa, igual proponla; el sistema la dejara preparada, no confirmada.\n\n"
+        f"Session ID: {session_id}\n\n"
+        f"Transcript:\n{text[:60000]}"
+    )
+
+
+def conversation_review(text="", session_id="", mode="auto"):
+    text = (text or "").strip()
+    session_id = str(session_id or "").strip()
+    if len(text) < 120:
+        return {"ok": True, "reviewed": False, "reason": "Transcript demasiado corto para revisar."}
+    prompt = review_prompt_for_transcript(text, session_id=session_id)
+    response, model = openai_response_with_fallback(
+        DOCUMENT_MODEL_CANDIDATES,
+        {"input": prompt, "max_output_tokens": 2200},
+    )
+    parsed = parse_json_object_from_text(output_text_from_response(response))
+    parsed.setdefault("knowledge_cards", [])
+    parsed.setdefault("crm_updates", [])
+    parsed.setdefault("clickup_tasks", [])
+    parsed.setdefault("warnings", [])
+    knowledge_saved = []
+    crm_saved = []
+    prepared_actions = []
+    for card in parsed.get("knowledge_cards", [])[:8]:
+        try:
+            confidence = float(card.get("confidence") or 0)
+        except (TypeError, ValueError):
+            confidence = 0
+        if confidence < 0.68:
+            continue
+        if not str(card.get("content") or card.get("summary") or "").strip():
+            continue
+        path = write_knowledge_card(card, session_id=session_id)
+        knowledge_saved.append({"title": card.get("title"), "domain": card.get("domain"), "path": path, "confidence": confidence})
+    for contact in parsed.get("crm_updates", [])[:8]:
+        try:
+            confidence = float(contact.get("confidence") or 0)
+        except (TypeError, ValueError):
+            confidence = 0
+        phone = normalize_phone_number(first_value(contact, "phone", "telefono", default=""))
+        email = str(first_value(contact, "email", "correo", default="") or "").strip()
+        name = str(first_value(contact, "name", "display_name", default="") or "").strip()
+        if confidence < 0.78 or not name or not (phone or email):
+            continue
+        saved = crm_upsert_contact(
+            {
+                "display_name": name,
+                "phone": phone,
+                "email": email,
+                "company": contact.get("company") or "",
+                "contact_type": contact.get("contact_type") or "client",
+                "notes": "Auto review Kim Live. " + str(contact.get("notes") or contact.get("source_quote") or ""),
+            },
+            source="conversation_review",
+        )
+        crm_saved.append({"id": saved.get("id"), "display_name": saved.get("display_name"), "path": saved.get("markdown_path"), "confidence": confidence})
+    for task in parsed.get("clickup_tasks", [])[:8]:
+        try:
+            confidence = float(task.get("confidence") or 0)
+        except (TypeError, ValueError):
+            confidence = 0
+        title = str(first_value(task, "title", "name", "subject", default="") or "").strip()
+        if confidence < 0.82 or not title:
+            continue
+        params = {
+            "title": title,
+            "body": str(first_value(task, "description", "body", "notes", default="") or "").strip(),
+            "space_name": task.get("space_name") or "Products",
+            "list_name": task.get("list_name") or "Kim Live",
+        }
+        try:
+            result = run_api_bridge("clickup", "create_task", params, confirm=False, session_id=session_id, transcript=text)
+            if not result.get("prepared_action_id"):
+                parsed.setdefault("warnings", []).append(f"ClickUp no preparo accion para '{title}': {brief(result.get('error') or result, 240)}")
+                continue
+            prepared_actions.append(
+                {
+                    "id": result.get("prepared_action_id"),
+                    "provider": result.get("provider"),
+                    "action": result.get("action"),
+                    "summary": result.get("summary"),
+                    "prepared_action_id": result.get("prepared_action_id"),
+                    "preview": result.get("preview"),
+                    "confidence": confidence,
+                }
+            )
+        except Exception as exc:
+            parsed.setdefault("warnings", []).append(f"No pude preparar tarea ClickUp '{title}': {brief(str(exc), 240)}")
+    review = {
+        "ok": True,
+        "reviewed": True,
+        "provider": "memory",
+        "action": "conversation_review",
+        "mode": mode,
+        "model": model,
+        "session_id": session_id,
+        "knowledge_saved": knowledge_saved,
+        "crm_saved": crm_saved,
+        "prepared_actions": prepared_actions,
+        "warnings": parsed.get("warnings", []),
+        "raw_counts": {
+            "knowledge_cards": len(parsed.get("knowledge_cards", [])),
+            "crm_updates": len(parsed.get("crm_updates", [])),
+            "clickup_tasks": len(parsed.get("clickup_tasks", [])),
+        },
+    }
+    append_jsonl_any([MEMORY_CONTEXT_DIR / "conversation_reviews.jsonl", RUNTIME_CONTEXT / "conversation_reviews.jsonl"], review)
+    append_memory(
+        "conversation_review",
+        {
+            "session_id": session_id,
+            "knowledge_saved": len(knowledge_saved),
+            "crm_saved": len(crm_saved),
+            "prepared_actions": len(prepared_actions),
+            "warnings": review["warnings"][:3],
+        },
+    )
+    append_daily_note(
+        f"Kim librarian review: session={session_id}; knowledge={len(knowledge_saved)}; "
+        f"crm={len(crm_saved)}; prepared={len(prepared_actions)}"
+    )
+    return review
+
+
 def context_brief(limit=9000):
     parts = [
         "Identidad: Dr. Yehoshua trabaja con Kim como interfaz verbal y Codex como ejecutor.",
@@ -6878,6 +7223,9 @@ def realtime_session_config():
                 "o action=call_report con phone/call_sid/context_id antes de responder. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
                 "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
+                "No esperes a que el doctor diga 'guarda esto' cuando el contexto sea claro: si detectas datos estables de cliente, "
+                "prepara actualizar CRM; si detectas un pendiente concreto, prepara tarea ClickUp; si detectas conocimiento reutilizable, "
+                "apoyate en la revision bibliotecaria y en memoria literal. "
                 "si Twilio responde 401, pide Auth Token correcto o API Key SID que empieza con SK. "
                 "Si falta subject/title/name, usa un subject claro segun la conversacion. Enviar correo siempre requiere confirm=false, "
                 "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
@@ -6888,8 +7236,10 @@ def realtime_session_config():
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
                 "Para cancelar o sustituir una orden pendiente, usa replace_draft_order o cancel_transaction; "
                 "no intentes simular una cancelacion creando varias notas sueltas. "
-                "Para preguntas de memoria o contexto, usa kim_memory_router para decidir si debes consultar "
-                "portafolio, tareas, clientes/CRM, voz remota o memoria general. No intentes cargar todo BIFROST. "
+                "Para preguntas de memoria o contexto, primero usa kim_memory_search para consultar transcripts "
+                "literales y cita snippets/rutas como fuente primaria; los resumenes son derivados. Usa "
+                "kim_memory_router solo para decidir dominio cuando no sepas si va a portafolio, tareas, CRM, "
+                "voz remota o memoria general. No intentes cargar todo BIFROST. "
                 "Para seguimiento comercial en Pipedrive, usa provider=pipedrive: search_persons/list_persons antes de decir que no existe un contacto; "
                 "upsert_person, create_deal, create_activity y create_note requieren confirm=false y luego confirm_prepared. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
@@ -7038,6 +7388,28 @@ def realtime_session_config():
                             },
                         },
                         "required": ["text"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_memory_search",
+                    "description": "Busca en transcripts literales guardados de Kim Live/Twilio y devuelve snippets con rutas para sintetizar desde fuente primaria.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Tema, palabra clave o pregunta a buscar en transcripts.",
+                            },
+                            "session_id": {
+                                "type": "string",
+                                "description": "Opcional: abrir una sesion exacta si ya se conoce su ID.",
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Numero maximo de conversaciones a devolver.",
+                            },
+                        },
                     },
                 },
             ],
@@ -7793,6 +8165,23 @@ class Handler(BaseHTTPRequestHandler):
                     body.get("action", "classify"),
                     body.get("text", ""),
                     session_id=body.get("session_id", ""),
+                )
+                write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/memory-search":
+                result = search_memory_transcripts(
+                    query=body.get("query", ""),
+                    session_id=body.get("session_id", ""),
+                    limit=body.get("limit", 6),
+                    max_chars=body.get("max_chars", 1600),
+                )
+                write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/conversation-review":
+                result = conversation_review(
+                    text=body.get("text", ""),
+                    session_id=body.get("session_id", ""),
+                    mode=body.get("mode", "auto"),
                 )
                 write_json(self, {"ok": True, "result": result})
                 return

@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-15 / Kim Live 1.5.23: se agrega memoria tipo biblioteca. Kim puede buscar transcripts literales con `kim_memory_search`; la revision bibliotecaria revisa la conversacion guardada, crea tarjetas de conocimiento en `BIFROST/MEMORY/knowledge`, actualiza CRM local cuando hay datos claros y prepara tareas ClickUp detectadas por contexto. Las escrituras externas siguen requiriendo confirmacion.
+
 Update 2026-05-15 / Kim Live 1.5.22: CRM local ya no reemplaza `display_name` por el telefono cuando una actualizacion llega solo con `phone`, conserva `contact_type` si no se envio uno nuevo, reutiliza un contacto existente cuando hay una coincidencia exacta unica por nombre, y limpia fichas Markdown obsoletas del mismo contacto para evitar duplicados como `Isaac Kranz` / `Isaac Krantz`.
 
 Update 2026-05-15 / Kim Live 1.5.21: Kim Live ya guarda el transcript literal por sesion sin duplicar el indice de conversaciones, permite autosave silencioso desde el frontend y agrega `provider=pipedrive action=sync_persons` para bajar contactos de Pipedrive al CRM local de BIFROST como primer paso de la rutina diaria de sincronizacion.
@@ -59,9 +61,17 @@ Desde 1.5.8, Kim debe preferir confirmar asi:
 }
 ```
 
-## Herramienta Realtime
+## Herramientas Realtime
 
-Kim Live expone la herramienta `kim_api_bridge` al modelo Realtime.
+Kim Live expone `kim_api_bridge`, `kim_memory_search` y `kim_memory_router` al modelo Realtime.
+
+Regla de memoria 1.5.23:
+
+- El transcript literal es la fuente primaria.
+- Los resumenes son derivados y sirven para orientacion rapida, no como evidencia unica.
+- Para responder preguntas de contexto, Kim debe usar `kim_memory_search` antes de sintetizar cuando no tenga el dato fresco en la conversacion activa.
+- `kim_memory_router` solo decide el dominio correcto: portafolio, tareas, CRM/clientes, voz remota o memoria general.
+- Kim no debe cargar todo BIFROST; debe recuperar snippets relevantes y citar ruta/session_id cuando el contexto importe.
 
 Entrada:
 
@@ -193,6 +203,13 @@ BIFROST/MEMORY/context/api_bridge_actions.jsonl
 Tambien se agrega una nota diaria y un evento en el inbox de Kim Live.
 
 Las conversaciones de Kim Live se guardan por `session_id` en `BIFROST/MEMORY/calls/YYYY-MM-DD/` y el autosave silencioso actualiza el mismo archivo en lugar de crear duplicados.
+
+Desde 1.5.23, la revision bibliotecaria usa el transcript guardado para decidir automaticamente:
+
+- `knowledge_cards`: se guardan como Markdown en `BIFROST/MEMORY/knowledge/<dominio>/`.
+- `crm_updates`: si hay nombre y telefono/correo con confianza alta, actualiza `BIFROST/CRM` local.
+- `clickup_tasks`: se preparan como accion ClickUp con `prepared_action_id`; el doctor confirma desde el boton o con `confirm_prepared`.
+- No se ejecutan escrituras externas sin confirmacion explicita.
 
 ## Accion generica
 

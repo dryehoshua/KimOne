@@ -1293,7 +1293,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.22</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.23</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1552,6 +1552,9 @@
     let autoSaveInFlight = false;
     let autoSaveEnabled = true;
     let lastPersistedTranscript = "";
+    let autoReviewInFlight = false;
+    let lastReviewedTranscript = "";
+    let lastAutoReviewAt = 0;
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -2271,6 +2274,78 @@
       }
     }
 
+    async function runMemorySearchTool(args, callId = null) {
+      const query = args.query || args.text || "";
+      const sessionIdToOpen = args.session_id || "";
+      try {
+        const data = await post("/api/memory-search", {
+          query,
+          session_id: sessionIdToOpen,
+          limit: args.limit || 6,
+          max_chars: args.max_chars || 1800
+        });
+        const result = data.result;
+        appendMessage("Codex", "Memoria literal consultada: " + (result.count || 0) + " resultado(s)\n" + JSON.stringify(result, null, 2).slice(0, 2200), "codex", false);
+        $("apiBridgeState").textContent = "Memoria literal: " + (result.count || 0);
+        sendRealtimeToolOutput(callId, result);
+        refreshMemoryState();
+        return result;
+      } catch (error) {
+        const payload = {error: error.message, query};
+        appendMessage("Codex", "No pude buscar transcripts: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      }
+    }
+
+    async function reviewConversationForActions(options = {}) {
+      if (autoReviewInFlight) return null;
+      const text = currentTranscriptText();
+      if (text.length < 1000) return null;
+      if (!options.force && Math.abs(text.length - lastReviewedTranscript.length) < 700) return null;
+      autoReviewInFlight = true;
+      try {
+        const data = await post("/api/conversation-review", {
+          text,
+          session_id: sessionId,
+          mode: options.silent ? "auto_silent" : "manual"
+        });
+        const result = data.result || {};
+        lastReviewedTranscript = text;
+        lastAutoReviewAt = Date.now();
+        for (const item of result.prepared_actions || []) {
+          if (item.prepared_action_id) {
+            renderPendingApiAction({
+              id: item.prepared_action_id,
+              provider: item.provider,
+              action: item.action,
+              summary: item.summary || "Accion detectada por revision bibliotecaria.",
+              preview: item.preview || null
+            });
+          }
+        }
+        if (!options.silent) {
+          appendMessage(
+            "Codex",
+            "Revision bibliotecaria: conocimiento " + ((result.knowledge_saved || []).length)
+              + ", CRM " + ((result.crm_saved || []).length)
+              + ", acciones preparadas " + ((result.prepared_actions || []).length)
+              + (result.warnings?.length ? "\nAvisos: " + result.warnings.slice(0, 3).join(" | ") : ""),
+            "codex",
+            false
+          );
+        } else if ((result.knowledge_saved || []).length || (result.crm_saved || []).length || (result.prepared_actions || []).length) {
+          $("apiBridgeState").textContent = "Memoria actualizada";
+        }
+        return result;
+      } catch (error) {
+        if (!options.silent) appendMessage("Codex", "No pude revisar memoria: " + error.message, "codex", false);
+        return {error: error.message};
+      } finally {
+        autoReviewInFlight = false;
+      }
+    }
+
     async function handleRealtimeToolCall(data) {
       const callId = data.call_id || data.callId || data.item?.call_id;
       const name = data.name || data.item?.name;
@@ -2300,6 +2375,9 @@
       }
       if (name === "kim_memory_router") {
         await runMemoryRouterTool(args, callId);
+      }
+      if (name === "kim_memory_search") {
+        await runMemorySearchTool(args, callId);
       }
     }
 
@@ -2548,6 +2626,7 @@
           appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
           refreshMemoryState();
           setStatus("Memoria guardada.", "idle");
+          reviewConversationForActions({force: true, silent: false});
         }
         return data;
       } catch (error) {
@@ -2563,7 +2642,12 @@
       if (!force && text === lastPersistedTranscript) return null;
       autoSaveInFlight = true;
       try {
-        return await saveCurrentConversation("", {silent: true});
+        const saved = await saveCurrentConversation("", {silent: true});
+        const now = Date.now();
+        if (saved && now - lastAutoReviewAt > 240000) {
+          reviewConversationForActions({silent: true});
+        }
+        return saved;
       } finally {
         autoSaveInFlight = false;
       }
@@ -2769,8 +2853,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.22");
-        $("appVersion").textContent = "v" + (data.version || "1.5.22");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.23");
+        $("appVersion").textContent = "v" + (data.version || "1.5.23");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
