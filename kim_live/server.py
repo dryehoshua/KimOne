@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import cgi
 import base64
 import datetime as dt
+import difflib
 from email import policy
 from email.header import decode_header, make_header
 from email.message import EmailMessage
@@ -109,6 +110,8 @@ TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_k
 OPENAI_KEYCHAIN_SERVICE = "codex.openai.api_key"
 CLICKUP_KEYCHAIN_SERVICE = "codex.clickup.personal_token"
 NOTION_KEYCHAIN_SERVICE = "codex.notion.integration_token"
+PIPEDRIVE_KEYCHAIN_SERVICE = "codex.pipedrive.api_token"
+PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE = "codex.pipedrive.company_domain"
 GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
@@ -126,6 +129,7 @@ PORT = 8765
 OPENAI_API_BASE = "https://api.openai.com/v1"
 CLICKUP_API_BASE = "https://api.clickup.com/api/v2"
 NOTION_API_BASE = "https://api.notion.com/v1"
+PIPEDRIVE_API_BASE = "https://api.pipedrive.com/v1"
 GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
@@ -136,7 +140,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.18"
+APP_VERSION = "1.5.20"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1546,6 +1550,7 @@ def clickup_task_names_context(limit=3200, max_items=35):
 def api_bridge_config_status(live=False):
     clickup_configured = bool(load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE, required=False))
     notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
+    pipedrive_configured = bool(load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE, required=False))
     gmail_configured = gmail_oauth_configured()
     gmail_has_refresh = gmail_authorized()
     hostinger_status = hostinger_mail_status(live=False)
@@ -1576,6 +1581,24 @@ def api_bridge_config_status(live=False):
                 "Kim Live necesita un token de integracion Notion en Keychain para operar autonomamente. "
                 "Codex Desktop tambien tiene acceso Notion por MCP, pero ese acceso no vive dentro del servidor local."
             ),
+        },
+        "pipedrive": {
+            "configured": pipedrive_configured,
+            "company_domain": load_keychain_secret(PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE, required=False),
+            "write_requires_confirmation": True,
+            "capabilities": [
+                "status",
+                "list_persons",
+                "search_persons",
+                "get_person",
+                "upsert_person",
+                "list_deals",
+                "search_deals",
+                "create_deal",
+                "update_deal",
+                "create_activity",
+                "create_note",
+            ],
         },
         "gmail": {
             "configured": gmail_configured,
@@ -1613,6 +1636,12 @@ def api_bridge_config_status(live=False):
         except Exception as exc:
             status["notion"]["live_ok"] = False
             status["notion"]["error"] = brief(str(exc), 220)
+    if live and pipedrive_configured:
+        try:
+            status["pipedrive"].update(pipedrive_status(live=True))
+        except Exception as exc:
+            status["pipedrive"]["live_ok"] = False
+            status["pipedrive"]["error"] = brief(str(exc), 220)
     if live and gmail_configured:
         status["gmail"].update(gmail_status(live=gmail_has_refresh))
     if live:
@@ -1705,6 +1734,19 @@ def notion_request(path, method="GET", payload=None, params=None):
             "Authorization": f"Bearer {token}",
             "Notion-Version": NOTION_VERSION,
         },
+        method=method,
+        payload=payload,
+        params=params,
+    )
+
+
+def pipedrive_request(path, method="GET", payload=None, params=None):
+    params = dict(params or {})
+    params["api_token"] = load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE)
+    return api_json_request(
+        PIPEDRIVE_API_BASE,
+        path,
+        {},
         method=method,
         payload=payload,
         params=params,
@@ -2909,6 +2951,410 @@ def run_crm_bridge(action, parameters, confirm=False):
         interaction = crm_record_interaction("note", "internal", from_value="kim", to_value=phone, body=body, status="recorded", metadata={"source": "kim_live"})
         return {"ok": True, "provider": "crm", "action": action, "interaction": interaction, "confirmed": True}
     raise ValueError(f"Accion CRM no soportada: {action}")
+
+
+def pipedrive_value_list(value):
+    if not value:
+        return []
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    rows = value if isinstance(value, list) else [value]
+    result = []
+    for item in rows:
+        if isinstance(item, dict):
+            candidate = item.get("value") or item.get("email") or item.get("phone") or ""
+        else:
+            candidate = str(item or "")
+        candidate = str(candidate or "").strip()
+        if candidate:
+            result.append(candidate)
+    return result
+
+
+def normalize_pipedrive_person(item):
+    item = item or {}
+    org = item.get("org_id") if isinstance(item.get("org_id"), dict) else {}
+    owner = item.get("owner_id") if isinstance(item.get("owner_id"), dict) else {}
+    phones = pipedrive_value_list(item.get("phone"))
+    emails = pipedrive_value_list(item.get("email"))
+    return {
+        "id": item.get("id"),
+        "name": item.get("name") or "",
+        "email": emails[0] if emails else "",
+        "emails": emails,
+        "phone": phones[0] if phones else "",
+        "phones": phones,
+        "organization": org.get("name") if org else item.get("org_name", ""),
+        "organization_id": org.get("value") or item.get("org_id") if not isinstance(item.get("org_id"), dict) else org.get("value"),
+        "owner": owner.get("name") if owner else "",
+        "add_time": item.get("add_time", ""),
+        "update_time": item.get("update_time", ""),
+        "visible_to": item.get("visible_to", ""),
+    }
+
+
+def normalize_pipedrive_deal(item):
+    item = item or {}
+    person = item.get("person_id") if isinstance(item.get("person_id"), dict) else {}
+    org = item.get("org_id") if isinstance(item.get("org_id"), dict) else {}
+    return {
+        "id": item.get("id"),
+        "title": item.get("title") or "",
+        "status": item.get("status") or "",
+        "value": item.get("value"),
+        "currency": item.get("currency"),
+        "person_name": person.get("name") if person else item.get("person_name", ""),
+        "person_id": person.get("value") if person else item.get("person_id", ""),
+        "organization": org.get("name") if org else item.get("org_name", ""),
+        "organization_id": org.get("value") if org else item.get("org_id", ""),
+        "pipeline_id": item.get("pipeline_id", ""),
+        "stage_id": item.get("stage_id", ""),
+        "add_time": item.get("add_time", ""),
+        "update_time": item.get("update_time", ""),
+    }
+
+
+def pipedrive_status(live=False):
+    status = {
+        "configured": bool(load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE, required=False)),
+        "company_domain": load_keychain_secret(PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE, required=False),
+        "write_requires_confirmation": True,
+        "capabilities": [
+            "status",
+            "list_persons",
+            "search_persons",
+            "get_person",
+            "upsert_person",
+            "list_deals",
+            "search_deals",
+            "create_deal",
+            "update_deal",
+            "create_activity",
+            "create_note",
+        ],
+    }
+    if live and status["configured"]:
+        payload = pipedrive_request("/users/me")
+        data = payload.get("data") or {}
+        company_domain = data.get("company_domain") or status.get("company_domain")
+        if company_domain and company_domain != status.get("company_domain"):
+            try:
+                store_keychain_secret(PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE, company_domain)
+            except Exception:
+                pass
+            status["company_domain"] = company_domain
+        status["user"] = {key: data.get(key) for key in ["id", "name", "email", "locale"]}
+        status["company"] = {key: data.get(key) for key in ["company_id", "company_name", "company_domain"]}
+        status["live_ok"] = bool(payload.get("success"))
+    return status
+
+
+def pipedrive_payload_data(payload):
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("success") is False:
+        raise RuntimeError(payload.get("error") or "Pipedrive devolvio success=false.")
+    return payload.get("data")
+
+
+def pipedrive_person_id_from_local_contact(contact):
+    if not contact:
+        return ""
+    notes = str(contact.get("notes") or "")
+    match = re.search(r"\bPipedrive\s+person_id=(\d+)\b", notes, flags=re.IGNORECASE)
+    return match.group(1) if match else ""
+
+
+def pipedrive_person_candidates(term="", limit=25):
+    term = str(term or "").strip()
+    limit = max(1, min(int(limit or 25), 100))
+    people = []
+    normalized_phone = normalize_phone_number(term)
+    if normalized_phone:
+        local_contact = crm_find_contact_by_phone(normalized_phone)
+        person_id = pipedrive_person_id_from_local_contact(local_contact)
+        if person_id:
+            try:
+                payload = pipedrive_request(f"/persons/{urllib.parse.quote(str(person_id))}")
+                person = normalize_pipedrive_person(pipedrive_payload_data(payload) or {})
+                if person.get("id"):
+                    people.append(person)
+            except Exception:
+                pass
+        if local_contact and local_contact.get("display_name"):
+            try:
+                search = pipedrive_request(
+                    "/persons/search",
+                    params={"term": local_contact.get("display_name"), "fields": "name,email,phone", "limit": limit},
+                )
+                items = ((search.get("data") or {}).get("items") or [])
+                people.extend(normalize_pipedrive_person((item.get("item") if isinstance(item, dict) else item) or {}) for item in items)
+            except Exception:
+                pass
+    if term:
+        search = pipedrive_request("/persons/search", params={"term": term, "fields": "name,email,phone", "limit": limit})
+        items = ((search.get("data") or {}).get("items") or [])
+        people.extend(normalize_pipedrive_person((item.get("item") if isinstance(item, dict) else item) or {}) for item in items)
+    if not term or len(people) < limit:
+        listed = pipedrive_request("/persons", params={"start": 0, "limit": limit})
+        people.extend(normalize_pipedrive_person(item) for item in (listed.get("data") or []))
+    seen = {}
+    for person in people:
+        if person.get("id") and person.get("id") not in seen:
+            seen[person["id"]] = person
+    return list(seen.values())[:limit]
+
+
+def pipedrive_person_score(person, term):
+    term_norm = normalize_security_text(term)
+    if not term_norm:
+        return 0
+    fields = [
+        person.get("name", ""),
+        person.get("email", ""),
+        person.get("phone", ""),
+        " ".join(person.get("emails") or []),
+        " ".join(person.get("phones") or []),
+    ]
+    best = 0
+    for value in fields:
+        value_norm = normalize_security_text(value)
+        if not value_norm:
+            continue
+        if term_norm in value_norm or value_norm in term_norm:
+            best = max(best, 1.0)
+        best = max(best, difflib.SequenceMatcher(None, term_norm, value_norm).ratio())
+    return round(best, 3)
+
+
+def pipedrive_search_persons(parameters=None):
+    parameters = parameters or {}
+    term = str(first_value(parameters, "term", "query", "q", "search", "name", "contact_name", "client_name", default="") or "").strip()
+    phone = normalize_phone_number(first_value(parameters, "phone", "telefono", "to", "from", default=""))
+    email = str(first_value(parameters, "email", "correo", default="") or "").strip()
+    lookup = phone or email or term
+    limit = int(first_value(parameters, "limit", default=25) or 25)
+    people = pipedrive_person_candidates(lookup, limit=limit)
+    if lookup:
+        scored = []
+        for person in people:
+            score = max(pipedrive_person_score(person, lookup), pipedrive_person_score(person, term))
+            scored.append({**person, "match_score": score})
+        people = sorted(scored, key=lambda item: item.get("match_score", 0), reverse=True)
+    return {
+        "ok": True,
+        "provider": "pipedrive",
+        "action": "search_persons",
+        "query": lookup,
+        "count": len(people[:limit]),
+        "persons": people[:limit],
+    }
+
+
+def pipedrive_find_person_id(parameters=None, required=False):
+    parameters = parameters or {}
+    person_id = str(first_value(parameters, "person_id", "id", "pipedrive_person_id", default="") or "").strip()
+    if person_id:
+        return person_id, {"source": "provided", "person_id": person_id}
+    search = pipedrive_search_persons(parameters)
+    persons = search.get("persons") or []
+    confident = [person for person in persons if person.get("match_score", 0) >= 0.82]
+    if len(confident) == 1:
+        return str(confident[0]["id"]), {"source": "search", "person": confident[0], "candidates": persons[:5]}
+    if persons and not required:
+        return "", {"source": "candidates", "candidates": persons[:5]}
+    if required:
+        raise ValueError("No encontre una persona unica en Pipedrive. Usa person_id o confirma una coincidencia.")
+    return "", {"source": "not_found", "candidates": persons[:5]}
+
+
+def pipedrive_find_organization_id(parameters=None):
+    parameters = parameters or {}
+    org_id = str(first_value(parameters, "org_id", "organization_id", "empresa_id", default="") or "").strip()
+    if org_id:
+        return org_id
+    org_name = str(first_value(parameters, "organization", "organization_name", "org_name", "company", "empresa", default="") or "").strip()
+    if not org_name:
+        return ""
+    result = pipedrive_request("/organizations/search", params={"term": org_name, "fields": "name", "limit": 5})
+    items = ((result.get("data") or {}).get("items") or [])
+    if len(items) == 1:
+        item = items[0].get("item") or {}
+        return str(item.get("id") or "")
+    return ""
+
+
+def pipedrive_get_person(parameters=None):
+    parameters = parameters or {}
+    person_id, _scope = pipedrive_find_person_id(parameters, required=True)
+    payload = pipedrive_request(f"/persons/{urllib.parse.quote(str(person_id))}")
+    return {"ok": True, "provider": "pipedrive", "action": "get_person", "person": normalize_pipedrive_person(pipedrive_payload_data(payload) or {})}
+
+
+def pipedrive_upsert_person(parameters=None, confirm=False):
+    parameters = parameters or {}
+    name = str(first_value(parameters, "name", "display_name", "contact_name", "client_name", "nombre", default="") or "").strip()
+    email = str(first_value(parameters, "email", "correo", default="") or "").strip()
+    phone = normalize_phone_number(first_value(parameters, "phone", "telefono", "mobile", "to", "from", default=""))
+    if not name:
+        name = email or phone or "Contacto Pipedrive"
+    org_id = pipedrive_find_organization_id(parameters)
+    payload = {"name": name}
+    if email:
+        payload["email"] = email
+    if phone:
+        payload["phone"] = phone
+    if org_id:
+        payload["org_id"] = org_id
+    person_id, scope = pipedrive_find_person_id({**parameters, "name": name, "email": email, "phone": phone}, required=False)
+    preview = {"person_id": person_id, "match": scope, "payload": payload}
+    if not confirm:
+        summary = f"{'Actualizar' if person_id else 'Crear'} persona Pipedrive: {name}."
+        return confirmation_preview("pipedrive", "upsert_person", summary, preview, execution_parameters=parameters)
+    if person_id:
+        result = pipedrive_request(f"/persons/{urllib.parse.quote(str(person_id))}", method="PUT", payload=payload)
+        action = "update_person"
+    else:
+        result = pipedrive_request("/persons", method="POST", payload=payload)
+        action = "create_person"
+    person = normalize_pipedrive_person(pipedrive_payload_data(result) or {})
+    local_contact = crm_upsert_contact(
+        {
+            "display_name": person.get("name") or name,
+            "email": person.get("email") or email,
+            "phone": person.get("phone") or phone,
+            "company": person.get("organization") or first_value(parameters, "company", "empresa", default=""),
+            "contact_type": first_value(parameters, "contact_type", "tipo", default="client"),
+            "notes": f"Pipedrive person_id={person.get('id')}. " + str(first_value(parameters, "notes", "note", default="") or ""),
+        },
+        source="pipedrive",
+    )
+    return {"ok": True, "provider": "pipedrive", "action": action, "person": person, "local_contact": local_contact, "confirmed": True}
+
+
+def pipedrive_list_deals(parameters=None):
+    parameters = parameters or {}
+    term = str(first_value(parameters, "term", "query", "q", "search", "title", default="") or "").strip()
+    limit = max(1, min(int(first_value(parameters, "limit", default=25) or 25), 100))
+    if term:
+        payload = pipedrive_request("/deals/search", params={"term": term, "fields": "title,person_name,org_name", "limit": limit})
+        items = ((payload.get("data") or {}).get("items") or [])
+        deals = [normalize_pipedrive_deal((item.get("item") if isinstance(item, dict) else item) or {}) for item in items]
+    else:
+        payload = pipedrive_request("/deals", params={"start": 0, "limit": limit})
+        deals = [normalize_pipedrive_deal(item) for item in (payload.get("data") or [])]
+    return {"ok": True, "provider": "pipedrive", "action": "list_deals", "query": term, "count": len(deals), "deals": deals[:limit]}
+
+
+def pipedrive_create_deal(parameters=None, confirm=False):
+    parameters = parameters or {}
+    title = str(first_value(parameters, "title", "name", "deal_title", "subject", default="") or "").strip()
+    if not title:
+        title = generated_title("Deal Pipedrive")
+    person_id, person_scope = pipedrive_find_person_id(parameters, required=False)
+    org_id = pipedrive_find_organization_id(parameters)
+    payload = {"title": title}
+    if person_id:
+        payload["person_id"] = person_id
+    if org_id:
+        payload["org_id"] = org_id
+    for key in ["value", "currency", "pipeline_id", "stage_id", "status"]:
+        value = first_value(parameters, key, default="")
+        if value not in ("", None):
+            payload[key] = value
+    if not confirm:
+        return confirmation_preview("pipedrive", "create_deal", f"Crear deal Pipedrive: {title}.", {"payload": payload, "person_match": person_scope}, execution_parameters=parameters)
+    result = pipedrive_request("/deals", method="POST", payload=payload)
+    return {"ok": True, "provider": "pipedrive", "action": "create_deal", "deal": normalize_pipedrive_deal(pipedrive_payload_data(result) or {}), "confirmed": True}
+
+
+def pipedrive_update_deal(parameters=None, confirm=False):
+    parameters = parameters or {}
+    deal_id = str(first_value(parameters, "deal_id", "id", "pipedrive_deal_id", default="") or "").strip()
+    if not deal_id:
+        raise ValueError("Falta deal_id para actualizar deal Pipedrive.")
+    fields = parameters.get("fields") if isinstance(parameters.get("fields"), dict) else {}
+    payload = dict(fields)
+    for key in ["title", "value", "currency", "pipeline_id", "stage_id", "status", "person_id", "org_id"]:
+        value = first_value(parameters, key, default="")
+        if value not in ("", None):
+            payload[key] = value
+    if not payload:
+        raise ValueError("Faltan campos para actualizar deal Pipedrive.")
+    if not confirm:
+        return confirmation_preview("pipedrive", "update_deal", f"Actualizar deal Pipedrive {deal_id}.", {"deal_id": deal_id, "fields": payload}, execution_parameters=parameters)
+    result = pipedrive_request(f"/deals/{urllib.parse.quote(str(deal_id))}", method="PUT", payload=payload)
+    return {"ok": True, "provider": "pipedrive", "action": "update_deal", "deal": normalize_pipedrive_deal(pipedrive_payload_data(result) or {}), "confirmed": True}
+
+
+def pipedrive_create_activity(parameters=None, confirm=False):
+    parameters = parameters or {}
+    subject = str(first_value(parameters, "subject", "title", "name", "asunto", default="") or "").strip()
+    if not subject:
+        subject = generated_title("Actividad Pipedrive")
+    person_id, person_scope = pipedrive_find_person_id(parameters, required=False)
+    org_id = pipedrive_find_organization_id(parameters)
+    payload = {
+        "subject": subject,
+        "type": str(first_value(parameters, "type", "activity_type", "tipo", default="call") or "call").strip(),
+    }
+    if person_id:
+        payload["person_id"] = person_id
+    if org_id:
+        payload["org_id"] = org_id
+    for key in ["deal_id", "due_date", "due_time", "duration", "note", "location"]:
+        value = first_value(parameters, key, default="")
+        if value not in ("", None):
+            payload[key] = value
+    if not confirm:
+        return confirmation_preview("pipedrive", "create_activity", f"Crear actividad Pipedrive: {subject}.", {"payload": payload, "person_match": person_scope}, execution_parameters=parameters)
+    result = pipedrive_request("/activities", method="POST", payload=payload)
+    return {"ok": True, "provider": "pipedrive", "action": "create_activity", "activity": pipedrive_payload_data(result), "confirmed": True}
+
+
+def pipedrive_create_note(parameters=None, confirm=False):
+    parameters = parameters or {}
+    content = str(first_value(parameters, "content", "body", "note", "notes", "text", "message", default="") or "").strip()
+    if not content:
+        raise ValueError("Falta content/body para crear nota Pipedrive.")
+    person_id, person_scope = pipedrive_find_person_id(parameters, required=False)
+    org_id = pipedrive_find_organization_id(parameters)
+    payload = {"content": content}
+    if person_id:
+        payload["person_id"] = person_id
+    if org_id:
+        payload["org_id"] = org_id
+    deal_id = str(first_value(parameters, "deal_id", "pipedrive_deal_id", default="") or "").strip()
+    if deal_id:
+        payload["deal_id"] = deal_id
+    if not confirm:
+        return confirmation_preview("pipedrive", "create_note", f"Crear nota Pipedrive para {person_id or org_id or deal_id or 'CRM'}.", {"payload": payload, "person_match": person_scope}, execution_parameters=parameters)
+    result = pipedrive_request("/notes", method="POST", payload=payload)
+    return {"ok": True, "provider": "pipedrive", "action": "create_note", "note": pipedrive_payload_data(result), "confirmed": True}
+
+
+def run_pipedrive_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "pipedrive", "action": action, "status": pipedrive_status(live=True)}
+    if action in {"list_persons", "persons", "contacts", "contactos", "search_persons", "search_contacts", "buscar_personas"}:
+        return pipedrive_search_persons(parameters)
+    if action in {"get_person", "person", "contact", "get_contact"}:
+        return pipedrive_get_person(parameters)
+    if action in {"upsert_person", "save_person", "create_person", "update_person", "save_contact", "upsert_contact"}:
+        return pipedrive_upsert_person(parameters, confirm=confirm)
+    if action in {"list_deals", "search_deals", "deals", "oportunidades"}:
+        return pipedrive_list_deals(parameters)
+    if action in {"create_deal", "add_deal", "crear_deal", "crear_oportunidad"}:
+        return pipedrive_create_deal(parameters, confirm=confirm)
+    if action in {"update_deal", "actualizar_deal"}:
+        return pipedrive_update_deal(parameters, confirm=confirm)
+    if action in {"create_activity", "add_activity", "activity", "actividad", "crear_actividad"}:
+        return pipedrive_create_activity(parameters, confirm=confirm)
+    if action in {"create_note", "add_note", "note", "nota", "crear_nota"}:
+        return pipedrive_create_note(parameters, confirm=confirm)
+    raise ValueError(f"Accion Pipedrive no soportada: {action}")
 
 
 def oauth_form_request(url, payload, timeout=90):
@@ -4472,6 +4918,10 @@ def api_bridge_templates():
                 "update_task",
                 "comment_task",
                 "create_page",
+                "pipedrive_upsert_person",
+                "pipedrive_create_deal",
+                "pipedrive_create_activity",
+                "pipedrive_create_note",
             ],
             "confirmation": "Toda escritura devuelve prepared_action_id. El doctor confirma con action=confirm_prepared o el boton del frontend.",
             "security": "Desde 1.5.11, ejecutar una accion preparada o confirm=true requiere frase de autorizacion o PIN si estan configurados.",
@@ -4532,6 +4982,61 @@ def api_bridge_templates():
                     "phone": ["telefono", "to", "client_phone"],
                 },
                 "rule": "Registra una nota interna asociada al contacto si se conoce telefono o correo.",
+            },
+        },
+        "pipedrive": {
+            "status": {
+                "rule": "Valida token, usuario y empresa de Pipedrive sin modificar datos.",
+            },
+            "search_persons": {
+                "optional": ["term", "query", "name", "email", "phone", "limit"],
+                "aliases": {
+                    "term": ["query", "q", "search", "name", "contact_name", "client_name"],
+                    "phone": ["telefono", "to", "from"],
+                    "email": ["correo"],
+                },
+                "rule": "Usa busqueda flexible antes de afirmar que no existe un contacto. Devuelve match_score y candidatos cercanos.",
+            },
+            "upsert_person": {
+                "required": ["name or email or phone"],
+                "aliases": {
+                    "name": ["display_name", "contact_name", "client_name", "nombre"],
+                    "phone": ["telefono", "mobile", "to", "from"],
+                    "email": ["correo"],
+                    "organization": ["company", "empresa", "org_name"],
+                    "notes": ["note", "description", "body"],
+                },
+                "rule": "Preparar con confirm=false. Al confirmar crea/actualiza persona en Pipedrive y sincroniza contacto local BIFROST CRM.",
+            },
+            "create_deal": {
+                "required": ["title"],
+                "aliases": {
+                    "title": ["name", "deal_title", "subject"],
+                    "person_id": ["contact_id", "pipedrive_person_id"],
+                    "organization": ["company", "empresa", "org_name"],
+                },
+                "rule": "Preparar con confirm=false. Puede ligar person_id/org_id si Kim los conoce o buscar persona antes.",
+            },
+            "create_activity": {
+                "required": ["subject"],
+                "aliases": {
+                    "subject": ["title", "name", "asunto"],
+                    "type": ["activity_type", "tipo"],
+                    "due_date": ["date", "fecha"],
+                    "due_time": ["time", "hora"],
+                    "note": ["body", "description", "notes"],
+                },
+                "defaults": {"type": "call"},
+                "rule": "Preparar con confirm=false. Usar para seguimiento, llamadas, reuniones y tareas comerciales.",
+            },
+            "create_note": {
+                "required": ["content"],
+                "aliases": {
+                    "content": ["body", "note", "notes", "text", "message"],
+                    "person_id": ["contact_id", "pipedrive_person_id"],
+                    "deal_id": ["pipedrive_deal_id"],
+                },
+                "rule": "Preparar con confirm=false. Usar para registrar contexto comercial o resumen de llamada en Pipedrive.",
             },
         },
         "twilio": {
@@ -5239,6 +5744,21 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"pipedrive", "pipe_drive", "pd"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
+        result = run_pipedrive_bridge(action, parameters, confirm=confirm)
     elif provider in {"crm", "bifrost_crm", "clients", "clientes", "contacts", "contactos"}:
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -5275,7 +5795,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     elif provider in {"all", "auto", "kim", "agent"}:
         target_provider, target_action, target_parameters = agent_action_defaults(action, parameters)
         if not target_provider:
-            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task, create_page, call_phone, schedule_call, schedule_sms o save_contact.")
+            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task, create_page, call_phone, schedule_call, schedule_sms, save_contact o pipedrive.")
         result = run_api_bridge(
             target_provider,
             target_action,
@@ -5287,7 +5807,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, gmail, hostinger_mail, twilio, crm o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, twilio, crm o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -6184,7 +6704,7 @@ def realtime_session_config():
                 "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot con EMAs "
                 "personalizadas cuando el doctor las pida, incluyendo EMA34 por temporalidad, y analiza "
                 "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
-                "Para ClickUp, Notion o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
+                "Para ClickUp, Notion, Pipedrive o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
                 "para probar plantillas sin escribir ni enviar, llama action=self_test. "
                 "y usa el template exacto. Si faltan IDs de ClickUp, primero lista spaces/folders/lists o pasa "
                 "space_name/list_name; el bridge puede resolver list_id o preparar crear una lista con confirmacion. "
@@ -6231,6 +6751,8 @@ def realtime_session_config():
                 "no intentes simular una cancelacion creando varias notas sueltas. "
                 "Para preguntas de memoria o contexto, usa kim_memory_router para decidir si debes consultar "
                 "portafolio, tareas, clientes/CRM, voz remota o memoria general. No intentes cargar todo BIFROST. "
+                "Para seguimiento comercial en Pipedrive, usa provider=pipedrive: search_persons/list_persons antes de decir que no existe un contacto; "
+                "upsert_person, create_deal, create_activity y create_note requieren confirm=false y luego confirm_prepared. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
@@ -6271,7 +6793,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion, lee Gmail, maneja correo Hostinger, CRM local, prepara Twilio llamadas/SMS/WhatsApp y consulta reportes/transcripciones de llamadas desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion/Pipedrive, lee Gmail, maneja correo Hostinger, CRM local, prepara Twilio llamadas/SMS/WhatsApp y consulta reportes/transcripciones de llamadas desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -6279,7 +6801,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, gmail, hostinger_mail, twilio, crm o all.",
+                                "description": "Proveedor: clickup, notion, pipedrive, gmail, hostinger_mail, twilio, crm o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -6291,6 +6813,7 @@ def realtime_session_config():
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
+                                    "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, schedule_call, schedule_sms. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
                                 ),

@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-15 / Kim Live 1.5.20: Pipedrive phone lookup now uses the local BIFROST CRM contact as a fallback to recover `person_id` and fetch the exact Pipedrive person before fuzzy search. This keeps contacts like Isaac Krantz discoverable by phone after the first sync.
+
 Fecha: 2026-05-08.
 Tarea: KIM-0034 / KIM-0035.
 
@@ -24,6 +26,8 @@ Update 2026-05-13 / Kim Live 1.5.16: se agrega CRM local en `BIFROST/CRM` con SQ
 Update 2026-05-14 / Kim Live 1.5.17: las llamadas Twilio salientes pueden llevar `call_context`, `objective`, `questions`, `report_to_doctor`, `contact_name` y `relationship`. El contexto se guarda como `twilio_call_contexts.json`, viaja como `kim_context_id` en TwiML Media Streams y se inyecta al prompt Realtime para que Kim no salude como si hablara con el doctor cuando llama a terceros.
 
 Update 2026-05-14 / Kim Live 1.5.18: el puente Twilio Realtime espera el evento `start` antes de configurar OpenAI, de modo que `kim_context_id` llegue antes del primer saludo. Se agregan `latest_call` y `call_report` para que Kim Live lea transcripciones y reporte lo ocurrido en llamadas guardadas.
+
+Update 2026-05-15 / Kim Live 1.5.19: se agrega provider `pipedrive` con token guardado en Keychain. Kim puede buscar/listar personas con coincidencia flexible, crear/actualizar personas, crear deals, actividades y notas. Toda escritura requiere confirmacion y sincroniza contactos relevantes con BIFROST CRM local.
 
 ## Regla de seguridad
 
@@ -145,6 +149,30 @@ Templates 1.5.8:
 
 Nota: Codex Desktop ya tiene acceso Notion por MCP, pero ese acceso vive en esta sesion de Codex, no dentro del servidor local de Kim Live. Para que Kim Live opere Notion sola, se necesita token de integracion Notion o un worker remoto con acceso MCP.
 
+## Pipedrive
+
+Kim Live puede usar Pipedrive con API token personal guardado en macOS Keychain:
+
+```text
+service: codex.pipedrive.api_token
+service: codex.pipedrive.company_domain
+account: dryehoshuapython
+```
+
+Provider `pipedrive`:
+
+- `status`: valida token, usuario y empresa.
+- `search_persons` / `list_persons`: busca contactos con coincidencia flexible por nombre, email o telefono.
+- `get_person`: lee una persona por `person_id` o busqueda unica.
+- `upsert_person`: crea o actualiza persona. Requiere confirmacion y sincroniza BIFROST CRM.
+- `list_deals` / `search_deals`: consulta oportunidades.
+- `create_deal`: crea oportunidad. Requiere confirmacion.
+- `update_deal`: actualiza oportunidad por `deal_id`. Requiere confirmacion.
+- `create_activity`: crea actividad comercial, llamada, reunion o seguimiento. Requiere confirmacion.
+- `create_note`: crea nota ligada a persona, organizacion o deal. Requiere confirmacion.
+
+Regla: Kim no debe decir que no existe un contacto sin usar `search_persons` y revisar candidatos cercanos por `match_score`.
+
 ## Sonido de operacion
 
 Kim Live usa un tono tipo caja musical mientras interactua con ClickUp/Notion. El tono de investigacion web queda separado como sonido de cuenco.
@@ -171,6 +199,10 @@ Kim puede pedir acciones de alto nivel y dejar que el bridge enrute:
 - `schedule_call` -> `twilio.schedule_call`
 - `schedule_sms` -> `twilio.schedule_sms`
 - `save_contact` -> `crm.upsert_contact`
+- `pipedrive_upsert_person` -> `pipedrive.upsert_person`
+- `pipedrive_create_deal` -> `pipedrive.create_deal`
+- `pipedrive_create_activity` -> `pipedrive.create_activity`
+- `pipedrive_create_note` -> `pipedrive.create_note`
 
 ## CRM Local
 
