@@ -140,7 +140,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.20"
+APP_VERSION = "1.5.22"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -380,6 +380,42 @@ def append_jsonl_any(paths, payload):
     for path in paths:
         try:
             append_jsonl(path, payload)
+            return path
+        except PermissionError as exc:
+            last_error = exc
+    if last_error:
+        raise last_error
+    return None
+
+
+def write_jsonl(path, entries):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for item in entries:
+            handle.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def upsert_jsonl_any(paths, payload, key="session_id"):
+    record_key = str(payload.get(key) or "").strip()
+    if not record_key:
+        return append_jsonl_any(paths, payload)
+    last_error = None
+    for path in paths:
+        try:
+            entries = []
+            try:
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    try:
+                        entries.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+            except FileNotFoundError:
+                entries = []
+            filtered = [item for item in entries if str(item.get(key) or "").strip() != record_key]
+            filtered.append(payload)
+            write_jsonl(path, filtered)
             return path
         except PermissionError as exc:
             last_error = exc
@@ -1115,7 +1151,10 @@ def save_call_record(body):
     summary = local_extract_summary(text, title, limit=1400)
     related_files = body.get("uploaded_files") or []
     research_sources = body.get("research_sources") or load_sources_for_session(session_id)
-    call_number = len(load_call_entries(limit=5000)) + 1
+    existing_entries = load_call_entries(limit=5000)
+    existing_entry = next((item for item in reversed(existing_entries) if item.get("session_id") == session_id), None)
+    known_sessions = {item.get("session_id") for item in existing_entries if item.get("session_id")}
+    call_number = existing_entry.get("call_number") if existing_entry else len(known_sessions) + 1
     calls_dir = MEMORY_CALLS / today()
     try:
         calls_dir.mkdir(parents=True, exist_ok=True)
@@ -1179,7 +1218,7 @@ def save_call_record(body):
         "chars": len(text),
     }
     entry["memory_route"] = memory_router("save_call", text, session_id=session_id, call_entry=entry)["route"]
-    append_jsonl_any([CALL_INDEX, RUNTIME_CALL_INDEX], entry)
+    upsert_jsonl_any([CALL_INDEX, RUNTIME_CALL_INDEX], entry)
     return call_path, entry
 
 
@@ -1590,6 +1629,7 @@ def api_bridge_config_status(live=False):
                 "status",
                 "list_persons",
                 "search_persons",
+                "sync_persons",
                 "get_person",
                 "upsert_person",
                 "list_deals",
@@ -1976,6 +2016,22 @@ def crm_export_contact(contact):
         f"Notas:\n{contact.get('notes', '')}\n"
     )
     path.write_text(text, encoding="utf-8")
+    contact_id = str(contact.get("id") or "").strip()
+    if contact_id:
+        root = active_crm_root() / "contacts" / "by_type"
+        for existing in root.glob("*/*.md"):
+            if existing == path:
+                continue
+            try:
+                existing_text = existing.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            if f"- ID: {contact_id}\n" not in existing_text:
+                continue
+            try:
+                existing.unlink()
+            except OSError:
+                pass
     return str(path)
 
 
@@ -1984,9 +2040,9 @@ def crm_upsert_contact(parameters=None, source="kim_live"):
     phone = normalize_phone_number(first_value(parameters, "phone", "phone_e164", "telefono", "to", "from", "recipient", default=""))
     email = str(first_value(parameters, "email", "correo", default="") or "").strip()
     display_name = str(first_value(parameters, "display_name", "name", "nombre", "client_name", "contact_name", default="") or "").strip()
-    if not display_name:
-        display_name = phone or email or "Contacto Kim"
-    contact_type = str(first_value(parameters, "contact_type", "type", "tipo", default="client") or "client").strip().lower()
+    insert_display_name = display_name or phone or email or "Contacto Kim"
+    contact_type = str(first_value(parameters, "contact_type", "type", "tipo", default="") or "").strip().lower()
+    insert_contact_type = contact_type or "client"
     company_name = str(first_value(parameters, "company", "company_name", "empresa", default="") or "").strip()
     notes = str(first_value(parameters, "notes", "note", "description", "body", default="") or "").strip()
     country = str(first_value(parameters, "country", "pais", default="") or "").strip()
@@ -2003,22 +2059,29 @@ def crm_upsert_contact(parameters=None, source="kim_live"):
             row = conn.execute("SELECT * FROM contacts WHERE phone_e164=?", (phone,)).fetchone()
         if row is None and email:
             row = conn.execute("SELECT * FROM contacts WHERE lower(email)=lower(?)", (email,)).fetchone()
+        if row is None and display_name:
+            matches = conn.execute(
+                "SELECT * FROM contacts WHERE lower(display_name)=lower(?) ORDER BY updated_at DESC LIMIT 2",
+                (display_name,),
+            ).fetchall()
+            if len(matches) == 1:
+                row = matches[0]
         if row:
             contact_id = row["id"]
             conn.execute(
                 """
                 UPDATE contacts
-                SET display_name=COALESCE(NULLIF(?, ''), display_name),
+                SET display_name=CASE WHEN ? != '' THEN ? ELSE display_name END,
                     phone_e164=COALESCE(NULLIF(?, ''), phone_e164),
                     email=COALESCE(NULLIF(?, ''), email),
                     company_id=COALESCE(?, company_id),
-                    contact_type=COALESCE(NULLIF(?, ''), contact_type),
+                    contact_type=CASE WHEN ? != '' THEN ? ELSE contact_type END,
                     country=COALESCE(NULLIF(?, ''), country),
                     notes=CASE WHEN ? != '' AND instr(notes, ?) = 0 THEN trim(notes || char(10) || ?) ELSE notes END,
                     updated_at=?
                 WHERE id=?
                 """,
-                (display_name, phone, email, company_id, contact_type, country, notes, notes, notes, now, contact_id),
+                (display_name, display_name, phone, email, company_id, contact_type, contact_type, country, notes, notes, notes, now, contact_id),
             )
         else:
             contact_id = crm_id("CT")
@@ -2027,7 +2090,7 @@ def crm_upsert_contact(parameters=None, source="kim_live"):
                 INSERT INTO contacts (id, display_name, phone_e164, email, company_id, contact_type, source, country, notes, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (contact_id, display_name, phone or None, email or None, company_id, contact_type, source, country, notes, now, now),
+                (contact_id, insert_display_name, phone or None, email or None, company_id, insert_contact_type, source, country, notes, now, now),
             )
         conn.commit()
         contact = dict(conn.execute("SELECT * FROM contacts WHERE id=?", (contact_id,)).fetchone())
@@ -3023,6 +3086,7 @@ def pipedrive_status(live=False):
             "status",
             "list_persons",
             "search_persons",
+            "sync_persons",
             "get_person",
             "upsert_person",
             "list_deals",
@@ -3333,6 +3397,70 @@ def pipedrive_create_note(parameters=None, confirm=False):
     return {"ok": True, "provider": "pipedrive", "action": "create_note", "note": pipedrive_payload_data(result), "confirmed": True}
 
 
+def pipedrive_sync_persons(parameters=None):
+    parameters = parameters or {}
+    term = str(first_value(parameters, "term", "query", "q", "search", default="") or "").strip()
+    start = max(0, int(first_value(parameters, "start", default=0) or 0))
+    limit = max(1, min(int(first_value(parameters, "limit", default=100) or 100), 300))
+    if term:
+        people = pipedrive_person_candidates(term, limit=limit)
+    else:
+        people = []
+        cursor = start
+        while len(people) < limit:
+            page_limit = min(100, limit - len(people))
+            payload = pipedrive_request("/persons", params={"start": cursor, "limit": page_limit})
+            batch = [normalize_pipedrive_person(item) for item in (payload.get("data") or [])]
+            if not batch:
+                break
+            people.extend(batch)
+            cursor += len(batch)
+            pagination = ((payload.get("additional_data") or {}).get("pagination") or {})
+            if not pagination.get("more_items_in_collection"):
+                break
+    synced = []
+    for person in people[:limit]:
+        notes = [f"Pipedrive person_id={person.get('id')}."]
+        if person.get("organization"):
+            notes.append(f"Organizacion: {person.get('organization')}.")
+        local_contact = crm_upsert_contact(
+            {
+                "display_name": person.get("name") or "Contacto Pipedrive",
+                "email": person.get("email") or "",
+                "phone": person.get("phone") or "",
+                "company": person.get("organization") or "",
+                "contact_type": first_value(parameters, "contact_type", "tipo", default="client"),
+                "notes": " ".join(notes),
+            },
+            source="pipedrive_sync",
+        )
+        synced.append(
+            {
+                "person_id": person.get("id"),
+                "name": person.get("name"),
+                "phone": person.get("phone"),
+                "email": person.get("email"),
+                "organization": person.get("organization"),
+                "local_contact_id": local_contact.get("id"),
+                "local_markdown_path": local_contact.get("markdown_path"),
+            }
+        )
+    append_daily_note(
+        f"Kim CRM sync: Pipedrive -> local; synced={len(synced)}; "
+        f"mode={'search' if term else 'full'}; query={term or 'all'}"
+    )
+    return {
+        "ok": True,
+        "provider": "pipedrive",
+        "action": "sync_persons",
+        "mode": "search" if term else "full",
+        "query": term,
+        "count": len(synced),
+        "synced": synced[:20],
+        "has_more": len(synced) > 20,
+    }
+
+
 def run_pipedrive_bridge(action, parameters, confirm=False):
     action = (action or "").strip().lower()
     parameters = parameters or {}
@@ -3340,6 +3468,8 @@ def run_pipedrive_bridge(action, parameters, confirm=False):
         return {"ok": True, "provider": "pipedrive", "action": action, "status": pipedrive_status(live=True)}
     if action in {"list_persons", "persons", "contacts", "contactos", "search_persons", "search_contacts", "buscar_personas"}:
         return pipedrive_search_persons(parameters)
+    if action in {"sync_persons", "sync_contacts", "sync_local_crm", "sync_crm"}:
+        return pipedrive_sync_persons(parameters)
     if action in {"get_person", "person", "contact", "get_contact"}:
         return pipedrive_get_person(parameters)
     if action in {"upsert_person", "save_person", "create_person", "update_person", "save_contact", "upsert_contact"}:
@@ -4918,6 +5048,7 @@ def api_bridge_templates():
                 "update_task",
                 "comment_task",
                 "create_page",
+                "pipedrive_sync_persons",
                 "pipedrive_upsert_person",
                 "pipedrive_create_deal",
                 "pipedrive_create_activity",
@@ -4996,6 +5127,14 @@ def api_bridge_templates():
                     "email": ["correo"],
                 },
                 "rule": "Usa busqueda flexible antes de afirmar que no existe un contacto. Devuelve match_score y candidatos cercanos.",
+            },
+            "sync_persons": {
+                "optional": ["term", "query", "start", "limit", "contact_type"],
+                "aliases": {
+                    "term": ["query", "q", "search", "name"],
+                    "contact_type": ["tipo"],
+                },
+                "rule": "Sin confirmacion: lee personas de Pipedrive y sincroniza el CRM local BIFROST. Usar para preparar memoria de clientes.",
             },
             "upsert_person": {
                 "required": ["name or email or phone"],
@@ -7581,17 +7720,19 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/save":
                 text = body.get("text", "")
-                path = append_memory("conversation_note", {"text": text})
+                silent = bool(body.get("silent"))
+                path = None if silent else append_memory("conversation_note", {"text": text})
                 call_path = None
                 call_entry = None
                 if body.get("session_id"):
                     call_path, call_entry = save_call_record(body)
-                append_daily_note(text)
+                if not silent:
+                    append_daily_note(text)
                 write_json(
                     self,
                     {
                         "ok": True,
-                        "saved_to": str(path),
+                        "saved_to": str(path) if path else None,
                         "call_saved_to": str(call_path) if call_path else None,
                         "call": call_entry,
                     },

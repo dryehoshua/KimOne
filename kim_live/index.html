@@ -1293,7 +1293,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.20</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.22</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1548,6 +1548,10 @@
     let tradingViewScriptPromise = null;
     let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
     let micTestStream = null;
+    let autoSaveTimer = null;
+    let autoSaveInFlight = false;
+    let autoSaveEnabled = true;
+    let lastPersistedTranscript = "";
     const sessionStartedAt = new Date();
     const sessionId = "CALL-" + sessionStartedAt.toISOString()
       .replace(/[-:]/g, "")
@@ -1576,6 +1580,10 @@
     function updateLineCount() {
       const count = transcript.value.trim() ? transcript.value.trim().split(/\n+/).length : 0;
       $("lineCount").textContent = count + (count === 1 ? " linea" : " lineas");
+    }
+
+    function currentTranscriptText() {
+      return transcript.value.trim();
     }
 
     async function post(path, payload) {
@@ -2009,8 +2017,10 @@
         $("threadHeading").textContent = record.title || record.session_id;
         $("threadMeta").textContent = "Conversacion guardada " + (record.saved_at || "") + ". ID " + record.session_id + ".";
         chatLog.innerHTML = "";
+        autoSaveEnabled = false;
         appendMessage("Kim", "Resumen guardado:\n" + (record.summary || "Sin resumen disponible."), "kim", false);
         transcript.value = record.transcript || "";
+        lastPersistedTranscript = currentTranscriptText();
         updateLineCount();
         setStatus("Conversacion cargada.", "idle");
       } catch (error) {
@@ -2511,14 +2521,17 @@
       }
     });
 
-    async function saveCurrentConversation(statusText = "Guardando memoria...") {
-      const text = transcript.value.trim();
+    async function saveCurrentConversation(statusText = "Guardando memoria...", options = {}) {
+      const text = currentTranscriptText();
+      const silent = Boolean(options.silent);
       if (!text) {
-        setStatus("Primero conversa o escribe una nota para guardar.", "idle");
-        transcript.focus();
+        if (!silent) {
+          setStatus("Primero conversa o escribe una nota para guardar.", "idle");
+          transcript.focus();
+        }
         return null;
       }
-      setStatus(statusText, "working");
+      if (!silent) setStatus(statusText, "working");
       try {
         const data = await post("/api/save", {
           text,
@@ -2526,16 +2539,33 @@
           started_at: sessionStartedAt.toISOString(),
           title: $("threadHeading").textContent,
           uploaded_files: activeUploadedFiles,
-          research_sources: activeResearchSources
+          research_sources: activeResearchSources,
+          silent
         });
         const target = data.call_saved_to || data.saved_to;
-        appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
-        refreshMemoryState();
-        setStatus("Memoria guardada.", "idle");
+        lastPersistedTranscript = text;
+        if (!silent) {
+          appendMessage("Codex", "Memoria guardada en BIFROST: " + target, "codex", false);
+          refreshMemoryState();
+          setStatus("Memoria guardada.", "idle");
+        }
         return data;
       } catch (error) {
-        setStatus("No pude guardar: " + error.message, "idle");
+        if (!silent) setStatus("No pude guardar: " + error.message, "idle");
         return null;
+      }
+    }
+
+    async function maybeAutoSaveConversation(force = false) {
+      if (!autoSaveEnabled || autoSaveInFlight) return null;
+      const text = currentTranscriptText();
+      if (!text) return null;
+      if (!force && text === lastPersistedTranscript) return null;
+      autoSaveInFlight = true;
+      try {
+        return await saveCurrentConversation("", {silent: true});
+      } finally {
+        autoSaveInFlight = false;
       }
     }
 
@@ -2685,9 +2715,13 @@
     $("newConversation").addEventListener("click", () => {
       document.querySelectorAll(".thread-item").forEach((button) => button.classList.remove("active"));
       $("newConversation").classList.add("active");
+      autoSaveEnabled = true;
       $("threadHeading").textContent = "Kim Live Conversations";
       $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
       chatLog.innerHTML = "";
+      transcript.value = "";
+      lastPersistedTranscript = "";
+      updateLineCount();
       appendMessage("Kim", "Estoy lista. Pulsa Conversar, habla conmigo, pega texto o arrastra archivos cuando quieras; al terminar guardo la llamada con ID unico.", "kim", false);
     });
 
@@ -2727,12 +2761,16 @@
       navigator.mediaDevices.addEventListener("devicechange", refreshMicrophones);
     }
     transcript.addEventListener("input", updateLineCount);
+    autoSaveTimer = window.setInterval(() => {
+      if (!autoSaveEnabled) return;
+      maybeAutoSaveConversation(false);
+    }, 60000);
 
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.20");
-        $("appVersion").textContent = "v" + (data.version || "1.5.20");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.22");
+        $("appVersion").textContent = "v" + (data.version || "1.5.22");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";
@@ -2764,6 +2802,7 @@
     refreshMicrophones();
     loadConversations();
     updateLineCount();
+    lastPersistedTranscript = currentTranscriptText();
   </script>
 </body>
 </html>

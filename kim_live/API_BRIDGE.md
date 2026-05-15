@@ -1,5 +1,9 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-15 / Kim Live 1.5.22: CRM local ya no reemplaza `display_name` por el telefono cuando una actualizacion llega solo con `phone`, conserva `contact_type` si no se envio uno nuevo, reutiliza un contacto existente cuando hay una coincidencia exacta unica por nombre, y limpia fichas Markdown obsoletas del mismo contacto para evitar duplicados como `Isaac Kranz` / `Isaac Krantz`.
+
+Update 2026-05-15 / Kim Live 1.5.21: Kim Live ya guarda el transcript literal por sesion sin duplicar el indice de conversaciones, permite autosave silencioso desde el frontend y agrega `provider=pipedrive action=sync_persons` para bajar contactos de Pipedrive al CRM local de BIFROST como primer paso de la rutina diaria de sincronizacion.
+
 Update 2026-05-15 / Kim Live 1.5.20: Pipedrive phone lookup now uses the local BIFROST CRM contact as a fallback to recover `person_id` and fetch the exact Pipedrive person before fuzzy search. This keeps contacts like Isaac Krantz discoverable by phone after the first sync.
 
 Fecha: 2026-05-08.
@@ -163,6 +167,7 @@ Provider `pipedrive`:
 
 - `status`: valida token, usuario y empresa.
 - `search_persons` / `list_persons`: busca contactos con coincidencia flexible por nombre, email o telefono.
+- `sync_persons`: trae personas desde Pipedrive y hace upsert en `BIFROST/CRM` sin escribir en Pipedrive.
 - `get_person`: lee una persona por `person_id` o busqueda unica.
 - `upsert_person`: crea o actualiza persona. Requiere confirmacion y sincroniza BIFROST CRM.
 - `list_deals` / `search_deals`: consulta oportunidades.
@@ -186,6 +191,8 @@ BIFROST/MEMORY/context/api_bridge_actions.jsonl
 ```
 
 Tambien se agrega una nota diaria y un evento en el inbox de Kim Live.
+
+Las conversaciones de Kim Live se guardan por `session_id` en `BIFROST/MEMORY/calls/YYYY-MM-DD/` y el autosave silencioso actualiza el mismo archivo en lugar de crear duplicados.
 
 ## Accion generica
 
