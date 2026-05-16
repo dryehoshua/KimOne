@@ -96,6 +96,8 @@ TWILIO_CALL_LOG = MEMORY_CONTEXT_DIR / "twilio_call_actions.jsonl"
 RUNTIME_TWILIO_CALL_LOG = RUNTIME_CONTEXT / "twilio_call_actions.jsonl"
 TWILIO_CALL_CONTEXTS = MEMORY_CONTEXT_DIR / "twilio_call_contexts.json"
 RUNTIME_TWILIO_CALL_CONTEXTS = RUNTIME_CONTEXT / "twilio_call_contexts.json"
+TWILIO_PIPEDRIVE_CALL_SYNC = MEMORY_CONTEXT_DIR / "twilio_pipedrive_call_sync.json"
+RUNTIME_TWILIO_PIPEDRIVE_CALL_SYNC = RUNTIME_CONTEXT / "twilio_pipedrive_call_sync.json"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -142,7 +144,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.23"
+APP_VERSION = "1.5.24"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1148,6 +1150,9 @@ def save_call_record(body):
     session_id = re.sub(r"[^A-Za-z0-9_-]+", "-", body.get("session_id") or f"CALL-{today()}")
     text = (body.get("text") or "").strip()
     started_at = body.get("started_at") or now_iso()
+    call_date = str(body.get("date") or started_at or today())[:10]
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", call_date):
+        call_date = today()
     title = (body.get("title") or "Kim Live call").strip()[:120]
     topics = detect_topics(text)
     summary = local_extract_summary(text, title, limit=1400)
@@ -1157,11 +1162,11 @@ def save_call_record(body):
     existing_entry = next((item for item in reversed(existing_entries) if item.get("session_id") == session_id), None)
     known_sessions = {item.get("session_id") for item in existing_entries if item.get("session_id")}
     call_number = existing_entry.get("call_number") if existing_entry else len(known_sessions) + 1
-    calls_dir = MEMORY_CALLS / today()
+    calls_dir = MEMORY_CALLS / call_date
     try:
         calls_dir.mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        calls_dir = RUNTIME_CALLS / today()
+        calls_dir = RUNTIME_CALLS / call_date
         calls_dir.mkdir(parents=True, exist_ok=True)
     call_path = calls_dir / f"{session_id}.md"
     content = [
@@ -2421,6 +2426,7 @@ def twilio_status(live=False):
             "call_report",
             "latest_call",
             "list_calls",
+            "sync_call_attempts",
         ],
     }
     if live and status["configured"]:
@@ -2724,6 +2730,549 @@ def complete_twilio_call_context(call_sid="", context_id="", transcript_path="",
     )
 
 
+TWILIO_TERMINAL_CALL_STATUSES = {"completed", "no-answer", "busy", "failed", "canceled", "cancelled"}
+TWILIO_CALL_STATUS_ORDER = {
+    "queued": 10,
+    "initiated": 20,
+    "ringing": 30,
+    "answered": 40,
+    "in-progress": 50,
+    "completed": 90,
+    "no-answer": 90,
+    "busy": 90,
+    "failed": 90,
+    "canceled": 90,
+    "cancelled": 90,
+}
+
+
+def twilio_call_attempt_session_id(call_sid):
+    return re.sub(r"[^A-Za-z0-9_-]+", "-", f"PHONE-{call_sid or 'unknown'}")
+
+
+def twilio_event_time_value(event):
+    return str(event.get("at") or event.get("started_at") or event.get("sent_at") or event.get("created_at") or "")
+
+
+def twilio_parse_event_time(value):
+    raw = str(value or "").replace("Z", "+00:00")
+    if not raw:
+        return dt.datetime.min
+    try:
+        parsed = dt.datetime.fromisoformat(raw)
+    except ValueError:
+        return dt.datetime.min
+    if parsed.tzinfo:
+        parsed = parsed.astimezone().replace(tzinfo=None)
+    return parsed
+
+
+def twilio_event_status(event):
+    return str(event.get("call_status") or event.get("status") or event.get("message_status") or "").strip().lower()
+
+
+def twilio_call_status_is_terminal(status):
+    return str(status or "").strip().lower() in TWILIO_TERMINAL_CALL_STATUSES
+
+
+def twilio_event_sort_key(event):
+    status = twilio_event_status(event)
+    return (
+        twilio_parse_event_time(twilio_event_time_value(event)),
+        TWILIO_CALL_STATUS_ORDER.get(status, 0),
+    )
+
+
+def twilio_read_call_events(call_sid):
+    call_sid = str(call_sid or "").strip()
+    if not call_sid:
+        return []
+    events = []
+    for path in [TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG]:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            sid = event.get("call_sid") or event.get("sid")
+            if sid != call_sid:
+                continue
+            normalized = dict(event)
+            normalized["call_sid"] = call_sid
+            if not normalized.get("at") and normalized.get("started_at"):
+                normalized["at"] = normalized.get("started_at")
+            normalized["_source_path"] = str(path)
+            events.append(normalized)
+    deduped = {}
+    for event in events:
+        key = (
+            twilio_event_time_value(event),
+            event.get("kind") or event.get("action"),
+            twilio_event_status(event),
+            event.get("to") or "",
+            event.get("from") or "",
+        )
+        deduped[key] = event
+    return sorted(deduped.values(), key=twilio_event_sort_key)
+
+
+def twilio_latest_call_event(call_sid, fallback_event=None):
+    events = twilio_read_call_events(call_sid)
+    if fallback_event:
+        fallback = dict(fallback_event)
+        fallback["call_sid"] = fallback.get("call_sid") or fallback.get("sid") or call_sid
+        events.append(fallback)
+    if not events:
+        return {}
+    return sorted(events, key=twilio_event_sort_key)[-1]
+
+
+def twilio_existing_call_entry(call_sid):
+    session_id = twilio_call_attempt_session_id(call_sid)
+    for entry in reversed(load_call_entries(limit=5000)):
+        if entry.get("session_id") == session_id:
+            return entry
+    return {}
+
+
+def twilio_existing_call_text(call_sid):
+    entry = twilio_existing_call_entry(call_sid)
+    path = pathlib.Path(entry.get("path") or "")
+    return read_text_tail(path, limit=90000) if str(path) else ""
+
+
+def twilio_call_record_has_realtime_transcript(call_sid):
+    text = twilio_existing_call_text(call_sid)
+    return "Twilio Media Streams + OpenAI Realtime" in text and "Sin audio de Media Stream registrado" not in text
+
+
+def twilio_status_history(call_sid):
+    history = []
+    for event in twilio_read_call_events(call_sid):
+        status = twilio_event_status(event)
+        if not status:
+            continue
+        history.append(
+            {
+                "at": twilio_event_time_value(event),
+                "status": status,
+                "kind": event.get("kind") or event.get("action") or "",
+                "from": event.get("from", ""),
+                "to": event.get("to", ""),
+                "duration": event.get("duration", ""),
+                "error_code": event.get("error_code", ""),
+                "error_message": event.get("error_message", ""),
+            }
+        )
+    return history
+
+
+def twilio_call_attempt_context_from_event(event, call_context=None):
+    event = event or {}
+    call_sid = event.get("call_sid") or event.get("sid") or ""
+    context_id = event.get("context_id") or event.get("kim_context_id") or ""
+    context = dict(call_context or load_twilio_call_context(call_sid=call_sid, context_id=context_id) or {})
+    to_number = normalize_phone_number(event.get("to") or context.get("to") or "")
+    from_number = normalize_phone_number(event.get("from") or context.get("from") or "")
+    if not context:
+        contact = crm_find_contact_by_phone(to_number) or crm_find_contact_by_phone(from_number) or {}
+        context = {
+            "id": context_id,
+            "call_sid": call_sid,
+            "to": to_number,
+            "from": from_number,
+            "contact_name": contact.get("display_name") or "",
+            "company": contact.get("company") or "",
+            "relationship": contact.get("contact_type") or "",
+            "source": "twilio_status_callback",
+        }
+    if to_number and not context.get("to"):
+        context["to"] = to_number
+    if from_number and not context.get("from"):
+        context["from"] = from_number
+    if call_sid:
+        context["call_sid"] = call_sid
+    return context
+
+
+def twilio_history_markdown(history):
+    if not history:
+        return "- Sin callbacks Twilio registrados."
+    lines = []
+    for item in history:
+        status = item.get("status") or "unknown"
+        detail = []
+        if item.get("duration"):
+            detail.append(f"duration={item.get('duration')}s")
+        if item.get("error_code"):
+            detail.append(f"error={item.get('error_code')}")
+        suffix = f" ({', '.join(detail)})" if detail else ""
+        lines.append(f"- {item.get('at') or 'sin-fecha'}: {status} via {item.get('kind') or 'twilio'}{suffix}")
+    return "\n".join(lines)
+
+
+def twilio_context_markdown(context):
+    rows = [
+        ("Context ID", context.get("id", "")),
+        ("Contact", context.get("contact_name", "")),
+        ("Company", context.get("company", "")),
+        ("Relationship", context.get("relationship", "")),
+        ("Objective", context.get("objective", "")),
+        ("Instructions", context.get("instructions", "")),
+        ("Questions", context.get("questions", "")),
+        ("Message to deliver", context.get("message_to_deliver", "")),
+        ("Report to doctor", context.get("report_to_doctor", "")),
+        ("Success criteria", context.get("success_criteria", "")),
+    ]
+    lines = [f"- {label}: {brief(str(value), 1200)}" for label, value in rows if value]
+    return "\n".join(lines) if lines else "- Sin contexto explicito capturado."
+
+
+def twilio_call_attempt_markdown(event, context, history):
+    call_sid = event.get("call_sid") or event.get("sid") or context.get("call_sid") or ""
+    status = twilio_event_status(event) or context.get("status") or "unknown"
+    from_number = normalize_phone_number(event.get("from") or context.get("from") or "")
+    to_number = normalize_phone_number(event.get("to") or context.get("to") or "")
+    duration = event.get("duration") or context.get("duration") or ""
+    error_code = event.get("error_code") or context.get("error_code") or ""
+    error_message = event.get("error_message") or context.get("error_message") or ""
+    terminal_note = (
+        "Este intento llego a un estado terminal sin audio util de Media Stream."
+        if twilio_call_status_is_terminal(status) and status != "completed"
+        else "Este registro se crea desde el inicio para que Kim recuerde el intento aunque todavia no haya transcripcion."
+    )
+    lines = [
+        "Canal: Twilio call attempt/status ledger",
+        f"CallSid: {call_sid}",
+        f"From: {from_number}",
+        f"To: {to_number}",
+        f"Status actual: {status}",
+    ]
+    if duration:
+        lines.append(f"Duration seconds: {duration}")
+    if error_code or error_message:
+        lines.append(f"Twilio error: {error_code} {error_message}".strip())
+    lines.extend(
+        [
+            "",
+            "## Call Context",
+            "",
+            twilio_context_markdown(context),
+            "",
+            "## Status History",
+            "",
+            twilio_history_markdown(history),
+            "",
+            "## Transcript",
+            "",
+            f"Sin audio de Media Stream registrado. Estado Twilio: {status}. {terminal_note}",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def load_twilio_pipedrive_sync_state():
+    state = {"calls": {}}
+    for path in [TWILIO_PIPEDRIVE_CALL_SYNC, RUNTIME_TWILIO_PIPEDRIVE_CALL_SYNC]:
+        payload = read_json_file(path, {})
+        if not isinstance(payload, dict):
+            continue
+        calls = payload.get("calls", {})
+        if isinstance(calls, dict):
+            state["calls"].update(calls)
+        if payload.get("updated_at"):
+            state["updated_at"] = payload.get("updated_at")
+    state.setdefault("calls", {})
+    return state
+
+
+def save_twilio_pipedrive_sync_state(state):
+    state["updated_at"] = now_iso()
+    last_error = None
+    wrote = False
+    for path in [TWILIO_PIPEDRIVE_CALL_SYNC, RUNTIME_TWILIO_PIPEDRIVE_CALL_SYNC]:
+        try:
+            write_json_file(path, state)
+            wrote = True
+        except (PermissionError, OSError) as exc:
+            last_error = exc
+    if not wrote and last_error:
+        raise last_error
+
+
+def twilio_seconds_to_pipedrive_duration(value):
+    try:
+        seconds = max(0, int(float(value or 0)))
+    except (TypeError, ValueError):
+        return ""
+    hours = seconds // 3600
+    minutes = max(1 if seconds else 0, (seconds % 3600 + 59) // 60)
+    return f"{hours:02d}:{minutes:02d}" if seconds else ""
+
+
+def twilio_pipedrive_note(event, context, attempt_path, history):
+    status = twilio_event_status(event) or context.get("status") or ""
+    parts = [
+        f"Kim Live Twilio call attempt",
+        f"CallSid: {event.get('call_sid') or event.get('sid') or context.get('call_sid') or ''}",
+        f"Status: {status}",
+        f"From: {event.get('from') or context.get('from') or ''}",
+        f"To: {event.get('to') or context.get('to') or ''}",
+    ]
+    if context.get("contact_name"):
+        parts.append(f"Contact: {context.get('contact_name')}")
+    if context.get("objective"):
+        parts.append(f"Objective: {context.get('objective')}")
+    if context.get("report_to_doctor"):
+        parts.append(f"Report requested: {context.get('report_to_doctor')}")
+    if attempt_path:
+        parts.append(f"BIFROST call memory: {attempt_path}")
+    parts.append("Status history:")
+    for item in history[-10:]:
+        parts.append(f"- {item.get('at')}: {item.get('status')}")
+    return "\n".join(parts)
+
+
+def sync_twilio_call_attempt_to_pipedrive(event, context, attempt_path="", history=None):
+    call_sid = event.get("call_sid") or event.get("sid") or context.get("call_sid") or ""
+    if not call_sid:
+        return {"ok": False, "skipped": "missing_call_sid"}
+    if not pipedrive_status(live=False).get("configured"):
+        return {"ok": False, "skipped": "pipedrive_not_configured"}
+    history = history if history is not None else twilio_status_history(call_sid)
+    status = twilio_event_status(event) or context.get("status") or "unknown"
+    state = load_twilio_pipedrive_sync_state()
+    current = state["calls"].get(call_sid, {})
+    contact_name = context.get("contact_name") or context.get("to") or event.get("to") or call_sid
+    subject = f"Kim call: {contact_name} - {status}"[:250]
+    occurred = twilio_parse_event_time(twilio_event_time_value(event) or now_iso())
+    note = twilio_pipedrive_note(event, context, attempt_path, history)
+    payload = {
+        "subject": subject,
+        "type": "call",
+        "done": 1 if twilio_call_status_is_terminal(status) else 0,
+        "note": note,
+    }
+    if occurred != dt.datetime.min:
+        payload["due_date"] = occurred.strftime("%Y-%m-%d")
+        payload["due_time"] = occurred.strftime("%H:%M")
+    duration = twilio_seconds_to_pipedrive_duration(event.get("duration") or context.get("duration"))
+    if duration:
+        payload["duration"] = duration
+    person_params = {
+        "phone": event.get("to") or context.get("to") or event.get("from") or context.get("from"),
+        "contact_name": context.get("contact_name") or "",
+        "name": context.get("contact_name") or "",
+    }
+    try:
+        person_id, person_scope = pipedrive_find_person_id(person_params, required=False)
+        if person_id:
+            payload["person_id"] = person_id
+    except Exception as exc:
+        person_scope = {"source": "error", "error": brief(str(exc), 300)}
+    try:
+        if current.get("activity_id"):
+            response = pipedrive_request(
+                f"/activities/{urllib.parse.quote(str(current['activity_id']))}",
+                method="PUT",
+                payload=payload,
+            )
+            activity = pipedrive_payload_data(response) or {}
+            activity_id = activity.get("id") or current.get("activity_id")
+            action = "updated"
+        else:
+            response = pipedrive_request("/activities", method="POST", payload=payload)
+            activity = pipedrive_payload_data(response) or {}
+            activity_id = activity.get("id")
+            action = "created"
+        state["calls"][call_sid] = {
+            **current,
+            "activity_id": activity_id,
+            "last_status": status,
+            "last_attempt_path": attempt_path,
+            "last_synced_at": now_iso(),
+            "person_scope": person_scope,
+        }
+        save_twilio_pipedrive_sync_state(state)
+        append_memory("twilio_pipedrive_call_sync", {"call_sid": call_sid, "status": status, "activity_id": activity_id, "action": action})
+        return {"ok": True, "provider": "pipedrive", "action": action, "activity_id": activity_id, "status": status}
+    except Exception as exc:
+        state["calls"][call_sid] = {
+            **current,
+            "last_status": status,
+            "last_attempt_path": attempt_path,
+            "last_error": brief(str(exc), 800),
+            "last_error_at": now_iso(),
+        }
+        try:
+            save_twilio_pipedrive_sync_state(state)
+        except Exception:
+            pass
+        append_memory("twilio_pipedrive_call_sync_error", {"call_sid": call_sid, "status": status, "error": brief(str(exc), 800)})
+        return {"ok": False, "provider": "pipedrive", "error": brief(str(exc), 800), "status": status}
+
+
+def record_twilio_call_attempt(event, call_context=None, force=False):
+    event = dict(event or {})
+    call_sid = event.get("call_sid") or event.get("sid") or ""
+    if not call_sid:
+        return {"ok": False, "skipped": "missing_call_sid"}
+    latest = twilio_latest_call_event(call_sid, event) or event
+    status = twilio_event_status(latest) or twilio_event_status(event) or "unknown"
+    context = twilio_call_attempt_context_from_event(latest, call_context=call_context)
+    history = twilio_status_history(call_sid)
+    started_at = (history[0].get("at") if history else twilio_event_time_value(latest)) or now_iso()
+    updates = {
+        "status": "transcribed" if context.get("status") == "transcribed" else status,
+        "twilio_status": status,
+        "last_call_status": status,
+        "duration": latest.get("duration") or context.get("duration", ""),
+        "error_code": latest.get("error_code") or context.get("error_code", ""),
+        "error_message": latest.get("error_message") or context.get("error_message", ""),
+        "last_status_at": twilio_event_time_value(latest) or now_iso(),
+    }
+    if twilio_call_status_is_terminal(status):
+        updates["context_consumed_at"] = updates["last_status_at"]
+        updates["context_invalidated_at"] = updates["last_status_at"]
+    if context.get("id"):
+        updated = update_twilio_call_context(context_id=context.get("id"), call_sid=call_sid, updates=updates)
+        if updated:
+            context = updated
+    existing = twilio_existing_call_entry(call_sid)
+    has_realtime_transcript = twilio_call_record_has_realtime_transcript(call_sid)
+    if has_realtime_transcript:
+        attempt_path = existing.get("path", "")
+    else:
+        text = twilio_call_attempt_markdown(latest, context, history)
+        title_contact = context.get("contact_name") or context.get("to") or latest.get("to") or call_sid
+        call_path, entry = save_call_record(
+            {
+                "session_id": twilio_call_attempt_session_id(call_sid),
+                "title": f"Twilio call attempt - {title_contact}",
+                "started_at": started_at,
+                "date": str(started_at)[:10],
+                "text": text,
+            }
+        )
+        attempt_path = str(call_path)
+        if context.get("id"):
+            updated = update_twilio_call_context(
+                context_id=context.get("id"),
+                call_sid=call_sid,
+                updates={
+                    "transcript_path": attempt_path,
+                    "summary": brief(entry.get("summary", ""), 1200),
+                    "status": status,
+                    "twilio_status": status,
+                },
+            )
+            if updated:
+                context = updated
+    should_record = force or twilio_call_status_is_terminal(status) or status in {"queued", "in-progress"}
+    crm_interaction = {}
+    if should_record:
+        crm_interaction = crm_record_interaction(
+            "call_attempt",
+            "outbound",
+            from_value=latest.get("from") or context.get("from", ""),
+            to_value=latest.get("to") or context.get("to", ""),
+            status=status,
+            body=twilio_pipedrive_note(latest, context, attempt_path, history),
+            external_sid=call_sid,
+            transcript_path=attempt_path,
+            metadata={**latest, "attempt_path": attempt_path, "status_history": history},
+            contact_hint={
+                "display_name": context.get("contact_name", ""),
+                "company": context.get("company", ""),
+                "notes": context.get("relationship", ""),
+            },
+        )
+    pipedrive_sync = {}
+    if should_record:
+        pipedrive_sync = sync_twilio_call_attempt_to_pipedrive(latest, context, attempt_path=attempt_path, history=history)
+    append_memory(
+        "twilio_call_attempt_recorded",
+        {
+            "call_sid": call_sid,
+            "status": status,
+            "path": attempt_path,
+            "has_realtime_transcript": has_realtime_transcript,
+            "pipedrive_ok": pipedrive_sync.get("ok"),
+        },
+    )
+    return {
+        "ok": True,
+        "call_sid": call_sid,
+        "status": status,
+        "path": attempt_path,
+        "has_realtime_transcript": has_realtime_transcript,
+        "crm_interaction": crm_interaction,
+        "pipedrive_sync": pipedrive_sync,
+    }
+
+
+def twilio_reconcile_call_attempts(parameters=None):
+    parameters = parameters or {}
+    raw_limit = first_value(parameters, "limit", "count", default=25)
+    try:
+        limit = max(1, min(int(raw_limit or 25), 200))
+    except (TypeError, ValueError):
+        limit = 25
+    since = str(first_value(parameters, "since", "from_date", "desde", default="") or "").strip()
+    since_dt = twilio_parse_event_time(since) if since else dt.datetime.min
+    grouped = {}
+    for path in [TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG]:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            call_sid = event.get("call_sid") or event.get("sid")
+            if not call_sid:
+                continue
+            event_dt = twilio_parse_event_time(twilio_event_time_value(event))
+            if event_dt < since_dt:
+                continue
+            grouped.setdefault(call_sid, []).append(event)
+    ordered = sorted(
+        grouped,
+        key=lambda sid: twilio_event_sort_key(twilio_latest_call_event(sid, grouped[sid][-1] if grouped[sid] else {})),
+        reverse=True,
+    )
+    results = []
+    for call_sid in ordered[:limit]:
+        latest = twilio_latest_call_event(call_sid, grouped[call_sid][-1] if grouped[call_sid] else {})
+        try:
+            results.append(record_twilio_call_attempt(latest, force=False))
+        except Exception as exc:
+            error = {"ok": False, "call_sid": call_sid, "error": brief(str(exc), 800)}
+            append_memory("twilio_call_attempt_reconcile_error", error)
+            results.append(error)
+    return {
+        "ok": True,
+        "provider": "twilio",
+        "action": "sync_call_attempts",
+        "since": since,
+        "count": len(results),
+        "recorded": sum(1 for item in results if item.get("ok")),
+        "pipedrive_synced": sum(1 for item in results if (item.get("pipedrive_sync") or {}).get("ok")),
+        "results": results,
+    }
+
+
 def call_transcript_from_text(text):
     text = (text or "").strip()
     marker = "\n## Transcript\n"
@@ -2801,6 +3350,15 @@ def twilio_call_report(parameters=None):
         if contact_query and contact_query not in normalized_haystack:
             continue
         transcript = call_transcript_from_text(text)
+        entry_call_sid = context.get("call_sid") or call_sid
+        if not entry_call_sid and str(entry.get("session_id") or "").startswith("PHONE-"):
+            entry_call_sid = str(entry.get("session_id")).replace("PHONE-", "", 1)
+        entry_status = context.get("twilio_status") or context.get("last_call_status") or context.get("status", "")
+        attempt_without_media = (
+            "Sin audio de Media Stream registrado" in text
+            or "Sin audio de Media Stream registrado" in transcript
+            or bool(entry_call_sid and twilio_call_status_is_terminal(entry_status) and not twilio_call_record_has_realtime_transcript(entry_call_sid))
+        )
         calls.append(
             {
                 "session_id": entry.get("session_id", ""),
@@ -2811,11 +3369,13 @@ def twilio_call_report(parameters=None):
                 "path": entry.get("path", ""),
                 "summary": entry.get("summary", ""),
                 "transcript_excerpt": brief(transcript, 9000),
-                "call_sid": context.get("call_sid") or call_sid,
+                "call_sid": entry_call_sid,
                 "context_id": context.get("id") or context_id,
                 "to": context.get("to", ""),
                 "from": context.get("from", ""),
-                "status": context.get("status", ""),
+                "status": entry_status,
+                "status_history": twilio_status_history(entry_call_sid) if entry_call_sid else [],
+                "attempt_without_media_stream": attempt_without_media,
                 "contact_name": context.get("contact_name", ""),
                 "objective": context.get("objective", ""),
                 "report_to_doctor": context.get("report_to_doctor", ""),
@@ -2838,17 +3398,27 @@ def twilio_call_report(parameters=None):
                 continue
             transcript_path = context.get("transcript_path", "")
             text = read_text_tail(pathlib.Path(transcript_path), limit=60000) if transcript_path else ""
+            context_call_sid = context.get("call_sid", "")
+            history = twilio_status_history(context_call_sid) if context_call_sid else []
+            transcript_excerpt = brief(call_transcript_from_text(text), 9000)
+            if not transcript_excerpt and context_call_sid:
+                transcript_excerpt = brief(
+                    f"Sin audio de Media Stream registrado. Estado Twilio: {context.get('twilio_status') or context.get('last_call_status') or context.get('status') or 'unknown'}.",
+                    9000,
+                )
             calls.append(
                 {
                     "session_id": pathlib.Path(transcript_path).stem if transcript_path else "",
                     "path": transcript_path,
                     "summary": context.get("summary", ""),
-                    "transcript_excerpt": brief(call_transcript_from_text(text), 9000),
-                    "call_sid": context.get("call_sid", ""),
+                    "transcript_excerpt": transcript_excerpt,
+                    "call_sid": context_call_sid,
                     "context_id": context.get("id", ""),
                     "to": context.get("to", ""),
                     "from": context.get("from", ""),
-                    "status": context.get("status", ""),
+                    "status": context.get("twilio_status") or context.get("last_call_status") or context.get("status", ""),
+                    "status_history": history,
+                    "attempt_without_media_stream": bool(context_call_sid and not text),
                     "contact_name": context.get("contact_name", ""),
                     "objective": context.get("objective", ""),
                     "report_to_doctor": context.get("report_to_doctor", ""),
@@ -2974,6 +3544,16 @@ def twilio_start_call(parameters, confirm=False):
             "notes": call_context.get("relationship") if call_context else "",
         },
     )
+    try:
+        attempt = record_twilio_call_attempt(event, call_context=call_context, force=True)
+        event["attempt_record"] = {
+            "path": attempt.get("path", ""),
+            "status": attempt.get("status", ""),
+            "pipedrive_sync": attempt.get("pipedrive_sync", {}),
+        }
+    except Exception as exc:
+        event["attempt_record_error"] = brief(str(exc), 800)
+        append_memory("twilio_call_attempt_start_error", {"call_sid": event.get("sid", ""), "error": event["attempt_record_error"]})
     return event
 
 
@@ -3150,6 +3730,8 @@ def run_twilio_bridge(action, parameters, confirm=False):
         if action in {"latest_call", "ultima_llamada"}:
             parameters = {**parameters, "limit": 1}
         return twilio_call_report(parameters)
+    if action in {"sync_call_attempts", "reconcile_calls", "reconcile_call_attempts", "sincronizar_intentos"}:
+        return twilio_reconcile_call_attempts(parameters)
     raise ValueError(f"Accion Twilio no soportada: {action}")
 
 
@@ -5170,6 +5752,8 @@ def agent_action_defaults(action, parameters):
         return "twilio", "call_phone", data
     if action in {"call_report", "latest_call", "get_call", "call_summary", "reporte_llamada", "ultima_llamada"}:
         return "twilio", "call_report", data
+    if action in {"sync_call_attempts", "reconcile_calls", "sincronizar_intentos"}:
+        return "twilio", "sync_call_attempts", data
     if action in {"schedule_call", "programar_llamada", "agendar_llamada"}:
         return "twilio", "schedule_call", data
     if action in {"schedule_sms", "programar_sms", "agendar_sms"}:
@@ -5206,6 +5790,7 @@ def api_bridge_templates():
                 "send_whatsapp",
                 "call_phone",
                 "call_report",
+                "sync_call_attempts",
                 "schedule_call",
                 "schedule_sms",
                 "save_contact",
@@ -5397,6 +5982,10 @@ def api_bridge_templates():
                     "contact_name": ["client_name", "name", "query"],
                 },
                 "rule": "Lee transcripciones y contexto guardados en BIFROST/MEMORY/calls. Usa latest_call sin filtros para reportar la ultima llamada.",
+            },
+            "sync_call_attempts": {
+                "optional": ["since", "limit"],
+                "rule": "Reconcilia callbacks Twilio ya recibidos: crea/actualiza memoria PHONE-<CallSid>, CRM local y actividad Pipedrive para intentos contestados y no contestados. No inicia llamadas nuevas.",
             },
             "schedule_call": {
                 "required": ["to", "due_at or delay_minutes"],
@@ -7105,14 +7694,22 @@ def twilio_status_callback(params):
     append_jsonl_any([TWILIO_CALL_LOG, RUNTIME_TWILIO_CALL_LOG], event)
     append_memory("twilio_status_callback", event)
     if event.get("call_sid"):
+        status_updates = {
+            "twilio_status": event.get("call_status", ""),
+            "last_call_status": event.get("call_status", ""),
+            "duration": event.get("duration", ""),
+            "error_code": event.get("error_code", ""),
+            "error_message": event.get("error_message", ""),
+            "last_status_at": event.get("at", ""),
+        }
+        if event.get("call_status"):
+            status_updates["status"] = event.get("call_status", "")
+        if twilio_call_status_is_terminal(event.get("call_status", "")):
+            status_updates["context_consumed_at"] = event.get("at", "")
+            status_updates["context_invalidated_at"] = event.get("at", "")
         update_twilio_call_context(
             call_sid=event.get("call_sid", ""),
-            updates={
-                "twilio_status": event.get("call_status", ""),
-                "duration": event.get("duration", ""),
-                "error_code": event.get("error_code", ""),
-                "error_message": event.get("error_message", ""),
-            },
+            updates=status_updates,
         )
         crm_record_interaction(
             "call_status",
@@ -7123,6 +7720,13 @@ def twilio_status_callback(params):
             external_sid=event.get("call_sid", ""),
             metadata=event,
         )
+        try:
+            record_twilio_call_attempt(event)
+        except Exception as exc:
+            append_memory(
+                "twilio_call_attempt_callback_error",
+                {"call_sid": event.get("call_sid", ""), "status": event.get("call_status", ""), "error": brief(str(exc), 800)},
+            )
     if event.get("message_sid"):
         crm_record_interaction(
             "sms_status",
@@ -7220,7 +7824,8 @@ def realtime_session_config():
                 "debes pasar contact_name, relationship, call_context, objective, questions/report_to_doctor y cualquier mensaje "
                 "que el doctor quiera transmitir; ese contexto se inyecta al prompt telefonico. "
                 "Si el doctor pregunta que paso en una llamada o pide resumen/transcripcion, llama provider=twilio action=latest_call "
-                "o action=call_report con phone/call_sid/context_id antes de responder. "
+                "o action=call_report con phone/call_sid/context_id antes de responder; estos reportes incluyen llamadas no contestadas, busy, failed o sin audio. "
+                "Si sospechas que faltan intentos viejos, usa provider=twilio action=sync_call_attempts con since/limit; esa accion no llama a nadie. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
                 "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
                 "No esperes a que el doctor diga 'guarda esto' cuando el contexto sea claro: si detectas datos estables de cliente, "
@@ -7303,7 +7908,7 @@ def realtime_session_config():
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
-                                    "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, schedule_call, schedule_sms. "
+                                    "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, sync_call_attempts, schedule_call, schedule_sms. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
                                 ),
                             },

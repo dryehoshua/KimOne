@@ -2853,8 +2853,8 @@
     fetch("/api/status")
       .then((r) => r.json())
       .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.23");
-        $("appVersion").textContent = "v" + (data.version || "1.5.23");
+        $("mode").textContent = data.mode + " v" + (data.version || "1.5.24");
+        $("appVersion").textContent = "v" + (data.version || "1.5.24");
       })
       .catch(() => {
         $("mode").textContent = "Sin conexion local";

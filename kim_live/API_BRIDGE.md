@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-16 / Kim Live 1.5.24: las llamadas Twilio crean memoria `PHONE-<CallSid>.md` desde el intento inicial y actualizan ese mismo registro con callbacks `ringing`, `in-progress`, `completed`, `no-answer`, `busy`, `failed` o `canceled`. `call_report` ya ve intentos sin audio, y `sync_call_attempts` reconcilia callbacks viejos con CRM local y Pipedrive sin iniciar llamadas nuevas.
+
 Update 2026-05-15 / Kim Live 1.5.23: se agrega memoria tipo biblioteca. Kim puede buscar transcripts literales con `kim_memory_search`; la revision bibliotecaria revisa la conversacion guardada, crea tarjetas de conocimiento en `BIFROST/MEMORY/knowledge`, actualiza CRM local cuando hay datos claros y prepara tareas ClickUp detectadas por contexto. Las escrituras externas siguen requiriendo confirmacion.
 
 Update 2026-05-15 / Kim Live 1.5.22: CRM local ya no reemplaza `display_name` por el telefono cuando una actualizacion llega solo con `phone`, conserva `contact_type` si no se envio uno nuevo, reutiliza un contacto existente cuando hay una coincidencia exacta unica por nombre, y limpia fichas Markdown obsoletas del mismo contacto para evitar duplicados como `Isaac Kranz` / `Isaac Krantz`.
@@ -265,7 +267,7 @@ Para llamadas a terceros, `call_phone` debe incluir:
 }
 ```
 
-Las llamadas y SMS quedan enlazados a CRM como interacciones. Las llamadas Realtime tambien guardan transcript en `BIFROST/MEMORY/calls`.
+Las llamadas y SMS quedan enlazados a CRM como interacciones. Las llamadas Realtime tambien guardan transcript en `BIFROST/MEMORY/calls`. Desde 1.5.24, los intentos no contestados tambien guardan un archivo `PHONE-<CallSid>.md` con historial de estados y ruta a CRM/Pipedrive.
 - `create_task` -> `clickup.create_task`
 - `update_task` -> `clickup.update_task`
 - `comment_task` -> `clickup.comment_task`
@@ -305,11 +307,16 @@ Acciones:
 - `list_numbers`: lista numeros entrantes comprados/asignados y capacidades `voice`, `sms`, `mms`.
 - `send_sms`: prepara/envia SMS con `to`, `body` y `from`/`from_number` opcional.
 - `send_whatsapp`: prepara/envia WhatsApp usando formato `whatsapp:+numero`; requiere sender/sandbox aprobado en Twilio.
+- `call_phone`: prepara/ejecuta llamada con contexto estructurado; al confirmar crea memoria del intento desde `queued`.
+- `latest_call`: lee la ultima llamada o intento guardado.
+- `call_report`: lee transcripciones e intentos por `call_sid`, `context_id`, `phone`, `contact_name` o `limit`.
+- `sync_call_attempts`: reconcilia callbacks Twilio ya recibidos y crea/actualiza memoria, CRM y actividad Pipedrive. No llama a nadie.
 
 Reglas:
 
 - No comprar numeros desde Kim Live sin confirmacion humana explicita.
 - `send_sms` y `send_whatsapp` siempre deben iniciar con `confirm=false`; luego el doctor confirma con `confirm_prepared` o el boton.
+- Si una llamada no se concreta, Kim debe reportar el estado real (`no-answer`, `busy`, `failed`, etc.) desde `call_report`, no decir que no hay registro.
 - Si Twilio devuelve `401`, el dato pendiente suele ser el Auth Token correcto o un API Key SID que empieza con `SK...`.
 
 ## Hostinger multi-buzon
