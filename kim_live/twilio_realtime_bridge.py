@@ -38,10 +38,49 @@ def log(message):
     print(message, flush=True)
 
 
+def inbound_profile_from_context(call_context=None):
+    call_context = call_context or {}
+    profile = call_context.get("inbound_caller_profile") or {}
+    return profile if isinstance(profile, dict) else {}
+
+
+def inbound_contact_label(call_context=None, fallback=""):
+    profile = inbound_profile_from_context(call_context)
+    if profile.get("is_doctor"):
+        return "Dr. Yehoshua"
+    return call_context.get("contact_name") or profile.get("display_name") or fallback or "la persona que llama"
+
+
 def bridge_session_config(call_sid="", caller="", called="", call_context=None):
     local_context = kim.context_brief()
     call_context = call_context or {}
-    if call_context:
+    if call_context and call_context.get("direction") == "inbound":
+        profile = inbound_profile_from_context(call_context)
+        known = bool(profile.get("known_contact") or profile.get("is_doctor"))
+        label = inbound_contact_label(call_context, caller)
+        mission = (
+            "MODO RECEPCION / SECRETARIA ENTRANTE.\n"
+            "La persona esta llamando al numero de Kim/Dr. Yehoshua. Actua como secretaria ejecutiva de recepcion, "
+            "no como IVR. Tu trabajo es escuchar, orientar y registrar.\n"
+            "Primero saluda como Kim, asistente del Dr. Yehoshua. Si el numero coincide con un perfil conocido, "
+            f"confirma con suavidad si hablas con {label}; si no coincide, pide nombre completo, empresa y motivo.\n"
+            "Puedes atender clientes, proveedores, inversionistas o interesados en Tesca Elements, Ignis, Ai People u otros proyectos. "
+            "Da informacion general de servicios y toma recados, pero no inventes datos especificos.\n"
+            "Regla de privacidad: solo puedes hablar de pendientes propios del llamante si la identidad es clara. "
+            "No reveles tareas de terceros, datos de otros clientes ni pendientes generales del doctor. Si piden algo sensible, "
+            "di que lo registras para que el doctor lo revise.\n\n"
+            f"Numero reconocido: {'si' if known else 'no'}\n"
+            f"Perfil esperado: {label}\n"
+            f"Relacion: {call_context.get('relationship', '')}\n"
+            f"Empresa: {call_context.get('company', '')}\n"
+            f"Contexto permitido: {call_context.get('call_context', '')}\n"
+            f"Objetivo: {call_context.get('objective', '')}\n"
+            f"Preguntas que debes hacer: {call_context.get('questions', '')}\n"
+            f"Que debes reportar al doctor: {call_context.get('report_to_doctor', '')}\n"
+            f"Criterio de exito: {call_context.get('success_criteria', '')}\n"
+            f"Tono: {call_context.get('tone', '')}\n"
+        )
+    elif call_context:
         mission = (
             "MODO LLAMADA CON CONTEXTO A TERCERO.\n"
             "La persona que contesta NO necesariamente es el doctor. No la saludes como doctor.\n"
@@ -78,7 +117,8 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
             "output_modalities": ["audio"],
             "instructions": (
                 "Habla en espanol mexicano, femenino, natural y fluido. "
-                "Esta llamada viene por Twilio Media Streams y debe sentirse como Kim Live local. "
+                "Esta llamada viene por Twilio Media Streams: comparte memoria y tono con Kim Local, "
+                "pero es un canal telefonico distinto de la interfaz local/web. "
                 f"{mission}\n\n"
                 f"CallSid: {call_sid}\nFrom: {caller}\nTo: {called}\n\n"
                 f"MEMORIA LOCAL BIFROST:\n{local_context}"
@@ -108,7 +148,26 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
 
 def initial_greeting_event(call_context=None):
     call_context = call_context or {}
-    if call_context:
+    if call_context and call_context.get("direction") == "inbound":
+        profile = inbound_profile_from_context(call_context)
+        label = inbound_contact_label(call_context)
+        if profile.get("is_doctor"):
+            greeting_instruction = (
+                "Saluda al Dr. Yehoshua con naturalidad como Kim. Dile que estas en modo llamada telefonica "
+                "y pregunta que necesita revisar o ejecutar ahora."
+            )
+        elif profile.get("known_contact"):
+            greeting_instruction = (
+                "Contesta como secretaria ejecutiva: 'Hola, habla Kim, asistente del Dr. Yehoshua. "
+                f"¿Tengo el gusto de hablar con {label}?'. Despues pregunta en que puedes ayudar. "
+                "No reveles pendientes hasta que confirme identidad."
+            )
+        else:
+            greeting_instruction = (
+                "Contesta como secretaria ejecutiva: 'Hola, habla Kim, asistente del Dr. Yehoshua. "
+                "¿Con quien tengo el gusto y en que puedo ayudarle?'. Pide empresa, motivo y si llama por Tesca Elements, Ignis, Ai People u otro proyecto."
+            )
+    elif call_context:
         greeting_instruction = (
             "Esta llamada es para una tercera persona. Presentate como Kim, asistente del Dr. Yehoshua. "
             f"La persona objetivo es {call_context.get('contact_name') or 'el destinatario'}. "
@@ -153,6 +212,14 @@ async def send_mark(twilio_ws, stream_sid, mark_queue):
 
 async def save_twilio_realtime_call(session_id, caller, called, transcript, call_sid, context_id="", call_context=None):
     call_context = call_context or {}
+    profile = inbound_profile_from_context(call_context)
+    speaker_label = inbound_contact_label(call_context, "Llamante") if call_context.get("direction") == "inbound" else "Dr. Yehoshua"
+    rendered_transcript = []
+    for line in transcript:
+        if call_context.get("direction") == "inbound" and line.startswith("Dr. Yehoshua:"):
+            rendered_transcript.append(line.replace("Dr. Yehoshua:", f"{speaker_label}:", 1))
+        else:
+            rendered_transcript.append(line)
     text = (
         "Canal: Twilio Media Streams + OpenAI Realtime\n"
         f"CallSid: {call_sid}\n"
@@ -162,12 +229,14 @@ async def save_twilio_realtime_call(session_id, caller, called, transcript, call
             "## Call Context\n"
             f"- Context ID: {context_id}\n"
             f"- Contact: {call_context.get('contact_name', '')}\n"
+            f"- Direction: {call_context.get('direction', '')}\n"
+            f"- Known caller: {profile.get('known_contact', '')}\n"
             f"- Objective: {call_context.get('objective', '')}\n"
             f"- Report requested: {call_context.get('report_to_doctor', '')}\n\n"
             if call_context
             else ""
         )
-        + "\n".join(transcript).strip()
+        + "\n".join(rendered_transcript).strip()
     )
     try:
         call_path, entry = kim.save_call_record(
@@ -202,7 +271,7 @@ async def save_twilio_realtime_call(session_id, caller, called, transcript, call
                 "call_context": call_context,
             },
             contact_hint={
-                "display_name": call_context.get("contact_name", ""),
+                "display_name": call_context.get("contact_name") or profile.get("display_name", ""),
                 "company": call_context.get("company", ""),
                 "notes": call_context.get("relationship") or call_context.get("call_context", ""),
             },

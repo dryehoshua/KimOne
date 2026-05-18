@@ -126,6 +126,8 @@ RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
 TWILIO_MEDIA_WS_URL_FILE = RUNTIME_CONTEXT / "twilio_media_ws_url.txt"
 OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
+INBOUND_CALL_PRIVACY_SPEC = BIFROST / "docs" / "kim_live_inbound_privacy_spec.md"
+RUNTIME_INBOUND_CALL_PRIVACY_SPEC = RUNTIME_CONTEXT / "kim_live_inbound_privacy_spec.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
 OPENAI_KEYCHAIN_SERVICE = "codex.openai.api_key"
 CLICKUP_KEYCHAIN_SERVICE = "codex.clickup.personal_token"
@@ -160,13 +162,26 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.27"
+APP_VERSION = "1.5.28"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
+INBOUND_CALL_SERVICE_SUMMARY = (
+    "informacion general de servicios, seguimiento de pendientes propios, llamadas con contexto, "
+    "coordinacion de correos y documentos, CRM, tareas y agentes personalizados, recepcion para "
+    "clientes o interesados en Tesca Elements, Ignis, Ai People y otros proyectos del Dr. Yehoshua"
+)
+DOCTOR_CONTEXT_NAME_HINTS = (
+    "dr yehoshua",
+    "dr. yehoshua",
+    "doctor yehoshua",
+    "doctor joshua",
+    "dr yehoshua rodriguez",
+    "yehoshua rodriguez",
+)
 DEFAULT_HOSTINGER_MAILBOX = "founder@aipeople.io"
 HOSTINGER_MAILBOXES = [
     DEFAULT_HOSTINGER_MAILBOX,
@@ -3414,6 +3429,198 @@ def build_person_context_index():
     }
     write_json_file_both(PERSON_CONTEXT_INDEX, RUNTIME_PERSON_CONTEXT_INDEX, payload)
     return payload
+
+
+def load_person_context_people(rebuild=False):
+    payload = read_json_file_any([PERSON_CONTEXT_INDEX, RUNTIME_PERSON_CONTEXT_INDEX], {})
+    people = payload.get("people") if isinstance(payload, dict) else None
+    if people:
+        return people
+    if rebuild:
+        try:
+            return build_person_context_index().get("people", [])
+        except Exception as exc:
+            append_memory("person_context_index_reload_error", {"error": brief(str(exc), 500)})
+    return []
+
+
+def person_context_record_for_phone(phone, rebuild=False):
+    normalized = normalize_phone_number(phone)
+    if not normalized:
+        return {}
+    for record in load_person_context_people(rebuild=rebuild):
+        phones = [normalize_phone_number(item) for item in record.get("phones") or []]
+        if normalized in phones:
+            return record
+    return {}
+
+
+def person_context_is_doctor(record):
+    if not record:
+        return False
+    if str(record.get("key") or "").strip() == "person:dr-yehoshua":
+        return True
+    title = person_context_title(record).strip().lower()
+    return any(hint in title for hint in DOCTOR_CONTEXT_NAME_HINTS)
+
+
+def person_context_pending_briefs(record, limit=4):
+    if not record:
+        return []
+    pending = []
+    seen = set()
+    blocks = sorted(
+        record.get("context_blocks") or [],
+        key=lambda item: item.get("updated_at") or item.get("created_at") or "",
+        reverse=True,
+    )
+    for block in blocks:
+        status = str(block.get("status") or "").strip().lower()
+        if status in {"completed", "transcribed"}:
+            continue
+        text = block.get("next_step_hint") or block.get("objective") or block.get("call_context") or ""
+        clean = brief(re.sub(r"\s+", " ", str(text).strip()), 220)
+        if clean and clean not in seen:
+            pending.append(clean)
+            seen.add(clean)
+        if len(pending) >= limit:
+            return pending
+    scheduled = sorted(
+        record.get("scheduled_actions") or [],
+        key=lambda item: item.get("due_at") or "",
+        reverse=True,
+    )
+    for item in scheduled:
+        status = str(item.get("status") or "").strip().lower()
+        if status in {"done", "completed", "cancelled", "canceled"}:
+            continue
+        clean = brief(f"{item.get('action') or ''} {item.get('due_at') or ''}".strip(), 220)
+        if clean and clean not in seen:
+            pending.append(clean)
+            seen.add(clean)
+        if len(pending) >= limit:
+            return pending
+    for note in record.get("notes") or []:
+        clean = brief(re.sub(r"\s+", " ", str(note).strip()), 220)
+        if clean and clean not in seen:
+            pending.append(clean)
+            seen.add(clean)
+        if len(pending) >= min(limit, 2):
+            break
+    return pending[:limit]
+
+
+def twilio_inbound_caller_profile(caller="", called=""):
+    normalized_caller = normalize_phone_number(caller)
+    record = person_context_record_for_phone(normalized_caller)
+    if not record and normalized_caller:
+        record = person_context_record_for_phone(normalized_caller, rebuild=True)
+    display_name = person_context_title(record) if record else (normalized_caller or "Llamante")
+    companies = ", ".join(compact_unique(record.get("companies", []), limit=3)) if record else ""
+    relationship = ", ".join(compact_unique(record.get("contact_types", []), limit=3)) if record else ""
+    pending_briefs = person_context_pending_briefs(record, limit=3)
+    return {
+        "caller": normalized_caller,
+        "called": normalize_phone_number(called),
+        "key": record.get("key", "") if record else "",
+        "display_name": display_name,
+        "known_contact": bool(record),
+        "is_doctor": person_context_is_doctor(record),
+        "company_summary": companies,
+        "relationship_summary": relationship,
+        "pending_briefs": pending_briefs,
+        "pending_summary": "; ".join(pending_briefs),
+        "service_summary": INBOUND_CALL_SERVICE_SUMMARY,
+        "privacy_summary": (
+            "No compartir tareas de terceros ni pendientes generales del doctor sin identidad clara; "
+            "solo dar contexto del propio llamante."
+        ),
+    }
+
+
+def twilio_inbound_caller_label(profile=None):
+    profile = profile or {}
+    if profile.get("is_doctor"):
+        return "Dr. Yehoshua"
+    return profile.get("display_name") or "Llamante"
+
+
+def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None):
+    profile = profile or twilio_inbound_caller_profile(caller, called)
+    caller_number = profile.get("caller") or normalize_phone_number(caller)
+    called_number = profile.get("called") or normalize_phone_number(called)
+    known = bool(profile.get("known_contact"))
+    is_doctor = bool(profile.get("is_doctor"))
+    label = twilio_inbound_caller_label(profile)
+    pending = profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
+    if is_doctor:
+        objective = "Atender al Dr. Yehoshua como linea directa de Kim Live y recibir instrucciones operativas."
+        instructions = (
+            "Saluda como Kim de forma natural. Puedes asumir que el interlocutor es el doctor si el numero coincide. "
+            "Registra instrucciones, tareas y contexto en memoria local; si algo requiere ejecucion fuera de la llamada, "
+            "confirma que quedara registrado para seguimiento."
+        )
+        questions = "Pregunta que necesita ejecutar o revisar ahora."
+    elif known:
+        objective = (
+            f"Atender llamada entrante de {label}; actuar como secretaria del Dr. Yehoshua, confirmar identidad, "
+            "responder sobre pendientes propios y orientar sobre Tesca Elements, Ignis, Ai People u otros frentes cuando sea informacion general."
+        )
+        instructions = (
+            f"Primero confirma con suavidad si hablas con {label}. No reveles datos sensibles hasta que la persona "
+            "se identifique razonablemente. Puedes mencionar pendientes propios ya vinculados a ese numero, pero no "
+            "compartas tareas de terceros ni pendientes generales del doctor. Si pregunta por otra persona, indica "
+            "que por confidencialidad solo puedes revisar asuntos propios o registrar la solicitud para el doctor. "
+            "Si llama como cliente, proveedor, inversionista o interesado en Tesca Elements, Ignis, Ai People u otro proyecto, atiende "
+            "como recepcion ejecutiva: toma datos, detecta necesidad, explica lo general sin inventar y propone siguiente paso."
+        )
+        questions = "Confirma nombre completo, empresa, motivo de llamada, proyecto de interes y si desea que el doctor reciba algun recado."
+    else:
+        objective = (
+            "Atender llamada entrante de numero no identificado como secretaria del Dr. Yehoshua; identificar si es cliente, "
+            "proveedor, inversionista o interesado en Tesca Elements, Ignis o Ai People, y registrar la solicitud."
+        )
+        instructions = (
+            "Presentate como Kim, asistente del Dr. Yehoshua. No compartas contexto privado. Pide nombre completo, "
+            "empresa o relacion con el doctor y motivo de llamada. Puedes dar informacion general de servicios. "
+            "Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
+            "ni prometer acciones no autorizadas. Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
+        )
+        questions = "Pregunta nombre completo, empresa, proyecto de interes, motivo de llamada y datos de contacto."
+    context_id = twilio_context_block_id({"context_id": f"INBOUND-{call_sid}" if call_sid else ""})
+    return {
+        "id": context_id,
+        "context_block_id": context_id,
+        "status": "prepared",
+        "created_at": now_iso(),
+        "source": "kim_live_twilio_inbound",
+        "direction": "inbound",
+        "context_scope": "single_contact",
+        "workflow_target": "crm_then_memory",
+        "call_sid": call_sid or "",
+        "to": caller_number,
+        "from": called_number,
+        "contact_name": label if known or is_doctor else "",
+        "relationship": profile.get("relationship_summary") or ("doctor" if is_doctor else ""),
+        "company": profile.get("company_summary") or "",
+        "call_context": (
+            f"Llamada entrante desde {caller_number or caller}. "
+            f"Perfil reconocido: {label if known or is_doctor else 'no identificado'}. "
+            f"Pendientes propios disponibles: {pending}. "
+            f"Servicios generales permitidos: {profile.get('service_summary') or INBOUND_CALL_SERVICE_SUMMARY}."
+        ),
+        "objective": objective,
+        "instructions": instructions,
+        "questions": questions,
+        "message_to_deliver": "",
+        "report_to_doctor": "Guardar transcript, numero entrante, identidad declarada, solicitud y siguiente paso recomendado.",
+        "success_criteria": (
+            "La persona fue atendida sin revelar informacion de terceros; quedo memoria de la llamada y del seguimiento."
+        ),
+        "tone": "amable, natural, profesional y cuidadoso con privacidad",
+        "next_step_hint": "Registrar seguimiento en CRM/memoria; escalar al doctor si hay solicitud sensible.",
+        "inbound_caller_profile": profile,
+    }
 
 
 def parse_json_object_from_text(text):
@@ -8276,6 +8483,9 @@ def context_brief(limit=9000):
     eval_text = read_text_tail_any([NOTION_CLICKUP_EVAL, RUNTIME_CONTEXT / "notion_vs_clickup_evaluation.md"], 1200)
     if eval_text:
         parts.append("Criterio Notion/ClickUp:\n" + eval_text)
+    inbound_spec = read_text_tail_any([INBOUND_CALL_PRIVACY_SPEC, RUNTIME_INBOUND_CALL_PRIVACY_SPEC], 1400)
+    if inbound_spec:
+        parts.append("Politica de llamadas entrantes:\n" + inbound_spec)
     latest = latest_kim_live_notes(limit=3)
     if latest:
         parts.append(
@@ -8330,6 +8540,8 @@ def load_context_bundle():
         daily_memory_path(),
         OPERATING_MODEL,
         NOTION_CLICKUP_EVAL,
+        INBOUND_CALL_PRIVACY_SPEC,
+        RUNTIME_INBOUND_CALL_PRIVACY_SPEC,
         CLICKUP_INVENTORY,
         CLICKUP_TASKS_JSON,
         CLICKUP_TASKS_MARKDOWN,
@@ -8539,12 +8751,36 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
     clean = (user_text or "").strip()
     if not clean:
         return "No alcance a escuchar la instruccion. Repitemela en una frase breve, por favor."
+    caller_profile = twilio_inbound_caller_profile(caller, called)
     route = memory_router("classify", clean, session_id=session_id)
+    if caller_profile.get("is_doctor"):
+        phone_mode = (
+            "Estas hablando por telefono con el Dr Yehoshua. "
+            "Puedes asumir continuidad operativa y tomar instrucciones directas."
+        )
+    else:
+        pending_summary = caller_profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
+        phone_mode = (
+            "Estas atendiendo una linea telefonica para terceros. "
+            "Este canal comparte memoria con Kim Local/Kim Live web, pero es una recepcion telefonica distinta. "
+            "No asumas que quien llama es el doctor. Presentate como Kim, asistente del Dr. Yehoshua, "
+            "y usa la frase 'si necesita algo, con mucho gusto se lo puedo informar' cuando encaje. "
+            "Solo puedes compartir pendientes propios del llamante. No des contexto de terceros ni "
+            "pendientes generales del doctor. Si la identidad no es clara, pide nombre completo antes "
+            "de compartir informacion personal. Si la llamada es general o comercial, explica servicios "
+            "de forma breve.\n"
+            f"Perfil conocido: {caller_profile.get('display_name')} | conocido={caller_profile.get('known_contact')} "
+            f"| empresa={caller_profile.get('company_summary') or 'N/A'} | relacion={caller_profile.get('relationship_summary') or 'N/A'}\n"
+            f"Pendientes propios conocidos: {pending_summary}\n"
+            f"Servicios generales permitidos: {caller_profile.get('service_summary')}\n"
+            f"Politica de privacidad: {caller_profile.get('privacy_summary')}"
+        )
     prompt = (
-        "Eres Kim Live hablando por telefono con Dr Yehoshua. "
+        "Eres Kim Live hablando por telefono. "
         "Responde en espanol mexicano, con una frase breve y accionable, idealmente menor a 45 palabras. "
         "Si la instruccion requiere trabajo largo, confirma que la guardaras para ejecucion en Kim Live/Codex. "
         "No inventes que ya hiciste acciones externas si solo las estas recibiendo por telefono.\n\n"
+        f"{phone_mode}\n\n"
         f"Caller: {caller}\nCalled: {called}\nSession: {session_id}\n"
         f"Ruta de memoria detectada: {route.get('route', {}).get('domain')}\n\n"
         f"Usuario dijo:\n{clean}"
@@ -8569,6 +8805,11 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
             "session_id": session_id,
             "caller": caller,
             "called": called,
+            "caller_profile": {
+                "display_name": caller_profile.get("display_name"),
+                "known_contact": caller_profile.get("known_contact"),
+                "is_doctor": caller_profile.get("is_doctor"),
+            },
             "user_text": clean,
             "reply": reply,
         },
@@ -8583,12 +8824,14 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
     called = params.get("To", "")
     call_sid = params.get("CallSid", "")
     started = params.get("Timestamp") or now_iso()
+    caller_profile = twilio_inbound_caller_profile(caller, called)
+    caller_label = twilio_inbound_caller_label(caller_profile)
     text = (
         "Canal: Twilio phone call\n"
         f"CallSid: {call_sid}\n"
         f"From: {caller}\n"
         f"To: {called}\n\n"
-        "Dr. Yehoshua: "
+        f"{caller_label}: "
         + ((user_text or "").strip() or "(sin voz capturada)")
         + "\n"
         "Kim: "
@@ -8613,7 +8856,20 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
             body=user_text,
             external_sid=call_sid,
             transcript_path=str(call_path),
-            metadata={"reply": reply_text, "session_id": session_id},
+            metadata={
+                "reply": reply_text,
+                "session_id": session_id,
+                "caller_profile": {
+                    "display_name": caller_profile.get("display_name"),
+                    "known_contact": caller_profile.get("known_contact"),
+                    "is_doctor": caller_profile.get("is_doctor"),
+                },
+            },
+            contact_hint={
+                "display_name": caller_profile.get("display_name") if caller_profile.get("known_contact") else "",
+                "company": caller_profile.get("company_summary", ""),
+                "notes": caller_profile.get("pending_summary") or caller_profile.get("relationship_summary", ""),
+            },
         )
         return result
     except Exception as exc:
@@ -8649,8 +8905,21 @@ def twilio_voice_twiml(handler, params=None):
     session_id = phone_session_id(params)
     caller = params.get("From", "")
     called = params.get("To", "")
+    caller_profile = twilio_inbound_caller_profile(caller, called)
     context_id = params.get("kim_context_id", "")
     call_context = load_twilio_call_context(call_sid=params.get("CallSid", ""), context_id=context_id)
+    default_from = normalize_phone_number(twilio_default_from_number())
+    is_outbound_leg = default_from and normalize_phone_number(caller) == default_from
+    if not call_context and not is_outbound_leg:
+        call_context = twilio_inbound_call_context(
+            caller=caller,
+            called=called,
+            call_sid=params.get("CallSid", ""),
+            profile=caller_profile,
+        )
+        context_id = store_twilio_call_context(call_context)
+    elif call_context and not context_id:
+        context_id = call_context.get("id") or call_context.get("context_block_id") or ""
     media_ws = twilio_media_ws_url(handler, params)
     append_memory(
         "phone_call_started",
@@ -8660,6 +8929,12 @@ def twilio_voice_twiml(handler, params=None):
             "called": called,
             "context_id": context_id,
             "has_call_context": bool(call_context),
+            "caller_profile": {
+                "display_name": caller_profile.get("display_name"),
+                "known_contact": caller_profile.get("known_contact"),
+                "is_doctor": caller_profile.get("is_doctor"),
+                "pending_summary": brief(caller_profile.get("pending_summary"), 240),
+            },
             "transport": "twilio_media_streams",
             "media_ws_url": media_ws,
         },
