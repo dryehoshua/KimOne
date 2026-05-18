@@ -96,10 +96,26 @@ TWILIO_CALL_LOG = MEMORY_CONTEXT_DIR / "twilio_call_actions.jsonl"
 RUNTIME_TWILIO_CALL_LOG = RUNTIME_CONTEXT / "twilio_call_actions.jsonl"
 TWILIO_CALL_CONTEXTS = MEMORY_CONTEXT_DIR / "twilio_call_contexts.json"
 RUNTIME_TWILIO_CALL_CONTEXTS = RUNTIME_CONTEXT / "twilio_call_contexts.json"
+EXTERNAL_CALL_CONTEXT_BLOCKS = MEMORY_CONTEXT_DIR / "external_call_context_blocks.json"
+RUNTIME_EXTERNAL_CALL_CONTEXT_BLOCKS = RUNTIME_CONTEXT / "external_call_context_blocks.json"
+EXTERNAL_CALL_CONTEXT_BLOCKS_DIR = MEMORY_CALLS / "_context_blocks"
+RUNTIME_EXTERNAL_CALL_CONTEXT_BLOCKS_DIR = RUNTIME_CALLS / "_context_blocks"
+PERSON_CONTEXT_INDEX = MEMORY_CONTEXT_DIR / "person_context_index.json"
+RUNTIME_PERSON_CONTEXT_INDEX = RUNTIME_CONTEXT / "person_context_index.json"
+PERSON_CONTEXT_DIR = MEMORY_ROOT / "person_contexts"
+RUNTIME_PERSON_CONTEXT_DIR = RUNTIME_MEMORY_ROOT / "person_contexts"
 TWILIO_PIPEDRIVE_CALL_SYNC = MEMORY_CONTEXT_DIR / "twilio_pipedrive_call_sync.json"
 RUNTIME_TWILIO_PIPEDRIVE_CALL_SYNC = RUNTIME_CONTEXT / "twilio_pipedrive_call_sync.json"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
+CLICKUP_OPERATION_MAP = MEMORY_CONTEXT_DIR / "clickup_operation_map.json"
+RUNTIME_CLICKUP_OPERATION_MAP = RUNTIME_CONTEXT / "clickup_operation_map.json"
+BIFROST_FILE_INDEX = MEMORY_CONTEXT_DIR / "bifrost_file_index.json"
+RUNTIME_BIFROST_FILE_INDEX = RUNTIME_CONTEXT / "bifrost_file_index.json"
+NOTION_DEFAULT_PARENT = MEMORY_CONTEXT_DIR / "notion_default_parent.json"
+RUNTIME_NOTION_DEFAULT_PARENT = RUNTIME_CONTEXT / "notion_default_parent.json"
+NOTION_OUTBOX_DIR = MEMORY_ROOT / "notion_outbox"
+RUNTIME_NOTION_OUTBOX_DIR = RUNTIME_MEMORY_ROOT / "notion_outbox"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
 RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
 HOSTINGER_MAIL_LOG = MEMORY_CONTEXT_DIR / "hostinger_mail_actions.jsonl"
@@ -144,7 +160,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.24"
+APP_VERSION = "1.5.27"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -351,7 +367,25 @@ def write_json_file_any(paths, payload):
         try:
             write_json_file(path, payload)
             return path
-        except PermissionError as exc:
+        except (PermissionError, OSError) as exc:
+            last_error = exc
+    if last_error:
+        raise last_error
+    return None
+
+
+def write_text_file(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def write_text_file_any(paths, text):
+    last_error = None
+    for path in paths:
+        try:
+            write_text_file(path, text)
+            return path
+        except (PermissionError, OSError) as exc:
             last_error = exc
     if last_error:
         raise last_error
@@ -385,7 +419,7 @@ def append_jsonl_any(paths, payload):
         try:
             append_jsonl(path, payload)
             return path
-        except PermissionError as exc:
+        except (PermissionError, OSError) as exc:
             last_error = exc
     if last_error:
         raise last_error
@@ -434,7 +468,18 @@ def write_json_file_both(primary, runtime, payload):
         try:
             write_json_file(path, payload)
             written.append(str(path))
-        except PermissionError:
+        except (PermissionError, OSError):
+            continue
+    return written
+
+
+def write_text_file_both(primary, runtime, text):
+    written = []
+    for path in [primary, runtime]:
+        try:
+            write_text_file(path, text)
+            written.append(str(path))
+        except (PermissionError, OSError):
             continue
     return written
 
@@ -1302,7 +1347,7 @@ def parse_upload(handler):
         index = read_json_file(index_path, {"files": []})
         index.setdefault("files", []).append({**analysis, "analysis_path": str(analysis_path)})
         write_json_file(index_path, index)
-    except PermissionError:
+    except (PermissionError, OSError):
         index_path = RUNTIME_UPLOAD_INDEX
         index = read_json_file(index_path, {"files": []})
         index.setdefault("files", []).append({**analysis, "analysis_path": str(RUNTIME_UPLOADS / today() / analysis_path.name)})
@@ -1602,11 +1647,129 @@ def transcript_snippet(transcript, query, max_chars=1600):
     return prefix + text[start:end].strip() + suffix
 
 
+def bifrost_search_roots():
+    return [
+        MEMORY_KNOWLEDGE,
+        MEMORY_CONTEXT_DIR,
+        MEMORY_CALLS,
+        MEMORY_DOCUMENTS,
+        PERSON_CONTEXT_DIR,
+        MEMORY_ROOT / "portfolios",
+        CRM_ROOT,
+        BIFROST / "docs",
+        RUNTIME_KNOWLEDGE,
+        RUNTIME_CONTEXT,
+        RUNTIME_CALLS,
+        RUNTIME_DOCUMENTS,
+        RUNTIME_PERSON_CONTEXT_DIR,
+        RUNTIME_MEMORY_ROOT / "portfolios",
+    ]
+
+
+BIFROST_SEARCH_SUFFIXES = {".md", ".txt", ".json", ".jsonl", ".csv", ".tsv"}
+BIFROST_SEARCH_MAX_BYTES = 1_400_000
+
+
+def iter_bifrost_search_files():
+    seen = set()
+    for root in bifrost_search_roots():
+        try:
+            if not root.exists():
+                continue
+            paths = root.rglob("*") if root.is_dir() else [root]
+            for path in paths:
+                try:
+                    if not path.is_file():
+                        continue
+                    if path.suffix.lower() not in BIFROST_SEARCH_SUFFIXES:
+                        continue
+                    path_key = str(path.resolve())
+                    if path_key in seen:
+                        continue
+                    size = path.stat().st_size
+                    if size <= 0 or size > BIFROST_SEARCH_MAX_BYTES:
+                        continue
+                    seen.add(path_key)
+                    yield path, size
+                except (FileNotFoundError, PermissionError, OSError):
+                    continue
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+
+
+def score_bifrost_file(query, path, text):
+    phrase = normalize_security_text(query)
+    terms = memory_search_terms(query)
+    path_norm = normalize_security_text(str(path))
+    text_norm = normalize_security_text(text)
+    if not phrase and not terms:
+        return 1
+    score = 0
+    if phrase and phrase in path_norm:
+        score += 12
+    if phrase and phrase in text_norm:
+        score += 8
+    for term in terms:
+        if term in path_norm:
+            score += 5
+        if term in text_norm:
+            score += 1
+    portfolio_terms = {"eli", "portafolio", "portfolio", "ignis", "usdt"}
+    if any(term in terms for term in portfolio_terms) and "portfolio" in path_norm:
+        score += 4
+    return score
+
+
+def search_bifrost_files(query="", limit=8, max_chars=1600):
+    query = str(query or "").strip()
+    limit = max(1, min(int(limit or 8), 20))
+    max_chars = max(400, min(int(max_chars or 1600), 6000))
+    results = []
+    for path, size in iter_bifrost_search_files():
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+        score = score_bifrost_file(query, path, text)
+        if query and score <= 0:
+            continue
+        title = path.stem
+        if text.startswith("# "):
+            title = text.splitlines()[0].lstrip("# ").strip() or title
+        results.append(
+            {
+                "path": str(path),
+                "title": title,
+                "score": score,
+                "bytes": size,
+                "updated_at": dt.datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds"),
+                "snippet": transcript_snippet(text, query, max_chars=max_chars),
+            }
+        )
+    results = sorted(results, key=lambda item: (item.get("score", 0), item.get("updated_at") or ""), reverse=True)
+    payload = {
+        "ok": True,
+        "provider": "memory",
+        "action": "search_bifrost_files",
+        "query": query,
+        "count": len(results[:limit]),
+        "results": results[:limit],
+    }
+    write_json_file_any([BIFROST_FILE_INDEX, RUNTIME_BIFROST_FILE_INDEX], {
+        "updated_at": now_iso(),
+        "query": query,
+        "result_count": payload["count"],
+        "top_paths": [item.get("path") for item in payload["results"]],
+    })
+    return payload
+
+
 def search_memory_transcripts(query="", session_id="", limit=6, max_chars=1600):
     query = str(query or "").strip()
     session_id = str(session_id or "").strip()
     limit = max(1, min(int(limit or 6), 20))
     max_chars = max(400, min(int(max_chars or 1600), 6000))
+    file_payload = search_bifrost_files(query, limit=max(6, limit), max_chars=max_chars)
     if session_id:
         record = load_conversation(session_id)
         transcript = record.get("transcript") or transcript_from_markdown(record.get("markdown", ""))
@@ -1628,6 +1791,9 @@ def search_memory_transcripts(query="", session_id="", limit=6, max_chars=1600):
                     "chars": len(transcript),
                 }
             ],
+            "file_count": file_payload.get("count", 0),
+            "file_results": file_payload.get("results", []),
+            "rule": "Usa transcript y file_results como fuentes primarias; los resumenes son derivados.",
         }
     results = []
     for entry in discover_call_memory_entries():
@@ -1658,7 +1824,9 @@ def search_memory_transcripts(query="", session_id="", limit=6, max_chars=1600):
         "query": query,
         "count": len(results[:limit]),
         "results": results[:limit],
-        "rule": "Usa estos snippets literales como fuente primaria; los resumenes son derivados.",
+        "file_count": file_payload.get("count", 0),
+        "file_results": file_payload.get("results", []),
+        "rule": "Usa estos snippets literales y file_results de BIFROST como fuente primaria; los resumenes son derivados.",
     }
     append_memory("memory_transcript_search", {"query": query, "count": payload["count"], "top_paths": [item.get("path") for item in payload["results"][:3]]})
     return payload
@@ -1715,6 +1883,197 @@ def clickup_context():
         "workspaces": workspaces,
         "summary": "ClickUp conectado como fuente de estructura, clientes y tareas.",
     }
+
+
+def clickup_inventory_payload():
+    for path in [CLICKUP_INVENTORY, RUNTIME_CLICKUP_INVENTORY, RUNTIME_CONTEXT / "clickup_inventory.json"]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                return payload, path
+        except (FileNotFoundError, PermissionError, OSError, json.JSONDecodeError):
+            continue
+    return {}, None
+
+
+def clickup_inventory_rows():
+    payload, source = clickup_inventory_payload()
+    rows = []
+    for workspace in payload.get("workspaces") or payload.get("teams") or []:
+        team_name = workspace.get("name") or ""
+        team_id = workspace.get("id") or ""
+        for space in workspace.get("spaces", []) or []:
+            space_name = space.get("name") or ""
+            space_id = space.get("id") or ""
+            for item in space.get("lists", []) or []:
+                rows.append(
+                    {
+                        "team_name": team_name,
+                        "team_id": team_id,
+                        "space_name": space_name,
+                        "space_id": space_id,
+                        "folder_name": item.get("folder_name") or item.get("folder") or "",
+                        "folder_id": item.get("folder_id") or "",
+                        "list_name": item.get("name") or "",
+                        "list_id": item.get("id") or "",
+                        "source": str(source) if source else "",
+                    }
+                )
+    return rows
+
+
+def clickup_operation_catalog():
+    rows = clickup_inventory_rows()
+
+    def find(team="", space="", list_name=""):
+        team_norm = normalize_security_text(team)
+        space_norm = normalize_security_text(space)
+        list_norm = normalize_security_text(list_name)
+        for row in rows:
+            if team_norm and normalize_security_text(row.get("team_name")) != team_norm:
+                continue
+            if space_norm and normalize_security_text(row.get("space_name")) != space_norm:
+                continue
+            if list_norm and normalize_security_text(row.get("list_name")) != list_norm:
+                continue
+            return row
+        return {}
+
+    routes = [
+        {
+            "id": "kim_product_system",
+            "label": "Kim Live / AI People producto",
+            "keywords": ["kim", "kim live", "codex", "bifrost", "api", "bug", "error", "frontend", "runtime", "github", "memoria", "contexto", "telegram", "voice", "voz", "twilio"],
+            "row": find("Ai people", "Products", "Kim Live"),
+            "rule": "bugs, mejoras de Kim, integraciones, memoria, telefonia y producto AI People.",
+        },
+        {
+            "id": "ai_spirits_product",
+            "label": "AI Spirits",
+            "keywords": ["ai spirits", "spirit", "agente visual", "avatar", "video", "expresarse"],
+            "row": find("Ai people", "Products", "AI Spirits"),
+            "rule": "producto AI Spirits o expresion visual de agentes.",
+        },
+        {
+            "id": "client_followup",
+            "label": "AI People Client Follow-up",
+            "keywords": ["cliente", "prospecto", "follow up", "seguimiento", "pipedrive", "crm", "venta", "deal", "trato", "llamada cliente", "isaac", "inversionista", "oficina"],
+            "row": find("Ai people", "Client Follow-up", "PASIV"),
+            "rule": "seguimiento comercial cuando no hay una lista de cliente mas especifica.",
+        },
+        {
+            "id": "ignis_investor",
+            "label": "Ignis investor follow-up",
+            "keywords": ["ignis", "portafolio", "portfolio", "eli", "inversion", "inversión", "crypto", "usdt", "khalil", "orden", "credito", "crédito"],
+            "row": find("Ignis Stock Financials", "Investor follow-up", "Khalil"),
+            "rule": "seguimiento comercial de inversiones; el ledger local sigue siendo fuente primaria del portafolio.",
+        },
+        {
+            "id": "neorgana_commercial",
+            "label": "Tesca / Neorgana Commercial",
+            "keywords": ["neorgana", "tesca", "comercial", "propuesta", "cliente tesca"],
+            "row": find("Tesca Elements", "Neorgana", "Commercial"),
+            "rule": "pendientes comerciales de Neorgana/Tesca.",
+        },
+        {
+            "id": "tesca_operations",
+            "label": "Tesca operations",
+            "keywords": ["aifa", "seo", "webpage", "campaña", "campaign", "dr ahmed", "taskspur"],
+            "row": find("Tesca Elements", "Quotation & Kick Off projects", "AIFA Cybersecurity"),
+            "rule": "operacion de proyectos Tesca cuando el texto no da una lista exacta.",
+        },
+        {
+            "id": "personal_scheduled",
+            "label": "Dr Y scheduled",
+            "keywords": ["personal", "shabat", "recordatorio", "agenda", "casa", "familia", "doctor yoshua mexico"],
+            "row": find("Dr Y", "Personal Life", "Scheduled"),
+            "rule": "temas personales programados del doctor.",
+        },
+    ]
+    fallback = find("Ai people", "Products", "Kim Live") or find("Tesca Elements", "Neorgana", "Commercial") or (rows[0] if rows else {})
+    return {"routes": routes, "fallback": fallback, "rows": rows}
+
+
+def clickup_route_from_context(parameters):
+    data = parameters or {}
+    text = " ".join(
+        str(first_value(data, key, default="") or "")
+        for key in ["name", "title", "subject", "task_name", "description", "body", "content", "message", "notes", "summary", "text", "space_name", "list_name", "company", "contact_name"]
+    )
+    text_norm = normalize_security_text(text)
+    catalog = clickup_operation_catalog()
+    for row in catalog.get("rows", []):
+        list_norm = normalize_security_text(row.get("list_name"))
+        space_norm = normalize_security_text(row.get("space_name"))
+        if list_norm and len(list_norm) >= 4 and list_norm in text_norm:
+            return {**row, "route_id": "explicit_list_match", "route_label": f"Lista mencionada: {row.get('list_name')}", "route_rule": "El texto menciono una lista/proyecto existente.", "score": 99}
+        if space_norm and len(space_norm) >= 5 and space_norm in text_norm and row.get("list_id"):
+            return {**row, "route_id": "explicit_space_match", "route_label": f"Space mencionado: {row.get('space_name')}", "route_rule": "El texto menciono un Space existente; se usa su primera lista disponible.", "score": 80}
+    best = None
+    best_score = 0
+    for route in catalog.get("routes", []):
+        score = sum(1 for keyword in route.get("keywords", []) if normalize_security_text(keyword) in text_norm)
+        row = route.get("row") or {}
+        if score > best_score and row.get("list_id"):
+            best = route
+            best_score = score
+    if not best:
+        best = {"id": "fallback", "label": "Fallback operativo", "row": catalog.get("fallback") or {}, "rule": "fallback seguro para no pedir IDs al doctor."}
+    row = best.get("row") or {}
+    return {**row, "route_id": best.get("id"), "route_label": best.get("label"), "route_rule": best.get("rule"), "score": best_score}
+
+
+def clickup_apply_operational_defaults(parameters, force=False):
+    data = dict(parameters or {})
+    existing_list_id = str(data.get("list_id") or "").strip()
+    existing_space = str(first_value(data, "space_name", "space", "workspace", "team_space", default="") or "").strip()
+    existing_list = str(first_value(data, "list_name", "list", "target_list", default="") or "").strip()
+    workspace_names = {normalize_security_text(row.get("team_name")) for row in clickup_inventory_rows() if row.get("team_name")}
+    semantic_space_is_workspace = normalize_security_text(existing_space) in workspace_names
+    should_route = force or not existing_list_id and (not existing_space or semantic_space_is_workspace or not existing_list)
+    if not should_route:
+        return data
+    route = clickup_route_from_context(data)
+    if not existing_list_id and route.get("list_id"):
+        data["list_id"] = route["list_id"]
+    if route.get("list_name") and (force or not existing_list or semantic_space_is_workspace):
+        data["list_name"] = route["list_name"]
+    if route.get("space_name") and (force or not existing_space or semantic_space_is_workspace):
+        data["space_name"] = route["space_name"]
+    if route.get("team_name") and not data.get("team_name"):
+        data["team_name"] = route["team_name"]
+    data["routing_note"] = (
+        f"Ruta ClickUp automatica {route.get('route_id')}: {route.get('route_label')} -> "
+        f"{route.get('team_name')} / {route.get('space_name')} / {route.get('list_name')}. "
+        f"{route.get('route_rule')}"
+    )
+    return data
+
+
+def write_clickup_operation_map_snapshot():
+    catalog = clickup_operation_catalog()
+    payload = {
+        "updated_at": now_iso(),
+        "purpose": "Mapa operativo para convertir voice-of-customer en estructura ClickUp sin pedir IDs.",
+        "rule": "BIFROST/CRM conservan contexto; ClickUp recibe tareas ejecutables; Pipedrive recibe relaciones comerciales.",
+        "routes": [
+            {
+                "id": route.get("id"),
+                "label": route.get("label"),
+                "rule": route.get("rule"),
+                "keywords": route.get("keywords"),
+                "team_name": (route.get("row") or {}).get("team_name"),
+                "space_name": (route.get("row") or {}).get("space_name"),
+                "list_name": (route.get("row") or {}).get("list_name"),
+                "list_id": (route.get("row") or {}).get("list_id"),
+            }
+            for route in catalog.get("routes", [])
+        ],
+        "fallback": catalog.get("fallback") or {},
+        "available_lists": catalog.get("rows")[:200],
+    }
+    written = write_json_file_both(CLICKUP_OPERATION_MAP, RUNTIME_CLICKUP_OPERATION_MAP, payload)
+    return written[0] if written else ""
 
 
 def load_json_any(paths):
@@ -2574,6 +2933,489 @@ def normalize_call_context_value(value):
     return str(value).strip()
 
 
+def twilio_context_block_id(parameters=None):
+    parameters = parameters or {}
+    explicit = first_value(parameters, "context_block_id", "context_id", "kim_context_id", default="")
+    explicit = re.sub(r"[^A-Za-z0-9_-]+", "-", str(explicit or "").strip()).strip("-")
+    return explicit or twilio_call_context_id()
+
+
+def twilio_context_scope(context):
+    explicit = str(context.get("context_scope") or "").strip().lower()
+    if explicit in {"bulk", "campaign", "mass"}:
+        return "bulk_campaign"
+    if explicit in {"single", "single_contact", "one_to_one"}:
+        return "single_contact"
+    if context.get("parent_context_id") or context.get("campaign_label"):
+        return "bulk_campaign"
+    return "single_contact"
+
+
+def twilio_context_tags(context):
+    tags = ["external_call", "phone"]
+    scope = twilio_context_scope(context)
+    tags.append(scope)
+    if context.get("parent_context_id"):
+        tags.append("child_context")
+    if context.get("report_to_doctor"):
+        tags.append("report_back")
+    if context.get("workflow_target"):
+        tags.append(str(context.get("workflow_target")))
+    status = str(context.get("status") or "").strip().lower()
+    if status:
+        tags.append(f"status:{status}")
+    unique = []
+    seen = set()
+    for tag in tags:
+        clean = re.sub(r"[^a-z0-9:_-]+", "-", str(tag or "").strip().lower()).strip("-")
+        if not clean or clean in seen:
+            continue
+        seen.add(clean)
+        unique.append(clean)
+    return unique
+
+
+def load_external_call_context_block_state():
+    state = {"blocks": {}}
+    for path in [EXTERNAL_CALL_CONTEXT_BLOCKS, RUNTIME_EXTERNAL_CALL_CONTEXT_BLOCKS]:
+        payload = read_json_file(path, {})
+        if not isinstance(payload, dict):
+            continue
+        blocks = payload.get("blocks", {})
+        if isinstance(blocks, dict):
+            state["blocks"].update(blocks)
+        if payload.get("updated_at"):
+            state["updated_at"] = payload.get("updated_at")
+    state.setdefault("blocks", {})
+    return state
+
+
+def save_external_call_context_block_state(state):
+    state["updated_at"] = now_iso()
+    last_error = None
+    wrote = False
+    for path in [EXTERNAL_CALL_CONTEXT_BLOCKS, RUNTIME_EXTERNAL_CALL_CONTEXT_BLOCKS]:
+        try:
+            write_json_file(path, state)
+            wrote = True
+        except (PermissionError, OSError) as exc:
+            last_error = exc
+    if not wrote and last_error:
+        raise last_error
+
+
+def external_call_context_block_markdown(block):
+    attempts = block.get("attempts") or []
+    lines = [
+        f"# {block.get('block_id') or block.get('id') or 'CTX'}",
+        "",
+        f"- Title: {block.get('title') or block.get('contact_name') or block.get('to') or 'External Call'}",
+        f"- Status: {block.get('status') or 'prepared'}",
+        f"- Scope: {block.get('scope') or 'single_contact'}",
+        f"- Workflow: {block.get('workflow_target') or 'pipedrive_then_clickup'}",
+        f"- Tags: {', '.join(block.get('tags') or []) or 'external_call, phone'}",
+        f"- Created: {block.get('created_at') or ''}",
+        f"- Updated: {block.get('updated_at') or ''}",
+    ]
+    if block.get("parent_context_id"):
+        lines.append(f"- Parent block: {block.get('parent_context_id')}")
+    if block.get("campaign_label"):
+        lines.append(f"- Campaign: {block.get('campaign_label')}")
+    if block.get("source_session_id"):
+        lines.append(f"- Source session: {block.get('source_session_id')}")
+    lines.extend(
+        [
+            "",
+            "## Context",
+            "",
+            f"- Contact: {block.get('contact_name') or ''}",
+            f"- Company: {block.get('company') or ''}",
+            f"- Relationship: {block.get('relationship') or ''}",
+            f"- To: {block.get('to') or ''}",
+            f"- From: {block.get('from') or ''}",
+            f"- Objective: {block.get('objective') or ''}",
+            f"- Call context: {block.get('call_context') or ''}",
+            f"- Questions: {block.get('questions') or ''}",
+            f"- Message to deliver: {block.get('message_to_deliver') or ''}",
+            f"- Report to doctor: {block.get('report_to_doctor') or ''}",
+            f"- Success criteria: {block.get('success_criteria') or ''}",
+            f"- Next step hint: {block.get('next_step_hint') or ''}",
+            "",
+            "## Attempts",
+            "",
+        ]
+    )
+    if attempts:
+        for item in attempts[-20:]:
+            lines.append(
+                f"- {item.get('at') or ''} | {item.get('status') or ''} | "
+                f"{item.get('call_sid') or 'sin-call-sid'} | to={item.get('to') or ''}"
+            )
+    else:
+        lines.append("- Sin intentos registrados todavia.")
+    if block.get("summary"):
+        lines.extend(["", "## Latest Summary", "", block.get("summary") or ""])
+    if block.get("transcript_path"):
+        lines.extend(["", "## Transcript Path", "", f"- {block.get('transcript_path')}"])
+    return "\n".join(lines).strip() + "\n"
+
+
+def sync_external_call_context_block(context):
+    context = context or {}
+    block_id = str(context.get("context_block_id") or context.get("id") or "").strip()
+    if not block_id:
+        return {}
+    state = load_external_call_context_block_state()
+    current = dict(state.get("blocks", {}).get(block_id) or {})
+    attempts = [item for item in current.get("attempts", []) if isinstance(item, dict)]
+    call_sid = str(context.get("call_sid") or "").strip()
+    status = str(
+        context.get("twilio_status")
+        or context.get("last_call_status")
+        or context.get("status")
+        or current.get("status")
+        or "prepared"
+    ).strip()
+    if call_sid:
+        attempt = {
+            "call_sid": call_sid,
+            "status": status,
+            "to": context.get("to") or current.get("to") or "",
+            "from": context.get("from") or current.get("from") or "",
+            "at": context.get("last_status_at") or context.get("updated_at") or now_iso(),
+            "transcript_path": context.get("transcript_path") or "",
+        }
+        replaced = False
+        for index, item in enumerate(attempts):
+            if item.get("call_sid") == call_sid:
+                attempts[index] = {**item, **attempt}
+                replaced = True
+                break
+        if not replaced:
+            attempts.append(attempt)
+    block = {
+        **current,
+        "block_id": block_id,
+        "id": block_id,
+        "title": current.get("title") or context.get("campaign_label") or context.get("contact_name") or context.get("to") or block_id,
+        "status": status,
+        "scope": twilio_context_scope(context),
+        "channel": "phone",
+        "tags": twilio_context_tags(context),
+        "workflow_target": context.get("workflow_target") or current.get("workflow_target") or "pipedrive_then_clickup",
+        "parent_context_id": context.get("parent_context_id") or current.get("parent_context_id") or "",
+        "campaign_label": context.get("campaign_label") or current.get("campaign_label") or "",
+        "source_session_id": context.get("source_session_id") or current.get("source_session_id") or "",
+        "contact_name": context.get("contact_name") or current.get("contact_name") or "",
+        "company": context.get("company") or current.get("company") or "",
+        "relationship": context.get("relationship") or current.get("relationship") or "",
+        "to": context.get("to") or current.get("to") or "",
+        "from": context.get("from") or current.get("from") or "",
+        "objective": context.get("objective") or current.get("objective") or "",
+        "call_context": context.get("call_context") or current.get("call_context") or "",
+        "instructions": context.get("instructions") or current.get("instructions") or "",
+        "questions": context.get("questions") or current.get("questions") or "",
+        "message_to_deliver": context.get("message_to_deliver") or current.get("message_to_deliver") or "",
+        "report_to_doctor": context.get("report_to_doctor") or current.get("report_to_doctor") or "",
+        "success_criteria": context.get("success_criteria") or current.get("success_criteria") or "",
+        "next_step_hint": context.get("next_step_hint") or current.get("next_step_hint") or "",
+        "call_sid": call_sid or current.get("call_sid") or "",
+        "transcript_path": context.get("transcript_path") or current.get("transcript_path") or "",
+        "summary": context.get("summary") or current.get("summary") or "",
+        "attempt_count": len(attempts),
+        "attempts": attempts,
+        "created_at": current.get("created_at") or context.get("created_at") or now_iso(),
+        "updated_at": now_iso(),
+    }
+    state["blocks"][block_id] = block
+    save_external_call_context_block_state(state)
+    markdown = external_call_context_block_markdown(block)
+    write_text_file_any(
+        [
+            EXTERNAL_CALL_CONTEXT_BLOCKS_DIR / f"{block_id}.md",
+            RUNTIME_EXTERNAL_CALL_CONTEXT_BLOCKS_DIR / f"{block_id}.md",
+        ],
+        markdown,
+    )
+    try:
+        build_person_context_index()
+    except Exception as exc:
+        append_memory("person_context_index_error", {"error": brief(str(exc), 500), "context_block_id": block_id})
+    return block
+
+
+def person_context_key(name="", phone="", email=""):
+    clean_name = str(name or "").strip()
+    clean_phone = normalize_phone_number(phone)
+    clean_email = str(email or "").strip().lower()
+    if clean_name and not clean_name.startswith("+"):
+        return "person:" + crm_slug(clean_name)
+    if clean_phone:
+        return "phone:" + clean_phone
+    if clean_email:
+        return "email:" + clean_email
+    return "person:sin-identificar"
+
+
+def person_context_title(record):
+    return record.get("display_name") or record.get("name") or next(iter(record.get("phones", [])), "") or record.get("key", "Persona")
+
+
+def ensure_person_context(index, name="", phone="", email=""):
+    key = person_context_key(name=name, phone=phone, email=email)
+    record = index.setdefault(
+        key,
+        {
+            "key": key,
+            "display_name": str(name or "").strip() or str(phone or email or "Persona sin identificar"),
+            "phones": [],
+            "emails": [],
+            "companies": [],
+            "contact_ids": [],
+            "contact_types": [],
+            "sources": [],
+            "notes": [],
+            "context_blocks": [],
+            "interactions": [],
+            "scheduled_actions": [],
+            "latest_status": "",
+            "latest_interaction_at": "",
+            "next_step_hint": "",
+        },
+    )
+    if name and (not record.get("display_name") or record.get("display_name", "").startswith("+")):
+        record["display_name"] = str(name).strip()
+    phone = normalize_phone_number(phone)
+    if phone and phone not in record["phones"]:
+        record["phones"].append(phone)
+    email = str(email or "").strip().lower()
+    if email and email not in record["emails"]:
+        record["emails"].append(email)
+    return record
+
+
+def compact_unique(items, limit=20):
+    output = []
+    for item in items or []:
+        if item in (None, ""):
+            continue
+        clean = str(item).strip()
+        if clean and clean not in output:
+            output.append(clean)
+        if len(output) >= limit:
+            break
+    return output
+
+
+def person_context_markdown(record):
+    title = person_context_title(record)
+    lines = [
+        f"# {title}",
+        "",
+        f"- Key: {record.get('key')}",
+        f"- Updated: {record.get('updated_at') or now_iso()}",
+        f"- Phones: {', '.join(record.get('phones') or []) or 'N/A'}",
+        f"- Emails: {', '.join(record.get('emails') or []) or 'N/A'}",
+        f"- Companies: {', '.join(record.get('companies') or []) or 'N/A'}",
+        f"- Contact IDs: {', '.join(record.get('contact_ids') or []) or 'N/A'}",
+        f"- Contact types: {', '.join(record.get('contact_types') or []) or 'N/A'}",
+        f"- Latest status: {record.get('latest_status') or 'N/A'}",
+        f"- Latest interaction: {record.get('latest_interaction_at') or 'N/A'}",
+        f"- Next step hint: {record.get('next_step_hint') or 'N/A'}",
+        "",
+        "## Notes",
+        "",
+    ]
+    notes = compact_unique(record.get("notes", []), limit=10)
+    lines.extend([f"- {note}" for note in notes] or ["- Sin notas consolidadas."])
+    lines.extend(["", "## Context Blocks", ""])
+    blocks = sorted(record.get("context_blocks") or [], key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
+    if blocks:
+        for block in blocks[:30]:
+            lines.append(
+                f"- {block.get('block_id')} | {block.get('status') or ''} | "
+                f"{block.get('objective') or block.get('call_context') or ''} | attempts={block.get('attempt_count', 0)}"
+            )
+    else:
+        lines.append("- Sin context blocks.")
+    lines.extend(["", "## Interactions", ""])
+    interactions = sorted(record.get("interactions") or [], key=lambda item: item.get("occurred_at") or item.get("created_at") or "", reverse=True)
+    if interactions:
+        for item in interactions[:40]:
+            target = item.get("transcript_path") or item.get("external_sid") or ""
+            lines.append(f"- {item.get('occurred_at') or ''} | {item.get('channel')} | {item.get('status')} | {target}")
+    else:
+        lines.append("- Sin interacciones registradas.")
+    lines.extend(["", "## Scheduled Actions", ""])
+    scheduled = sorted(record.get("scheduled_actions") or [], key=lambda item: item.get("due_at") or "", reverse=True)
+    if scheduled:
+        for item in scheduled[:20]:
+            lines.append(f"- {item.get('due_at')} | {item.get('status')} | {item.get('action')} | attempts={item.get('attempts')}")
+    else:
+        lines.append("- Sin acciones programadas pendientes o historicas.")
+    return "\n".join(lines).strip() + "\n"
+
+
+def build_person_context_index():
+    index = {}
+    contacts_by_id = {}
+    contacts_by_phone = {}
+    try:
+        with crm_connect() as conn:
+            contacts = [
+                dict(row)
+                for row in conn.execute(
+                    """
+                    SELECT c.*, co.name AS company_name
+                    FROM contacts c
+                    LEFT JOIN companies co ON co.id = c.company_id
+                    ORDER BY c.updated_at DESC
+                    """
+                ).fetchall()
+            ]
+            for contact in contacts:
+                record = ensure_person_context(
+                    index,
+                    name=contact.get("display_name"),
+                    phone=contact.get("phone_e164"),
+                    email=contact.get("email"),
+                )
+                contacts_by_id[contact.get("id")] = contact
+                phone = normalize_phone_number(contact.get("phone_e164"))
+                if phone:
+                    contacts_by_phone[phone] = contact
+                for key, target in [
+                    ("id", "contact_ids"),
+                    ("contact_type", "contact_types"),
+                    ("source", "sources"),
+                    ("company_name", "companies"),
+                    ("notes", "notes"),
+                ]:
+                    value = contact.get(key)
+                    if value and value not in record[target]:
+                        record[target].append(value)
+            interactions = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM interactions ORDER BY occurred_at DESC LIMIT 1200"
+                ).fetchall()
+            ]
+            for item in interactions:
+                contact = contacts_by_id.get(item.get("contact_id")) or {}
+                phone = item.get("to_value") if item.get("direction") == "outbound" else item.get("from_value")
+                phone = normalize_phone_number(phone)
+                if not contact and phone:
+                    contact = contacts_by_phone.get(phone) or {}
+                record = ensure_person_context(
+                    index,
+                    name=contact.get("display_name") or phone,
+                    phone=contact.get("phone_e164") or phone,
+                    email=contact.get("email"),
+                )
+                slim = {
+                    "id": item.get("id"),
+                    "channel": item.get("channel"),
+                    "direction": item.get("direction"),
+                    "provider": item.get("provider"),
+                    "external_sid": item.get("external_sid"),
+                    "status": item.get("status"),
+                    "from": item.get("from_value"),
+                    "to": item.get("to_value"),
+                    "body": brief(item.get("body") or "", 500),
+                    "transcript_path": item.get("transcript_path"),
+                    "occurred_at": item.get("occurred_at"),
+                    "created_at": item.get("created_at"),
+                }
+                record["interactions"].append(slim)
+                if not record.get("latest_interaction_at") or str(item.get("occurred_at") or "") > str(record.get("latest_interaction_at") or ""):
+                    record["latest_interaction_at"] = item.get("occurred_at") or ""
+                    record["latest_status"] = item.get("status") or ""
+            scheduled = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM scheduled_actions ORDER BY due_at DESC LIMIT 300"
+                ).fetchall()
+            ]
+            for item in scheduled:
+                contact = contacts_by_id.get(item.get("contact_id")) or contacts_by_phone.get(normalize_phone_number(item.get("to_value"))) or {}
+                record = ensure_person_context(
+                    index,
+                    name=contact.get("display_name") or item.get("to_value"),
+                    phone=contact.get("phone_e164") or item.get("to_value"),
+                    email=contact.get("email"),
+                )
+                record["scheduled_actions"].append(
+                    {
+                        "id": item.get("id"),
+                        "status": item.get("status"),
+                        "action": item.get("action"),
+                        "due_at": item.get("due_at"),
+                        "attempts": item.get("attempts"),
+                        "to": item.get("to_value"),
+                    }
+                )
+    except Exception as exc:
+        append_memory("person_context_crm_warning", {"error": brief(str(exc), 500)})
+    state = load_external_call_context_block_state()
+    for block in state.get("blocks", {}).values():
+        phone = normalize_phone_number(block.get("to"))
+        contact = contacts_by_phone.get(phone) or {}
+        record = ensure_person_context(
+            index,
+            name=contact.get("display_name") or block.get("contact_name") or phone,
+            phone=contact.get("phone_e164") or phone,
+            email=contact.get("email"),
+        )
+        if block.get("company") and block.get("company") not in record["companies"]:
+            record["companies"].append(block.get("company"))
+        if block.get("next_step_hint") and not record.get("next_step_hint"):
+            record["next_step_hint"] = block.get("next_step_hint")
+        record["context_blocks"].append(
+            {
+                "block_id": block.get("block_id") or block.get("id"),
+                "status": block.get("status"),
+                "scope": block.get("scope"),
+                "workflow_target": block.get("workflow_target"),
+                "objective": brief(block.get("objective") or "", 500),
+                "call_context": brief(block.get("call_context") or "", 500),
+                "next_step_hint": brief(block.get("next_step_hint") or "", 300),
+                "attempt_count": block.get("attempt_count", len(block.get("attempts") or [])),
+                "transcript_path": block.get("transcript_path"),
+                "created_at": block.get("created_at"),
+                "updated_at": block.get("updated_at"),
+            }
+        )
+        if not record.get("latest_interaction_at") or str(block.get("updated_at") or "") > str(record.get("latest_interaction_at") or ""):
+            record["latest_interaction_at"] = block.get("updated_at") or ""
+            record["latest_status"] = block.get("status") or record.get("latest_status") or ""
+    people = []
+    for record in index.values():
+        record["phones"] = compact_unique(record.get("phones", []), limit=10)
+        record["emails"] = compact_unique(record.get("emails", []), limit=10)
+        record["companies"] = compact_unique(record.get("companies", []), limit=10)
+        record["contact_ids"] = compact_unique(record.get("contact_ids", []), limit=10)
+        record["contact_types"] = compact_unique(record.get("contact_types", []), limit=8)
+        record["sources"] = compact_unique(record.get("sources", []), limit=8)
+        record["notes"] = compact_unique(record.get("notes", []), limit=20)
+        record["updated_at"] = now_iso()
+        slug = crm_slug(person_context_title(record))
+        record["markdown_path"] = str(PERSON_CONTEXT_DIR / f"{slug}.md")
+        markdown = person_context_markdown(record)
+        written = write_text_file_both(PERSON_CONTEXT_DIR / f"{slug}.md", RUNTIME_PERSON_CONTEXT_DIR / f"{slug}.md", markdown)
+        if written:
+            record["markdown_path"] = written[0]
+        people.append(record)
+    payload = {
+        "updated_at": now_iso(),
+        "count": len(people),
+        "purpose": "Indice por persona: contacto, CRM, Pipedrive mirror, llamadas, context blocks, transcripts e intentos.",
+        "rule": "Antes de llamar o responder por una persona, Kim debe consultar este indice y luego los transcripts/context blocks citados.",
+        "people": sorted(people, key=lambda item: (item.get("latest_interaction_at") or "", item.get("display_name") or ""), reverse=True),
+    }
+    write_json_file_both(PERSON_CONTEXT_INDEX, RUNTIME_PERSON_CONTEXT_INDEX, payload)
+    return payload
+
+
 def parse_json_object_from_text(text):
     text = (text or "").strip()
     if not text:
@@ -2651,6 +3493,12 @@ def twilio_context_from_parameters(parameters, preview, transcript=""):
         "report_to_doctor": first_value(parameters, "report_to_doctor", "report", "reporte", "return_with", default=""),
         "success_criteria": first_value(parameters, "success_criteria", "criterio_exito", "desired_outcome", default=""),
         "tone": first_value(parameters, "tone", "tono", default=""),
+        "parent_context_id": first_value(parameters, "parent_context_id", "parent_block_id", "context_parent_id", default=""),
+        "campaign_label": first_value(parameters, "campaign_label", "context_group", "group_name", "campaign", default=""),
+        "context_scope": first_value(parameters, "context_scope", "scope", default=""),
+        "next_step_hint": first_value(parameters, "next_step_hint", "post_response_action", "followup_hint", default=""),
+        "workflow_target": first_value(parameters, "workflow_target", "post_call_workflow", default=""),
+        "source_session_id": first_value(parameters, "source_session_id", "session_id", default=""),
     }
     explicit = {key: normalize_call_context_value(value) for key, value in explicit.items()}
     transcript_excerpt = brief(sanitize_text_for_log(transcript), 3200) if transcript else ""
@@ -2661,8 +3509,12 @@ def twilio_context_from_parameters(parameters, preview, transcript=""):
         return {}
     if not explicit.get("tone"):
         explicit["tone"] = "amable, natural y profesional"
+    if not explicit.get("workflow_target"):
+        explicit["workflow_target"] = "pipedrive_then_clickup"
+    context_id = twilio_context_block_id(parameters)
     context = {
-        "id": twilio_call_context_id(),
+        "id": context_id,
+        "context_block_id": context_id,
         "status": "prepared",
         "created_at": now_iso(),
         "to": preview.get("to", ""),
@@ -2681,6 +3533,7 @@ def store_twilio_call_context(context):
     state = load_twilio_call_context_state()
     state["contexts"][context["id"]] = context
     save_twilio_call_context_state(state)
+    sync_external_call_context_block(context)
     append_memory("twilio_call_context_prepared", {"context_id": context["id"], "to": context.get("to"), "objective": brief(context.get("objective") or context.get("instructions") or context.get("call_context"), 240)})
     return context["id"]
 
@@ -2703,6 +3556,7 @@ def update_twilio_call_context(context_id="", call_sid="", updates=None):
     context["updated_at"] = now_iso()
     state["contexts"][context_id] = context
     save_twilio_call_context_state(state)
+    sync_external_call_context_block(context)
     return context
 
 
@@ -2920,6 +3774,11 @@ def twilio_history_markdown(history):
 def twilio_context_markdown(context):
     rows = [
         ("Context ID", context.get("id", "")),
+        ("Context block", context.get("context_block_id", "")),
+        ("Parent block", context.get("parent_context_id", "")),
+        ("Campaign", context.get("campaign_label", "")),
+        ("Scope", context.get("context_scope", "") or twilio_context_scope(context)),
+        ("Workflow target", context.get("workflow_target", "") or "pipedrive_then_clickup"),
         ("Contact", context.get("contact_name", "")),
         ("Company", context.get("company", "")),
         ("Relationship", context.get("relationship", "")),
@@ -2929,6 +3788,7 @@ def twilio_context_markdown(context):
         ("Message to deliver", context.get("message_to_deliver", "")),
         ("Report to doctor", context.get("report_to_doctor", "")),
         ("Success criteria", context.get("success_criteria", "")),
+        ("Next step hint", context.get("next_step_hint", "")),
     ]
     lines = [f"- {label}: {brief(str(value), 1200)}" for label, value in rows if value]
     return "\n".join(lines) if lines else "- Sin contexto explicito capturado."
@@ -3028,6 +3888,8 @@ def twilio_pipedrive_note(event, context, attempt_path, history):
     ]
     if context.get("contact_name"):
         parts.append(f"Contact: {context.get('contact_name')}")
+    if context.get("context_block_id") or context.get("id"):
+        parts.append(f"Context block: {context.get('context_block_id') or context.get('id')}")
     if context.get("objective"):
         parts.append(f"Objective: {context.get('objective')}")
     if context.get("report_to_doctor"):
@@ -3380,6 +4242,10 @@ def twilio_call_report(parameters=None):
                 "objective": context.get("objective", ""),
                 "report_to_doctor": context.get("report_to_doctor", ""),
                 "call_context": brief(context.get("call_context", ""), 1000),
+                "context_block_id": context.get("context_block_id") or context.get("id", ""),
+                "parent_context_id": context.get("parent_context_id", ""),
+                "campaign_label": context.get("campaign_label", ""),
+                "workflow_target": context.get("workflow_target", "") or "pipedrive_then_clickup",
             }
         )
         if len(calls) >= limit:
@@ -3423,6 +4289,10 @@ def twilio_call_report(parameters=None):
                     "objective": context.get("objective", ""),
                     "report_to_doctor": context.get("report_to_doctor", ""),
                     "call_context": brief(context.get("call_context", ""), 1000),
+                    "context_block_id": context.get("context_block_id") or context.get("id", ""),
+                    "parent_context_id": context.get("parent_context_id", ""),
+                    "campaign_label": context.get("campaign_label", ""),
+                    "workflow_target": context.get("workflow_target", "") or "pipedrive_then_clickup",
                 }
             )
             if len(calls) >= limit:
@@ -3466,11 +4336,13 @@ def twilio_start_call(parameters, confirm=False):
         execution_parameters = {**parameters, "from_number": preview["from"], "url": preview["url"]}
         if call_context:
             preview_with_context["call_context"] = {
+                "context_block_id": call_context.get("context_block_id") or call_context.get("id"),
                 "contact_name": call_context.get("contact_name"),
                 "objective": brief(call_context.get("objective") or call_context.get("instructions") or call_context.get("call_context"), 500),
                 "report_to_doctor": brief(call_context.get("report_to_doctor"), 300),
             }
             for key in [
+                "context_block_id",
                 "contact_name",
                 "relationship",
                 "company",
@@ -3482,6 +4354,12 @@ def twilio_start_call(parameters, confirm=False):
                 "report_to_doctor",
                 "success_criteria",
                 "tone",
+                "parent_context_id",
+                "campaign_label",
+                "context_scope",
+                "next_step_hint",
+                "workflow_target",
+                "source_session_id",
             ]:
                 if call_context.get(key):
                     execution_parameters[key] = call_context[key]
@@ -5323,8 +6201,9 @@ def clickup_list_spaces(parameters=None):
         except Exception as exc:
             failures.append({"team_id": team_id, "team_name": team.get("name"), "error": brief(str(exc), 260)})
     snapshot = {"updated_at": now_iso(), "spaces": spaces, "failures": failures}
-    write_json_file(CLICKUP_STRUCTURE_JSON, snapshot)
-    write_json_file(RUNTIME_CLICKUP_STRUCTURE_JSON, snapshot)
+    written = write_json_file_both(CLICKUP_STRUCTURE_JSON, RUNTIME_CLICKUP_STRUCTURE_JSON, snapshot)
+    if not written and spaces:
+        append_memory("clickup_structure_write_warning", {"error": "No pude escribir snapshot ClickUp en BIFROST ni runtime."})
     return spaces, failures
 
 
@@ -5443,6 +6322,7 @@ def clickup_task_description(parameters):
 
 
 def clickup_resolve_task_list(parameters, confirm=False):
+    parameters = clickup_apply_operational_defaults(parameters)
     list_id = str(parameters.get("list_id") or "").strip()
     if list_id:
         return list_id, {"list_id": list_id, "source": "provided"}, []
@@ -5541,6 +6421,82 @@ def notion_children_from_content(content):
     return blocks
 
 
+def notion_default_parent_config():
+    config = read_json_file_any([NOTION_DEFAULT_PARENT, RUNTIME_NOTION_DEFAULT_PARENT], {})
+    return config if isinstance(config, dict) else {}
+
+
+def semantic_notion_parent(value):
+    text = normalize_security_text(value)
+    if not text:
+        return False
+    return text in {"general", "memoria", "memory", "kim", "kim live", "bifrost", "portafolio", "portfolio", "notas", "notes"}
+
+
+def notion_resolve_default_parent(parameters=None):
+    parameters = parameters or {}
+    config = notion_default_parent_config()
+    if config.get("parent_page_id"):
+        return {"type": "page_id", "page_id": str(config["parent_page_id"]), "source": "configured_default"}
+    if config.get("parent_database_id"):
+        return {"type": "database_id", "database_id": str(config["parent_database_id"]), "source": "configured_default"}
+    query_terms = []
+    for key in ["notion_parent_query", "parent_query", "workspace", "domain"]:
+        value = str(parameters.get(key) or "").strip()
+        if value:
+            query_terms.append(value)
+    query_terms.extend(["Kim Live", "BIFROST", "AI People", "General"])
+    seen = set()
+    for query in query_terms:
+        query_key = normalize_security_text(query)
+        if not query_key or query_key in seen:
+            continue
+        seen.add(query_key)
+        try:
+            result = notion_request("/search", method="POST", payload={"query": query, "page_size": 10})
+        except Exception:
+            continue
+        for item in result.get("results", []) or []:
+            obj = item.get("object")
+            item_id = item.get("id")
+            if obj in {"page", "database"} and item_id:
+                parent_type = "page_id" if obj == "page" else "database_id"
+                resolved = {"type": parent_type, parent_type: item_id, "source": f"search:{query}", "url": item.get("url", "")}
+                write_json_file_any([NOTION_DEFAULT_PARENT, RUNTIME_NOTION_DEFAULT_PARENT], {
+                    "updated_at": now_iso(),
+                    "parent_page_id": item_id if obj == "page" else "",
+                    "parent_database_id": item_id if obj == "database" else "",
+                    "source": resolved["source"],
+                    "url": resolved.get("url", ""),
+                    "note": "Auto default for Kim Live Notion create_page. Change this file when the doctor chooses a better Notion destination.",
+                })
+                return resolved
+    return {}
+
+
+def notion_outbox_markdown(title, parameters, reason=""):
+    content = str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or "").strip()
+    lines = [
+        f"# {title}",
+        "",
+        f"- Created: {now_iso()}",
+        "- Provider target: Notion",
+        "- Status: local_outbox_pending_parent",
+    ]
+    if reason:
+        lines.append(f"- Reason: {reason}")
+    lines.extend(["", "## Content", "", content or "Sin contenido."])
+    return "\n".join(lines).strip() + "\n"
+
+
+def save_notion_outbox(title, parameters, reason=""):
+    safe = knowledge_slug(title)
+    filename = f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}-{safe}.md"
+    markdown = notion_outbox_markdown(title, parameters, reason=reason)
+    path = write_text_file_any([NOTION_OUTBOX_DIR / today() / filename, RUNTIME_NOTION_OUTBOX_DIR / today() / filename], markdown)
+    return str(path) if path else ""
+
+
 def build_notion_create_page_payload(parameters):
     parameters = dict(parameters or {})
     title = str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or "").strip()
@@ -5549,6 +6505,10 @@ def build_notion_create_page_payload(parameters):
         title = brief(source_text, 80) if source_text else generated_title("Nota Kim")
     parent_page_id = str(first_value(parameters, "parent_page_id", "page_id", "parent_id", "notion_page_id") or "").strip()
     parent_database_id = str(first_value(parameters, "parent_database_id", "database_id", "parent_database", "notion_database_id") or "").strip()
+    if semantic_notion_parent(parent_page_id):
+        parent_page_id = ""
+    if semantic_notion_parent(parent_database_id):
+        parent_database_id = ""
     if parent_page_id:
         parent = {"type": "page_id", "page_id": parent_page_id}
         properties = {"title": {"title": notion_rich_text(title)}}
@@ -5557,7 +6517,17 @@ def build_notion_create_page_payload(parameters):
         parent = {"type": "database_id", "database_id": parent_database_id}
         properties = {title_property: {"title": notion_rich_text(title)}}
     else:
-        raise ValueError("Falta parent_page_id o parent_database_id; Notion exige un padre para crear paginas.")
+        resolved = notion_resolve_default_parent(parameters)
+        if not resolved:
+            raise ValueError("Falta parent real de Notion. Guarde un default en notion_default_parent.json o comparta una pagina/base con la integracion.")
+        if resolved.get("type") == "page_id":
+            parent = {"type": "page_id", "page_id": resolved.get("page_id")}
+            properties = {"title": {"title": notion_rich_text(title)}}
+        else:
+            title_property = str(parameters.get("title_property") or "Name").strip()
+            parent = {"type": "database_id", "database_id": resolved.get("database_id")}
+            properties = {title_property: {"title": notion_rich_text(title)}}
+        parameters["_notion_parent_resolution"] = resolved
     payload = {"parent": parent, "properties": properties}
     children = notion_children_from_content(first_value(parameters, "content", "body", "text", "message", "description", "summary") or "")
     if children:
@@ -5763,10 +6733,7 @@ def agent_action_defaults(action, parameters):
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
         if not first_value(data, "name", "title", "subject", "task_name", "task", "asunto"):
             data["name"] = generated_title("Tarea Kim")
-        if not first_value(data, "space_name", "space", "workspace", "team_space") and not data.get("list_id"):
-            data["space_name"] = "Neorgana"
-            data["list_name"] = first_value(data, "list_name", "list", "target_list", default="Kim Inbox") or "Kim Inbox"
-            data["routing_note"] = "Default operativo KIM-0047: sin destino explicito, Kim usa Neorgana / Kim Inbox."
+        data = clickup_apply_operational_defaults(data)
         return "clickup", "create_task", data
     if action in {"update_task", "change_task", "cambiar_tarea", "actualizar_tarea"}:
         return "clickup", "update_task", data
@@ -5780,6 +6747,7 @@ def agent_action_defaults(action, parameters):
 
 
 def api_bridge_templates():
+    write_clickup_operation_map_snapshot()
     return {
         "agent_action": {
             "description": "Accion de alto nivel para que Kim escriba por API sin reconstruir JSON complicado.",
@@ -5966,12 +6934,17 @@ def api_bridge_templates():
                     "objective": ["goal", "mission", "objetivo", "mision"],
                     "questions": ["preguntas", "ask", "asks"],
                     "report_to_doctor": ["report", "reporte", "return_with"],
+                    "context_block_id": ["context_id", "kim_context_id"],
+                    "parent_context_id": ["parent_block_id", "context_parent_id"],
+                    "campaign_label": ["context_group", "group_name", "campaign"],
+                    "context_scope": ["scope"],
+                    "next_step_hint": ["post_response_action", "followup_hint"],
                 },
                 "defaults": {
                     "from": twilio_default_from_number() or "numero Twilio con capacidad Voice",
                     "url": "https://kim.aipeople.app/twilio/voice",
                 },
-                "rule": "Preparar con confirm=false. Si el doctor pide llamar a una tercera persona, SIEMPRE incluye contact_name, relationship, call_context, objective, questions y report_to_doctor. Llamar requiere confirmacion explicita; la conversacion se guarda en BIFROST/MEMORY/calls y BIFROST/CRM.",
+                "rule": "Preparar con confirm=false. Si el doctor pide llamar a una tercera persona, SIEMPRE incluye contact_name, relationship, call_context, objective, questions y report_to_doctor. Cada llamada queda ligada a un bloque CTX-* en BIFROST/MEMORY/calls/_context_blocks. Llamar requiere confirmacion explicita; la conversacion se guarda en BIFROST/MEMORY/calls y BIFROST/CRM.",
             },
             "call_report": {
                 "optional": ["call_sid", "context_id", "phone", "contact_name", "limit"],
@@ -6069,8 +7042,19 @@ def api_bridge_templates():
             },
         },
         "clickup": {
+            "routing_catalog": {
+                "rule": "Kim no debe pedir IDs al doctor para tareas normales. El bridge transforma voice-of-customer a team/space/list usando el catalogo local. Si el texto menciona una lista existente, la usa; si no, enruta por dominio.",
+                "default_examples": [
+                    "Kim/BIFROST/API/Telegram/Twilio -> ruta operativa Kim.",
+                    "Portafolio/Ignis/Eli -> Ignis Stock Financials / Investor follow-up / Khalil.",
+                    "Cliente/prospecto/CRM/Isaac -> Ai people / Client Follow-up.",
+                    "Shabat/personal/recordatorio -> Dr Y / Personal Life / Scheduled.",
+                    "Neorgana/Tesca comercial -> Tesca Elements / Neorgana / Commercial.",
+                ],
+                "catalog_paths": [str(CLICKUP_OPERATION_MAP), str(RUNTIME_CLICKUP_OPERATION_MAP)],
+            },
             "create_task": {
-                "required": ["space_name or list_id", "name"],
+                "required": ["name"],
                 "aliases": {
                     "name": ["title", "subject", "task_name", "task", "asunto"],
                     "description": ["body", "content", "message", "notes", "summary", "text"],
@@ -6079,9 +7063,9 @@ def api_bridge_templates():
                 },
                 "defaults": {
                     "name": "se genera desde description o 'Tarea Kim <timestamp>'",
-                    "list_name": "Kim Inbox si hay space_name y no se indica lista",
+                    "list_name": "se resuelve desde catalogo operativo si Kim no pasa lista",
                 },
-                "rule": "space_name debe ser un Space real, no el workspace/equipo. Si el doctor dice Tesca Elements, primero lista spaces y elige Neorgana, Equibio, Client Follow-up, etc. Si falta list_id pero hay space_name, el bridge busca list_name o prepara crear la lista antes de la tarea.",
+                "rule": "Preparar con confirm=false. No pidas list_id al doctor: pasa texto/descripcion y deja que el bridge enrute. Si el doctor dice un workspace como Tesca Elements o Ai people, el bridge lo baja a un Space/List real. Si de verdad falta destino, usa el fallback operativo y deja routing_note.",
             },
             "create_list": {
                 "required": ["space_name", "name"],
@@ -6100,7 +7084,7 @@ def api_bridge_templates():
         },
         "notion": {
             "create_page": {
-                "required": ["parent_page_id or parent_database_id", "title"],
+                "required": ["title or content"],
                 "aliases": {
                     "title": ["name", "subject", "asunto", "page_title"],
                     "content": ["body", "text", "message", "description", "summary"],
@@ -6110,8 +7094,9 @@ def api_bridge_templates():
                 "defaults": {
                     "title": "se genera desde content o 'Nota Kim <timestamp>'",
                     "title_property": "Name para bases de datos",
+                    "parent": "default configurable en BIFROST/MEMORY/context/notion_default_parent.json; si falta, se guarda outbox local.",
                 },
-                "rule": "Si falta parent, Kim debe buscar/leer el destino antes de crear; si falta title, el bridge lo genera.",
+                "rule": "No pidas IDs en conversacion normal. Si falta parent real, el bridge intenta resolverlo y, si Notion no tiene un destino compartido, guarda la nota en BIFROST/MEMORY/notion_outbox para no perder contexto.",
             },
         },
     }
@@ -6180,19 +7165,19 @@ def api_bridge_self_test():
         ),
     )
     run_case(
-        "clickup_workspace_guardrail",
+        "clickup_workspace_auto_route",
         lambda: run_clickup_bridge(
             "create_task",
             {
                 "space_name": "Tesca Elements",
                 "list_name": "Nueva",
-                "title": "Debe explicar workspace vs Space",
-                "content": "Dry run de guardrail.",
+                "title": "Debe enrutar workspace a lista real",
+                "content": "Dry run de ruta automatica.",
             },
             confirm=False,
         ),
     )
-    ok = all(item.get("ok") for item in tests[:-1]) and not tests[-1].get("ok")
+    ok = all(item.get("ok") for item in tests)
     return {
         "ok": ok,
         "provider": "all",
@@ -6347,6 +7332,7 @@ def run_clickup_bridge(action, parameters, confirm=False):
             "confirmed": True,
         }
     if action == "create_task":
+        parameters = clickup_apply_operational_defaults(parameters)
         name = clickup_task_name(parameters)
         list_id, list_scope, planned_steps = clickup_resolve_task_list(parameters, confirm=confirm)
         payload = {"name": name}
@@ -6451,10 +7437,28 @@ def run_notion_bridge(action, parameters, confirm=False):
         page = notion_request(f"/pages/{urllib.parse.quote(page_id)}")
         return {"ok": True, "provider": "notion", "action": action, "page": page}
     if action == "create_page":
-        payload = build_notion_create_page_payload(parameters)
         title = str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or "").strip()
         if not title:
             title = brief(str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or ""), 80) or "Nota Kim"
+        try:
+            payload = build_notion_create_page_payload(parameters)
+        except ValueError as exc:
+            reason = brief(str(exc), 500)
+            outbox_path = save_notion_outbox(title, parameters, reason=reason)
+            result = {
+                "ok": True,
+                "provider": "notion",
+                "action": action,
+                "mode": "local_outbox",
+                "confirmed": False,
+                "requires_notion_parent_configuration": True,
+                "outbox_path": outbox_path,
+                "message": "No pude crear en Notion porque falta un parent compartido/configurado; guarde la nota en outbox local BIFROST para no perder contexto.",
+                "parent_config_path": str(NOTION_DEFAULT_PARENT),
+                "runtime_parent_config_path": str(RUNTIME_NOTION_DEFAULT_PARENT),
+            }
+            append_memory("notion_outbox_saved", {"title": title, "outbox_path": outbox_path, "reason": reason})
+            return result
         parent = payload.get("parent", {})
         if not confirm:
             return confirmation_preview(
@@ -6798,6 +7802,8 @@ def portfolio_cli(action, parameters=None):
             result = module.init_db()
     elif action == "summary":
         result = module.portfolio_summary_json()
+    elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
+        result = portfolio_client_report(module.portfolio_summary_json(), parameters)
     elif action == "init":
         result = module.init_db()
     elif action in {"record_consultation", "record_market_consultation"}:
@@ -6975,9 +7981,14 @@ MEMORY_DOMAIN_KEYWORDS = {
         "pipedrive",
         "inversionista",
         "follow-up",
+        "follow up",
+        "trato",
+        "deal",
         "correo",
         "email",
         "llamada cliente",
+        "isaac",
+        "arturo",
     ],
     "remote_voice": [
         "twilio",
@@ -6989,6 +8000,9 @@ MEMORY_DOMAIN_KEYWORDS = {
         "aws",
         "nube",
         "zoom",
+        "context block",
+        "bloque de contexto",
+        "paquete de contexto",
     ],
 }
 
@@ -7006,6 +8020,7 @@ def classify_memory_text(text):
             str(CONTEXT_MEMORY),
             str(CALL_INDEX),
             str(MEMORY_INBOX),
+            str(MEMORY_KNOWLEDGE),
         ],
         "ignis_portfolio": [
             str(MEMORY_ROOT / "portfolios" / "portfolio_ledger.sqlite"),
@@ -7017,9 +8032,15 @@ def classify_memory_text(text):
             str(CLICKUP_TASKS_JSON),
             str(CLICKUP_TASKS_MARKDOWN),
             str(API_BRIDGE_LOG),
+            str(CLICKUP_OPERATION_MAP),
         ],
         "crm_clients": [
             str(MEMORY_CONTEXT_DIR / "pipedrive_context_latest.json"),
+            str(PERSON_CONTEXT_INDEX),
+            str(PERSON_CONTEXT_DIR),
+            str(EXTERNAL_CALL_CONTEXT_BLOCKS),
+            str(EXTERNAL_CALL_CONTEXT_BLOCKS_DIR),
+            str(CRM_ROOT),
             str(CONTEXT_MEMORY),
         ],
         "remote_voice": [
@@ -7185,9 +8206,10 @@ def conversation_review(text="", session_id="", mode="auto"):
         params = {
             "title": title,
             "body": str(first_value(task, "description", "body", "notes", default="") or "").strip(),
-            "space_name": task.get("space_name") or "Products",
-            "list_name": task.get("list_name") or "Kim Live",
+            "space_name": task.get("space_name") or "",
+            "list_name": task.get("list_name") or "",
         }
+        params = clickup_apply_operational_defaults(params)
         try:
             result = run_api_bridge("clickup", "create_task", params, confirm=False, session_id=session_id, transcript=text)
             if not result.get("prepared_action_id"):
@@ -7794,13 +8816,13 @@ def realtime_session_config():
                 "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
                 "Para ClickUp, Notion, Pipedrive o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
                 "para probar plantillas sin escribir ni enviar, llama action=self_test. "
-                "y usa el template exacto. Si faltan IDs de ClickUp, primero lista spaces/folders/lists o pasa "
-                "space_name/list_name; el bridge puede resolver list_id o preparar crear una lista con confirmacion. "
+                "y usa el template exacto. Para ClickUp no le pidas IDs al doctor: pasa el texto, nombre, descripcion, "
+                "cliente o dominio, y el bridge usara el catalogo operativo para elegir team/space/list. "
                 "Si el doctor te pide actuar de forma directa, puedes usar provider=all con action send_email, "
                 "create_task, update_task, comment_task, create_page, mark_spam, move_to_trash o archive_email; "
                 "el servidor enruta a la API correcta. "
-                "No digas que falta subject/title/list_id sin haber llamado la herramienta: el bridge genera "
-                "subjects/titles por defecto y crea/prepara Kim Inbox cuando falta lista. "
+                "No digas que falta subject/title/list_id/parent_id sin haber llamado la herramienta: el bridge genera "
+                "subjects/titles, enruta ClickUp y guarda Notion outbox local si falta parent. "
                 "Puedes preparar folders/lists/tareas de ClickUp "
                 "y paginas de Notion; toda escritura requiere confirm=false, confirmacion explicita del "
                 "doctor y luego confirm=true o confirm_prepared usando prepared_action_id. Desde Kim Live 1.5.11, "
@@ -7821,7 +8843,8 @@ def realtime_session_config():
                 "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms, send_whatsapp, "
                 "call_phone, call_report, latest_call, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
                 "y requieren confirmacion explicita antes de ejecutar. Si llamas a una tercera persona, no basta con to: "
-                "debes pasar contact_name, relationship, call_context, objective, questions/report_to_doctor y cualquier mensaje "
+                "primero usa kim_memory_search con el nombre/telefono para consultar person_contexts, context blocks y transcripts; "
+                "despues debes pasar contact_name, relationship, call_context, objective, questions/report_to_doctor y cualquier mensaje "
                 "que el doctor quiera transmitir; ese contexto se inyecta al prompt telefonico. "
                 "Si el doctor pregunta que paso en una llamada o pide resumen/transcripcion, llama provider=twilio action=latest_call "
                 "o action=call_report con phone/call_sid/context_id antes de responder; estos reportes incluyen llamadas no contestadas, busy, failed o sin audio. "
@@ -7836,7 +8859,12 @@ def realtime_session_config():
                 "confirmacion explicita del doctor y luego confirm_prepared o confirm=true. Para Gmail, usa provider gmail en modo "
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
                 "entrega el link de autorizacion y no inventes correos. "
-                "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Guarda consultas "
+                "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Si el doctor pide "
+                "el portafolio del Sr. Eli o pregunta cuales ordenes ya entraron, primero llama "
+                "kim_portfolio_record con action=client_report. El formato por defecto es monto invertido, "
+                "precio de entrada, precio actual validado y variacion porcentual. No menciones unidades "
+                "salvo que el doctor las pida. Para ordenes pendientes de compra, indica si el precio actual "
+                "ya toco la entrada o sigue por encima. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
                 "Para cancelar o sustituir una orden pendiente, usa replace_draft_order o cancel_transaction; "
@@ -7961,7 +8989,7 @@ def realtime_session_config():
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "description": "status, summary, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
+                                "description": "status, summary, client_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -7969,7 +8997,9 @@ def realtime_session_config():
                                     "Campos de la accion. record_consultation acepta symbol, interval, question, "
                                     "snapshot_json, analysis, decision, is_final. record_final_change requiere summary. "
                                     "add_transaction requiere symbol y side. cancel_transaction acepta transaction_id o symbol. "
-                                    "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount."
+                                    "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount. "
+                                    "client_report acepta include_units=true si el doctor las pide; por defecto devuelve "
+                                    "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes."
                                 ),
                             },
                         },
@@ -8464,6 +9494,234 @@ def market_snapshot(symbol, interval, ema_periods=None, providers=None):
     )
     append_memory("market_snapshot", snapshot)
     return snapshot
+
+
+def format_usd_amount(value):
+    if value is None:
+        return None
+    value = float(value)
+    if value.is_integer():
+        return str(int(value))
+    text = f"{value:.2f}"
+    return text.rstrip("0").rstrip(".")
+
+
+def signed_percent_text(value):
+    if value is None:
+        return "N/D"
+    rounded = round_opt(value, 2)
+    return f"{rounded:+.2f}%"
+
+
+def portfolio_symbol_label(symbol, notes=""):
+    token = str(symbol or "").upper()
+    if token.endswith("USDT"):
+        label = f"{token[:-4]}/USDT"
+    elif token.endswith("USD"):
+        label = f"{token[:-3]}/USD"
+    else:
+        label = token
+    note_text = str(notes or "").lower()
+    if token == "LUNCUSDT" and "refuerzo" in note_text:
+        return "LUNC/USDT refuerzo"
+    return label
+
+
+def price_variation_pct(entry_price, current_price):
+    if entry_price in (None, "", 0) or current_price in (None, ""):
+        return None
+    entry = float(entry_price)
+    if entry == 0:
+        return None
+    return ((float(current_price) - entry) / entry) * 100
+
+
+def pending_entry_status(side, entry_price, current_price, approved):
+    if not approved or current_price in (None, "") or entry_price in (None, "", 0):
+        return "precio actual no validado"
+    side = str(side or "").upper()
+    current = float(current_price)
+    entry = float(entry_price)
+    if side == "BUY":
+        return "ya tocó entrada" if current <= entry else "sigue por encima de la entrada"
+    if side == "SELL":
+        return "ya tocó salida" if current >= entry else "sigue por debajo de la salida"
+    return "sin clasificar"
+
+
+def portfolio_client_report(summary, parameters=None):
+    parameters = parameters or {}
+    include_units = bool(parameters.get("include_units"))
+    providers = parameters.get("providers") or ["binance", "coingecko"]
+    active_order = [
+        "ADAUSDT",
+        "DOGEUSDT",
+        "FTTUSDT",
+        "XRPUSDT",
+        "LUNCUSDT",
+        "APTUSDT",
+        "DOTUSDT",
+        "TRUMPUSDT",
+    ]
+    pending_order = ["ONDOUSDT", "LUNCUSDT"]
+    final_transactions = summary.get("final_transactions") or []
+    draft_transactions = summary.get("draft_transactions") or []
+    positions = summary.get("positions") or []
+    position_map = {str(item.get("symbol") or "").upper(): item for item in positions}
+    symbol_validations = {}
+
+    def load_validation(symbol):
+        token = str(symbol or "").upper()
+        if token not in symbol_validations:
+            symbol_validations[token] = validate_market_prices(f"BINANCE:{token}", providers=providers)
+        return symbol_validations[token]
+
+    def sort_key(symbol, preferred):
+        token = str(symbol or "").upper()
+        try:
+            return (0, preferred.index(token))
+        except ValueError:
+            return (1, token)
+
+    active_by_symbol = {}
+    for tx in final_transactions:
+        symbol = str(tx.get("symbol") or "").upper()
+        bucket = active_by_symbol.setdefault(
+            symbol,
+            {
+                "symbol": symbol,
+                "gross_amount": 0.0,
+                "notes": [],
+                "sources": [],
+                "transaction_ids": [],
+            },
+        )
+        if str(tx.get("side") or "").upper() == "BUY":
+            bucket["gross_amount"] += float(tx.get("gross_amount") or 0)
+        bucket["notes"].append(str(tx.get("notes") or ""))
+        bucket["sources"].append(str(tx.get("source") or ""))
+        bucket["transaction_ids"].append(str(tx.get("id") or ""))
+        if tx.get("occurred_at"):
+            bucket["occurred_at"] = tx.get("occurred_at")
+    active_items = []
+    executed_preliminary = []
+    for symbol, bucket in sorted(active_by_symbol.items(), key=lambda item: sort_key(item[0], active_order)):
+        position = position_map.get(symbol) or {}
+        validation = load_validation(symbol)
+        current_price = validation.get("reference_price")
+        approved = bool(validation.get("approved_for_client_report"))
+        entry_price = position.get("average_cost")
+        variation_pct = price_variation_pct(entry_price, current_price if approved else None)
+        notes = "\n".join(note for note in bucket["notes"] if note).strip()
+        sources = [source for source in bucket["sources"] if source]
+        is_preliminary_fill = any("credit_filled" in source for source in sources) or "antes pendiente" in notes.lower()
+        item = {
+            "symbol": symbol,
+            "label": portfolio_symbol_label(symbol, notes),
+            "invested_usd": round_opt(bucket["gross_amount"], 2),
+            "entry_price": round_price(entry_price),
+            "entry_price_display": format_price(entry_price),
+            "current_price": round_price(current_price) if approved else None,
+            "current_price_display": validation.get("reference_price_display") if approved else None,
+            "price_validation_status": validation.get("status"),
+            "approved_for_client_report": approved,
+            "variation_pct": round_opt(variation_pct, 2),
+            "variation_display": signed_percent_text(variation_pct),
+            "reference_quantity": round_opt(position.get("quantity"), 8) if include_units else None,
+            "notes": notes,
+            "sources": sources,
+            "transaction_ids": bucket["transaction_ids"],
+        }
+        active_items.append(item)
+        if is_preliminary_fill:
+            executed_preliminary.append(item)
+
+    pending_items = []
+    for tx in sorted(draft_transactions, key=lambda item: sort_key(item.get("symbol"), pending_order)):
+        symbol = str(tx.get("symbol") or "").upper()
+        validation = load_validation(symbol)
+        current_price = validation.get("reference_price")
+        approved = bool(validation.get("approved_for_client_report"))
+        entry_price = tx.get("price")
+        variation_pct = price_variation_pct(entry_price, current_price if approved else None)
+        item = {
+            "id": tx.get("id"),
+            "symbol": symbol,
+            "label": portfolio_symbol_label(symbol, tx.get("notes")),
+            "side": tx.get("side"),
+            "invested_usd": round_opt(tx.get("gross_amount"), 2),
+            "entry_price": round_price(entry_price),
+            "entry_price_display": format_price(entry_price),
+            "current_price": round_price(current_price) if approved else None,
+            "current_price_display": validation.get("reference_price_display") if approved else None,
+            "price_validation_status": validation.get("status"),
+            "approved_for_client_report": approved,
+            "variation_pct": round_opt(variation_pct, 2),
+            "variation_display": signed_percent_text(variation_pct),
+            "entry_status": pending_entry_status(tx.get("side"), entry_price, current_price, approved),
+            "reference_quantity": round_opt(tx.get("quantity"), 8) if include_units else None,
+            "notes": tx.get("notes") or "",
+            "source": tx.get("source") or "",
+        }
+        pending_items.append(item)
+
+    lines = ["Portafolio Sr. Eli", "", "Posiciones activas:"]
+    for index, item in enumerate(active_items, start=1):
+        line = (
+            f"{index}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
+            f"{item['entry_price_display']}."
+        )
+        if item["approved_for_client_report"]:
+            line += f" Precio actual {item['current_price_display']}. Variación {item['variation_display']}."
+        else:
+            line += " Precio actual no validado. Variación N/D."
+        if include_units and item.get("reference_quantity") is not None:
+            line += f" Unidades de referencia: {item['reference_quantity']}."
+        lines.append(line)
+    if executed_preliminary:
+        lines.append("")
+        lines.append(
+            "Órdenes preliminares ya ejecutadas: "
+            + ", ".join(item["label"] for item in executed_preliminary)
+            + "."
+        )
+    lines.append("")
+    lines.append("Órdenes pendientes:")
+    if pending_items:
+        start_index = len(active_items) + 1
+        for offset, item in enumerate(pending_items, start=start_index):
+            line = (
+                f"{offset}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
+                f"{item['entry_price_display']}."
+            )
+            if item["approved_for_client_report"]:
+                line += (
+                    f" Precio actual {item['current_price_display']}. Estado: {item['entry_status']}. "
+                    f"Variación {item['variation_display']}."
+                )
+            else:
+                line += " Precio actual no validado. Estado: precio actual no validado. Variación N/D."
+            if include_units and item.get("reference_quantity") is not None:
+                line += f" Unidades de referencia: {item['reference_quantity']}."
+            lines.append(line)
+    else:
+        lines.append("Sin órdenes pendientes.")
+    lines.append("")
+    lines.append("Regla de salida: no reportar unidades salvo que el doctor las pida.")
+
+    return {
+        "ok": True,
+        "report_type": "sr_eli_client_report",
+        "generated_at": utc_now().isoformat(),
+        "portfolio_id": summary.get("portfolio_id"),
+        "hide_units_by_default": not include_units,
+        "providers_used": providers,
+        "active_positions": active_items,
+        "executed_preliminary_orders": executed_preliminary,
+        "pending_orders": pending_items,
+        "summary": "\n".join(lines),
+        "portfolio_summary": summary,
+    }
 
 
 def multipart_field(boundary, name, value, content_type=None):

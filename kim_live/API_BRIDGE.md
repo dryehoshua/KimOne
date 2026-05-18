@@ -1,5 +1,9 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-18 / Kim Live 1.5.27: `kim_memory_search` ya busca tanto transcripts literales como archivos reales de BIFROST (`knowledge`, `context`, `calls`, `documents`, `person_contexts`, `portfolios`, `CRM` y `docs`) para evitar respuestas sin fuente como `Related files: 0`. Se agrega `BIFROST/MEMORY/context/person_context_index.json`: un indice por persona con contacto, telefonos, context blocks, intentos, transcripts, estado y acciones programadas. ClickUp agrega un mapa operativo en `BIFROST/MEMORY/context/clickup_operation_map.json` para convertir voz del cliente en `team/space/list` sin pedir IDs. Notion deja de bloquear la conversacion si falta `parent_id`: intenta resolver un destino default y, si no hay pagina/base compartida, guarda una nota en `BIFROST/MEMORY/notion_outbox`.
+
+Update 2026-05-17 / Kim Live 1.5.26: se agregan `context blocks` para llamadas externas. Cada llamada preparada conserva un `CTX-*` estable con objetivo, contacto, contexto, intentos, estado, transcript y `workflow_target`, persistido en `BIFROST/MEMORY/context/external_call_context_blocks.json` y `BIFROST/MEMORY/calls/_context_blocks/`.
+
 Update 2026-05-16 / Kim Live 1.5.24: las llamadas Twilio crean memoria `PHONE-<CallSid>.md` desde el intento inicial y actualizan ese mismo registro con callbacks `ringing`, `in-progress`, `completed`, `no-answer`, `busy`, `failed` o `canceled`. `call_report` ya ve intentos sin audio, y `sync_call_attempts` reconcilia callbacks viejos con CRM local y Pipedrive sin iniciar llamadas nuevas.
 
 Update 2026-05-15 / Kim Live 1.5.23: se agrega memoria tipo biblioteca. Kim puede buscar transcripts literales con `kim_memory_search`; la revision bibliotecaria revisa la conversacion guardada, crea tarjetas de conocimiento en `BIFROST/MEMORY/knowledge`, actualiza CRM local cuando hay datos claros y prepara tareas ClickUp detectadas por contexto. Las escrituras externas siguen requiriendo confirmacion.
@@ -70,6 +74,8 @@ Kim Live expone `kim_api_bridge`, `kim_memory_search` y `kim_memory_router` al m
 Regla de memoria 1.5.23:
 
 - El transcript literal es la fuente primaria.
+- Desde 1.5.27, los archivos BIFROST relevantes tambien son fuente primaria: portafolios, fichas CRM, context blocks, knowledge cards y docs.
+- Desde 1.5.27, antes de llamar, escribir o responder sobre una persona, Kim debe buscar por nombre/telefono para cargar `person_contexts/<persona>.md` y los `CTX-*` relacionados.
 - Los resumenes son derivados y sirven para orientacion rapida, no como evidencia unica.
 - Para responder preguntas de contexto, Kim debe usar `kim_memory_search` antes de sintetizar cuando no tenga el dato fresco en la conversacion activa.
 - `kim_memory_router` solo decide el dominio correcto: portafolio, tareas, CRM/clientes, voz remota o memoria general.
@@ -268,6 +274,23 @@ Para llamadas a terceros, `call_phone` debe incluir:
 ```
 
 Las llamadas y SMS quedan enlazados a CRM como interacciones. Las llamadas Realtime tambien guardan transcript en `BIFROST/MEMORY/calls`. Desde 1.5.24, los intentos no contestados tambien guardan un archivo `PHONE-<CallSid>.md` con historial de estados y ruta a CRM/Pipedrive.
+
+Desde 1.5.26, cada llamada externa queda ademas enlazada a un `context_block_id`. Ese bloque permite retomar el hilo sin que el doctor repita el contexto: objetivo, preguntas, persona, respuestas, intentos y siguiente paso viven bajo el mismo `CTX-*`.
+
+Provider `clickup` 1.5.27:
+
+- Kim no debe pedir `list_id` ni `space_id` para tareas normales.
+- El bridge intenta mapear el texto a una lista existente con `clickup_operation_map.json`.
+- Si el texto menciona un cliente/lista existente, se usa esa lista.
+- Si habla de portafolio/Ignis/Eli, se enruta a `Ignis Stock Financials / Investor follow-up / Khalil`.
+- Si habla de producto Kim/BIFROST/API/Twilio/Telegram, se enruta al fallback operativo disponible hasta que exista un Space de producto dedicado.
+- Si habla de cliente/prospecto/CRM/Isaac, se enruta a `Ai people / Client Follow-up`.
+
+Provider `notion` 1.5.27:
+
+- Si falta un parent real, Kim no debe pedir IDs repetidamente.
+- El bridge intenta usar `BIFROST/MEMORY/context/notion_default_parent.json`.
+- Si no hay destino compartido/configurado, guarda la nota en `BIFROST/MEMORY/notion_outbox` para no perder el contenido y reporta que falta configurar el parent de Notion.
 - `create_task` -> `clickup.create_task`
 - `update_task` -> `clickup.update_task`
 - `comment_task` -> `clickup.comment_task`
