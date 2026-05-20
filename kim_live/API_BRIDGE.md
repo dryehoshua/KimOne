@@ -1,5 +1,11 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-20 / Kim Live 1.5.32: recepcion Twilio refinada. Si el caller inbound es desconocido, Kim saluda sencillo, se presenta, explica brevemente Ai People y pide primero el nombre. Si el caller ya esta identificado, Kim saluda por nombre y continua el hilo previo/pending propio del contacto, sin revelar informacion de terceros.
+
+Update 2026-05-20 / Kim Live 1.5.31: protocolo Twilio actualizado para ahorrar tiempo y tokens: ante llamadas mudas o fallas de voz, el primer descarte obligatorio es saldo/cuota de OpenAI Realtime (`insufficient_quota`) antes de revisar Twilio, Cloudflare, prompts o frontend. Los reads de Keychain para credenciales bajan de 60s a 8s para evitar que Kim Live quede congelada por una llave opcional.
+
+Update 2026-05-19 / Kim Live 1.5.30: la landing publica de `kim.aipeople.app` queda en ingles con el mensaje "The first capable AI employee" y creditos a Dr. Yehoshua / Ai People. Se agrega avatar digital propio de Kim como figura de particulas en canvas. Twilio Realtime ahora registra errores de OpenAI con detalle seguro y guarda el intento/transcript aunque la API cierre por cuota (`insufficient_quota`) o macOS bloquee escritura en `BIFROST/MEMORY/calls`, usando fallback local en runtime.
+
 Update 2026-05-19 / Kim Live 1.5.29: `kim.aipeople.app` ahora muestra una landing publica de Kim para Ai People con escena visual, propuesta comercial y formularios de login/solicitud de acceso. Las APIs sensibles quedan protegidas por cookie de sesion; el codigo privado se valida desde Keychain (`codex.kim.site_access_code`) con fallback al PIN de seguridad existente. Las solicitudes publicas se guardan como leads en `BIFROST/CRM/leads/kim_site_leads.jsonl`.
 
 Update 2026-05-18 / Kim Live 1.5.28: Twilio inbound ahora crea un contexto `INBOUND-<CallSid>` antes de abrir Realtime. Kim por telefono opera como recepcion/secretaria, identifica el numero entrante contra `person_context_index`, confirma identidad, atiende interesados en Tesca Elements, Ignis o Ai People con informacion general, registra recados y evita revelar pendientes de terceros. El canal Twilio comparte memoria BIFROST con Kim Local, pero se documenta como superficie distinta de la interfaz local/web.

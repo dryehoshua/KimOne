@@ -58,12 +58,18 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
         profile = inbound_profile_from_context(call_context)
         known = bool(profile.get("known_contact") or profile.get("is_doctor"))
         label = inbound_contact_label(call_context, caller)
+        identity_instruction = (
+            f"El caller coincide con un perfil conocido: saluda por nombre a {label} y continua el hilo anterior de ese contacto; "
+            "confirma identidad con suavidad solo si hay duda.\n"
+            if known
+            else "El caller no coincide con un perfil conocido: explica brevemente Ai People y pide primero el nombre; despues pide empresa y motivo.\n"
+        )
         mission = (
             "MODO RECEPCION / SECRETARIA ENTRANTE.\n"
             "La persona esta llamando al numero de Kim/Dr. Yehoshua. Actua como secretaria ejecutiva de recepcion, "
             "no como IVR. Tu trabajo es escuchar, orientar y registrar.\n"
-            "Primero saluda como Kim, asistente del Dr. Yehoshua. Si el numero coincide con un perfil conocido, "
-            f"confirma con suavidad si hablas con {label}; si no coincide, pide nombre completo, empresa y motivo.\n"
+            "Primero saluda como Kim, asistente del Dr. Yehoshua. "
+            f"{identity_instruction}"
             "Puedes atender clientes, proveedores, inversionistas o interesados en Tesca Elements, Ignis, Ai People u otros proyectos. "
             "Da informacion general de servicios y toma recados, pero no inventes datos especificos. "
             "Las areas comerciales permitidas son automatizacion con IA, consultoria tecnologica y empresarial, branding, "
@@ -160,14 +166,20 @@ def initial_greeting_event(call_context=None):
             )
         elif profile.get("known_contact"):
             greeting_instruction = (
-                "Contesta como secretaria ejecutiva: 'Hola, habla Kim, asistente del Dr. Yehoshua. "
-                f"¿Tengo el gusto de hablar con {label}?'. Despues pregunta en que puedes ayudar. "
-                "No reveles pendientes hasta que confirme identidad."
+                "Contesta como secretaria ejecutiva y usa el contexto previo de esa persona. "
+                f"Saluda por nombre: 'Hola, {label}, habla Kim, asistente del Dr. Yehoshua. "
+                "Me da gusto saludarte de nuevo. ¿Continuamos con lo que teniamos pendiente o en que puedo ayudarte hoy?'. "
+                "Continua el hilo de la conversacion anterior y pendientes propios de ese contacto. "
+                "No reveles datos sensibles ni pendientes de terceros; si hay duda de identidad, confirma con suavidad antes de entrar en detalles."
             )
         else:
             greeting_instruction = (
-                "Contesta como secretaria ejecutiva: 'Hola, habla Kim, asistente del Dr. Yehoshua. "
-                "¿Con quien tengo el gusto y en que puedo ayudarle?'. Pide empresa, motivo y si llama por Tesca Elements, Ignis, Ai People u otro proyecto."
+                "Contesta como secretaria ejecutiva con este flujo, sin sonar como IVR: "
+                "'Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos a empresas con automatizacion con IA, "
+                "consultoria tecnologica, procesos, branding y analisis financiero. ¿Te puedo preguntar tu nombre?'. "
+                "Despues de que la persona diga su nombre, usalo y responde algo como: "
+                "'Mucho gusto, Jorge; es un placer atenderte. ¿En que puedo ayudarte hoy?'. "
+                "Luego identifica empresa, motivo y si llama por Tesca Elements, Ignis, Ai People u otro proyecto."
             )
     elif call_context:
         greeting_instruction = (
@@ -312,124 +324,144 @@ async def handle_media_stream(twilio_ws):
         "Authorization": f"Bearer {kim.load_openai_key()}",
         "OpenAI-Safety-Identifier": "dr-yehoshua-kim-twilio-realtime",
     }
-    async with websockets.connect(REALTIME_WS, additional_headers=headers) as openai_ws:
-        configured = False
+    saved = False
+    try:
+        async with websockets.connect(REALTIME_WS, additional_headers=headers) as openai_ws:
+            configured = False
 
-        async def configure_openai_session():
-            nonlocal configured
-            if configured:
-                return
-            await openai_ws.send(
-                json.dumps(
-                    bridge_session_config(
-                        call_sid=call_sid,
-                        caller=caller,
-                        called=called,
-                        call_context=call_context,
+            async def configure_openai_session():
+                nonlocal configured
+                if configured:
+                    return
+                await openai_ws.send(
+                    json.dumps(
+                        bridge_session_config(
+                            call_sid=call_sid,
+                            caller=caller,
+                            called=called,
+                            call_context=call_context,
+                        )
                     )
                 )
-            )
-            await openai_ws.send(json.dumps(initial_greeting_event(call_context=call_context)))
-            await openai_ws.send(json.dumps({"type": "response.create"}))
-            configured = True
-            log(
-                "OpenAI session configured "
-                f"call_sid={call_sid or '-'} context_id={context_id or '-'} has_context={bool(call_context)}"
-            )
+                await openai_ws.send(json.dumps(initial_greeting_event(call_context=call_context)))
+                await openai_ws.send(json.dumps({"type": "response.create"}))
+                configured = True
+                log(
+                    "OpenAI session configured "
+                    f"call_sid={call_sid or '-'} context_id={context_id or '-'} has_context={bool(call_context)}"
+                )
 
-        async def receive_from_twilio():
-            nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id, context_id, call_context
-            async for message in twilio_ws:
-                data = json.loads(message)
-                event = data.get("event")
-                if event == "start":
-                    start = data.get("start", {})
-                    stream_sid = start.get("streamSid")
-                    custom = start.get("customParameters") or {}
-                    call_sid = start.get("callSid") or custom.get("callSid") or call_sid
-                    caller = caller or custom.get("from", "")
-                    called = called or custom.get("to", "")
-                    context_id = context_id or custom.get("kim_context_id", "")
-                    if not call_context and (call_sid or context_id):
-                        call_context = kim.load_twilio_call_context(call_sid=call_sid, context_id=context_id)
-                    if call_sid and session_id.startswith("PHONE-RT-"):
-                        session_id = kim.phone_session_id({"CallSid": call_sid})
-                    call = call_sid
-                    if call and not transcript:
-                        transcript.append(f"[system] Twilio Media Stream iniciado: {call}")
-                    response_start_timestamp_twilio = None
-                    latest_media_timestamp = 0
-                    last_assistant_item = None
-                    await configure_openai_session()
-                    log(f"Stream started {stream_sid}")
-                elif event == "media":
-                    if not configured:
+            async def receive_from_twilio():
+                nonlocal stream_sid, latest_media_timestamp, response_start_timestamp_twilio, last_assistant_item, caller, called, call_sid, session_id, context_id, call_context
+                async for message in twilio_ws:
+                    data = json.loads(message)
+                    event = data.get("event")
+                    if event == "start":
+                        start = data.get("start", {})
+                        stream_sid = start.get("streamSid")
+                        custom = start.get("customParameters") or {}
+                        call_sid = start.get("callSid") or custom.get("callSid") or call_sid
+                        caller = caller or custom.get("from", "")
+                        called = called or custom.get("to", "")
+                        context_id = context_id or custom.get("kim_context_id", "")
+                        if not call_context and (call_sid or context_id):
+                            call_context = kim.load_twilio_call_context(call_sid=call_sid, context_id=context_id)
+                        if call_sid and session_id.startswith("PHONE-RT-"):
+                            session_id = kim.phone_session_id({"CallSid": call_sid})
+                        call = call_sid
+                        if call and not transcript:
+                            transcript.append(f"[system] Twilio Media Stream iniciado: {call}")
+                        response_start_timestamp_twilio = None
+                        latest_media_timestamp = 0
+                        last_assistant_item = None
                         await configure_openai_session()
-                    latest_media_timestamp = int(data.get("media", {}).get("timestamp") or 0)
-                    payload = data.get("media", {}).get("payload")
-                    if payload:
-                        await openai_ws.send(
-                            json.dumps({"type": "input_audio_buffer.append", "audio": payload})
-                        )
-                elif event == "mark":
-                    if mark_queue:
-                        mark_queue.pop(0)
-                elif event == "stop":
-                    log(f"Stream stopped {stream_sid}")
-                    break
-            await openai_ws.close()
+                        log(f"Stream started {stream_sid}")
+                    elif event == "media":
+                        if not configured:
+                            await configure_openai_session()
+                        latest_media_timestamp = int(data.get("media", {}).get("timestamp") or 0)
+                        payload = data.get("media", {}).get("payload")
+                        if payload:
+                            await openai_ws.send(
+                                json.dumps({"type": "input_audio_buffer.append", "audio": payload})
+                            )
+                    elif event == "mark":
+                        if mark_queue:
+                            mark_queue.pop(0)
+                    elif event == "stop":
+                        log(f"Stream stopped {stream_sid}")
+                        break
+                await openai_ws.close()
 
-        async def send_to_twilio():
-            nonlocal last_assistant_item, response_start_timestamp_twilio, stream_sid
-            async for raw in openai_ws:
-                response = json.loads(raw)
-                event_type = response.get("type")
-                if event_type in LOG_EVENT_TYPES:
-                    log(f"OpenAI event {event_type}")
-                if event_type == "response.output_audio.delta" and response.get("delta") and stream_sid:
-                    await twilio_ws.send(
-                        json.dumps(
-                            {
-                                "event": "media",
-                                "streamSid": stream_sid,
-                                "media": {"payload": response["delta"]},
-                            }
-                        )
-                    )
-                    if response.get("item_id") and response.get("item_id") != last_assistant_item:
-                        response_start_timestamp_twilio = latest_media_timestamp
-                        last_assistant_item = response["item_id"]
-                    await send_mark(twilio_ws, stream_sid, mark_queue)
-                elif event_type == "input_audio_buffer.speech_started":
-                    if last_assistant_item and mark_queue and response_start_timestamp_twilio is not None:
-                        elapsed = max(0, latest_media_timestamp - response_start_timestamp_twilio)
-                        await openai_ws.send(
+            async def send_to_twilio():
+                nonlocal last_assistant_item, response_start_timestamp_twilio, stream_sid
+                async for raw in openai_ws:
+                    response = json.loads(raw)
+                    event_type = response.get("type")
+                    if event_type in LOG_EVENT_TYPES:
+                        if event_type == "error":
+                            log(f"OpenAI event error {json.dumps(response.get('error') or response, ensure_ascii=False)[:1600]}")
+                        else:
+                            log(f"OpenAI event {event_type}")
+                    if event_type == "response.output_audio.delta" and response.get("delta") and stream_sid:
+                        await twilio_ws.send(
                             json.dumps(
                                 {
-                                    "type": "conversation.item.truncate",
-                                    "item_id": last_assistant_item,
-                                    "content_index": 0,
-                                    "audio_end_ms": elapsed,
+                                    "event": "media",
+                                    "streamSid": stream_sid,
+                                    "media": {"payload": response["delta"]},
                                 }
                             )
                         )
-                        if stream_sid:
-                            await twilio_ws.send(json.dumps({"event": "clear", "streamSid": stream_sid}))
-                        mark_queue.clear()
-                        last_assistant_item = None
-                        response_start_timestamp_twilio = None
-                elif event_type == "conversation.item.input_audio_transcription.completed":
-                    text = (response.get("transcript") or "").strip()
-                    if text:
-                        transcript.append(f"Dr. Yehoshua: {text}")
-                elif event_type == "response.output_audio_transcript.done":
-                    text = (response.get("transcript") or "").strip()
-                    if text:
-                        transcript.append(f"Kim: {text}")
+                        if response.get("item_id") and response.get("item_id") != last_assistant_item:
+                            response_start_timestamp_twilio = latest_media_timestamp
+                            last_assistant_item = response["item_id"]
+                        await send_mark(twilio_ws, stream_sid, mark_queue)
+                    elif event_type == "input_audio_buffer.speech_started":
+                        if last_assistant_item and mark_queue and response_start_timestamp_twilio is not None:
+                            elapsed = max(0, latest_media_timestamp - response_start_timestamp_twilio)
+                            await openai_ws.send(
+                                json.dumps(
+                                    {
+                                        "type": "conversation.item.truncate",
+                                        "item_id": last_assistant_item,
+                                        "content_index": 0,
+                                        "audio_end_ms": elapsed,
+                                    }
+                                )
+                            )
+                            if stream_sid:
+                                await twilio_ws.send(json.dumps({"event": "clear", "streamSid": stream_sid}))
+                            mark_queue.clear()
+                            last_assistant_item = None
+                            response_start_timestamp_twilio = None
+                    elif event_type == "conversation.item.input_audio_transcription.completed":
+                        text = (response.get("transcript") or "").strip()
+                        if text:
+                            transcript.append(f"Dr. Yehoshua: {text}")
+                    elif event_type == "response.output_audio_transcript.done":
+                        text = (response.get("transcript") or "").strip()
+                        if text:
+                            transcript.append(f"Kim: {text}")
 
-        try:
-            await asyncio.gather(receive_from_twilio(), send_to_twilio())
-        finally:
+            try:
+                await asyncio.gather(receive_from_twilio(), send_to_twilio())
+            finally:
+                await save_twilio_realtime_call(session_id, caller, called, transcript, call_sid, context_id=context_id, call_context=call_context)
+                saved = True
+                log(f"Saved session={session_id}")
+    except Exception as exc:
+        if isinstance(exc, websockets.exceptions.ConnectionClosedOK) or "received 1000 (OK)" in str(exc):
+            log(f"OpenAI bridge closed normally session={session_id}")
+            return
+        error_text = kim.brief(str(exc), 800)
+        transcript.append(f"[system] OpenAI Realtime error: {error_text}")
+        kim.append_memory(
+            "twilio_realtime_openai_error",
+            {"session_id": session_id, "call_sid": call_sid, "context_id": context_id, "error": error_text},
+        )
+        log(f"OpenAI bridge error session={session_id} error={error_text}")
+        if not saved:
             await save_twilio_realtime_call(session_id, caller, called, transcript, call_sid, context_id=context_id, call_context=call_context)
             log(f"Saved session={session_id}")
 

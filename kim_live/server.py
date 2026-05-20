@@ -167,7 +167,8 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.29"
+APP_VERSION = "1.5.32"
+KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -657,13 +658,15 @@ def load_keychain_secret(service, required=True):
             ],
             text=True,
             capture_output=True,
-            timeout=60,
+            timeout=KEYCHAIN_READ_TIMEOUT,
             check=True,
         )
-    except subprocess.CalledProcessError as exc:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         if not required:
             return ""
-        detail = (exc.stderr or exc.stdout or "").strip()
+        detail = (getattr(exc, "stderr", "") or getattr(exc, "stdout", "") or "").strip()
+        if isinstance(exc, subprocess.TimeoutExpired):
+            detail = f"Keychain no respondio en {KEYCHAIN_READ_TIMEOUT}s."
         raise ValueError(f"No encontre credencial en Keychain para {service}.") from ValueError(detail)
     return completed.stdout.strip()
 
@@ -682,13 +685,15 @@ def load_keychain_secret_for_account(service, account, required=True):
             ],
             text=True,
             capture_output=True,
-            timeout=60,
+            timeout=KEYCHAIN_READ_TIMEOUT,
             check=True,
         )
-    except subprocess.CalledProcessError as exc:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         if not required:
             return ""
-        detail = (exc.stderr or exc.stdout or "").strip()
+        detail = (getattr(exc, "stderr", "") or getattr(exc, "stdout", "") or "").strip()
+        if isinstance(exc, subprocess.TimeoutExpired):
+            detail = f"Keychain no respondio en {KEYCHAIN_READ_TIMEOUT}s."
         raise ValueError(f"No encontre credencial en Keychain para {service}/{account}.") from ValueError(detail)
     return completed.stdout.strip()
 
@@ -1414,7 +1419,15 @@ def save_call_record(body):
         text or "(empty)",
         "",
     ]
-    call_path.write_text("\n".join(content), encoding="utf-8")
+    try:
+        call_path.write_text("\n".join(content), encoding="utf-8")
+    except OSError as exc:
+        if getattr(exc, "errno", None) not in {1, 13, 30}:
+            raise
+        calls_dir = RUNTIME_CALLS / call_date
+        calls_dir.mkdir(parents=True, exist_ok=True)
+        call_path = calls_dir / f"{session_id}.md"
+        call_path.write_text("\n".join(content), encoding="utf-8")
     entry = {
         "session_id": session_id,
         "title": title,
@@ -3711,7 +3724,10 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "responder sobre pendientes propios y orientar sobre Tesca Elements, Ignis, Ai People u otros frentes cuando sea informacion general."
         )
         instructions = (
-            f"Primero confirma con suavidad si hablas con {label}. No reveles datos sensibles hasta que la persona "
+            f"Si el numero ya esta vinculado a {label}, saluda por su nombre y continua el hilo de la conversacion anterior. "
+            f"Primera frase recomendada: 'Hola, {label}, habla Kim, asistente del Dr. Yehoshua. Me da gusto saludarte de nuevo. "
+            "¿Continuamos con lo que teniamos pendiente o en que puedo ayudarte hoy?'. "
+            f"Confirma con suavidad que hablas con {label} si el contexto lo requiere. No reveles datos sensibles hasta que la persona "
             "se identifique razonablemente. Puedes mencionar pendientes propios ya vinculados a ese numero, pero no "
             "compartas tareas de terceros ni pendientes generales del doctor. Si pregunta por otra persona, indica "
             "que por confidencialidad solo puedes revisar asuntos propios o registrar la solicitud para el doctor. "
@@ -3727,14 +3743,18 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "proveedor, inversionista o interesado en Tesca Elements, Ignis o Ai People, y registrar la solicitud."
         )
         instructions = (
-            "Presentate como Kim, asistente del Dr. Yehoshua. No compartas contexto privado. Pide nombre completo, "
-            "empresa o relacion con el doctor y motivo de llamada. Puedes dar informacion general de servicios. "
-            "Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
+            "Presentate como Kim, asistente del Dr. Yehoshua. Si el numero no esta identificado, inicia con un saludo breve: "
+            "'Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos a empresas con automatizacion con IA, "
+            "consultoria tecnologica, procesos, branding y analisis financiero. ¿Te puedo preguntar tu nombre?'. "
+            "Cuando la persona diga su nombre, respondelo con naturalidad y profesionalismo, por ejemplo: "
+            "'Mucho gusto, Jorge; es un placer atenderte. ¿En que puedo ayudarte hoy?'. "
+            "No compartas contexto privado. Pide empresa o relacion con el doctor y motivo de llamada solo despues de tener el nombre. "
+            "Puedes dar informacion general de servicios. Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
             "ni prometer acciones no autorizadas. Puedes describir a grandes rasgos automatizacion con IA, consultoria tecnologica "
             "y empresarial, branding, procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
             "Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
         )
-        questions = "Pregunta nombre completo, empresa, proyecto de interes, motivo de llamada y datos de contacto."
+        questions = "Primero pregunta el nombre. Despues pregunta empresa, proyecto de interes, motivo de llamada y datos de contacto."
     context_id = twilio_context_block_id({"context_id": f"INBOUND-{call_sid}" if call_sid else ""})
     return {
         "id": context_id,
@@ -8770,28 +8790,12 @@ def store_openai_key(api_key):
 
 def load_openai_key():
     try:
-        completed = subprocess.run(
-            [
-                "security",
-                "find-generic-password",
-                "-a",
-                KEYCHAIN_ACCOUNT,
-                "-s",
-                OPENAI_KEYCHAIN_SERVICE,
-                "-w",
-            ],
-            text=True,
-            capture_output=True,
-            timeout=60,
-            check=True,
-        )
-    except subprocess.CalledProcessError as exc:
-        detail = (exc.stderr or exc.stdout or "").strip()
+        key = load_keychain_secret(OPENAI_KEYCHAIN_SERVICE, required=True)
+    except ValueError as exc:
         raise ValueError(
             "No encuentro la API key de OpenAI en Keychain. "
             "Abre /setup-openai-key para guardarla."
-        ) from ValueError(detail)
-    key = completed.stdout.strip()
+        ) from exc
     if not key:
         raise ValueError("La API key de OpenAI esta vacia en Keychain.")
     return key

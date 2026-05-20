@@ -1540,7 +1540,7 @@
   </style>
 </head>
 <body data-voice-state="idle" data-auth="checking">
-  <section class="public-landing" id="publicLanding" aria-label="Kim para Ai People">
+  <section class="public-landing" id="publicLanding" aria-label="Kim for Ai People">
     <canvas id="landingCanvas" aria-hidden="true"></canvas>
     <div class="landing-shell">
       <nav class="landing-nav">
@@ -1548,50 +1548,50 @@
           <span class="brand-mark">K</span>
           <span>Ai People / Kim</span>
         </div>
-        <small>Recepcion inteligente, memoria operativa y agentes de IA para equipos que ejecutan.</small>
+        <small>Intelligent reception, operational memory, and AI agents for teams that execute.</small>
       </nav>
 
       <div class="landing-hero">
         <div class="landing-copy">
-          <span class="landing-kicker">Kim Live para Ai People</span>
-          <h1>Una secretaria de IA para operar conversaciones, clientes y decisiones.</h1>
-          <p>Kim atiende llamadas, organiza memoria, prepara tareas, consulta contexto y ayuda a convertir voz de cliente en seguimiento real. Este acceso es privado: si quieres usarlo para tu empresa, solicita entrada y lo revisamos.</p>
+          <span class="landing-kicker">Kim Live for Ai People</span>
+          <h1>The first capable AI employee.</h1>
+          <p>Developed by Dr. Yehoshua and Ai People, Kim answers calls, organizes operational memory, prepares tasks, consults context, and helps turn customer conversations into real follow-up. Access is private: request entry if you want Kim working for your company.</p>
           <div class="landing-actions">
-            <button class="landing-primary" type="button" id="jumpLogin">Entrar</button>
-            <button class="landing-secondary" type="button" id="jumpRequest">Solicitar acceso</button>
+            <button class="landing-primary" type="button" id="jumpLogin">Sign in</button>
+            <button class="landing-secondary" type="button" id="jumpRequest">Request access</button>
           </div>
-          <div class="service-strip" aria-label="Servicios de Ai People">
-            <span>Automatizacion con IA</span>
-            <span>Consultoria tecnologica</span>
-            <span>Branding y procesos</span>
-            <span>Desarrollo humano</span>
-            <span>Analisis financiero</span>
-            <span>Portafolios / Hedge Fund / VC</span>
+          <div class="service-strip" aria-label="Ai People services">
+            <span>AI automation</span>
+            <span>Technology consulting</span>
+            <span>Branding and process design</span>
+            <span>Human development</span>
+            <span>Financial analysis</span>
+            <span>Portfolio operations / Hedge Fund / VC</span>
           </div>
         </div>
 
         <div class="access-band" id="accessBand">
           <div class="access-card" id="loginCard">
-            <h2>Acceso privado</h2>
-            <p>Ingresa con el codigo autorizado para abrir Kim Live. Las sesiones vencen automaticamente.</p>
+            <h2>Private Access</h2>
+            <p>Enter the authorized code to open Kim Live. Sessions expire automatically.</p>
             <form class="access-form" id="loginForm">
-              <input id="loginName" autocomplete="name" placeholder="Nombre">
-              <input id="loginCode" autocomplete="current-password" type="password" placeholder="Codigo de acceso">
-              <button class="landing-primary" type="submit">Entrar a Kim</button>
-              <span class="access-status" id="loginStatus">Verificando acceso...</span>
+              <input id="loginName" autocomplete="name" placeholder="Name">
+              <input id="loginCode" autocomplete="current-password" type="password" placeholder="Access code">
+              <button class="landing-primary" type="submit">Open Kim</button>
+              <span class="access-status" id="loginStatus">Checking access...</span>
             </form>
           </div>
 
           <div class="access-card" id="requestCard">
-            <h2>Solicitar usuario</h2>
-            <p>Deja tus datos si te interesa evaluar Kim para automatizacion, consultoria, branding, procesos o servicios financieros.</p>
+            <h2>Request a User</h2>
+            <p>Leave your details if you want to evaluate Kim for automation, consulting, branding, process work, or financial services.</p>
             <form class="access-form" id="leadForm">
-              <input id="leadName" autocomplete="name" placeholder="Nombre">
-              <input id="leadEmail" autocomplete="email" placeholder="Correo">
-              <input id="leadCompany" autocomplete="organization" placeholder="Empresa">
-              <textarea id="leadInterest" placeholder="Que te interesa resolver con Kim"></textarea>
-              <button class="landing-secondary" type="submit">Enviar solicitud</button>
-              <span class="access-status" id="leadStatus">Las solicitudes se guardan en BIFROST/CRM para seguimiento.</span>
+              <input id="leadName" autocomplete="name" placeholder="Name">
+              <input id="leadEmail" autocomplete="email" placeholder="Email">
+              <input id="leadCompany" autocomplete="organization" placeholder="Company">
+              <textarea id="leadInterest" placeholder="What would you like Kim to solve?"></textarea>
+              <button class="landing-secondary" type="submit">Send request</button>
+              <span class="access-status" id="leadStatus">Requests are stored in BIFROST/CRM for follow-up.</span>
             </form>
           </div>
         </div>
@@ -3182,6 +3182,59 @@
         context.clearRect(0, 0, width, height);
         context.fillStyle = "#071715";
         context.fillRect(0, 0, width, height);
+        const avatarX = width * (window.innerWidth < 780 ? 0.74 : 0.79);
+        const avatarY = height * (window.innerWidth < 780 ? 0.38 : 0.48);
+        const avatarScale = Math.min(width, height) * (window.innerWidth < 780 ? 0.22 : 0.26);
+        const breathe = Math.sin(performance.now() / 1300) * 0.018;
+        context.save();
+        context.translate(avatarX, avatarY);
+        context.scale(avatarScale * (1 + breathe), avatarScale * (1 + breathe));
+        context.globalAlpha = window.innerWidth < 780 ? 0.28 : 0.48;
+        const glow = context.createRadialGradient(0, -0.06, 0.04, 0, 0, 1.05);
+        glow.addColorStop(0, "rgba(183, 255, 245, 0.24)");
+        glow.addColorStop(0.55, "rgba(102, 218, 204, 0.08)");
+        glow.addColorStop(1, "rgba(102, 218, 204, 0)");
+        context.fillStyle = glow;
+        context.beginPath();
+        context.ellipse(0, -0.02, 0.78, 1.08, 0, 0, Math.PI * 2);
+        context.fill();
+        context.globalAlpha = window.innerWidth < 780 ? 0.32 : 0.64;
+        context.strokeStyle = "rgba(236, 255, 252, 0.78)";
+        context.lineWidth = 0.012;
+        context.beginPath();
+        context.ellipse(0, -0.42, 0.16, 0.19, 0, 0, Math.PI * 2);
+        context.stroke();
+        context.strokeStyle = "rgba(22, 44, 42, 0.62)";
+        context.lineWidth = 0.018;
+        context.beginPath();
+        context.arc(-0.02, -0.45, 0.18, Math.PI * 0.86, Math.PI * 2.06);
+        context.stroke();
+        context.strokeStyle = "rgba(255, 255, 255, 0.68)";
+        context.lineWidth = 0.016;
+        context.beginPath();
+        context.moveTo(-0.34, 0.45);
+        context.lineTo(-0.21, -0.14);
+        context.quadraticCurveTo(0, -0.24, 0.21, -0.14);
+        context.lineTo(0.34, 0.45);
+        context.moveTo(-0.16, -0.12);
+        context.lineTo(0, 0.42);
+        context.lineTo(0.16, -0.12);
+        context.moveTo(-0.29, 0.12);
+        context.lineTo(0.29, 0.12);
+        context.stroke();
+        context.strokeStyle = "rgba(137, 238, 221, 0.8)";
+        context.lineWidth = 0.008;
+        for (let i = 0; i < 36; i++) {
+          const angle = i * 0.72 + performance.now() / 1800;
+          const radius = 0.28 + (i % 7) * 0.055;
+          const px = Math.cos(angle) * radius;
+          const py = Math.sin(angle * 1.17) * radius * 0.9;
+          context.beginPath();
+          context.arc(px, py - 0.06, 0.008 + (i % 3) * 0.003, 0, Math.PI * 2);
+          context.fillStyle = i % 4 === 0 ? "rgba(255, 255, 255, 0.82)" : "rgba(137, 238, 221, 0.72)";
+          context.fill();
+        }
+        context.restore();
         for (const node of nodes) {
           node.x += node.vx;
           node.y += node.vy;
@@ -3222,7 +3275,7 @@
     function setAuthState(state) {
       document.body.dataset.auth = state;
       if (state === "public") {
-        $("loginStatus").textContent = "Ingresa el codigo autorizado o solicita acceso.";
+        $("loginStatus").textContent = "Enter the authorized code or request access.";
       }
     }
 
@@ -3285,15 +3338,15 @@
 
     $("loginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      $("loginStatus").textContent = "Validando...";
+      $("loginStatus").textContent = "Validating...";
       try {
         const data = await post("/api/auth/login", {
           name: $("loginName").value.trim(),
           access_code: $("loginCode").value
         });
-        if (!data.authenticated) throw new Error("No autorizado.");
+        if (!data.authenticated) throw new Error("Not authorized.");
         $("loginCode").value = "";
-        $("loginStatus").textContent = "Acceso concedido.";
+        $("loginStatus").textContent = "Access granted.";
         setAuthState("authenticated");
         await initializeApp();
       } catch (error) {
@@ -3303,7 +3356,7 @@
 
     $("leadForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      $("leadStatus").textContent = "Guardando solicitud...";
+      $("leadStatus").textContent = "Saving request...";
       try {
         await post("/api/public-lead", {
           name: $("leadName").value.trim(),
@@ -3312,7 +3365,7 @@
           interest: $("leadInterest").value.trim()
         });
         $("leadForm").reset();
-        $("leadStatus").textContent = "Solicitud recibida. El equipo revisara el acceso.";
+        $("leadStatus").textContent = "Request received. The team will review access.";
       } catch (error) {
         $("leadStatus").textContent = error.message;
       }
