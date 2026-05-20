@@ -18,6 +18,7 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import formataddr, getaddresses
 import hashlib
+import hmac
 import html
 import imaplib
 import importlib.util
@@ -76,6 +77,9 @@ RUNTIME_MEMORY_ANALYTICS = RUNTIME_CONTEXT / "memory_analytics_latest.json"
 RUNTIME_UPLOAD_INDEX = RUNTIME_CONTEXT / "uploaded_files_index.json"
 RUNTIME_CALL_INDEX = RUNTIME_CONTEXT / "call_index.jsonl"
 RUNTIME_RESEARCH_SOURCE_CACHE = RUNTIME_CONTEXT / "research_sources_latest.json"
+SITE_AUTH_SESSIONS = RUNTIME_CONTEXT / "site_auth_sessions.json"
+SITE_LEADS = BIFROST / "CRM" / "leads" / "kim_site_leads.jsonl"
+RUNTIME_SITE_LEADS = RUNTIME_CONTEXT / "site_leads.jsonl"
 CONTEXT_MEMORY = BIFROST / "MEMORY" / "context" / "kim_context.md"
 CONTEXT_SPEC = BIFROST / "docs" / "kim_live_context_memory_spec.md"
 CLICKUP_INVENTORY = BIFROST / "kimtools" / "clickup" / "clickup_inventory.json"
@@ -145,6 +149,7 @@ TWILIO_API_KEY_SECRET_KEYCHAIN_SERVICE = "codex.twilio.api_key_secret"
 TWILIO_DEFAULT_FROM_NUMBER_KEYCHAIN_SERVICE = "codex.twilio.default_from_number"
 SECURITY_VOICE_PHRASE_KEYCHAIN_SERVICE = "codex.kim.security.voice_phrase"
 SECURITY_PIN_KEYCHAIN_SERVICE = "codex.kim.security.pin"
+SITE_ACCESS_CODE_KEYCHAIN_SERVICE = "codex.kim.site_access_code"
 KEYCHAIN_ACCOUNT = "dryehoshuapython"
 HOST = "127.0.0.1"
 PORT = 8765
@@ -162,7 +167,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.28"
+APP_VERSION = "1.5.29"
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -171,8 +176,10 @@ RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
 INBOUND_CALL_SERVICE_SUMMARY = (
     "informacion general de servicios, seguimiento de pendientes propios, llamadas con contexto, "
-    "coordinacion de correos y documentos, CRM, tareas y agentes personalizados, recepcion para "
-    "clientes o interesados en Tesca Elements, Ignis, Ai People y otros proyectos del Dr. Yehoshua"
+    "coordinacion de correos y documentos, CRM, tareas y agentes personalizados, automatizacion con IA, "
+    "consultoria tecnologica y empresarial en branding, procesos y desarrollo humano, analisis financiero, "
+    "operacion de portafolios, hedge fund, venture capital y recepcion para clientes o interesados en "
+    "Tesca Elements, Ignis, Ai People y otros proyectos del Dr. Yehoshua"
 )
 DOCTOR_CONTEXT_NAME_HINTS = (
     "dr yehoshua",
@@ -312,6 +319,143 @@ def write_text(handler, text, status=200, content_type="text/plain; charset=utf-
 
 def write_xml(handler, text, status=200):
     write_text(handler, text, status=status, content_type="text/xml; charset=utf-8")
+
+
+def parse_cookie_header(value):
+    cookies = {}
+    for part in str(value or "").split(";"):
+        if "=" not in part:
+            continue
+        key, raw = part.split("=", 1)
+        cookies[key.strip()] = urllib.parse.unquote(raw.strip())
+    return cookies
+
+
+def cookie_token(handler):
+    return parse_cookie_header(handler.headers.get("Cookie", "")).get("kim_live_access", "")
+
+
+def token_hash(token):
+    return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()
+
+
+def load_site_auth_state():
+    state = read_json_file(SITE_AUTH_SESSIONS, {"sessions": {}})
+    if not isinstance(state, dict):
+        state = {"sessions": {}}
+    state.setdefault("sessions", {})
+    return state
+
+
+def save_site_auth_state(state):
+    SITE_AUTH_SESSIONS.parent.mkdir(parents=True, exist_ok=True)
+    state["updated_at"] = now_iso()
+    write_json_file(SITE_AUTH_SESSIONS, state)
+
+
+def site_access_code():
+    return (
+        load_keychain_secret(SITE_ACCESS_CODE_KEYCHAIN_SERVICE, required=False)
+        or load_keychain_secret(SECURITY_PIN_KEYCHAIN_SERVICE, required=False)
+    )
+
+
+def site_auth_status(handler):
+    token = cookie_token(handler)
+    if not token:
+        return {"authenticated": False}
+    state = load_site_auth_state()
+    now = dt.datetime.now()
+    changed = False
+    for digest, item in list((state.get("sessions") or {}).items()):
+        expires_at = str(item.get("expires_at") or "")
+        try:
+            expired = dt.datetime.fromisoformat(expires_at) <= now
+        except ValueError:
+            expired = True
+        if expired:
+            state["sessions"].pop(digest, None)
+            changed = True
+    digest = token_hash(token)
+    item = (state.get("sessions") or {}).get(digest)
+    if changed:
+        save_site_auth_state(state)
+    if not item:
+        return {"authenticated": False}
+    return {
+        "authenticated": True,
+        "label": item.get("label") or "Kim operator",
+        "expires_at": item.get("expires_at") or "",
+    }
+
+
+def site_auth_is_valid(handler):
+    return bool(site_auth_status(handler).get("authenticated"))
+
+
+def send_auth_cookie(handler, token="", max_age=86400):
+    parts = [
+        "kim_live_access=" + urllib.parse.quote(token or ""),
+        "Path=/",
+        "HttpOnly",
+        "SameSite=Lax",
+        f"Max-Age={max_age}",
+    ]
+    handler.send_header("Set-Cookie", "; ".join(parts))
+
+
+def create_site_session(handler, label=""):
+    token = secrets.token_urlsafe(32)
+    expires = dt.datetime.now() + dt.timedelta(hours=18)
+    state = load_site_auth_state()
+    state.setdefault("sessions", {})[token_hash(token)] = {
+        "label": brief(label or "Kim operator", 80),
+        "created_at": now_iso(),
+        "expires_at": expires.isoformat(timespec="seconds"),
+        "ip": handler.client_address[0] if handler.client_address else "",
+    }
+    save_site_auth_state(state)
+    return token, expires
+
+
+def login_site_user(handler, body):
+    code = str(body.get("access_code") or body.get("code") or "").strip()
+    label = str(body.get("name") or body.get("email") or "Kim operator").strip()
+    expected = site_access_code()
+    if not expected:
+        append_memory("site_login_blocked", {"reason": "missing_site_access_code"})
+        return None, {"ok": False, "error": "No hay codigo de acceso configurado en Keychain."}, 503
+    if not hmac.compare_digest(code, expected):
+        append_memory("site_login_failed", {"label": brief(label, 80), "ip": handler.client_address[0] if handler.client_address else ""})
+        return None, {"ok": False, "error": "Codigo de acceso incorrecto."}, 401
+    token, expires = create_site_session(handler, label=label)
+    append_memory("site_login_ok", {"label": brief(label, 80), "expires_at": expires.isoformat(timespec="seconds")})
+    return token, {"ok": True, "authenticated": True, "label": label, "expires_at": expires.isoformat(timespec="seconds")}, 200
+
+
+def record_public_lead(handler, body):
+    lead = {
+        "at": now_iso(),
+        "ip": handler.client_address[0] if handler.client_address else "",
+        "name": brief(body.get("name", ""), 140),
+        "email": brief(body.get("email", ""), 180),
+        "company": brief(body.get("company", ""), 180),
+        "interest": brief(body.get("interest", ""), 400),
+        "source": "kim_aipeople_landing",
+    }
+    if not lead["email"] and not lead["name"]:
+        raise ValueError("Deja al menos nombre o correo para solicitar acceso.")
+    append_jsonl_any([SITE_LEADS, RUNTIME_SITE_LEADS], lead)
+    append_memory("site_access_request", {key: lead[key] for key in ["name", "email", "company", "interest"]})
+    return lead
+
+
+def is_public_get_path(path):
+    return path in {"/", "/index.html", "/api/auth/status", "/twilio/health"} or path.startswith("/twilio/")
+
+
+def is_public_post_path(path):
+    return path in {"/api/auth/login", "/api/auth/logout", "/api/public-lead"} or path.startswith("/twilio/")
 
 
 def append_memory(kind, payload):
@@ -3572,7 +3716,9 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "compartas tareas de terceros ni pendientes generales del doctor. Si pregunta por otra persona, indica "
             "que por confidencialidad solo puedes revisar asuntos propios o registrar la solicitud para el doctor. "
             "Si llama como cliente, proveedor, inversionista o interesado en Tesca Elements, Ignis, Ai People u otro proyecto, atiende "
-            "como recepcion ejecutiva: toma datos, detecta necesidad, explica lo general sin inventar y propone siguiente paso."
+            "como recepcion ejecutiva: toma datos, detecta necesidad, explica lo general sin inventar y propone siguiente paso. "
+            "Los temas comerciales permitidos incluyen automatizacion con IA, consultoria tecnologica y empresarial, branding, "
+            "procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital."
         )
         questions = "Confirma nombre completo, empresa, motivo de llamada, proyecto de interes y si desea que el doctor reciba algun recado."
     else:
@@ -3584,7 +3730,9 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "Presentate como Kim, asistente del Dr. Yehoshua. No compartas contexto privado. Pide nombre completo, "
             "empresa o relacion con el doctor y motivo de llamada. Puedes dar informacion general de servicios. "
             "Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
-            "ni prometer acciones no autorizadas. Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
+            "ni prometer acciones no autorizadas. Puedes describir a grandes rasgos automatizacion con IA, consultoria tecnologica "
+            "y empresarial, branding, procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
+            "Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
         )
         questions = "Pregunta nombre completo, empresa, proyecto de interes, motivo de llamada y datos de contacto."
     context_id = twilio_context_block_id({"context_id": f"INBOUND-{call_sid}" if call_sid else ""})
@@ -10052,6 +10200,23 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        if parsed.path == "/api/auth/status":
+            status = site_auth_status(self)
+            write_json(
+                self,
+                {
+                    "ok": True,
+                    "requires_auth": True,
+                    "authenticated": bool(status.get("authenticated")),
+                    "label": status.get("label", ""),
+                    "expires_at": status.get("expires_at", ""),
+                    "version": APP_VERSION,
+                },
+            )
+            return
+        if parsed.path.startswith("/api/") and not is_public_get_path(parsed.path) and not site_auth_is_valid(self):
+            write_json(self, {"ok": False, "error": "AUTH_REQUIRED"}, status=401)
+            return
         if parsed.path == "/setup-openai-key":
             data = (APP_DIR / "setup-openai-key.html").read_bytes()
             self.send_response(200)
@@ -10176,6 +10341,42 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         try:
+            if parsed.path == "/api/auth/login":
+                body = read_body(self)
+                token, payload, status = login_site_user(self, body)
+                data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+                self.send_response(status)
+                if token:
+                    send_auth_cookie(self, token)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            if parsed.path == "/api/auth/logout":
+                token = cookie_token(self)
+                if token:
+                    state = load_site_auth_state()
+                    state.get("sessions", {}).pop(token_hash(token), None)
+                    save_site_auth_state(state)
+                data = json.dumps({"ok": True, "authenticated": False}, ensure_ascii=False, indent=2).encode("utf-8")
+                self.send_response(200)
+                send_auth_cookie(self, "", max_age=0)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            if parsed.path == "/api/public-lead":
+                body = read_body(self)
+                lead = record_public_lead(self, body)
+                write_json(self, {"ok": True, "lead": lead})
+                return
+            if parsed.path.startswith("/api/") and not is_public_post_path(parsed.path) and not site_auth_is_valid(self):
+                write_json(self, {"ok": False, "error": "AUTH_REQUIRED"}, status=401)
+                return
             if parsed.path == "/twilio/voice":
                 params = read_form(self)
                 write_xml(self, twilio_voice_twiml(self, params))

@@ -942,6 +942,236 @@
       flex-wrap: wrap;
     }
 
+    body[data-auth="checking"],
+    body[data-auth="public"] {
+      display: block;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: auto;
+      background: #071715;
+      color: #f7fffd;
+    }
+
+    body[data-auth="checking"] > header,
+    body[data-auth="checking"] > main,
+    body[data-auth="checking"] > footer,
+    body[data-auth="public"] > header,
+    body[data-auth="public"] > main,
+    body[data-auth="public"] > footer {
+      display: none;
+    }
+
+    body[data-auth="authenticated"] .public-landing {
+      display: none;
+    }
+
+    .public-landing {
+      min-height: 100vh;
+      min-height: 100dvh;
+      position: relative;
+      overflow: hidden;
+      background: #071715;
+      color: #f7fffd;
+    }
+
+    #landingCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.86;
+    }
+
+    .landing-shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      padding: 22px;
+    }
+
+    .landing-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: #d9fffa;
+    }
+
+    .landing-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(177, 255, 243, 0.54);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      color: #9ff5e6;
+    }
+
+    .landing-nav small {
+      color: rgba(234, 255, 251, 0.72);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .landing-hero {
+      display: grid;
+      align-content: center;
+      gap: 24px;
+      max-width: 1160px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 54px 0 34px;
+    }
+
+    .landing-copy {
+      max-width: 780px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .landing-kicker {
+      color: #8be3d4;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .landing-copy h1 {
+      max-width: 760px;
+      color: #ffffff;
+      font-size: clamp(42px, 7vw, 86px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .landing-copy p {
+      max-width: 690px;
+      color: rgba(241, 255, 252, 0.82);
+      font-size: 18px;
+      line-height: 1.48;
+    }
+
+    .landing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .public-landing button {
+      width: auto;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .landing-primary,
+    .landing-secondary {
+      min-width: 148px;
+      border-color: rgba(189, 255, 245, 0.38);
+      color: #f7fffd;
+    }
+
+    .landing-primary {
+      background: #f7fffd;
+      color: #08211f;
+      border-color: #f7fffd;
+    }
+
+    .landing-secondary {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .service-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 900px;
+    }
+
+    .service-strip span {
+      border: 1px solid rgba(207, 255, 247, 0.24);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: rgba(245, 255, 253, 0.82);
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .access-band {
+      width: min(100%, 980px);
+      border: 1px solid rgba(207, 255, 247, 0.2);
+      border-radius: 8px;
+      background: rgba(7, 23, 21, 0.76);
+      backdrop-filter: blur(14px);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: minmax(260px, 0.82fr) minmax(280px, 1fr);
+      gap: 14px;
+    }
+
+    .access-card {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .access-card h2 {
+      color: #ffffff;
+      font-size: 17px;
+    }
+
+    .access-card p,
+    .access-status {
+      color: rgba(238, 255, 252, 0.72);
+      font-size: 13px;
+      line-height: 1.38;
+    }
+
+    .access-form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .access-form input,
+    .access-form textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid rgba(204, 255, 247, 0.26);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      font: 14px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      outline: none;
+    }
+
+    .access-form textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .access-form input::placeholder,
+    .access-form textarea::placeholder {
+      color: rgba(236, 255, 252, 0.54);
+    }
+
+    .access-form button {
+      min-height: 42px;
+    }
+
     @media (max-width: 880px) {
       body {
         display: block;
@@ -968,6 +1198,26 @@
         min-height: 30px;
         white-space: normal;
         text-align: right;
+      }
+
+      .landing-shell {
+        padding: 16px;
+      }
+
+      .landing-nav {
+        align-items: flex-start;
+      }
+
+      .landing-copy h1 {
+        font-size: 48px;
+      }
+
+      .landing-copy p {
+        font-size: 16px;
+      }
+
+      .access-band {
+        grid-template-columns: 1fr;
       }
 
       main {
@@ -1289,7 +1539,66 @@
     }
   </style>
 </head>
-<body data-voice-state="idle">
+<body data-voice-state="idle" data-auth="checking">
+  <section class="public-landing" id="publicLanding" aria-label="Kim para Ai People">
+    <canvas id="landingCanvas" aria-hidden="true"></canvas>
+    <div class="landing-shell">
+      <nav class="landing-nav">
+        <div class="landing-brand">
+          <span class="brand-mark">K</span>
+          <span>Ai People / Kim</span>
+        </div>
+        <small>Recepcion inteligente, memoria operativa y agentes de IA para equipos que ejecutan.</small>
+      </nav>
+
+      <div class="landing-hero">
+        <div class="landing-copy">
+          <span class="landing-kicker">Kim Live para Ai People</span>
+          <h1>Una secretaria de IA para operar conversaciones, clientes y decisiones.</h1>
+          <p>Kim atiende llamadas, organiza memoria, prepara tareas, consulta contexto y ayuda a convertir voz de cliente en seguimiento real. Este acceso es privado: si quieres usarlo para tu empresa, solicita entrada y lo revisamos.</p>
+          <div class="landing-actions">
+            <button class="landing-primary" type="button" id="jumpLogin">Entrar</button>
+            <button class="landing-secondary" type="button" id="jumpRequest">Solicitar acceso</button>
+          </div>
+          <div class="service-strip" aria-label="Servicios de Ai People">
+            <span>Automatizacion con IA</span>
+            <span>Consultoria tecnologica</span>
+            <span>Branding y procesos</span>
+            <span>Desarrollo humano</span>
+            <span>Analisis financiero</span>
+            <span>Portafolios / Hedge Fund / VC</span>
+          </div>
+        </div>
+
+        <div class="access-band" id="accessBand">
+          <div class="access-card" id="loginCard">
+            <h2>Acceso privado</h2>
+            <p>Ingresa con el codigo autorizado para abrir Kim Live. Las sesiones vencen automaticamente.</p>
+            <form class="access-form" id="loginForm">
+              <input id="loginName" autocomplete="name" placeholder="Nombre">
+              <input id="loginCode" autocomplete="current-password" type="password" placeholder="Codigo de acceso">
+              <button class="landing-primary" type="submit">Entrar a Kim</button>
+              <span class="access-status" id="loginStatus">Verificando acceso...</span>
+            </form>
+          </div>
+
+          <div class="access-card" id="requestCard">
+            <h2>Solicitar usuario</h2>
+            <p>Deja tus datos si te interesa evaluar Kim para automatizacion, consultoria, branding, procesos o servicios financieros.</p>
+            <form class="access-form" id="leadForm">
+              <input id="leadName" autocomplete="name" placeholder="Nombre">
+              <input id="leadEmail" autocomplete="email" placeholder="Correo">
+              <input id="leadCompany" autocomplete="organization" placeholder="Empresa">
+              <textarea id="leadInterest" placeholder="Que te interesa resolver con Kim"></textarea>
+              <button class="landing-secondary" type="submit">Enviar solicitud</button>
+              <span class="access-status" id="leadStatus">Las solicitudes se guardan en BIFROST/CRM para seguimiento.</span>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
@@ -2850,43 +3159,170 @@
       maybeAutoSaveConversation(false);
     }, 60000);
 
-    fetch("/api/status")
-      .then((r) => r.json())
-      .then((data) => {
-        $("mode").textContent = data.mode + " v" + (data.version || "1.5.24");
-        $("appVersion").textContent = "v" + (data.version || "1.5.24");
-      })
-      .catch(() => {
-        $("mode").textContent = "Sin conexion local";
-      });
+    let appInitialized = false;
 
-    fetch("/api/context")
-      .then((r) => r.json())
-      .then((data) => {
-        const availableSources = (data.sources || []).filter((source) => source.exists).length;
-        const bridge = data.api_bridge || {};
-        const clickupReady = bridge.clickup && bridge.clickup.configured;
-        const notionReady = bridge.notion && bridge.notion.configured;
-        const gmailReady = bridge.gmail && bridge.gmail.authorized;
-        const hostingerReady = bridge.hostinger_mail && bridge.hostinger_mail.configured;
-        $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
-        $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
-        $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave")
-          + " / Notion " + (notionReady ? "listo" : "sin llave")
-          + " / Gmail " + (gmailReady ? "autorizado" : "pendiente")
-          + " / Hostinger " + (hostingerReady ? "listo" : "pendiente");
-      })
-      .catch(() => {
-        $("contextStatus").textContent = "Contexto no disponible";
-        $("contextSummary").textContent = "Kim puede conversar, pero no cargo memoria local.";
-        $("apiBridgeState").textContent = "APIs sin contexto";
-      });
+    function drawLandingCanvas() {
+      const canvas = $("landingCanvas");
+      if (!canvas) return;
+      const context = canvas.getContext("2d");
+      const nodes = Array.from({length: 54}, (_, index) => ({
+        x: Math.random(),
+        y: Math.random(),
+        vx: (Math.random() - 0.5) * 0.00034,
+        vy: (Math.random() - 0.5) * 0.00034,
+        r: 1.2 + (index % 5) * 0.38
+      }));
+      function resize() {
+        canvas.width = Math.max(1, window.innerWidth * window.devicePixelRatio);
+        canvas.height = Math.max(1, window.innerHeight * window.devicePixelRatio);
+      }
+      function tick() {
+        const width = canvas.width;
+        const height = canvas.height;
+        context.clearRect(0, 0, width, height);
+        context.fillStyle = "#071715";
+        context.fillRect(0, 0, width, height);
+        for (const node of nodes) {
+          node.x += node.vx;
+          node.y += node.vy;
+          if (node.x < 0.03 || node.x > 0.97) node.vx *= -1;
+          if (node.y < 0.04 || node.y > 0.96) node.vy *= -1;
+        }
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const a = nodes[i];
+            const b = nodes[j];
+            const dx = (a.x - b.x) * width;
+            const dy = (a.y - b.y) * height;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 170 * window.devicePixelRatio) {
+              const alpha = 1 - distance / (170 * window.devicePixelRatio);
+              context.strokeStyle = "rgba(137, 238, 221, " + (alpha * 0.18).toFixed(3) + ")";
+              context.lineWidth = window.devicePixelRatio;
+              context.beginPath();
+              context.moveTo(a.x * width, a.y * height);
+              context.lineTo(b.x * width, b.y * height);
+              context.stroke();
+            }
+          }
+        }
+        for (const node of nodes) {
+          context.fillStyle = "rgba(230, 255, 250, 0.72)";
+          context.beginPath();
+          context.arc(node.x * width, node.y * height, node.r * window.devicePixelRatio, 0, Math.PI * 2);
+          context.fill();
+        }
+        requestAnimationFrame(tick);
+      }
+      resize();
+      window.addEventListener("resize", resize);
+      tick();
+    }
 
-    $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
-    refreshMicrophones();
-    loadConversations();
-    updateLineCount();
-    lastPersistedTranscript = currentTranscriptText();
+    function setAuthState(state) {
+      document.body.dataset.auth = state;
+      if (state === "public") {
+        $("loginStatus").textContent = "Ingresa el codigo autorizado o solicita acceso.";
+      }
+    }
+
+    async function initializeApp() {
+      if (appInitialized) return;
+      appInitialized = true;
+      fetch("/api/status")
+        .then((r) => r.json())
+        .then((data) => {
+          $("mode").textContent = data.mode + " v" + (data.version || "1.5.24");
+          $("appVersion").textContent = "v" + (data.version || "1.5.24");
+        })
+        .catch(() => {
+          $("mode").textContent = "Sin conexion local";
+        });
+
+      fetch("/api/context")
+        .then((r) => r.json())
+        .then((data) => {
+          const availableSources = (data.sources || []).filter((source) => source.exists).length;
+          const bridge = data.api_bridge || {};
+          const clickupReady = bridge.clickup && bridge.clickup.configured;
+          const notionReady = bridge.notion && bridge.notion.configured;
+          const gmailReady = bridge.gmail && bridge.gmail.authorized;
+          const hostingerReady = bridge.hostinger_mail && bridge.hostinger_mail.configured;
+          $("contextStatus").textContent = "Contexto cargado: " + availableSources + " fuentes";
+          $("contextSummary").textContent = (data.brief || "Memoria local lista.").slice(0, 180);
+          $("apiBridgeState").textContent = "ClickUp " + (clickupReady ? "listo" : "sin llave")
+            + " / Notion " + (notionReady ? "listo" : "sin llave")
+            + " / Gmail " + (gmailReady ? "autorizado" : "pendiente")
+            + " / Hostinger " + (hostingerReady ? "listo" : "pendiente");
+        })
+        .catch(() => {
+          $("contextStatus").textContent = "Contexto no disponible";
+          $("contextSummary").textContent = "Kim puede conversar, pero no cargo memoria local.";
+          $("apiBridgeState").textContent = "APIs sin contexto";
+        });
+
+      $("threadMeta").textContent = "Sesion " + sessionId + " con voz, archivos, investigacion y documentos.";
+      refreshMicrophones();
+      loadConversations();
+      updateLineCount();
+      lastPersistedTranscript = currentTranscriptText();
+    }
+
+    async function checkSiteAuth() {
+      try {
+        const response = await fetch("/api/auth/status", {cache: "no-store"});
+        const data = await response.json();
+        if (data.authenticated) {
+          setAuthState("authenticated");
+          await initializeApp();
+        } else {
+          setAuthState("public");
+        }
+      } catch (_) {
+        setAuthState("public");
+      }
+    }
+
+    $("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("loginStatus").textContent = "Validando...";
+      try {
+        const data = await post("/api/auth/login", {
+          name: $("loginName").value.trim(),
+          access_code: $("loginCode").value
+        });
+        if (!data.authenticated) throw new Error("No autorizado.");
+        $("loginCode").value = "";
+        $("loginStatus").textContent = "Acceso concedido.";
+        setAuthState("authenticated");
+        await initializeApp();
+      } catch (error) {
+        $("loginStatus").textContent = error.message;
+      }
+    });
+
+    $("leadForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("leadStatus").textContent = "Guardando solicitud...";
+      try {
+        await post("/api/public-lead", {
+          name: $("leadName").value.trim(),
+          email: $("leadEmail").value.trim(),
+          company: $("leadCompany").value.trim(),
+          interest: $("leadInterest").value.trim()
+        });
+        $("leadForm").reset();
+        $("leadStatus").textContent = "Solicitud recibida. El equipo revisara el acceso.";
+      } catch (error) {
+        $("leadStatus").textContent = error.message;
+      }
+    });
+
+    $("jumpLogin").onclick = () => $("loginCode").focus();
+    $("jumpRequest").onclick = () => $("leadName").focus();
+
+    drawLandingCanvas();
+    checkSiteAuth();
   </script>
 </body>
 </html>
