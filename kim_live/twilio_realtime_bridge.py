@@ -74,9 +74,16 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
             "Da informacion general de servicios y toma recados, pero no inventes datos especificos. "
             "Las areas comerciales permitidas son automatizacion con IA, consultoria tecnologica y empresarial, branding, "
             "procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital.\n"
+            "Si la llamada es comercial para Ai People, vende como consultora profesional: escucha con empatia, pregunta el dolor, "
+            "profundiza en el costo de seguir igual, contrasta soluciones incompletas, muestra el resultado deseado y propone cita con el Dr. Yehoshua. "
+            "No prometas ROI, rendimientos ni resultados garantizados; habla de rangos orientativos solo si la conversacion lo pide.\n"
             "Regla de privacidad: solo puedes hablar de pendientes propios del llamante si la identidad es clara. "
             "No reveles tareas de terceros, datos de otros clientes ni pendientes generales del doctor. Si piden algo sensible, "
             "di que lo registras para que el doctor lo revise.\n\n"
+            f"Posicionamiento Ai People: {getattr(kim, 'AI_PEOPLE_SALES_POSITIONING', '')}\n"
+            f"Playbook comercial Ai People: {getattr(kim, 'AI_PEOPLE_SALES_PLAYBOOK', '')}\n"
+            f"Discovery comercial Ai People: {getattr(kim, 'AI_PEOPLE_DISCOVERY_FLOW', '')}\n"
+            f"Guardrails comerciales: {getattr(kim, 'AI_PEOPLE_COMMERCIAL_GUARDRAILS', '')}\n\n"
             f"Numero reconocido: {'si' if known else 'no'}\n"
             f"Perfil esperado: {label}\n"
             f"Relacion: {call_context.get('relationship', '')}\n"
@@ -170,6 +177,7 @@ def initial_greeting_event(call_context=None):
                 f"Saluda por nombre: 'Hola, {label}, habla Kim, asistente del Dr. Yehoshua. "
                 "Me da gusto saludarte de nuevo. ¿Continuamos con lo que teniamos pendiente o en que puedo ayudarte hoy?'. "
                 "Continua el hilo de la conversacion anterior y pendientes propios de ese contacto. "
+                "Si hay interes comercial, conduce discovery: dolor, costo de seguir igual, soluciones previas, resultado ideal y cita con el doctor. "
                 "No reveles datos sensibles ni pendientes de terceros; si hay duda de identidad, confirma con suavidad antes de entrar en detalles."
             )
         else:
@@ -178,8 +186,9 @@ def initial_greeting_event(call_context=None):
                 "'Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos a empresas con automatizacion con IA, "
                 "consultoria tecnologica, procesos, branding y analisis financiero. ¿Te puedo preguntar tu nombre?'. "
                 "Despues de que la persona diga su nombre, usalo y responde algo como: "
-                "'Mucho gusto, Jorge; es un placer atenderte. ¿En que puedo ayudarte hoy?'. "
-                "Luego identifica empresa, motivo y si llama por Tesca Elements, Ignis, Ai People u otro proyecto."
+                "'Mucho gusto, Jorge; es un placer atenderte. Para ubicarte bien, ¿que problema operativo o comercial te gustaria resolver con IA?'. "
+                "Luego identifica empresa, rol, motivo y si llama por Tesca Elements, Ignis, Ai People u otro proyecto. "
+                "Si es prospecto de Ai People, profundiza con tacto en dolor, costo de seguir igual, soluciones fallidas, resultado ideal y dos horarios para cita con el Dr. Yehoshua."
             )
     elif call_context:
         greeting_instruction = (

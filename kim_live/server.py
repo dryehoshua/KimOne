@@ -167,7 +167,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.32"
+APP_VERSION = "1.5.33"
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -177,10 +177,39 @@ RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
 INBOUND_CALL_SERVICE_SUMMARY = (
     "informacion general de servicios, seguimiento de pendientes propios, llamadas con contexto, "
-    "coordinacion de correos y documentos, CRM, tareas y agentes personalizados, automatizacion con IA, "
+    "coordinacion de correos y documentos, CRM, tareas, agentes de IA y empleados de IA, automatizacion con IA, "
+    "atencion telefonica, reportes, servicio al cliente, clasificacion de proveedores/clientes/buyer personas, "
+    "marketing automation avanzado, procesamiento de datos, memoria operativa, "
     "consultoria tecnologica y empresarial en branding, procesos y desarrollo humano, analisis financiero, "
     "operacion de portafolios, hedge fund, venture capital y recepcion para clientes o interesados en "
     "Tesca Elements, Ignis, Ai People y otros proyectos del Dr. Yehoshua"
+)
+AI_PEOPLE_SALES_POSITIONING = (
+    "Ai People ayuda a empresas a implementar agentes y empleados de IA que atienden llamadas, correos, "
+    "reportes, CRM, servicio al cliente, seguimiento comercial, analisis de datos y automatizacion de procesos. "
+    "La tecnologia puede operar localmente en la maquina del cliente, en infraestructura administrada por Ai People "
+    "o en una arquitectura privada segun seguridad, presupuesto y complejidad."
+)
+AI_PEOPLE_SALES_PLAYBOOK = (
+    "Actua como vendedora consultiva profesional. Primero escucha y valida con empatia. Despues pregunta cual es "
+    "el dolor operativo o comercial mas importante. Profundiza con tacto: que costo tiene seguir igual, que se pierde "
+    "en tiempo, dinero, clientes o control, y que soluciones han probado que no resolvieron el problema. Luego conecta "
+    "ese dolor con un resultado aspiracional: como se veria una operacion con un empleado de IA que responde, recuerda, "
+    "documenta y ejecuta. Cierra buscando el siguiente paso: una cita con el Dr. Yehoshua si hay interes real."
+)
+AI_PEOPLE_DISCOVERY_FLOW = (
+    "Captura nombre, empresa, rol, industria, proceso que duele, urgencia, herramientas actuales, soluciones previas, "
+    "impacto economico aproximado, resultado ideal, presupuesto o rango si la conversacion lo permite, correo/telefono "
+    "de contacto y dos horarios preferidos con zona horaria para una cita. No digas que la cita quedo agendada hasta "
+    "que exista confirmacion de calendario; por ahora di que dejaras la solicitud lista para el doctor."
+)
+AI_PEOPLE_COMMERCIAL_GUARDRAILS = (
+    "Precios orientativos: implementaciones basicas de agente o funcion suelen iniciar en USD 3k-5k; infraestructura "
+    "completa suele ubicarse en USD 10k-20k segun complejidad; una arquitectura privada/local con modelo propio o equipo "
+    "dedicado puede rondar USD 30k o mas. Puede existir cuota mensual por operacion, modelos y soporte. ROI objetivo "
+    "frecuente: recuperar valor en 3-6 meses cuando el proceso esta bien elegido, pero nunca lo prometas como garantia. "
+    "Para inversionistas, Ignis, portafolios, deuda o dinero de terceros, no prometas rendimientos ni tranquilices con "
+    "frases absolutas; registra detalles y escala al Dr. Yehoshua."
 )
 DOCTOR_CONTEXT_NAME_HINTS = (
     "dr yehoshua",
@@ -3688,6 +3717,10 @@ def twilio_inbound_caller_profile(caller="", called=""):
         "pending_briefs": pending_briefs,
         "pending_summary": "; ".join(pending_briefs),
         "service_summary": INBOUND_CALL_SERVICE_SUMMARY,
+        "sales_positioning": AI_PEOPLE_SALES_POSITIONING,
+        "sales_playbook": AI_PEOPLE_SALES_PLAYBOOK,
+        "sales_discovery_flow": AI_PEOPLE_DISCOVERY_FLOW,
+        "commercial_guardrails": AI_PEOPLE_COMMERCIAL_GUARDRAILS,
         "privacy_summary": (
             "No compartir tareas de terceros ni pendientes generales del doctor sin identidad clara; "
             "solo dar contexto del propio llamante."
@@ -3734,9 +3767,16 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "Si llama como cliente, proveedor, inversionista o interesado en Tesca Elements, Ignis, Ai People u otro proyecto, atiende "
             "como recepcion ejecutiva: toma datos, detecta necesidad, explica lo general sin inventar y propone siguiente paso. "
             "Los temas comerciales permitidos incluyen automatizacion con IA, consultoria tecnologica y empresarial, branding, "
-            "procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital."
+            "procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
+            f"Si hay interes en Ai People, usa este posicionamiento: {AI_PEOPLE_SALES_POSITIONING} "
+            f"Usa este playbook comercial: {AI_PEOPLE_SALES_PLAYBOOK} "
+            f"Flujo de discovery: {AI_PEOPLE_DISCOVERY_FLOW} "
+            f"Guardrails comerciales: {AI_PEOPLE_COMMERCIAL_GUARDRAILS}"
         )
-        questions = "Confirma nombre completo, empresa, motivo de llamada, proyecto de interes y si desea que el doctor reciba algun recado."
+        questions = (
+            "Confirma nombre completo, empresa, rol, motivo de llamada y proyecto de interes. Si hay interes comercial, "
+            "pregunta por dolor, costo de seguir igual, soluciones ya probadas, resultado ideal y dos horarios para hablar con el doctor."
+        )
     else:
         objective = (
             "Atender llamada entrante de numero no identificado como secretaria del Dr. Yehoshua; identificar si es cliente, "
@@ -3747,14 +3787,22 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "'Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos a empresas con automatizacion con IA, "
             "consultoria tecnologica, procesos, branding y analisis financiero. ¿Te puedo preguntar tu nombre?'. "
             "Cuando la persona diga su nombre, respondelo con naturalidad y profesionalismo, por ejemplo: "
-            "'Mucho gusto, Jorge; es un placer atenderte. ¿En que puedo ayudarte hoy?'. "
+            "'Mucho gusto, Jorge; es un placer atenderte. Para ubicarte bien, ¿que problema operativo o comercial te gustaria resolver con IA?'. "
             "No compartas contexto privado. Pide empresa o relacion con el doctor y motivo de llamada solo despues de tener el nombre. "
             "Puedes dar informacion general de servicios. Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
             "ni prometer acciones no autorizadas. Puedes describir a grandes rasgos automatizacion con IA, consultoria tecnologica "
             "y empresarial, branding, procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
+            f"Si hay interes en Ai People, usa este posicionamiento: {AI_PEOPLE_SALES_POSITIONING} "
+            f"Usa este playbook comercial: {AI_PEOPLE_SALES_PLAYBOOK} "
+            f"Flujo de discovery: {AI_PEOPLE_DISCOVERY_FLOW} "
+            f"Guardrails comerciales: {AI_PEOPLE_COMMERCIAL_GUARDRAILS} "
             "Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
         )
-        questions = "Primero pregunta el nombre. Despues pregunta empresa, proyecto de interes, motivo de llamada y datos de contacto."
+        questions = (
+            "Primero pregunta el nombre. Despues pregunta empresa, rol, proyecto de interes y motivo de llamada. "
+            "Si es prospecto de Ai People, pregunta cual es su dolor mas importante, que pasa si siguen igual seis meses, "
+            "que soluciones han probado, como se veria el resultado ideal, y dos horarios para una cita con el Dr. Yehoshua."
+        )
     context_id = twilio_context_block_id({"context_id": f"INBOUND-{call_sid}" if call_sid else ""})
     return {
         "id": context_id,
@@ -3775,13 +3823,20 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             f"Llamada entrante desde {caller_number or caller}. "
             f"Perfil reconocido: {label if known or is_doctor else 'no identificado'}. "
             f"Pendientes propios disponibles: {pending}. "
-            f"Servicios generales permitidos: {profile.get('service_summary') or INBOUND_CALL_SERVICE_SUMMARY}."
+            f"Servicios generales permitidos: {profile.get('service_summary') or INBOUND_CALL_SERVICE_SUMMARY}. "
+            f"Posicionamiento Ai People: {profile.get('sales_positioning') or AI_PEOPLE_SALES_POSITIONING}. "
+            f"Playbook comercial: {profile.get('sales_playbook') or AI_PEOPLE_SALES_PLAYBOOK}. "
+            f"Discovery comercial: {profile.get('sales_discovery_flow') or AI_PEOPLE_DISCOVERY_FLOW}. "
+            f"Guardrails comerciales: {profile.get('commercial_guardrails') or AI_PEOPLE_COMMERCIAL_GUARDRAILS}."
         ),
         "objective": objective,
         "instructions": instructions,
         "questions": questions,
         "message_to_deliver": "",
-        "report_to_doctor": "Guardar transcript, numero entrante, identidad declarada, solicitud y siguiente paso recomendado.",
+        "report_to_doctor": (
+            "Guardar transcript, numero entrante, identidad declarada, empresa, rol, dolor, urgencia, soluciones previas, "
+            "resultado deseado, presupuesto/rango si surgio, objeciones, horarios propuestos y siguiente paso recomendado."
+        ),
         "success_criteria": (
             "La persona fue atendida sin revelar informacion de terceros; quedo memoria de la llamada y del seguimiento."
         ),

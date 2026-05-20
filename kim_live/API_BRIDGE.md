@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-20 / Kim Live 1.5.33: KIM-0063 agrega playbook comercial inbound para Ai People. Kim por Twilio debe actuar como vendedora consultiva: preguntar nombre, empresa, rol, dolor, costo de seguir igual, soluciones previas, resultado deseado y horarios para cita con Dr. Yehoshua. Los precios se manejan solo como rangos orientativos y los temas de inversion/portafolio se escalan sin prometer rendimientos. Se documenta el estado real de transcripts: Kim Live web/local guarda transcript literal; Twilio guarda transcript cuando hay audio de Media Streams y deja ledger cuando no hay audio util.
+
 Update 2026-05-20 / Kim Live 1.5.32: recepcion Twilio refinada. Si el caller inbound es desconocido, Kim saluda sencillo, se presenta, explica brevemente Ai People y pide primero el nombre. Si el caller ya esta identificado, Kim saluda por nombre y continua el hilo previo/pending propio del contacto, sin revelar informacion de terceros.
 
 Update 2026-05-20 / Kim Live 1.5.31: protocolo Twilio actualizado para ahorrar tiempo y tokens: ante llamadas mudas o fallas de voz, el primer descarte obligatorio es saldo/cuota de OpenAI Realtime (`insufficient_quota`) antes de revisar Twilio, Cloudflare, prompts o frontend. Los reads de Keychain para credenciales bajan de 60s a 8s para evitar que Kim Live quede congelada por una llave opcional.
