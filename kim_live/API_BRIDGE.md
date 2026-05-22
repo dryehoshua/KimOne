@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-22 / Kim Live 1.5.36: KimOne ya tiene acceso directo a nuevas bases Notion compartidas: `Wiki`, `Projects`, `Documentos` y `Reuniones`, ademas de paginas como `Tesca Elements`, `Neorgana`, `Equibio` y `Glam Homes AI Call Center`. Se guarda inventario en `BIFROST/MEMORY/context/notion_access_inventory.json/md`, y `context_brief` lo inyecta al prompt Realtime para enrutar conocimiento, documentos, proyectos y agenda sin pedir IDs.
+
 Update 2026-05-22 / Kim Live 1.5.35: se agrega una capa durable de `file knowledge`. Cada upload crea una ficha Markdown en `BIFROST/MEMORY/knowledge/<domain>/files`, actualiza `BIFROST/MEMORY/context/file_knowledge_index.json` y expone esos paths en el contexto Realtime. Se hizo backfill de los cuatro PDF TESCA cargados el 2026-05-21 para que Kim no tenga que pedir al doctor repetir la metodologia, contratos, diagnosticos o estructura ya leida.
 
 Update 2026-05-21 / Kim Live 1.5.34: KIM-0065 porta al repo la agenda Notion que habia quedado solo en runtime. `notion/create_page` ahora puede crear registros tipo reunion usando `Nombre`, `Hora` y `Tipo`, y `agent_action` acepta `schedule_meeting`/`agendar_reunion` para enrutar a la base `Reuniones` sin pedir IDs. Se guarda default en `BIFROST/MEMORY/context/notion_default_parent.json`. Bloqueo externo: la base Notion `Reuniones` debe compartirse con la integracion `KimOne`; Codex MCP puede verla, pero el token directo de Kim Live aun recibe 404 si no se comparte.

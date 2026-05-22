@@ -122,6 +122,8 @@ BIFROST_FILE_INDEX = MEMORY_CONTEXT_DIR / "bifrost_file_index.json"
 RUNTIME_BIFROST_FILE_INDEX = RUNTIME_CONTEXT / "bifrost_file_index.json"
 NOTION_DEFAULT_PARENT = MEMORY_CONTEXT_DIR / "notion_default_parent.json"
 RUNTIME_NOTION_DEFAULT_PARENT = RUNTIME_CONTEXT / "notion_default_parent.json"
+NOTION_ACCESS_INVENTORY = MEMORY_CONTEXT_DIR / "notion_access_inventory.md"
+RUNTIME_NOTION_ACCESS_INVENTORY = RUNTIME_CONTEXT / "notion_access_inventory.md"
 NOTION_OUTBOX_DIR = MEMORY_ROOT / "notion_outbox"
 RUNTIME_NOTION_OUTBOX_DIR = RUNTIME_MEMORY_ROOT / "notion_outbox"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
@@ -171,7 +173,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.35"
+APP_VERSION = "1.5.36"
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -9064,6 +9066,9 @@ def context_brief(limit=9000):
     api_spec = read_text_tail_any([API_BRIDGE_SPEC, RUNTIME_API_BRIDGE_SPEC], 1600)
     if api_spec:
         parts.append("Kim API bridge:\n" + api_spec)
+    notion_inventory = read_text_tail_any([NOTION_ACCESS_INVENTORY, RUNTIME_NOTION_ACCESS_INVENTORY], 1800)
+    if notion_inventory:
+        parts.append("Notion access inventory:\n" + notion_inventory)
     parts.append(
         "Kim API templates obligatorios: usa kim_api_bridge action=templates si dudas del formato. "
         "Correo Hostinger usa send_email/reply_email para enviar; ClickUp create_task acepta title/subject/body y resuelve list_id desde space_name/list_name; "
