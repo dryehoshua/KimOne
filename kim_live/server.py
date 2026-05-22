@@ -66,6 +66,8 @@ ACTIVE_CRM_ROOT = None
 ACTIVE_CRM_DB = None
 MEMORY_ANALYTICS = MEMORY_CONTEXT_DIR / "memory_analytics_latest.json"
 UPLOAD_INDEX = MEMORY_CONTEXT_DIR / "uploaded_files_index.json"
+FILE_KNOWLEDGE_INDEX = MEMORY_CONTEXT_DIR / "file_knowledge_index.json"
+FILE_KNOWLEDGE_INDEX_MD = MEMORY_CONTEXT_DIR / "file_knowledge_index.md"
 CALL_INDEX = MEMORY_CONTEXT_DIR / "call_index.jsonl"
 RESEARCH_SOURCE_CACHE = MEMORY_CONTEXT_DIR / "research_sources_latest.json"
 RUNTIME_CALLS = RUNTIME_MEMORY_ROOT / "calls"
@@ -75,6 +77,8 @@ RUNTIME_KNOWLEDGE = RUNTIME_MEMORY_ROOT / "knowledge"
 RUNTIME_PHONE_CALLS = RUNTIME_MEMORY_ROOT / "phone_calls"
 RUNTIME_MEMORY_ANALYTICS = RUNTIME_CONTEXT / "memory_analytics_latest.json"
 RUNTIME_UPLOAD_INDEX = RUNTIME_CONTEXT / "uploaded_files_index.json"
+RUNTIME_FILE_KNOWLEDGE_INDEX = RUNTIME_CONTEXT / "file_knowledge_index.json"
+RUNTIME_FILE_KNOWLEDGE_INDEX_MD = RUNTIME_CONTEXT / "file_knowledge_index.md"
 RUNTIME_CALL_INDEX = RUNTIME_CONTEXT / "call_index.jsonl"
 RUNTIME_RESEARCH_SOURCE_CACHE = RUNTIME_CONTEXT / "research_sources_latest.json"
 SITE_AUTH_SESSIONS = RUNTIME_CONTEXT / "site_auth_sessions.json"
@@ -167,7 +171,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.34"
+APP_VERSION = "1.5.35"
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -1238,6 +1242,188 @@ def summarize_uploaded_text(text, filename):
         return local_extract_summary(text, filename)
 
 
+def file_knowledge_domain(analysis):
+    haystack = normalize_security_text(
+        " ".join(
+            [
+                str(analysis.get("filename") or ""),
+                str(analysis.get("summary") or ""),
+                " ".join(str(item.get("name") or item) for item in analysis.get("topics", []) if item),
+            ]
+        )
+    )
+    if "tesca" in haystack:
+        return "tesca"
+    rules = [
+        ("tesca", {"tesca", "elements", "elemental", "compliance", "corporate", "arquitectura", "diagnostic", "diagnostico"}),
+        ("ai_people", {"aipeople", "people", "kim", "employee", "asistente", "agente"}),
+        ("ignis", {"ignis", "portfolio", "portafolio", "hedge", "venture", "financial"}),
+        ("crm", {"cliente", "clientes", "pipedrive", "lead", "sales"}),
+        ("legal", {"contrato", "contract", "nda", "legal", "jurisdiccion"}),
+        ("operaciones", {"operacion", "operaciones", "process", "proceso", "clickup", "notion"}),
+    ]
+    best_domain = "general"
+    best_score = 0
+    for domain, keywords in rules:
+        score = sum(1 for keyword in keywords if keyword in haystack)
+        if score > best_score:
+            best_domain = domain
+            best_score = score
+    return best_domain
+
+
+def file_knowledge_card_paths(analysis):
+    filename = str(analysis.get("filename") or "archivo")
+    uploaded_at = str(analysis.get("uploaded_at") or today())
+    uploaded_date = uploaded_at[:10] if re.match(r"^\d{4}-\d{2}-\d{2}", uploaded_at) else today()
+    domain = analysis.get("knowledge_domain") or file_knowledge_domain(analysis)
+    sha = str(analysis.get("sha256") or "")[:8]
+    slug = knowledge_slug(pathlib.Path(filename).stem)
+    suffix = f"-{sha}" if sha else ""
+    rel = pathlib.Path(domain) / "files" / f"{uploaded_date}-{slug}{suffix}.md"
+    return MEMORY_KNOWLEDGE / rel, RUNTIME_KNOWLEDGE / rel
+
+
+def file_knowledge_card_markdown(analysis, analysis_path=""):
+    filename = str(analysis.get("filename") or "archivo")
+    domain = analysis.get("knowledge_domain") or file_knowledge_domain(analysis)
+    topics = analysis.get("topics") or []
+    topic_names = [str(item.get("name") or item) for item in topics if item]
+    summary = str(analysis.get("summary") or "").strip()
+    text_preview = str(analysis.get("text_preview") or "").strip()
+    source_path = str(analysis.get("stored_path") or "")
+    return "\n".join(
+        [
+            f"# {pathlib.Path(filename).stem}",
+            "",
+            f"- Tipo: file_knowledge_card",
+            f"- Dominio: {domain}",
+            f"- Archivo original: {filename}",
+            f"- Ruta fuente: {source_path}",
+            f"- Analisis JSON: {analysis_path}",
+            f"- Subido: {analysis.get('uploaded_at') or ''}",
+            f"- Actualizado: {now_iso()}",
+            f"- SHA256: {analysis.get('sha256') or ''}",
+            f"- Extractor: {analysis.get('extractor') or ''}",
+            f"- Caracteres procesados: {analysis.get('processed_chars') or analysis.get('extracted_chars') or 0}",
+            f"- Temas: {', '.join(topic_names) or 'Sin clasificar'}",
+            "",
+            "## Regla De Uso",
+            "",
+            "Esta ficha es memoria durable de un archivo cargado. Kim debe consultarla antes de pedirle al doctor que repita informacion ya contenida en el archivo. La ruta fuente y el analisis JSON son la fuente primaria; esta ficha es una sintesis operacional.",
+            "",
+            "## Sintesis",
+            "",
+            summary or "Sin resumen disponible.",
+            "",
+            "## Extracto Base",
+            "",
+            brief(text_preview, 3000) or "Sin texto extraido disponible.",
+            "",
+        ]
+    )
+
+
+def load_file_knowledge_index():
+    data = read_json_file_any([FILE_KNOWLEDGE_INDEX, RUNTIME_FILE_KNOWLEDGE_INDEX], {"files": []})
+    if not isinstance(data, dict):
+        data = {"files": []}
+    data.setdefault("files", [])
+    return data
+
+
+def write_file_knowledge_markdown_index(index):
+    entries = index.get("files", [])
+    lines = [
+        "# File Knowledge Index",
+        "",
+        f"- Updated: {index.get('updated_at') or now_iso()}",
+        f"- Files: {len(entries)}",
+        "",
+        "Kim debe usar este indice para ubicar fichas durables de archivos cargados antes de pedir informacion repetida.",
+        "",
+    ]
+    for item in sorted(entries, key=lambda row: (row.get("domain") or "", row.get("filename") or "")):
+        lines.extend(
+            [
+                f"## {item.get('filename') or 'archivo'}",
+                "",
+                f"- Domain: {item.get('domain') or 'general'}",
+                f"- Uploaded: {item.get('uploaded_at') or ''}",
+                f"- Source: {item.get('stored_path') or ''}",
+                f"- Card: {item.get('knowledge_card_path') or ''}",
+                f"- Analysis: {item.get('analysis_path') or ''}",
+                f"- Topics: {', '.join(item.get('topic_names') or []) or 'Sin clasificar'}",
+                "",
+                brief(item.get("summary") or "", 700),
+                "",
+            ]
+        )
+    text = "\n".join(lines).rstrip() + "\n"
+    write_text_file_both(FILE_KNOWLEDGE_INDEX_MD, RUNTIME_FILE_KNOWLEDGE_INDEX_MD, text)
+
+
+def update_file_knowledge_index(analysis, card_path="", analysis_path=""):
+    index = load_file_knowledge_index()
+    topics = analysis.get("topics") or []
+    topic_names = [str(item.get("name") or item) for item in topics if item]
+    entry = {
+        "filename": analysis.get("filename") or "",
+        "domain": analysis.get("knowledge_domain") or file_knowledge_domain(analysis),
+        "uploaded_at": analysis.get("uploaded_at") or "",
+        "stored_path": analysis.get("stored_path") or "",
+        "analysis_path": str(analysis_path or analysis.get("analysis_path") or ""),
+        "knowledge_card_path": str(card_path or analysis.get("knowledge_card_path") or ""),
+        "sha256": analysis.get("sha256") or "",
+        "summary": brief(analysis.get("summary") or "", 1200),
+        "topic_names": topic_names,
+        "processed_chars": analysis.get("processed_chars") or analysis.get("extracted_chars") or 0,
+        "updated_at": now_iso(),
+    }
+    files = index.setdefault("files", [])
+    entry_key = entry["sha256"] or entry["stored_path"] or entry["filename"]
+    deduped = []
+    replaced = False
+    for item in files:
+        item_key = item.get("sha256") or item.get("stored_path") or item.get("filename")
+        if item_key == entry_key:
+            deduped.append(entry)
+            replaced = True
+        else:
+            deduped.append(item)
+    if not replaced:
+        deduped.append(entry)
+    index["files"] = deduped
+    by_domain = {}
+    for item in deduped:
+        by_domain.setdefault(item.get("domain") or "general", []).append(item.get("filename") or "archivo")
+    index["by_domain"] = {key: sorted(value) for key, value in sorted(by_domain.items())}
+    index["updated_at"] = now_iso()
+    write_json_file_both(FILE_KNOWLEDGE_INDEX, RUNTIME_FILE_KNOWLEDGE_INDEX, index)
+    write_file_knowledge_markdown_index(index)
+    return entry
+
+
+def store_file_knowledge_card(analysis, analysis_path=""):
+    domain = file_knowledge_domain(analysis)
+    analysis["knowledge_domain"] = domain
+    primary_path, runtime_path = file_knowledge_card_paths(analysis)
+    markdown = file_knowledge_card_markdown(analysis, analysis_path=str(analysis_path or ""))
+    written = write_text_file_both(primary_path, runtime_path, markdown)
+    card_path = written[0] if written else str(primary_path)
+    analysis["knowledge_card_path"] = card_path
+    update_file_knowledge_index(analysis, card_path=card_path, analysis_path=str(analysis_path or ""))
+    return card_path
+
+
+def load_file_knowledge_entries(limit=8):
+    index = load_file_knowledge_index()
+    files = index.get("files", [])
+    if not isinstance(files, list):
+        return []
+    return files[-limit:]
+
+
 def draft_document(instruction, source_text="", session_id=""):
     instruction = (instruction or "").strip()
     source_text = (source_text or "").strip()
@@ -1345,6 +1531,7 @@ def memory_analytics():
     docs_files = count_tree_files(BIFROST / "docs")
     context_files = count_tree_files(MEMORY_CONTEXT_DIR) + count_tree_files(RUNTIME_CONTEXT)
     upload_entries = load_upload_entries()
+    file_knowledge_entries = load_file_knowledge_entries(limit=5000)
     call_entries = load_call_entries()
     corpus_parts = []
     for paths in [
@@ -1366,11 +1553,13 @@ def memory_analytics():
         "docs_file_count": len(docs_files),
         "context_file_count": len(context_files),
         "uploaded_file_count": len(upload_entries),
+        "file_knowledge_count": len(file_knowledge_entries),
         "call_count": len(load_call_entries(limit=5000)),
         "topics": topics,
         "principles": extract_principles(),
         "recent_calls": call_entries,
         "recent_uploads": upload_entries,
+        "recent_file_knowledge": file_knowledge_entries[-8:],
         "tracked_files": [
             item for item in [
                 file_stats(CONTEXT_MEMORY),
@@ -1542,6 +1731,10 @@ def parse_upload(handler):
         "local_vector": stable_vector(text + " " + safe_name),
     }
     analysis_path = target.with_suffix(target.suffix + ".analysis.json")
+    try:
+        store_file_knowledge_card(analysis, analysis_path=analysis_path)
+    except Exception as exc:
+        analysis["knowledge_error"] = brief(str(exc), 700)
     write_json_file_any([analysis_path, RUNTIME_UPLOADS / today() / analysis_path.name], analysis)
     index_path = UPLOAD_INDEX
     try:
@@ -8850,6 +9043,15 @@ def context_brief(limit=9000):
                 for item in recent_uploads[-4:]
             )
         )
+    file_knowledge = load_file_knowledge_entries(limit=6)
+    if file_knowledge:
+        parts.append(
+            "File knowledge durable:\n"
+            + "\n".join(
+                f"- {item.get('domain') or 'general'} / {item.get('filename')}: {item.get('knowledge_card_path')}"
+                for item in file_knowledge[-6:]
+            )
+        )
     clickup = clickup_context()
     if clickup.get("available"):
         names = []
@@ -9401,14 +9603,16 @@ def realtime_session_config():
                 "Si necesitas datos actuales, investigacion externa o verificacion en internet, "
                 "di brevemente que vas a buscar y llama la herramienta kim_research_web. "
                 "Cuando uses investigacion web, conserva fuentes para anexarlas al reporte de llamada. "
+                "Cuando el doctor suba archivos, el servidor crea fichas durables en BIFROST/MEMORY/knowledge y "
+                "actualiza file_knowledge_index; si pregunta por archivos, TESCA, contratos, diagnosticos o algo "
+                "ya cargado, primero usa kim_memory_search y esas fichas antes de pedir que repita informacion. "
                 "Para reportes del Sr. Eli o cualquier reporte a cliente, NO uses precios recordados, "
                 "precios de reportes anteriores ni cierres historicos como si fueran actuales. Antes de "
                 "redactar cifras de precio actual llama kim_market_snapshot y solo usa current_price si "
                 "current_price_validation.approved_for_client_report=true. Si no hay al menos dos fuentes "
                 "frescas en rango, di que el precio no quedo validado y pide verificacion manual. "
                 "Si el doctor pide redactar una carta, propuesta, reporte o documento, llama "
-                "kim_draft_document. Cuando el doctor suba archivos, usa los resumenes que aparecen "
-                "en la conversacion activa como contexto. "
+                "kim_draft_document. "
                 "No digas que ves la camara, la pantalla o el iframe de TradingView si no recibiste "
                 "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot con EMAs "
                 "personalizadas cuando el doctor las pida, incluyendo EMA34 por temporalidad, y analiza "
