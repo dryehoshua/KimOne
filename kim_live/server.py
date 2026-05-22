@@ -167,7 +167,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "marin"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.33"
+APP_VERSION = "1.5.34"
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -6856,6 +6856,83 @@ def notion_default_parent_config():
     return config if isinstance(config, dict) else {}
 
 
+def notion_event_like(parameters=None):
+    parameters = parameters or {}
+    blob = " ".join(
+        [
+            str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or ""),
+            str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or ""),
+            str(first_value(parameters, "meeting_type", "tipo", "event_type", "type", "category") or ""),
+        ]
+    )
+    text = normalize_security_text(blob)
+    if not text:
+        return False
+    keywords = [
+        "reunion",
+        "meeting",
+        "calendario",
+        "calendar",
+        "evento",
+        "event",
+        "recordatorio",
+        "alarma",
+        "agenda",
+        "cita",
+    ]
+    return any(keyword in text for keyword in keywords)
+
+
+def notion_parent_config_value(parameters=None, resolved=None, *keys, default=""):
+    parameters = parameters or {}
+    resolved = resolved or {}
+    config = notion_default_parent_config()
+    for source in [parameters, resolved, config]:
+        for key in keys:
+            value = str(source.get(key) or "").strip()
+            if value:
+                return value
+    return default
+
+
+def notion_database_title_property(parameters=None, resolved=None):
+    return notion_parent_config_value(parameters, resolved, "title_property", default="Name")
+
+
+def notion_bridge_database_properties(parameters=None, resolved=None):
+    parameters = parameters or {}
+    properties = parameters.get("properties") if isinstance(parameters.get("properties"), dict) else {}
+    merged = dict(properties)
+    date_property = notion_parent_config_value(parameters, resolved, "date_property", "datetime_property", "calendar_property")
+    start = str(
+        first_value(
+            parameters,
+            "start_at",
+            "starts_at",
+            "start",
+            "date_start",
+            "scheduled_for",
+            "event_at",
+            "datetime",
+            "date",
+            "hora_inicio",
+            "inicio",
+        )
+        or ""
+    ).strip()
+    end = str(first_value(parameters, "end_at", "ends_at", "end", "date_end", "hora_fin", "fin") or "").strip()
+    if date_property and start and date_property not in merged:
+        date_payload = {"start": start}
+        if end:
+            date_payload["end"] = end
+        merged[date_property] = {"date": date_payload}
+    type_property = notion_parent_config_value(parameters, resolved, "type_property", "meeting_type_property")
+    meeting_type = str(first_value(parameters, "meeting_type", "tipo", "event_type", "type", "category") or "").strip()
+    if type_property and meeting_type and type_property not in merged:
+        merged[type_property] = {"select": {"name": meeting_type}}
+    return merged
+
+
 def semantic_notion_parent(value):
     text = normalize_security_text(value)
     if not text:
@@ -6867,10 +6944,20 @@ def notion_resolve_default_parent(parameters=None):
     parameters = parameters or {}
     config = notion_default_parent_config()
     if config.get("parent_page_id"):
-        return {"type": "page_id", "page_id": str(config["parent_page_id"]), "source": "configured_default"}
+        resolved = {"type": "page_id", "page_id": str(config["parent_page_id"]), "source": "configured_default"}
+        for key in ["title_property", "date_property", "type_property", "url", "note"]:
+            if config.get(key):
+                resolved[key] = config.get(key)
+        return resolved
     if config.get("parent_database_id"):
-        return {"type": "database_id", "database_id": str(config["parent_database_id"]), "source": "configured_default"}
+        resolved = {"type": "database_id", "database_id": str(config["parent_database_id"]), "source": "configured_default"}
+        for key in ["title_property", "date_property", "type_property", "url", "note"]:
+            if config.get(key):
+                resolved[key] = config.get(key)
+        return resolved
     query_terms = []
+    if notion_event_like(parameters):
+        query_terms.extend(["Reuniones", "Meetings", "Calendario"])
     for key in ["notion_parent_query", "parent_query", "workspace", "domain"]:
         value = str(parameters.get(key) or "").strip()
         if value:
@@ -6892,14 +6979,31 @@ def notion_resolve_default_parent(parameters=None):
             if obj in {"page", "database"} and item_id:
                 parent_type = "page_id" if obj == "page" else "database_id"
                 resolved = {"type": parent_type, parent_type: item_id, "source": f"search:{query}", "url": item.get("url", "")}
-                write_json_file_any([NOTION_DEFAULT_PARENT, RUNTIME_NOTION_DEFAULT_PARENT], {
+                config_payload = {
                     "updated_at": now_iso(),
                     "parent_page_id": item_id if obj == "page" else "",
                     "parent_database_id": item_id if obj == "database" else "",
                     "source": resolved["source"],
                     "url": resolved.get("url", ""),
                     "note": "Auto default for Kim Live Notion create_page. Change this file when the doctor chooses a better Notion destination.",
-                })
+                }
+                if obj == "database" and query_key in {"reuniones", "meetings", "calendario", "calendar"}:
+                    config_payload.update(
+                        {
+                            "title_property": "Nombre",
+                            "date_property": "Hora",
+                            "type_property": "Tipo",
+                            "note": "Default meeting/calendar database for Kim Live. Adjust if the doctor later picks another Notion destination.",
+                        }
+                    )
+                write_json_file_any([NOTION_DEFAULT_PARENT, RUNTIME_NOTION_DEFAULT_PARENT], config_payload)
+                resolved.update(
+                    {
+                        key: config_payload[key]
+                        for key in ["title_property", "date_property", "type_property"]
+                        if config_payload.get(key)
+                    }
+                )
                 return resolved
     return {}
 
@@ -6935,6 +7039,7 @@ def build_notion_create_page_payload(parameters):
         title = brief(source_text, 80) if source_text else generated_title("Nota Kim")
     parent_page_id = str(first_value(parameters, "parent_page_id", "page_id", "parent_id", "notion_page_id") or "").strip()
     parent_database_id = str(first_value(parameters, "parent_database_id", "database_id", "parent_database", "notion_database_id") or "").strip()
+    resolved = {}
     if semantic_notion_parent(parent_page_id):
         parent_page_id = ""
     if semantic_notion_parent(parent_database_id):
@@ -6943,7 +7048,7 @@ def build_notion_create_page_payload(parameters):
         parent = {"type": "page_id", "page_id": parent_page_id}
         properties = {"title": {"title": notion_rich_text(title)}}
     elif parent_database_id:
-        title_property = str(parameters.get("title_property") or "Name").strip()
+        title_property = notion_database_title_property(parameters, resolved)
         parent = {"type": "database_id", "database_id": parent_database_id}
         properties = {title_property: {"title": notion_rich_text(title)}}
     else:
@@ -6954,11 +7059,13 @@ def build_notion_create_page_payload(parameters):
             parent = {"type": "page_id", "page_id": resolved.get("page_id")}
             properties = {"title": {"title": notion_rich_text(title)}}
         else:
-            title_property = str(parameters.get("title_property") or "Name").strip()
+            title_property = notion_database_title_property(parameters, resolved)
             parent = {"type": "database_id", "database_id": resolved.get("database_id")}
             properties = {title_property: {"title": notion_rich_text(title)}}
         parameters["_notion_parent_resolution"] = resolved
     payload = {"parent": parent, "properties": properties}
+    if parent.get("type") == "database_id":
+        payload["properties"].update(notion_bridge_database_properties(parameters, resolved))
     children = notion_children_from_content(first_value(parameters, "content", "body", "text", "message", "description", "summary") or "")
     if children:
         payload["children"] = children
@@ -7172,6 +7279,14 @@ def agent_action_defaults(action, parameters):
     if action in {"create_page", "note", "nota", "notion_note", "crear_nota"}:
         if not first_value(data, "title", "name", "subject", "asunto", "page_title"):
             data["title"] = generated_title("Nota Kim")
+        return "notion", "create_page", data
+    if action in {"schedule_meeting", "create_meeting", "meeting", "agendar_reunion", "agendar_reunión", "crear_reunion", "crear_reunión", "agendar_cita"}:
+        if not first_value(data, "title", "name", "subject", "asunto", "page_title"):
+            data["title"] = generated_title("Reunion Kim")
+        if not first_value(data, "meeting_type", "tipo", "event_type", "type", "category"):
+            data["meeting_type"] = "Brainstorming"
+        if not first_value(data, "notion_parent_query", "parent_query", "workspace", "domain", "parent_database_id", "database_id"):
+            data["notion_parent_query"] = "Reuniones"
         return "notion", "create_page", data
     return "", action, data
 
@@ -7523,10 +7638,12 @@ def api_bridge_templates():
                 },
                 "defaults": {
                     "title": "se genera desde content o 'Nota Kim <timestamp>'",
-                    "title_property": "Name para bases de datos",
+                    "title_property": "Name para bases genericas; Nombre para la base Reuniones",
+                    "date_property": "Hora para reuniones/eventos si existe start_at",
+                    "type_property": "Tipo para reuniones/eventos si existe meeting_type",
                     "parent": "default configurable en BIFROST/MEMORY/context/notion_default_parent.json; si falta, se guarda outbox local.",
                 },
-                "rule": "No pidas IDs en conversacion normal. Si falta parent real, el bridge intenta resolverlo y, si Notion no tiene un destino compartido, guarda la nota en BIFROST/MEMORY/notion_outbox para no perder contexto.",
+                "rule": "No pidas IDs en conversacion normal. Para reuniones usa action agent_action/schedule_meeting o notion/create_page con title, content, start_at, end_at, meeting_type. Si falta parent real, el bridge intenta resolver Reuniones y, si Notion no tiene un destino compartido, guarda la nota en BIFROST/MEMORY/notion_outbox para no perder contexto.",
             },
         },
     }
@@ -9413,7 +9530,8 @@ def realtime_session_config():
                                     "Accion. ClickUp: status, inventory, list_spaces, list_folders, "
                                     "list_lists, list_tasks, get_task, create_folder, create_list, "
                                     "create_task, update_task, comment_task. Notion: status, search, "
-                                    "get_page, create_page, update_page_properties. Templates: templates, self_test. Gmail: status, auth_url, "
+                                    "get_page, create_page, update_page_properties; para reuniones usa agent_action schedule_meeting "
+                                    "o create_page con start_at/end_at/meeting_type hacia la base Reuniones. Templates: templates, self_test. Gmail: status, auth_url, "
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "

@@ -1,5 +1,7 @@
 # Kim Live API Bridge Spec
 
+Update 2026-05-21 / Kim Live 1.5.34: KIM-0065 porta al repo la agenda Notion que habia quedado solo en runtime. `notion/create_page` ahora puede crear registros tipo reunion usando `Nombre`, `Hora` y `Tipo`, y `agent_action` acepta `schedule_meeting`/`agendar_reunion` para enrutar a la base `Reuniones` sin pedir IDs. Se guarda default en `BIFROST/MEMORY/context/notion_default_parent.json`. Bloqueo externo: la base Notion `Reuniones` debe compartirse con la integracion `KimOne`; Codex MCP puede verla, pero el token directo de Kim Live aun recibe 404 si no se comparte.
+
 Update 2026-05-20 / Kim Live 1.5.33: KIM-0063 agrega playbook comercial inbound para Ai People. Kim por Twilio debe actuar como vendedora consultiva: preguntar nombre, empresa, rol, dolor, costo de seguir igual, soluciones previas, resultado deseado y horarios para cita con Dr. Yehoshua. Los precios se manejan solo como rangos orientativos y los temas de inversion/portafolio se escalan sin prometer rendimientos. Se documenta el estado real de transcripts: Kim Live web/local guarda transcript literal; Twilio guarda transcript cuando hay audio de Media Streams y deja ledger cuando no hay audio util.
 
 Update 2026-05-20 / Kim Live 1.5.32: recepcion Twilio refinada. Si el caller inbound es desconocido, Kim saluda sencillo, se presenta, explica brevemente Ai People y pide primero el nombre. Si el caller ya esta identificado, Kim saluda por nombre y continua el hilo previo/pending propio del contacto, sin revelar informacion de terceros.
