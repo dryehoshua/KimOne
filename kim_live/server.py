@@ -234,7 +234,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.69"
+APP_VERSION = "1.5.70"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -17302,6 +17302,33 @@ def openai_realtime_call(offer_sdp):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/oauth/zoom/start":
+            try:
+                url = zoom_oauth_start_url(self)
+                self.send_response(302)
+                self.send_header("Location", url)
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+            except Exception:
+                self.send_response(500)
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+            return
+        if parsed.path in {"/", "/index.html", "/oauth/zoom/callback", "/api/auth/status", "/twilio/health"}:
+            self.send_response(200)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
+        if parsed.path in PUBLIC_ASSETS or parsed.path.startswith("/assets/kim/"):
+            self.send_response(200)
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            return
+        self.send_response(404)
+        self.end_headers()
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path in {"/", "/index.html"}:
