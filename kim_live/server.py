@@ -158,6 +158,10 @@ NOTION_OUTBOX_DIR = MEMORY_ROOT / "notion_outbox"
 RUNTIME_NOTION_OUTBOX_DIR = RUNTIME_MEMORY_ROOT / "notion_outbox"
 ZOOM_MEETINGS_LOG = MEMORY_CONTEXT_DIR / "zoom_meetings.jsonl"
 RUNTIME_ZOOM_MEETINGS_LOG = RUNTIME_CONTEXT / "zoom_meetings.jsonl"
+ZOOM_TRANSCRIPTS_DIR = MEMORY_ROOT / "zoom_transcripts"
+RUNTIME_ZOOM_TRANSCRIPTS_DIR = RUNTIME_MEMORY_ROOT / "zoom_transcripts"
+ZOOM_TRANSCRIPTS_LOG = MEMORY_CONTEXT_DIR / "zoom_transcripts.jsonl"
+RUNTIME_ZOOM_TRANSCRIPTS_LOG = RUNTIME_CONTEXT / "zoom_transcripts.jsonl"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
 RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
 HOSTINGER_MAIL_LOG = MEMORY_CONTEXT_DIR / "hostinger_mail_actions.jsonl"
@@ -230,7 +234,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.68"
+APP_VERSION = "1.5.69"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -3643,8 +3647,139 @@ def zoom_record_meeting(parameters, host, meeting):
     return record
 
 
+def zoom_human_start_time(meeting, parameters=None):
+    parameters = parameters or {}
+    timezone_name = str(first_value(parameters, "timezone", "tz", "zona_horaria", default=meeting.get("timezone") or DEFAULT_SCHEDULER_TIMEZONE) or DEFAULT_SCHEDULER_TIMEZONE)
+    raw = str(meeting.get("start_time") or first_value(parameters, "start_at", "start_time", "datetime", "cuando", default="") or "").strip()
+    if not raw:
+        return ""
+    try:
+        if raw.endswith("Z"):
+            parsed = dt.datetime.fromisoformat(raw[:-1] + "+00:00").astimezone(ZoneInfo(timezone_name))
+        else:
+            parsed = dt.datetime.fromisoformat(raw)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=ZoneInfo(timezone_name))
+            else:
+                parsed = parsed.astimezone(ZoneInfo(timezone_name))
+        return parsed.strftime("%Y-%m-%d %H:%M") + f" {timezone_name}"
+    except Exception:
+        return f"{raw} {timezone_name}".strip()
+
+
+def zoom_invitation_subject(meeting, parameters=None):
+    parameters = parameters or {}
+    explicit = str(first_value(parameters, "invite_subject", "email_subject", "subject", "asunto", default="") or "").strip()
+    if explicit:
+        return explicit
+    topic = str(meeting.get("topic") or first_value(parameters, "topic", "title", "name", default="Reunion Zoom") or "Reunion Zoom").strip()
+    return f"Invitacion Zoom: {topic}"
+
+
+def zoom_invitation_text(meeting, parameters=None):
+    parameters = parameters or {}
+    meeting = meeting or {}
+    greeting = str(first_value(parameters, "greeting", "saludo", default="Hola,") or "").strip()
+    intro = str(
+        first_value(
+            parameters,
+            "invite_intro",
+            "intro",
+            "message_intro",
+            default="Te comparto la invitacion para nuestra reunion con el Dr. Yehoshua.",
+        )
+        or ""
+    ).strip()
+    topic = str(meeting.get("topic") or first_value(parameters, "topic", "title", "name", default="Reunion Zoom") or "Reunion Zoom").strip()
+    start = zoom_human_start_time(meeting, parameters)
+    duration = meeting.get("duration") or first_value(parameters, "duration", "duration_minutes", "minutes", default="")
+    agenda = str(meeting.get("agenda") or first_value(parameters, "agenda", "description", "objective", "objetivo", default="") or "").strip()
+    join_url = str(meeting.get("join_url") or "").strip()
+    lines = [greeting, "", intro, "", f"Reunion: {topic}"]
+    if start:
+        lines.append(f"Fecha y hora: {start}")
+    if duration:
+        lines.append(f"Duracion: {duration} minutos")
+    if agenda:
+        lines.append(f"Objetivo: {agenda}")
+    if join_url:
+        lines.extend(["", f"Link de Zoom: {join_url}"])
+    if meeting.get("id"):
+        lines.append(f"Meeting ID: {meeting.get('id')}")
+    if meeting.get("password"):
+        lines.append(f"Passcode: {meeting.get('password')}")
+    closing = str(first_value(parameters, "closing", "cierre", default="Quedo atenta por si necesitas ajustar algo.") or "").strip()
+    if closing:
+        lines.extend(["", closing])
+    signature = str(first_value(parameters, "signature", "firma", default="Kim Yan\nAI People") or "").strip()
+    if signature and not boolish(parameters.get("no_signature")):
+        lines.extend(["", signature])
+    return "\n".join(lines).strip()
+
+
+def zoom_invite_recipients(parameters=None):
+    parameters = parameters or {}
+    raw_whatsapp = first_value(parameters, "whatsapp_to", "to_whatsapp", "phone", "telefono", "whatsapp", default="")
+    raw_email = first_value(parameters, "email_to", "to_email", "email", "correo", default="")
+    raw_to = first_value(parameters, "to", "recipient", "recipients", "destinatario", default="")
+    whatsapp_values = []
+    email_values = []
+    if isinstance(raw_whatsapp, list):
+        whatsapp_values.extend(raw_whatsapp)
+    elif raw_whatsapp:
+        whatsapp_values.extend(re.split(r"[,;\s]+", str(raw_whatsapp)))
+    if isinstance(raw_email, list):
+        email_values.extend(raw_email)
+    elif raw_email:
+        email_values.extend(re.split(r"[,;\s]+", str(raw_email)))
+    if raw_to:
+        raw_items = raw_to if isinstance(raw_to, list) else re.split(r"[,;\s]+", str(raw_to))
+        for item in raw_items:
+            text = str(item or "").strip()
+            if not text:
+                continue
+            if "@" in text:
+                email_values.append(text)
+            elif re.search(r"\d", text):
+                whatsapp_values.append(text)
+    email_values = list(dict.fromkeys(addr for addr in normalize_email_recipients(email_values) if addr))
+    whatsapp_values = list(dict.fromkeys(normalize_phone_number(value) for value in whatsapp_values if normalize_phone_number(value)))
+    return {"whatsapp": whatsapp_values, "email": email_values}
+
+
+def zoom_invite_preview(parameters=None):
+    parameters = parameters or {}
+    payload = zoom_create_meeting_payload(parameters)
+    recipients = zoom_invite_recipients(parameters)
+    channels = []
+    if recipients["whatsapp"]:
+        channels.append("WhatsApp")
+    if recipients["email"]:
+        channels.append("email")
+    return {
+        "meeting_payload": payload,
+        "recipients": recipients,
+        "channels": channels,
+        "will_send": bool(channels),
+    }
+
+
+def zoom_requires_authorization_result(action="create_and_send_invite"):
+    return {
+        "ok": False,
+        "provider": "zoom",
+        "action": action,
+        "requires_authorization": True,
+        "auth_url": "https://kim.aipeople.app/oauth/zoom/start",
+        "status": zoom_status(live=False),
+        "message": "Zoom esta configurado, pero falta autorizar la cuenta. Abre el auth_url, inicia sesion en Zoom y acepta los permisos.",
+    }
+
+
 def zoom_create_meeting(parameters=None, confirm=False):
     parameters = parameters or {}
+    if not zoom_authorized() and not zoom_s2s_configured():
+        return zoom_requires_authorization_result("create_meeting")
     token = zoom_access_token()
     host = zoom_resolve_host(parameters, token=token)
     payload = zoom_create_meeting_payload(parameters)
@@ -3661,6 +3796,430 @@ def zoom_create_meeting(parameters=None, confirm=False):
     safe = zoom_safe_meeting_result(meeting)
     record = zoom_record_meeting(parameters, host, meeting)
     return {"ok": True, "provider": "zoom", "action": "create_meeting", "meeting": safe, "join_url": safe.get("join_url"), "meeting_log": record, "confirmed": True}
+
+
+def zoom_create_and_send_invite(parameters=None, confirm=False):
+    parameters = parameters or {}
+    if not zoom_authorized() and not zoom_s2s_configured():
+        return zoom_requires_authorization_result("create_and_send_invite")
+    preview = zoom_invite_preview(parameters)
+    if not confirm:
+        summary = f"Crear reunion Zoom '{preview['meeting_payload'].get('topic')}'"
+        if preview["channels"]:
+            summary += " y enviar invitacion por " + " y ".join(preview["channels"])
+        else:
+            summary += " y devolver invitacion lista para copiar"
+        prepared = confirmation_preview(
+            "zoom",
+            "create_and_send_invite",
+            summary + ".",
+            preview,
+            execution_parameters=parameters,
+        )
+        prepared["preview"] = preview
+        return prepared
+    meeting_result = zoom_create_meeting(parameters, confirm=True)
+    if not meeting_result.get("ok"):
+        return meeting_result
+    meeting = meeting_result.get("meeting") or {}
+    invite_text = zoom_invitation_text(meeting, parameters)
+    subject = zoom_invitation_subject(meeting, parameters)
+    recipients = zoom_invite_recipients(parameters)
+    deliveries = []
+    failures = []
+    for phone in recipients["whatsapp"]:
+        try:
+            delivery = run_twilio_bridge(
+                "send_whatsapp",
+                {
+                    "to": phone,
+                    "body": invite_text,
+                    "contact_name": first_value(parameters, "contact_name", "client_name", "name", default="Invitado Zoom"),
+                    "relationship": first_value(parameters, "relationship", default="meeting_invitee"),
+                    "company": first_value(parameters, "company", "empresa", default="AI People"),
+                    "context_id": first_value(parameters, "context_id", default=f"ZOOM-{meeting.get('id') or today()}"),
+                },
+                confirm=True,
+            )
+            deliveries.append(delivery)
+        except Exception as exc:
+            failures.append({"channel": "whatsapp", "to": phone, "error": brief(str(exc), 500)})
+    if recipients["email"]:
+        try:
+            delivery = run_hostinger_mail_bridge(
+                "send_email",
+                {
+                    "mailbox": first_value(parameters, "mailbox", "from", "sender", default=""),
+                    "to": recipients["email"],
+                    "subject": subject,
+                    "body": invite_text,
+                    "from_name": first_value(parameters, "from_name", default="Kim Yan"),
+                },
+                confirm=True,
+            )
+            deliveries.append(delivery)
+        except Exception as exc:
+            failures.append({"channel": "email", "to": recipients["email"], "error": brief(str(exc), 500)})
+    result = {
+        "ok": not failures,
+        "provider": "zoom",
+        "action": "create_and_send_invite",
+        "meeting": meeting,
+        "join_url": meeting.get("join_url"),
+        "invite_subject": subject,
+        "invite_text": invite_text,
+        "recipients": recipients,
+        "deliveries": deliveries,
+        "failures": failures,
+        "meeting_log": meeting_result.get("meeting_log"),
+        "confirmed": True,
+    }
+    append_jsonl_any([ZOOM_MEETINGS_LOG, RUNTIME_ZOOM_MEETINGS_LOG], {"at": now_iso(), "provider": "zoom", "action": "create_and_send_invite", "result": sanitize_for_log(result)})
+    append_memory("zoom_invite_sent", {"meeting_id": meeting.get("id"), "topic": meeting.get("topic"), "recipients": recipients, "failures": failures})
+    return result
+
+
+def zoom_encode_meeting_id(meeting_id):
+    raw = str(meeting_id or "").strip()
+    if not raw:
+        raise ValueError("Falta meeting_id/meeting_uuid para consultar transcript de Zoom.")
+    encoded = urllib.parse.quote(raw, safe="")
+    if raw.startswith("/") or "//" in raw:
+        encoded = urllib.parse.quote(encoded, safe="")
+    return encoded
+
+
+def zoom_transcript_meeting_id(parameters=None):
+    parameters = parameters or {}
+    value = first_value(parameters, "meeting_id", "meetingId", "meeting_uuid", "uuid", "id", "recording_id", default="")
+    if not value:
+        raise ValueError("Falta meeting_id o meeting_uuid para consultar transcript de Zoom.")
+    return str(value).strip()
+
+
+def zoom_download_bytes(download_url, token=None):
+    token = token or zoom_access_token()
+    headers = {"Authorization": f"Bearer {token['access_token']}", "User-Agent": f"KimLive/{APP_VERSION}"}
+    request = urllib.request.Request(download_url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return response.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code not in {401, 403}:
+            raise
+    separator = "&" if "?" in download_url else "?"
+    fallback_url = f"{download_url}{separator}access_token={urllib.parse.quote(token['access_token'])}"
+    request = urllib.request.Request(fallback_url, headers={"User-Agent": f"KimLive/{APP_VERSION}"}, method="GET")
+    with urllib.request.urlopen(request, timeout=120) as response:
+        return response.read()
+
+
+def zoom_file_text(data):
+    raw = data or b""
+    for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
+
+
+def zoom_clean_transcript_text(raw_text):
+    text = str(raw_text or "").replace("\r\n", "\n").replace("\r", "\n")
+    cleaned = []
+    skip_next_setting = False
+    timestamp_re = re.compile(r"^\s*(?:\d{1,2}:)?\d{2}:\d{2}\.\d{3}\s+-->\s+(?:\d{1,2}:)?\d{2}:\d{2}\.\d{3}")
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if cleaned and cleaned[-1]:
+                cleaned.append("")
+            continue
+        if line.upper().startswith("WEBVTT") or line.startswith("NOTE"):
+            continue
+        if timestamp_re.search(line):
+            skip_next_setting = True
+            continue
+        if skip_next_setting and re.match(r"^(align|position|size|line):", line, flags=re.I):
+            continue
+        skip_next_setting = False
+        if re.fullmatch(r"\d+", line):
+            continue
+        line = re.sub(r"<v\s+([^>]+)>", r"\1: ", line)
+        line = re.sub(r"</v>", "", line)
+        line = re.sub(r"<[^>]+>", "", line)
+        line = html.unescape(line)
+        line = re.sub(r"\s+", " ", line).strip()
+        if line:
+            cleaned.append(line)
+    compact = "\n".join(cleaned)
+    compact = re.sub(r"\n{3,}", "\n\n", compact)
+    return compact.strip()
+
+
+def zoom_transcript_candidates(payload):
+    candidates = []
+
+    def add_candidate(item, source):
+        if not isinstance(item, dict):
+            return
+        download_url = item.get("download_url") or item.get("transcript_download_url") or item.get("url") or item.get("downloadUrl")
+        if not download_url:
+            return
+        file_type = str(item.get("file_type") or item.get("file_extension") or item.get("recording_type") or item.get("type") or "").upper()
+        name = str(item.get("file_name") or item.get("name") or item.get("id") or "").strip()
+        score = 0
+        if "TRANSCRIPT" in file_type or "TRANSCRIPT" in name.upper():
+            score += 20
+        if "VTT" in file_type or name.lower().endswith(".vtt") or ".vtt" in download_url.lower():
+            score += 10
+        if "CC" in file_type or "CHAT" in file_type:
+            score -= 5
+        candidates.append({"source": source, "score": score, "metadata": item, "download_url": download_url})
+
+    if isinstance(payload, dict):
+        add_candidate(payload, "direct")
+        for key in ("transcript_files", "transcripts", "recording_files", "files"):
+            for item in payload.get(key) or []:
+                add_candidate(item, key)
+    elif isinstance(payload, list):
+        for item in payload:
+            add_candidate(item, "list")
+    return sorted(candidates, key=lambda item: item.get("score", 0), reverse=True)
+
+
+def zoom_fetch_transcript_file(meeting_id, token=None):
+    token = token or zoom_access_token()
+    encoded = zoom_encode_meeting_id(meeting_id)
+    errors = []
+    for path in (f"/meetings/{encoded}/transcript", f"/meetings/{encoded}/recordings"):
+        try:
+            payload = zoom_request(path, token=token)
+            candidates = zoom_transcript_candidates(payload)
+            if candidates:
+                candidate = candidates[0]
+                candidate["api_path"] = path
+                candidate["api_payload"] = payload
+                return candidate
+        except Exception as exc:
+            errors.append({"path": path, "error": brief(str(exc), 500)})
+    return {"error": "Zoom no devolvio transcript para esa reunion.", "errors": errors}
+
+
+def zoom_transcript_paths(meeting_id, suffix):
+    safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(meeting_id or "meeting")).strip("_") or "meeting"
+    stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"zoom_transcript_{safe_id}_{stamp}{suffix}"
+    return ZOOM_TRANSCRIPTS_DIR / filename, RUNTIME_ZOOM_TRANSCRIPTS_DIR / filename
+
+
+def zoom_store_transcript(meeting_id, raw_bytes, raw_text, clean_text, metadata):
+    raw_suffix = ".vtt" if "WEBVTT" in (raw_text or "")[:80].upper() else ".txt"
+    raw_primary, raw_runtime = zoom_transcript_paths(meeting_id, raw_suffix)
+    txt_primary, txt_runtime = zoom_transcript_paths(meeting_id, ".txt")
+    raw_written = write_bytes_file_both(raw_primary, raw_runtime, raw_bytes)
+    txt_written = []
+    for path in (txt_primary, txt_runtime):
+        try:
+            write_text_file(path, clean_text)
+            txt_written.append(str(path))
+        except (PermissionError, OSError):
+            continue
+    record = {
+        "at": now_iso(),
+        "provider": "zoom",
+        "action": "get_transcript",
+        "meeting_id": meeting_id,
+        "raw_paths": raw_written,
+        "text_paths": txt_written,
+        "char_count": len(clean_text or ""),
+        "metadata": sanitize_for_log(metadata),
+    }
+    append_jsonl_any([ZOOM_TRANSCRIPTS_LOG, RUNTIME_ZOOM_TRANSCRIPTS_LOG], record)
+    append_memory("zoom_transcript_saved", {"meeting_id": meeting_id, "text_paths": txt_written, "char_count": record["char_count"]})
+    return record
+
+
+def zoom_fetch_transcript(parameters=None):
+    parameters = parameters or {}
+    if not zoom_authorized() and not zoom_s2s_configured():
+        return zoom_requires_authorization_result("get_transcript")
+    token = zoom_access_token()
+    meeting_id = zoom_transcript_meeting_id(parameters)
+    candidate = zoom_fetch_transcript_file(meeting_id, token=token)
+    if candidate.get("error"):
+        return {
+            "ok": False,
+            "provider": "zoom",
+            "action": "get_transcript",
+            "meeting_id": meeting_id,
+            "message": (
+                "No encontre transcript descargable para esa reunion. Zoom solo lo entrega si la reunion tuvo cloud recording "
+                "con audio transcript habilitado y el OAuth tiene permisos de lectura de recording/transcript."
+            ),
+            "errors": candidate.get("errors") or [],
+        }
+    raw_bytes = zoom_download_bytes(candidate["download_url"], token=token)
+    raw_text = zoom_file_text(raw_bytes)
+    clean_text = zoom_clean_transcript_text(raw_text) or raw_text.strip()
+    record = zoom_store_transcript(meeting_id, raw_bytes, raw_text, clean_text, candidate)
+    return {
+        "ok": True,
+        "provider": "zoom",
+        "action": "get_transcript",
+        "meeting_id": meeting_id,
+        "char_count": len(clean_text),
+        "transcript_text": clean_text if len(clean_text) <= 6000 else clean_text[:6000].rstrip() + "\n\n[Transcript completo guardado en BIFROST.]",
+        "text_paths": record.get("text_paths") or [],
+        "raw_paths": record.get("raw_paths") or [],
+        "metadata": sanitize_for_log(candidate.get("metadata") or {}),
+        "log": record,
+    }
+
+
+def zoom_transcript_summary_text(transcript_text, parameters=None):
+    parameters = parameters or {}
+    text = str(transcript_text or "").strip()
+    if not text:
+        return "No hay transcript legible para resumir."
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    keywords = (
+        "acuerdo",
+        "pendiente",
+        "siguiente",
+        "tarea",
+        "enviar",
+        "mandar",
+        "confirmar",
+        "agenda",
+        "reunion",
+        "reunión",
+        "cliente",
+        "precio",
+        "propuesta",
+        "next",
+        "follow",
+    )
+    useful = []
+    for line in lines:
+        if any(keyword in line.lower() for keyword in keywords):
+            useful.append(line)
+        if len(useful) >= 8:
+            break
+    opening = lines[:5]
+    if useful:
+        bullets = "\n".join(f"- {brief(item, 260)}" for item in useful)
+    else:
+        bullets = "\n".join(f"- {brief(item, 260)}" for item in opening[:6])
+    title = str(first_value(parameters, "summary_title", "title", "topic", default="Resumen de reunion Zoom") or "Resumen de reunion Zoom").strip()
+    return (
+        f"{title}\n\n"
+        "Resumen local de Kim:\n"
+        f"{bullets}\n\n"
+        "Nota: este resumen fue generado localmente desde el transcript guardado en BIFROST; si necesitas sintesis profunda con IA, pide resumen AI explicitamente."
+    ).strip()
+
+
+def zoom_transcript_delivery_body(fetch_result, parameters=None):
+    parameters = parameters or {}
+    send_type = str(first_value(parameters, "send_type", "content_type", "tipo", default="summary") or "summary").strip().lower()
+    transcript = str(fetch_result.get("transcript_text") or "").strip()
+    if send_type in {"full", "transcript", "transcripcion", "transcripción", "complete", "completo"}:
+        text = transcript
+        if len(text) > 50000:
+            text = text[:50000].rstrip() + "\n\n[Transcript completo guardado en BIFROST; recortado para envio.]"
+    else:
+        text = zoom_transcript_summary_text(transcript, parameters)
+    paths = fetch_result.get("text_paths") or []
+    if paths:
+        text += "\n\nBIFROST transcript: " + paths[0]
+    return text.strip(), send_type
+
+
+def zoom_send_transcript(parameters=None, confirm=False):
+    parameters = parameters or {}
+    if not zoom_authorized() and not zoom_s2s_configured():
+        return zoom_requires_authorization_result("send_transcript")
+    fetch_result = zoom_fetch_transcript(parameters)
+    if not fetch_result.get("ok"):
+        return fetch_result
+    body, send_type = zoom_transcript_delivery_body(fetch_result, parameters)
+    subject = str(first_value(parameters, "subject", "email_subject", "asunto", default="Resumen de reunion Zoom") or "Resumen de reunion Zoom").strip()
+    recipients = zoom_invite_recipients(parameters)
+    preview_body = body
+    if recipients["whatsapp"] and len(preview_body) > 1400:
+        preview_body = brief(preview_body, 1400)
+    preview = {
+        "meeting_id": fetch_result.get("meeting_id"),
+        "send_type": send_type,
+        "recipients": recipients,
+        "subject": subject,
+        "body_preview": preview_body,
+        "text_paths": fetch_result.get("text_paths") or [],
+    }
+    if not confirm:
+        prepared = confirmation_preview(
+            "zoom",
+            "send_transcript",
+            f"Enviar {send_type} de Zoom por " + (" y ".join(channel for channel, values in {"WhatsApp": recipients["whatsapp"], "email": recipients["email"]}.items() if values) or "canal pendiente") + ".",
+            preview,
+            execution_parameters=parameters,
+        )
+        prepared["preview"] = preview
+        return prepared
+    deliveries = []
+    failures = []
+    for phone in recipients["whatsapp"]:
+        whatsapp_body = body if len(body) <= 1400 else brief(body, 1400)
+        try:
+            deliveries.append(
+                run_twilio_bridge(
+                    "send_whatsapp",
+                    {
+                        "to": phone,
+                        "body": whatsapp_body,
+                        "contact_name": first_value(parameters, "contact_name", "client_name", "name", default="Invitado Zoom"),
+                        "relationship": first_value(parameters, "relationship", default="meeting_transcript_recipient"),
+                        "company": first_value(parameters, "company", "empresa", default="AI People"),
+                        "context_id": first_value(parameters, "context_id", default=f"ZOOM-TRANSCRIPT-{fetch_result.get('meeting_id') or today()}"),
+                    },
+                    confirm=True,
+                )
+            )
+        except Exception as exc:
+            failures.append({"channel": "whatsapp", "to": phone, "error": brief(str(exc), 500)})
+    if recipients["email"]:
+        try:
+            deliveries.append(
+                run_hostinger_mail_bridge(
+                    "send_email",
+                    {
+                        "mailbox": first_value(parameters, "mailbox", "from", "sender", default=""),
+                        "to": recipients["email"],
+                        "subject": subject,
+                        "body": body,
+                        "from_name": first_value(parameters, "from_name", default="Kim Yan"),
+                    },
+                    confirm=True,
+                )
+            )
+        except Exception as exc:
+            failures.append({"channel": "email", "to": recipients["email"], "error": brief(str(exc), 500)})
+    result = {
+        "ok": not failures,
+        "provider": "zoom",
+        "action": "send_transcript",
+        "meeting_id": fetch_result.get("meeting_id"),
+        "send_type": send_type,
+        "recipients": recipients,
+        "deliveries": deliveries,
+        "failures": failures,
+        "text_paths": fetch_result.get("text_paths") or [],
+        "confirmed": True,
+    }
+    append_jsonl_any([ZOOM_TRANSCRIPTS_LOG, RUNTIME_ZOOM_TRANSCRIPTS_LOG], {"at": now_iso(), "provider": "zoom", "action": "send_transcript", "result": sanitize_for_log(result)})
+    append_memory("zoom_transcript_sent", {"meeting_id": result.get("meeting_id"), "recipients": recipients, "failures": failures})
+    return result
 
 
 def zoom_list_meetings(parameters=None):
@@ -3701,7 +4260,7 @@ def zoom_status(live=False):
         "has_client_id": has_client_id,
         "has_client_secret": has_client_secret,
         "write_requires_confirmation": True,
-        "capabilities": ["status", "auth_url", "list_users", "list_meetings", "create_meeting"],
+        "capabilities": ["status", "auth_url", "list_users", "list_meetings", "create_meeting", "create_and_send_invite", "get_transcript", "send_transcript"],
         "auth_type": "user_oauth_or_server_to_server_oauth",
         "auth_url": "https://kim.aipeople.app/oauth/zoom/start",
         "docs": "https://developers.zoom.us/api-hub/",
@@ -3730,6 +4289,34 @@ def run_zoom_bridge(action, parameters, confirm=False):
         return zoom_list_users(parameters)
     if action in {"list_meetings", "meetings", "upcoming_meetings"}:
         return zoom_list_meetings(parameters)
+    if action in {
+        "create_and_send_invite",
+        "create_invite",
+        "send_invite",
+        "send_invitation",
+        "crear_y_enviar_invitacion",
+        "crear_y_mandar_invitacion",
+        "zoom_invite",
+        "zoom_invitation",
+        "agendar_y_enviar_zoom",
+        "mandar_invitacion_zoom",
+    }:
+        return zoom_create_and_send_invite(parameters, confirm=confirm)
+    if action in {"get_transcript", "fetch_transcript", "transcript", "meeting_transcript", "transcripcion", "transcripción"}:
+        return zoom_fetch_transcript(parameters)
+    if action in {
+        "send_transcript",
+        "send_summary",
+        "resend_transcript",
+        "forward_transcript",
+        "meeting_summary",
+        "reenviar_transcript",
+        "reenviar_transcripción",
+        "reenviar_resumen",
+        "mandar_resumen",
+        "mandar_transcript",
+    }:
+        return zoom_send_transcript(parameters, confirm=confirm)
     if action in {"create_meeting", "schedule_meeting", "meeting", "agendar_reunion", "agendar_reunión", "crear_reunion", "crear_reunión", "zoom_meeting"}:
         return zoom_create_meeting(parameters, confirm=confirm)
     raise ValueError(f"Accion Zoom no soportada: {action}")
@@ -10211,10 +10798,27 @@ def agent_action_defaults(action, parameters):
         return "twilio", "schedule_call", data
     if action in {"schedule_sms", "programar_sms", "agendar_sms"}:
         return "twilio", "schedule_sms", data
+    if action in {
+        "create_zoom_invite",
+        "send_zoom_invite",
+        "zoom_invite",
+        "zoom_invitation",
+        "mandar_invitacion_zoom",
+        "enviar_invitacion_zoom",
+        "agendar_y_enviar_zoom",
+        "crear_y_enviar_zoom",
+    }:
+        if not first_value(data, "topic", "title", "subject", "name", "asunto"):
+            data["topic"] = generated_title("Reunion Zoom Kim")
+        return "zoom", "create_and_send_invite", data
     if action in {"create_zoom_meeting", "schedule_zoom_meeting", "zoom_meeting", "agendar_zoom", "crear_zoom", "reunion_zoom", "reunión_zoom"}:
         if not first_value(data, "topic", "title", "subject", "name", "asunto"):
             data["topic"] = generated_title("Reunion Zoom Kim")
         return "zoom", "create_meeting", data
+    if action in {"zoom_transcript", "get_zoom_transcript", "fetch_zoom_transcript", "transcript_zoom", "transcripcion_zoom", "transcripción_zoom"}:
+        return "zoom", "get_transcript", data
+    if action in {"send_zoom_transcript", "send_zoom_summary", "reenviar_zoom_transcript", "reenviar_resumen_zoom", "mandar_resumen_zoom", "mandar_transcript_zoom"}:
+        return "zoom", "send_transcript", data
     if action in {"save_contact", "create_contact", "upsert_contact", "guardar_contacto", "crear_contacto"}:
         return "crm", "upsert_contact", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
@@ -10260,6 +10864,9 @@ def api_bridge_templates():
                 "schedule_call",
                 "schedule_sms",
                 "create_zoom_meeting",
+                "create_zoom_invite",
+                "zoom_transcript",
+                "send_zoom_summary",
                 "save_contact",
                 "mark_spam",
                 "move_to_trash",
@@ -10464,6 +11071,53 @@ def api_bridge_templates():
                     "Preparar con confirm=false. Al confirmar crea una reunion Zoom real y guarda meeting_id/join_url "
                     "en BIFROST/MEMORY/context/zoom_meetings.jsonl. Usa OAuth de usuario si se autorizo desde /oauth/zoom/start; "
                     "si se usa Server-to-Server, no uses 'me' y pasa host_user_id/host_email o deja que Kim elija usuario activo."
+                ),
+            },
+                "create_and_send_invite": {
+                "required": ["topic or title", "start_at"],
+                "optional": ["duration", "agenda", "timezone", "whatsapp_to", "email_to", "mailbox", "contact_name", "company"],
+                "aliases": {
+                    "topic": ["title", "subject", "name", "asunto"],
+                    "start_at": ["start_time", "due_at", "scheduled_at", "datetime", "cuando"],
+                    "whatsapp_to": ["to_whatsapp", "phone", "telefono", "whatsapp"],
+                    "email_to": ["to_email", "email", "correo"],
+                    "mailbox": ["from", "sender", "account"],
+                },
+                "rule": (
+                    "Preparar con confirm=false. Al confirmar crea una reunion Zoom real, formatea la invitacion con join_url, "
+                    "meeting_id/passcode si existen, y la envia por WhatsApp y/o correo. WhatsApp proactivo mantiene la regla "
+                    "de Pipedrive: el telefono debe pertenecer a una persona registrada salvo que sea el WhatsApp de control del doctor. "
+                    "Si faltan destinatarios, crea la reunion y devuelve invite_text listo para copiar."
+                ),
+            },
+            "get_transcript": {
+                "required": ["meeting_id or meeting_uuid"],
+                "aliases": {
+                    "meeting_id": ["meetingId", "id", "meeting_uuid", "uuid", "recording_id"],
+                },
+                "rule": (
+                    "Lee el transcript de una reunion Zoom y lo guarda en BIFROST/MEMORY/zoom_transcripts. "
+                    "Requiere OAuth autorizado y scope de lectura de recordings/transcripts. Solo funciona si Zoom genero cloud recording "
+                    "con audio transcript; si no existe, Kim debe decirlo claramente y no inventar transcript."
+                ),
+            },
+            "send_transcript": {
+                "required": ["meeting_id or meeting_uuid"],
+                "optional": ["send_type", "whatsapp_to", "email_to", "mailbox", "subject", "contact_name", "company"],
+                "aliases": {
+                    "meeting_id": ["meetingId", "id", "meeting_uuid", "uuid", "recording_id"],
+                    "send_type": ["content_type", "tipo"],
+                    "whatsapp_to": ["to_whatsapp", "phone", "telefono", "whatsapp"],
+                    "email_to": ["to_email", "email", "correo"],
+                    "mailbox": ["from", "sender", "account"],
+                },
+                "defaults": {
+                    "send_type": "summary",
+                },
+                "rule": (
+                    "Preparar con confirm=false. Descarga/guarda el transcript y prepara envio de resumen por defecto. "
+                    "Para email puede enviar transcript completo si send_type=transcript; para WhatsApp recorta mensajes largos y conserva ruta BIFROST. "
+                    "El envio real por WhatsApp/correo requiere confirmacion."
                 ),
             },
         },
@@ -14520,10 +15174,13 @@ def realtime_session_config():
                 "selected_mailbox en las siguientes acciones. "
                 "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
                 "o move_to_trash; no borres permanentemente. "
-                "Para Zoom usa provider zoom: status, auth_url, list_users, list_meetings o create_meeting. "
+                "Para Zoom usa provider zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript o send_transcript. "
                 "Si el prospecto quiere reunion con el Dr. Yehoshua, primero captura nombre, empresa, correo, zona horaria, objetivo y dos horarios posibles; "
-                "si ya hay horario claro, prepara provider=zoom action=create_meeting con topic/start_at/duration/timezone/agenda y confirm=false. "
+                "si ya hay horario claro y pide mandar invitacion, prepara provider=zoom action=create_and_send_invite con topic/start_at/duration/timezone/agenda y whatsapp_to o email_to. "
+                "Si solo pide crear reunion sin avisar al cliente, usa create_meeting. "
                 "No digas que hay liga Zoom hasta que Zoom devuelva join_url. Si Zoom no esta autorizado, pide abrir /oauth/zoom/start. "
+                "Si el doctor pide transcript, transcripcion, resumen de reunion Zoom o reenviarlo a cliente, usa get_transcript o send_transcript con meeting_id/meeting_uuid; "
+                "Zoom solo entrega transcripts cuando hubo cloud recording con audio transcript habilitado y scope de recording/transcript, asi que no inventes contenido si el bridge dice que no existe. "
                 "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms, send_whatsapp, "
                 "call_phone, call_report, latest_call, whatsapp_report, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
                 "y requieren confirmacion explicita antes de ejecutar, excepto send_whatsapp_report del portafolio Sr. Eli al WhatsApp Dubai del doctor. Regla dura: SMS, llamadas y WhatsApp proactivo solo pueden enviarse a personas registradas "
@@ -14651,7 +15308,7 @@ def realtime_session_config():
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
-                                    "Zoom: status, auth_url, list_users, list_meetings, create_meeting. "
+                                    "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
