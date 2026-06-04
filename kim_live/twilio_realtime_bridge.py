@@ -131,7 +131,7 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
             "model": kim.REALTIME_MODEL,
             "output_modalities": ["audio"],
             "instructions": (
-                "Habla en espanol mexicano, femenino, natural y fluido. "
+                f"{getattr(kim, 'active_voice_style', lambda: 'Habla en espanol mexicano, femenino, natural y fluido.')()} "
                 "Esta llamada viene por Twilio Media Streams: comparte memoria y tono con Kim Local, "
                 "pero es un canal telefonico distinto de la interfaz local/web. "
                 f"{mission}\n\n"
@@ -154,7 +154,7 @@ def bridge_session_config(call_sid="", caller="", called="", call_context=None):
                 },
                 "output": {
                     "format": {"type": "audio/pcmu"},
-                    "voice": kim.REALTIME_VOICE,
+                    "voice": getattr(kim, "active_realtime_voice", lambda: kim.REALTIME_VOICE)(),
                 },
             },
         },
@@ -191,11 +191,17 @@ def initial_greeting_event(call_context=None):
                 "Si es prospecto de Ai People, profundiza con tacto en dolor, costo de seguir igual, soluciones fallidas, resultado ideal y dos horarios para cita con el Dr. Yehoshua."
             )
     elif call_context:
+        opening = (call_context.get("message_to_deliver") or "").strip()
+        opening_instruction = (
+            f"Empieza con esta frase o una version natural muy cercana: '{opening}'. "
+            if opening
+            else "Primera frase recomendada: 'Hola, soy Kim, asistente del Dr. Yehoshua'. "
+        )
         greeting_instruction = (
             "Esta llamada es para una tercera persona. Presentate como Kim, asistente del Dr. Yehoshua. "
             f"La persona objetivo es {call_context.get('contact_name') or 'el destinatario'}. "
             f"Ejecuta esta mision desde el primer turno: {call_context.get('objective') or call_context.get('instructions') or call_context.get('call_context')}. "
-            "Primera frase recomendada: 'Hola, soy Kim, asistente del Dr. Yehoshua'. "
+            f"{opening_instruction}"
             "No digas 'hola doctor' salvo que confirmes que quien contesta es el doctor."
         )
     else:
@@ -336,6 +342,12 @@ async def handle_media_stream(twilio_ws):
     saved = False
     try:
         async with websockets.connect(REALTIME_WS, additional_headers=headers) as openai_ws:
+            kim.set_twilio_realtime_health(
+                "ok",
+                reason="openai_realtime_connected",
+                metadata={"session_id": session_id, "call_sid": call_sid, "context_id": context_id},
+                notify=False,
+            )
             configured = False
 
             async def configure_openai_session():
@@ -464,6 +476,21 @@ async def handle_media_stream(twilio_ws):
             log(f"OpenAI bridge closed normally session={session_id}")
             return
         error_text = kim.brief(str(exc), 800)
+        reason = "insufficient_quota" if "insufficient_quota" in error_text else "openai_realtime_bridge_error"
+        if reason == "insufficient_quota" or "api.openai.com" in error_text or "401" in error_text:
+            kim.set_twilio_realtime_health(
+                "unavailable",
+                reason=reason,
+                metadata={"session_id": session_id, "call_sid": call_sid, "context_id": context_id, "error": error_text},
+            )
+        else:
+            kim.notify_kim_live(
+                "twilio_realtime_bridge_error",
+                "Twilio realtime bridge closed",
+                error_text,
+                severity="warning",
+                metadata={"session_id": session_id, "call_sid": call_sid, "context_id": context_id},
+            )
         transcript.append(f"[system] OpenAI Realtime error: {error_text}")
         kim.append_memory(
             "twilio_realtime_openai_error",

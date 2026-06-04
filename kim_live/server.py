@@ -41,10 +41,12 @@ import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
+from zoneinfo import ZoneInfo
 
 
 APP_DIR = pathlib.Path(__file__).resolve().parent
 BIFROST = pathlib.Path("/Users/dryehoshuapython/Documents/BIFROST")
+RUNTIME_ASSETS = APP_DIR / "assets"
 MEMORY_INBOX = BIFROST / "MEMORY" / "inbox"
 RUNTIME_MEMORY_ROOT = pathlib.Path("/Users/dryehoshuapython/.kim_live/MEMORY")
 RUNTIME_MEMORY_INBOX = pathlib.Path("/Users/dryehoshuapython/.kim_live/MEMORY/inbox")
@@ -84,6 +86,8 @@ RUNTIME_RESEARCH_SOURCE_CACHE = RUNTIME_CONTEXT / "research_sources_latest.json"
 SITE_AUTH_SESSIONS = RUNTIME_CONTEXT / "site_auth_sessions.json"
 SITE_LEADS = BIFROST / "CRM" / "leads" / "kim_site_leads.jsonl"
 RUNTIME_SITE_LEADS = RUNTIME_CONTEXT / "site_leads.jsonl"
+BIFROST_EXPORT_DIR = RUNTIME_CONTEXT / "exports"
+BIFROST_EXPORT_TOKENS = RUNTIME_CONTEXT / "bifrost_export_tokens.json"
 CONTEXT_MEMORY = BIFROST / "MEMORY" / "context" / "kim_context.md"
 CONTEXT_SPEC = BIFROST / "docs" / "kim_live_context_memory_spec.md"
 CLICKUP_INVENTORY = BIFROST / "kimtools" / "clickup" / "clickup_inventory.json"
@@ -100,8 +104,32 @@ API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
 RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
 TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
+WHATSAPP_THREAD_DIR = MEMORY_ROOT / "whatsapp_threads"
+RUNTIME_WHATSAPP_THREAD_DIR = RUNTIME_MEMORY_ROOT / "whatsapp_threads"
+WHATSAPP_THREAD_INDEX = MEMORY_CONTEXT_DIR / "whatsapp_thread_index.json"
+RUNTIME_WHATSAPP_THREAD_INDEX = RUNTIME_CONTEXT / "whatsapp_thread_index.json"
+WHATSAPP_CLICKUP_OUTBOX = MEMORY_CONTEXT_DIR / "whatsapp_clickup_outbox.jsonl"
+RUNTIME_WHATSAPP_CLICKUP_OUTBOX = RUNTIME_CONTEXT / "whatsapp_clickup_outbox.jsonl"
+VOICE_PROFILE_FILE = MEMORY_CONTEXT_DIR / "kim_voice_profile.json"
+RUNTIME_VOICE_PROFILE_FILE = RUNTIME_CONTEXT / "kim_voice_profile.json"
+WHATSAPP_MEDIA_DIR = MEMORY_ROOT / "whatsapp_media"
+RUNTIME_WHATSAPP_MEDIA_DIR = RUNTIME_MEMORY_ROOT / "whatsapp_media"
+WHATSAPP_PUBLIC_AUDIO_DIR = RUNTIME_ASSETS / "whatsapp_audio"
+WHATSAPP_PUBLIC_AUDIO_PATH_PREFIX = "/media/whatsapp_audio"
+SELLER_KNOWLEDGE_DIR = MEMORY_ROOT / "knowledge" / "seller"
+RUNTIME_SELLER_KNOWLEDGE_DIR = RUNTIME_MEMORY_ROOT / "knowledge" / "seller"
+SELLER_CONTEXT_PACK = SELLER_KNOWLEDGE_DIR / "seller_context_pack.json"
+RUNTIME_SELLER_CONTEXT_PACK = RUNTIME_SELLER_KNOWLEDGE_DIR / "seller_context_pack.json"
+DOCTOR_AVAILABILITY = MEMORY_CONTEXT_DIR / "doctor_availability.json"
+RUNTIME_DOCTOR_AVAILABILITY = RUNTIME_CONTEXT / "doctor_availability.json"
 TWILIO_CALL_LOG = MEMORY_CONTEXT_DIR / "twilio_call_actions.jsonl"
 RUNTIME_TWILIO_CALL_LOG = RUNTIME_CONTEXT / "twilio_call_actions.jsonl"
+TWILIO_REALTIME_SYNC_QUEUE = MEMORY_CONTEXT_DIR / "twilio_realtime_sync_queue.jsonl"
+RUNTIME_TWILIO_REALTIME_SYNC_QUEUE = RUNTIME_CONTEXT / "twilio_realtime_sync_queue.jsonl"
+TWILIO_REALTIME_HEALTH = MEMORY_CONTEXT_DIR / "twilio_realtime_health.json"
+RUNTIME_TWILIO_REALTIME_HEALTH = RUNTIME_CONTEXT / "twilio_realtime_health.json"
+KIM_LIVE_NOTIFICATIONS = MEMORY_CONTEXT_DIR / "kim_live_notifications.jsonl"
+RUNTIME_KIM_LIVE_NOTIFICATIONS = RUNTIME_CONTEXT / "kim_live_notifications.jsonl"
 TWILIO_CALL_CONTEXTS = MEMORY_CONTEXT_DIR / "twilio_call_contexts.json"
 RUNTIME_TWILIO_CALL_CONTEXTS = RUNTIME_CONTEXT / "twilio_call_contexts.json"
 EXTERNAL_CALL_CONTEXT_BLOCKS = MEMORY_CONTEXT_DIR / "external_call_context_blocks.json"
@@ -114,6 +142,8 @@ PERSON_CONTEXT_DIR = MEMORY_ROOT / "person_contexts"
 RUNTIME_PERSON_CONTEXT_DIR = RUNTIME_MEMORY_ROOT / "person_contexts"
 TWILIO_PIPEDRIVE_CALL_SYNC = MEMORY_CONTEXT_DIR / "twilio_pipedrive_call_sync.json"
 RUNTIME_TWILIO_PIPEDRIVE_CALL_SYNC = RUNTIME_CONTEXT / "twilio_pipedrive_call_sync.json"
+PIPEDRIVE_PHONE_INDEX = MEMORY_CONTEXT_DIR / "pipedrive_phone_index.json"
+RUNTIME_PIPEDRIVE_PHONE_INDEX = RUNTIME_CONTEXT / "pipedrive_phone_index.json"
 CLICKUP_STRUCTURE_JSON = MEMORY_CONTEXT_DIR / "clickup_structure_latest.json"
 RUNTIME_CLICKUP_STRUCTURE_JSON = RUNTIME_CONTEXT / "clickup_structure_latest.json"
 CLICKUP_OPERATION_MAP = MEMORY_CONTEXT_DIR / "clickup_operation_map.json"
@@ -126,11 +156,28 @@ NOTION_ACCESS_INVENTORY = MEMORY_CONTEXT_DIR / "notion_access_inventory.md"
 RUNTIME_NOTION_ACCESS_INVENTORY = RUNTIME_CONTEXT / "notion_access_inventory.md"
 NOTION_OUTBOX_DIR = MEMORY_ROOT / "notion_outbox"
 RUNTIME_NOTION_OUTBOX_DIR = RUNTIME_MEMORY_ROOT / "notion_outbox"
+ZOOM_MEETINGS_LOG = MEMORY_CONTEXT_DIR / "zoom_meetings.jsonl"
+RUNTIME_ZOOM_MEETINGS_LOG = RUNTIME_CONTEXT / "zoom_meetings.jsonl"
 MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jsonl"
 RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
 HOSTINGER_MAIL_LOG = MEMORY_CONTEXT_DIR / "hostinger_mail_actions.jsonl"
 RUNTIME_HOSTINGER_MAIL_LOG = RUNTIME_CONTEXT / "hostinger_mail_actions.jsonl"
+KIM_PRODUCT_BACKLOG_JSON = MEMORY_CONTEXT_DIR / "kim_product_backlog.json"
+RUNTIME_KIM_PRODUCT_BACKLOG_JSON = RUNTIME_CONTEXT / "kim_product_backlog.json"
+KIM_PRODUCT_BACKLOG_MD = MEMORY_CONTEXT_DIR / "kim_product_backlog.md"
+RUNTIME_KIM_PRODUCT_BACKLOG_MD = RUNTIME_CONTEXT / "kim_product_backlog.md"
+KIM_PRODUCT_BACKLOG_SPEC = BIFROST / "docs" / "kim_live_whatsapp_sales_backlog.md"
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
+PORTFOLIO_REPORT_OVERRIDES = APP_DIR / "context" / "portfolio_report_overrides.json"
+RUNTIME_PORTFOLIO_REPORT_OVERRIDES = RUNTIME_CONTEXT / "portfolio_report_overrides.json"
+PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
+RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR = RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026"
+PORTFOLIO_SR_ELI_STANDARD_JSON = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
+RUNTIME_PORTFOLIO_SR_ELI_STANDARD_JSON = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
+PORTFOLIO_SR_ELI_STANDARD_MD = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
+RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
+PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
+RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
 RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
 TWILIO_MEDIA_WS_URL_FILE = RUNTIME_CONTEXT / "twilio_media_ws_url.txt"
@@ -138,6 +185,8 @@ OPERATING_MODEL = BIFROST / "docs" / "operating_model.md"
 NOTION_CLICKUP_EVAL = BIFROST / "docs" / "notion_vs_clickup_evaluation.md"
 INBOUND_CALL_PRIVACY_SPEC = BIFROST / "docs" / "kim_live_inbound_privacy_spec.md"
 RUNTIME_INBOUND_CALL_PRIVACY_SPEC = RUNTIME_CONTEXT / "kim_live_inbound_privacy_spec.md"
+MULTITENANT_AGENT_PLAN = BIFROST / "docs" / "kim_multitenant_agent_plan.md"
+RUNTIME_MULTITENANT_AGENT_PLAN = RUNTIME_CONTEXT / "kim_multitenant_agent_plan.md"
 TELEGRAM_BRIDGE = pathlib.Path("/Users/dryehoshuapython/.kim_telegram/telegram_kim_bridge.py")
 OPENAI_KEYCHAIN_SERVICE = "codex.openai.api_key"
 CLICKUP_KEYCHAIN_SERVICE = "codex.clickup.personal_token"
@@ -147,6 +196,11 @@ PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE = "codex.pipedrive.company_domain"
 GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
+ZOOM_ACCOUNT_ID_KEYCHAIN_SERVICE = "codex.zoom.account_id"
+ZOOM_CLIENT_ID_KEYCHAIN_SERVICE = "codex.zoom.client_id"
+ZOOM_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.zoom.client_secret"
+ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.zoom.refresh_token"
+ZOOM_DEFAULT_HOST_KEYCHAIN_SERVICE = "codex.zoom.default_host"
 COINMARKETCAP_KEYCHAIN_SERVICE = "codex.coinmarketcap.api_key"
 TWILIO_ACCOUNT_SID_KEYCHAIN_SERVICE = "codex.twilio.account_sid"
 TWILIO_AUTH_TOKEN_KEYCHAIN_SERVICE = "codex.twilio.auth_token"
@@ -167,20 +221,61 @@ GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
 TWILIO_API_BASE = "https://api.twilio.com/2010-04-01"
+ZOOM_OAUTH_TOKEN_URL = "https://zoom.us/oauth/token"
+ZOOM_API_BASE = "https://api.zoom.us/v2"
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 GMAIL_OAUTH_STATE_FILE = RUNTIME_CONTEXT / "google_gmail_oauth_state.json"
+ZOOM_OAUTH_STATE_FILE = RUNTIME_CONTEXT / "zoom_oauth_state.json"
 NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
-REALTIME_VOICE = "marin"
+REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.36"
+APP_VERSION = "1.5.67"
+VERSION_MEMORY_BASELINE_NOTES = [
+    ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
+    ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
+    ("1.5.43", "reconstruccion completa de transcripciones, mejoras del scheduler local y ajustes de UX."),
+]
+DEFAULT_SCHEDULER_TIMEZONE = "America/Mexico_City"
+DOCTOR_DUBAI_WHATSAPP_NUMBER = "+971585943726"
+DOCTOR_DUBAI_WHATSAPP_TO = f"whatsapp:{DOCTOR_DUBAI_WHATSAPP_NUMBER}"
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 VISION_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
+OPENAI_TRANSCRIBE_MODEL_CANDIDATES = ["gpt-4o-mini-transcribe", "gpt-4o-transcribe"]
+OPENAI_SPEECH_MODEL_CANDIDATES = ["gpt-4o-mini-tts", "tts-1"]
+WHATSAPP_REPLY_VOICE = "coral"
+TWILIO_POLLY_VOICE = "Polly.Mia"
+REALTIME_COMPATIBLE_VOICES = {"alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse", "marin", "cedar"}
+KIM_VOICE_OPTIONS = [
+    {"id": "coral", "label": "Coral", "mood": "mas aguda, alegre y luminosa", "recommended": True},
+    {"id": "nova", "label": "Nova", "mood": "joven, clara y brillante; TTS/WhatsApp, no siempre Realtime"},
+    {"id": "shimmer", "label": "Shimmer", "mood": "suave y eterea"},
+    {"id": "sage", "label": "Sage", "mood": "calmada, madura y serena"},
+    {"id": "marin", "label": "Marin", "mood": "calida y cercana"},
+    {"id": "verse", "label": "Verse", "mood": "expresiva y teatral"},
+    {"id": "alloy", "label": "Alloy", "mood": "neutral y estable"},
+]
+KIM_VOICE_STYLE = (
+    "Voz femenina, clara, alegre y seductora profesional: habla con calidez, seguridad, ritmo vivo pero elegante, "
+    "brillo vocal y sonrisa audible. Debe sonar cercana y magnetica, nunca vulgar, exagerada, infantil ni invasiva. "
+    "En contextos de clientes conserva autoridad ejecutiva y discrecion."
+)
+KIM_TTS_INSTRUCTIONS = (
+    "Speak as Kim: a feminine, warm, elegant, subtly seductive professional assistant. "
+    "Use a bright, cheerful, slightly higher feminine delivery, confident pacing, a soft smile in the voice, and natural Mexican Spanish cadence. "
+    "Keep it tasteful, executive, intimate but not sexual, and never exaggerated."
+)
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
+PUBLIC_ASSETS = {
+    "/assets/kim/kim_whatsapp_avatar_korean_digital.png": [
+        RUNTIME_ASSETS / "kim" / "kim_whatsapp_avatar_korean_digital.png",
+        BIFROST / "assets" / "kim" / "kim_whatsapp_avatar_korean_digital.png",
+    ],
+}
 INBOUND_CALL_SERVICE_SUMMARY = (
     "informacion general de servicios, seguimiento de pendientes propios, llamadas con contexto, "
     "coordinacion de correos y documentos, CRM, tareas, agentes de IA y empleados de IA, automatizacion con IA, "
@@ -216,6 +311,31 @@ AI_PEOPLE_COMMERCIAL_GUARDRAILS = (
     "frecuente: recuperar valor en 3-6 meses cuando el proceso esta bien elegido, pero nunca lo prometas como garantia. "
     "Para inversionistas, Ignis, portafolios, deuda o dinero de terceros, no prometas rendimientos ni tranquilices con "
     "frases absolutas; registra detalles y escala al Dr. Yehoshua."
+)
+REMOTE_SECRETARY_BRIDGE_POLICY = (
+    "Kim debe operar como secretaria y puente remoto hacia Kim Live. Para el Dr. Yehoshua, WhatsApp, SMS y llamadas "
+    "son canales de control operativo: recibir instrucciones, guardar contexto, notificar Kim Live y preparar acciones "
+    "sin afirmar ejecucion externa si no existe resultado confirmado. Para terceros, Kim solo usa el hilo propio del "
+    "contacto: puede preguntar disponibilidad publica, tomar recados, orientar clientes, desarrollar relacion comercial, "
+    "explicar ofertas y servicios de AI People, Tesca Elements e Ignis, y proponer cita o seguimiento. Nunca debe revelar "
+    "agenda privada, memoria de otros contactos, datos de clientes/inversionistas, portafolios privados ni tareas internas "
+    "del doctor. Si el contacto no esta identificado, primero pide nombre, empresa y necesidad."
+)
+INBOUND_RELATIONSHIP_GOODWILL_POLICY = (
+    "Cada inbound de terceros debe desarrollar relacion comercial o buen nombre para Dr. Yehoshua, Tesca Elements, "
+    "Ignis Financials/iGNIS SF y AI People. Kim debe dejar a la persona mejor orientada, escuchada y con una percepcion "
+    "profesional del grupo. Debe descubrir necesidad, cuidar reputacion, mencionar capacidades publicas pertinentes, "
+    "proponer un siguiente paso suave y registrar lo que contestaron. Si la persona no compra hoy, debe quedar una "
+    "relacion educada y retomable. Kim no presiona ni exagera; construye confianza, claridad y continuidad."
+)
+WHATSAPP_SALES_PR_MEETING_PLAYBOOK = (
+    "WhatsApp ventas/RP: Kim debe construir relacion antes de vender. Usa rapport breve, escucha activa, preguntas "
+    "consultivas, espejo del dolor, contraste del costo de seguir igual y una propuesta clara de siguiente paso. "
+    "Objetivo comercial principal: lograr una reunion diagnostica con el Dr. Yehoshua cuando haya interes real. "
+    "Debe capturar nombre, empresa, rol, correo, telefono, zona horaria, dolor principal, urgencia, herramientas actuales, "
+    "resultado deseado y dos horarios posibles. Puede preparar Zoom con provider zoom/create_meeting y confirm=false "
+    "solo si ya hay horario claro; si falta dato, lo pide con elegancia. Nunca inventa liga Zoom ni cita confirmada "
+    "sin join_url/resultado API. Para terceros, todo seguimiento queda en su hilo aislado y CRM."
 )
 DOCTOR_CONTEXT_NAME_HINTS = (
     "dr yehoshua",
@@ -262,17 +382,23 @@ HOSTINGER_MAILBOX_DISPLAY_NAMES = {
 KIM_EMAIL_SIGNATURE = "Kim Yan\nAugmented Intelligence Assistant, created by Dr. Yehoshua"
 SCHEDULER_THREAD_STARTED = False
 SCHEDULER_LOCK = threading.Lock()
+SCHEDULER_STALE_RUNNING_SECONDS = 15 * 60
 SECURITY_AUTHORIZATIONS = MEMORY_CONTEXT_DIR / "kim_security_authorizations.json"
 RUNTIME_SECURITY_AUTHORIZATIONS = RUNTIME_CONTEXT / "kim_security_authorizations.json"
 SECURITY_AUTH_TTL_SECONDS = 15 * 60
 SECURITY_SECRET_CACHE_SECONDS = 60
 SECURITY_SECRET_CACHE = {"loaded_at": 0.0, "items": [], "loaded_once": False}
+BIFROST_EXPORT_TTL_SECONDS = 30 * 60
+BIFROST_EXPORT_MAX_DOWNLOADS = 5
+BIFROST_EXPORT_SKIP_NAMES = {".DS_Store", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+BIFROST_EXPORT_SKIP_SUFFIXES = {".pyc", ".pyo"}
 HOSTINGER_IMAP_HOST = "imap.hostinger.com"
 HOSTINGER_IMAP_PORT = 993
 HOSTINGER_SMTP_HOST = "smtp.hostinger.com"
 HOSTINGER_SMTP_PORT = 465
 MARKET_PRICE_MAX_AGE_SECONDS = 15 * 60
 MARKET_PRICE_SPREAD_LIMIT_PCT = 2.0
+MARKET_PRICE_BATCH_CACHE_TTL_SECONDS = 90
 COINGECKO_IDS_BY_SYMBOL = {
     "ADA": "cardano",
     "APT": "aptos",
@@ -286,6 +412,7 @@ COINGECKO_IDS_BY_SYMBOL = {
     "HBAR": "hedera-hashgraph",
     "ICP": "internet-computer",
     "LUNC": "terra-luna",
+    "NEAR": "near",
     "ONDO": "ondo-finance",
     "PEPE": "pepe",
     "SHIB": "shiba-inu",
@@ -296,6 +423,9 @@ COINGECKO_IDS_BY_SYMBOL = {
     "XRP": "ripple",
     "ZEC": "zcash",
 }
+COINGECKO_BATCH_PRICE_CACHE = {"key": "", "loaded_at": 0.0, "items": {}}
+COINMARKETCAP_BATCH_PRICE_CACHE = {"key": "", "loaded_at": 0.0, "items": {}}
+ZOOM_TOKEN_CACHE = {"access_token": "", "api_url": ZOOM_API_BASE, "expires_at": 0.0, "scope": ""}
 
 
 def today():
@@ -336,25 +466,70 @@ def read_form(handler):
 
 def write_json(handler, payload, status=200):
     data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
-    handler.send_response(status)
-    handler.send_header("Content-Type", "application/json; charset=utf-8")
-    handler.send_header("Content-Length", str(len(data)))
-    handler.end_headers()
-    handler.wfile.write(data)
+    try:
+        handler.send_response(status)
+        handler.send_header("Content-Type", "application/json; charset=utf-8")
+        handler.send_header("Content-Length", str(len(data)))
+        handler.end_headers()
+        handler.wfile.write(data)
+    except (BrokenPipeError, ConnectionResetError):
+        return
 
 
 def write_text(handler, text, status=200, content_type="text/plain; charset=utf-8"):
     data = (text or "").encode("utf-8")
-    handler.send_response(status)
-    handler.send_header("Content-Type", content_type)
-    handler.send_header("Cache-Control", "no-store")
-    handler.send_header("Content-Length", str(len(data)))
-    handler.end_headers()
-    handler.wfile.write(data)
+    try:
+        handler.send_response(status)
+        handler.send_header("Content-Type", content_type)
+        handler.send_header("Cache-Control", "no-store")
+        handler.send_header("Content-Length", str(len(data)))
+        handler.end_headers()
+        handler.wfile.write(data)
+    except (BrokenPipeError, ConnectionResetError):
+        return
 
 
 def write_xml(handler, text, status=200):
     write_text(handler, text, status=status, content_type="text/xml; charset=utf-8")
+
+
+def write_file_response(handler, path, content_type=None, cache_control="public, max-age=3600"):
+    candidates = path if isinstance(path, (list, tuple)) else [path]
+    selected_path = None
+    data = None
+    for candidate in candidates:
+        candidate_path = pathlib.Path(candidate)
+        try:
+            if not candidate_path.exists() or not candidate_path.is_file():
+                continue
+            data = candidate_path.read_bytes()
+            selected_path = candidate_path
+            break
+        except OSError:
+            continue
+    if selected_path is None or data is None:
+        handler.send_error(404)
+        return
+    try:
+        handler.send_response(200)
+        handler.send_header("Content-Type", content_type or mimetypes.guess_type(selected_path.name)[0] or "application/octet-stream")
+        handler.send_header("Cache-Control", cache_control)
+        handler.send_header("Content-Length", str(len(data)))
+        handler.end_headers()
+        handler.wfile.write(data)
+    except (BrokenPipeError, ConnectionResetError):
+        return
+
+
+def public_kim_asset_candidates(path_value):
+    name = pathlib.PurePosixPath(urllib.parse.unquote(path_value)).name
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+\.(png|jpg|jpeg|webp|gif)", name, flags=re.I):
+        return []
+    return [
+        RUNTIME_ASSETS / "kim" / name,
+        APP_DIR / "assets" / "kim" / name,
+        BIFROST / "assets" / "kim" / name,
+    ]
 
 
 def parse_cookie_header(value):
@@ -510,6 +685,18 @@ def append_memory(kind, payload):
         return jsonl
 
 
+def run_background_task(name, fn, *args, **kwargs):
+    def runner():
+        try:
+            fn(*args, **kwargs)
+        except Exception as exc:
+            append_memory("background_task_error", {"task": name, "error": brief(str(exc), 800)})
+
+    thread = threading.Thread(target=runner, daemon=True, name=name)
+    thread.start()
+    return thread
+
+
 def append_daily_note(text):
     path = daily_memory_path()
     try:
@@ -587,6 +774,22 @@ def write_text_file_any(paths, text):
     return None
 
 
+def write_bytes_file(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data or b"")
+
+
+def write_bytes_file_both(primary, runtime, data):
+    written = []
+    for path in [primary, runtime]:
+        try:
+            write_bytes_file(path, data)
+            written.append(str(path))
+        except (PermissionError, OSError):
+            continue
+    return written
+
+
 def read_json_file(path, default):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -600,6 +803,114 @@ def read_json_file_any(paths, default):
         if payload is not None:
             return payload
     return default
+
+
+def voice_option(value):
+    voice_id = str(value or "").strip().lower()
+    for item in KIM_VOICE_OPTIONS:
+        if item.get("id") == voice_id:
+            return item
+    return next((item for item in KIM_VOICE_OPTIONS if item.get("id") == WHATSAPP_REPLY_VOICE), KIM_VOICE_OPTIONS[0])
+
+
+def payload_updated_at_ts(payload):
+    if not isinstance(payload, dict):
+        return 0.0
+    raw = str(payload.get("updated_at") or "").strip()
+    if not raw:
+        return 0.0
+    try:
+        parsed = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return 0.0
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.timestamp()
+
+
+def newest_json_payload(paths):
+    candidates = []
+    for index, path in enumerate(paths):
+        payload = read_json_file(path, None)
+        if isinstance(payload, dict) and payload:
+            score = payload_updated_at_ts(payload)
+            if not score:
+                try:
+                    score = path.stat().st_mtime
+                except OSError:
+                    score = 0.0
+            candidates.append((score, -index, payload))
+    if not candidates:
+        return {}
+    candidates.sort(reverse=True)
+    return candidates[0][2]
+
+
+def load_voice_profile():
+    payload = newest_json_payload([VOICE_PROFILE_FILE, RUNTIME_VOICE_PROFILE_FILE])
+    if not isinstance(payload, dict):
+        payload = {}
+    selected = voice_option(payload.get("voice") or WHATSAPP_REPLY_VOICE)
+    realtime_voice = selected["id"] if selected["id"] in REALTIME_COMPATIBLE_VOICES else REALTIME_VOICE
+    profile = {
+        "voice": selected["id"],
+        "label": selected.get("label", selected["id"]),
+        "mood": selected.get("mood", ""),
+        "tts_voice": selected["id"],
+        "realtime_voice": realtime_voice,
+        "fallback_realtime_voice": REALTIME_VOICE,
+        "twilio_fallback_voice": TWILIO_POLLY_VOICE,
+        "style": str(payload.get("style") or KIM_VOICE_STYLE),
+        "tts_instructions": str(payload.get("tts_instructions") or KIM_TTS_INSTRUCTIONS),
+        "updated_at": payload.get("updated_at") or "",
+    }
+    return profile
+
+
+def save_voice_profile(payload):
+    payload = payload or {}
+    selected = voice_option(payload.get("voice"))
+    profile = load_voice_profile()
+    profile.update(
+        {
+            "voice": selected["id"],
+            "label": selected.get("label", selected["id"]),
+            "mood": selected.get("mood", ""),
+            "tts_voice": selected["id"],
+            "realtime_voice": selected["id"] if selected["id"] in REALTIME_COMPATIBLE_VOICES else REALTIME_VOICE,
+            "style": str(payload.get("style") or profile.get("style") or KIM_VOICE_STYLE),
+            "tts_instructions": str(payload.get("tts_instructions") or profile.get("tts_instructions") or KIM_TTS_INSTRUCTIONS),
+            "updated_at": now_iso(),
+        }
+    )
+    write_json_file_both(VOICE_PROFILE_FILE, RUNTIME_VOICE_PROFILE_FILE, profile)
+    append_memory("kim_voice_profile_updated", {"voice": profile["voice"], "realtime_voice": profile["realtime_voice"], "mood": profile["mood"]})
+    return profile
+
+
+def active_voice_profile():
+    return load_voice_profile()
+
+
+def active_realtime_voice():
+    return active_voice_profile().get("realtime_voice") or REALTIME_VOICE
+
+
+def active_tts_voice():
+    return active_voice_profile().get("tts_voice") or WHATSAPP_REPLY_VOICE
+
+
+def active_voice_style():
+    return active_voice_profile().get("style") or KIM_VOICE_STYLE
+
+
+def active_tts_instructions():
+    return active_voice_profile().get("tts_instructions") or KIM_TTS_INSTRUCTIONS
+
+
+def load_seller_context_pack_payload():
+    payload = newest_json_payload([SELLER_CONTEXT_PACK, RUNTIME_SELLER_CONTEXT_PACK])
+    return payload if isinstance(payload, dict) else {}
 
 
 def append_jsonl(path, payload):
@@ -677,6 +988,184 @@ def write_text_file_both(primary, runtime, text):
         except (PermissionError, OSError):
             continue
     return written
+
+
+def default_kim_product_backlog_payload():
+    return {
+        "updated_at": now_iso(),
+        "version": "2026-06-04",
+        "source_tasks": ["KIM-0088", "KIM-0089"],
+        "product": "Kim Live / AI People",
+        "focus": "Ventas y seguimiento inteligente por WhatsApp con supervision del doctor.",
+        "doctor_requests": [
+            "Guardar backlog de desarrollo Kim Live como fuente operativa durable.",
+            "Priorizar ventas en WhatsApp con reportes y criterio para pedir permiso antes del siguiente contacto.",
+            "Preparar seguimiento por franjas horarias para no sobre-contactar clientes.",
+            "Mantener Zoom, correo, mapas y frontend como siguientes integraciones del producto.",
+        ],
+        "follow_up_windows": [
+            {"label": "morning_review", "time_hint": "morning", "goal": "revisar pendientes comerciales y decidir a quien escribir primero"},
+            {"label": "afternoon_review", "time_hint": "14:00", "goal": "segundo pase de seguimiento con clientes activos"},
+            {"label": "evening_review", "time_hint": "18:00", "goal": "ultimo reporte del dia y propuesta del siguiente contacto"},
+        ],
+        "priorities": [
+            {
+                "id": "whatsapp_sales_followup",
+                "priority": 1,
+                "status": "active",
+                "title": "Ventas y seguimiento por WhatsApp",
+                "summary": "Kim debe atender clientes, resumir interes, recomendar proximo contacto y pedir aprobacion antes de ejecutar seguimiento sensible.",
+                "deliverables": [
+                    "reporte por contacto con interes, ultimo mensaje y siguiente paso sugerido",
+                    "hilo conductor por cliente sin mezclar contextos",
+                    "tecnicas basicas de venta consultiva y permiso explicito para follow-up",
+                ],
+                "next_safe_step": "Conectar backlog de producto con resumen de hilos WhatsApp y seller context pack.",
+            },
+            {
+                "id": "gmail_cleanup_and_triage",
+                "priority": 2,
+                "status": "planned",
+                "title": "Limpieza y revision de correo",
+                "summary": "Leer ultimos correos, priorizar, y preparar limpieza segura antes de cualquier borrado o movimiento a papelera.",
+                "deliverables": [
+                    "resumen de correos recientes",
+                    "cola de correos sugeridos para archivar o borrar con confirmacion",
+                ],
+                "next_safe_step": "Activar lectura Gmail/Hostinger y definir flujo de confirmacion para limpieza.",
+            },
+            {
+                "id": "zoom_meeting_ops",
+                "priority": 3,
+                "status": "in_progress",
+                "title": "Zoom para agenda comercial",
+                "summary": "Kim debe poder preparar reuniones y dejarlas listas cuando haya horario confirmado.",
+                "deliverables": [
+                    "crear reunion con host y join_url validos",
+                    "registrar reunion en memoria y reportes",
+                ],
+                "next_safe_step": "Aprovechar el bridge Zoom ya presente para amarrarlo al flujo comercial.",
+            },
+            {
+                "id": "scheduled_tasks_for_doctor",
+                "priority": 4,
+                "status": "planned",
+                "title": "Pendientes con horario y ritmo diario",
+                "summary": "Asignar tareas a Kim en horarios concretos para crear cadencia operativa.",
+                "deliverables": [
+                    "tareas recurrentes confirmadas",
+                    "bitacora de ejecucion y estado",
+                ],
+                "next_safe_step": "Aterrizar plantillas de scheduler para reportes y follow-up comercial.",
+            },
+            {
+                "id": "maps_campaigns_and_mobility",
+                "priority": 5,
+                "status": "queued",
+                "title": "Mapas, campanas y movilidad",
+                "summary": "Ubicacion, distancias, campañas y futuro puente con transporte bajo confirmacion humana.",
+                "deliverables": [
+                    "consulta de ubicacion y distancias",
+                    "contexto de campaña por zona",
+                ],
+                "next_safe_step": "Definir capa de lectura y analitica antes de cualquier automatizacion externa.",
+            },
+            {
+                "id": "figma_frontend_and_prompt",
+                "priority": 6,
+                "status": "queued",
+                "title": "Frontend de agentes en Figma y prompt de producto",
+                "summary": "Diseño operativo de agentes y consolidacion del prompt base de Kim.",
+                "deliverables": [
+                    "estructura visual del frontend",
+                    "prompt operativo mantenible",
+                ],
+                "next_safe_step": "Bajar requisitos de UX y vistas del operador antes de diseño.",
+            },
+        ],
+        "notes": [
+            "SMS sigue limitado como canal de respuesta; el enfoque activo es WhatsApp y reporteria.",
+            "No hacer compras, transporte ni borrados destructivos sin confirmacion humana.",
+            "Las integraciones externas deben operar con privacidad por contacto y memoria aislada.",
+        ],
+    }
+
+
+def render_kim_product_backlog_markdown(payload):
+    payload = payload or default_kim_product_backlog_payload()
+    lines = [
+        "# Kim Live backlog operativo",
+        "",
+        f"Actualizado: {payload.get('updated_at') or now_iso()}",
+        f"Producto: {payload.get('product') or 'Kim Live'}",
+        f"Foco actual: {payload.get('focus') or ''}",
+        "",
+        "## Prioridades",
+    ]
+    for item in payload.get("priorities") or []:
+        lines.append(
+            f"- P{item.get('priority', '?')} [{item.get('status') or 'planned'}] {item.get('title')}: {item.get('summary')}"
+        )
+        next_step = item.get("next_safe_step")
+        if next_step:
+            lines.append(f"  Siguiente paso seguro: {next_step}")
+    windows = payload.get("follow_up_windows") or []
+    if windows:
+        lines.extend(["", "## Ventanas de seguimiento"])
+        for item in windows:
+            lines.append(f"- {item.get('label')}: {item.get('time_hint')} -> {item.get('goal')}")
+    doctor_requests = payload.get("doctor_requests") or []
+    if doctor_requests:
+        lines.extend(["", "## Solicitudes del doctor"])
+        for item in doctor_requests:
+            lines.append(f"- {item}")
+    notes = payload.get("notes") or []
+    if notes:
+        lines.extend(["", "## Guardrails"])
+        for item in notes:
+            lines.append(f"- {item}")
+    return "\n".join(lines).strip() + "\n"
+
+
+def load_kim_product_backlog_payload():
+    payload = newest_json_payload([KIM_PRODUCT_BACKLOG_JSON, RUNTIME_KIM_PRODUCT_BACKLOG_JSON])
+    if isinstance(payload, dict) and payload.get("priorities"):
+        return payload
+    payload = default_kim_product_backlog_payload()
+    write_json_file_both(KIM_PRODUCT_BACKLOG_JSON, RUNTIME_KIM_PRODUCT_BACKLOG_JSON, payload)
+    write_text_file_both(KIM_PRODUCT_BACKLOG_MD, RUNTIME_KIM_PRODUCT_BACKLOG_MD, render_kim_product_backlog_markdown(payload))
+    return payload
+
+
+def kim_product_backlog_summary(payload=None, limit=6):
+    payload = payload or load_kim_product_backlog_payload()
+    priorities = []
+    for item in (payload.get("priorities") or [])[:limit]:
+        priorities.append(
+            {
+                "id": item.get("id"),
+                "priority": item.get("priority"),
+                "status": item.get("status"),
+                "title": item.get("title"),
+                "summary": item.get("summary"),
+                "next_safe_step": item.get("next_safe_step"),
+            }
+        )
+    top = priorities[0] if priorities else {}
+    return {
+        "updated_at": payload.get("updated_at") or now_iso(),
+        "focus": payload.get("focus") or "",
+        "top_priority": top.get("title") or "",
+        "top_priority_status": top.get("status") or "",
+        "follow_up_windows": payload.get("follow_up_windows") or [],
+        "priorities": priorities,
+        "source_tasks": payload.get("source_tasks") or [],
+        "paths": {
+            "json": str(KIM_PRODUCT_BACKLOG_JSON),
+            "markdown": str(KIM_PRODUCT_BACKLOG_MD),
+            "spec": str(KIM_PRODUCT_BACKLOG_SPEC),
+        },
+    }
 
 
 def load_keychain_secret(service, required=True):
@@ -874,6 +1363,41 @@ def security_authorization_from_input(parameters=None, transcript=""):
             if compact_secret and compact_secret in compact:
                 return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
     return {"authorized": False}
+
+
+def security_secret_matches(provided, expected):
+    provided_text = str(provided or "").strip()
+    expected_text = str(expected or "").strip()
+    if not provided_text or not expected_text:
+        return False
+    if hmac.compare_digest(provided_text, expected_text):
+        return True
+    provided_norm = normalize_security_text(provided_text)
+    expected_norm = normalize_security_text(expected_text)
+    if provided_norm and expected_norm and hmac.compare_digest(provided_norm, expected_norm):
+        return True
+    provided_compact = re.sub(r"\s+", "", provided_norm)
+    expected_compact = re.sub(r"\s+", "", expected_norm)
+    return bool(provided_compact and expected_compact and hmac.compare_digest(provided_compact, expected_compact))
+
+
+def validate_bifrost_export_authorization(pin="", phrase=""):
+    expected_pin = load_keychain_secret(SECURITY_PIN_KEYCHAIN_SERVICE, required=False)
+    expected_phrase = load_keychain_secret(SECURITY_VOICE_PHRASE_KEYCHAIN_SERVICE, required=False)
+    if not expected_pin or not expected_phrase:
+        append_memory(
+            "bifrost_export_blocked",
+            {
+                "reason": "missing_security_secrets",
+                "has_pin": bool(expected_pin),
+                "has_phrase": bool(expected_phrase),
+            },
+        )
+        raise ValueError("Falta configurar PIN o frase de seguridad en Keychain.")
+    if not security_secret_matches(pin, expected_pin) or not security_secret_matches(phrase, expected_phrase):
+        append_memory("bifrost_export_denied", {"reason": "invalid_pin_or_phrase"})
+        raise ValueError("PIN o frase de seguridad incorrectos.")
+    return True
 
 
 def api_action_requires_security(provider, action, confirm=False):
@@ -1136,6 +1660,92 @@ def openai_delete_file(file_id):
             return
     except Exception:
         return
+
+
+def multipart_escape(value):
+    return str(value or "").replace("\\", "\\\\").replace('"', '\\"')
+
+
+def openai_audio_transcribe(filename, data, content_type=""):
+    if not data:
+        raise RuntimeError("No hay audio para transcribir.")
+    safe_name = pathlib.Path(filename or "whatsapp-audio.ogg").name
+    mime = content_type or mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
+    last_error = None
+    for model in OPENAI_TRANSCRIBE_MODEL_CANDIDATES:
+        boundary = "----kimliveaudio" + hashlib.sha256(f"{safe_name}{len(data)}{model}{now_iso()}".encode()).hexdigest()[:24]
+        parts = [
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\n{model}\r\n".encode("utf-8"),
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nes\r\n".encode("utf-8"),
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\njson\r\n".encode("utf-8"),
+            (
+                f"--{boundary}\r\n"
+                f"Content-Disposition: form-data; name=\"file\"; filename=\"{multipart_escape(safe_name)}\"\r\n"
+                f"Content-Type: {mime}\r\n\r\n"
+            ).encode("utf-8")
+            + data
+            + b"\r\n",
+            f"--{boundary}--\r\n".encode("utf-8"),
+        ]
+        request = urllib.request.Request(
+            f"{OPENAI_API_BASE}/audio/transcriptions",
+            data=b"".join(parts),
+            headers={
+                "Authorization": f"Bearer {load_openai_key()}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                payload = json.loads(response.read().decode("utf-8", errors="replace") or "{}")
+            transcript = str(payload.get("text") or "").strip()
+            if transcript:
+                return {"text": transcript, "model": model, "payload": payload}
+            last_error = RuntimeError("Transcripcion vacia.")
+        except Exception as exc:
+            last_error = exc
+    if last_error:
+        raise last_error
+    raise RuntimeError("No hay modelos de transcripcion configurados.")
+
+
+def openai_audio_speech(text, voice=None):
+    clean = re.sub(r"\s+", " ", text or "").strip()
+    if not clean:
+        raise RuntimeError("No hay texto para generar audio.")
+    last_error = None
+    selected_voice = voice or active_tts_voice()
+    for model in OPENAI_SPEECH_MODEL_CANDIDATES:
+        payload = {
+            "model": model,
+            "voice": selected_voice,
+            "input": brief(clean, 1800),
+            "response_format": "mp3",
+            "speed": 0.95,
+        }
+        if not model.startswith("tts-1"):
+            payload["instructions"] = active_tts_instructions()
+        request = urllib.request.Request(
+            f"{OPENAI_API_BASE}/audio/speech",
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {load_openai_key()}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                data = response.read()
+            if data:
+                return {"data": data, "model": model, "voice": payload["voice"], "content_type": "audio/mpeg"}
+            last_error = RuntimeError("Audio TTS vacio.")
+        except Exception as exc:
+            last_error = exc
+    if last_error:
+        raise last_error
+    raise RuntimeError("No hay modelos TTS configurados.")
 
 
 def analyze_file_with_openai(data, filename, extracted_text=""):
@@ -1528,6 +2138,18 @@ def extract_principles(limit=18):
     return seen[-limit:]
 
 
+def version_memory_snapshot():
+    lines = [
+        f"Version viva actual confirmada por backend: {APP_VERSION}.",
+        "Si memoria vieja menciona 1.5.43, 1.5.45 u otra anterior, tratarla como hito historico y no como estado vigente.",
+        "No responder con una version mas baja si el backend ya expone una version mas nueva.",
+        "Hitos confirmados:",
+    ]
+    for version, note in VERSION_MEMORY_BASELINE_NOTES:
+        lines.append(f"- v{version}: {note}")
+    return "\n".join(lines)
+
+
 def memory_analytics():
     memory_files = count_tree_files(MEMORY_ROOT) + count_tree_files(RUNTIME_MEMORY_ROOT)
     docs_files = count_tree_files(BIFROST / "docs")
@@ -1541,6 +2163,7 @@ def memory_analytics():
         [CLICKUP_TASKS_MARKDOWN, RUNTIME_CLICKUP_TASKS_MARKDOWN],
         [BIFROST / "README.md"],
         [BIFROST / "docs" / "operating_model.md"],
+        [MULTITENANT_AGENT_PLAN, RUNTIME_MULTITENANT_AGENT_PLAN],
     ]:
         corpus_parts.append(read_text_tail_any(paths, 16000))
     for upload in upload_entries[-8:]:
@@ -1568,6 +2191,7 @@ def memory_analytics():
                 file_stats(CLICKUP_TASKS_MARKDOWN),
                 file_stats(BIFROST / "README.md"),
                 file_stats(BIFROST / "docs" / "operating_model.md"),
+                file_stats(MULTITENANT_AGENT_PLAN),
             ] if item
         ],
     }
@@ -2518,9 +3142,11 @@ def api_bridge_config_status(live=False):
     clickup_configured = bool(load_keychain_secret(CLICKUP_KEYCHAIN_SERVICE, required=False))
     notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
     pipedrive_configured = bool(load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE, required=False))
+    zoom_status_data = zoom_status(live=False)
     gmail_configured = gmail_oauth_configured()
     gmail_has_refresh = gmail_authorized()
     hostinger_status = hostinger_mail_status(live=False)
+    backlog = kim_product_backlog_summary()
     status = {
         "clickup": {
             "configured": clickup_configured,
@@ -2577,10 +3203,19 @@ def api_bridge_config_status(live=False):
             "auth_url": "https://kim.aipeople.app/oauth/google/start",
             "mode": "readonly",
         },
+        "zoom": zoom_status_data,
         "hostinger_mail": hostinger_status,
         "twilio": twilio_status(live=False),
+        "scheduler": {
+            "configured": True,
+            "runs_inside": "Kim Live launchd service",
+            "default_timezone": DEFAULT_SCHEDULER_TIMEZONE,
+            "write_requires_confirmation": True,
+            "capabilities": ["schedule_action", "list_schedules", "cancel_schedule"],
+        },
         "crm": crm_status(),
         "security": security_status(),
+        "product_backlog": backlog,
         "templates": api_bridge_templates(),
     }
     if live and clickup_configured:
@@ -2612,6 +3247,8 @@ def api_bridge_config_status(live=False):
             status["pipedrive"]["error"] = brief(str(exc), 220)
     if live and gmail_configured:
         status["gmail"].update(gmail_status(live=gmail_has_refresh))
+    if live:
+        status["zoom"].update(zoom_status(live=True))
     if live:
         status["hostinger_mail"].update(hostinger_mail_status(live=True))
         status["twilio"].update(twilio_status(live=True))
@@ -2708,6 +3345,395 @@ def notion_request(path, method="GET", payload=None, params=None):
     )
 
 
+def zoom_client_configured():
+    return bool(load_keychain_secret(ZOOM_CLIENT_ID_KEYCHAIN_SERVICE, required=False)) and bool(
+        load_keychain_secret(ZOOM_CLIENT_SECRET_KEYCHAIN_SERVICE, required=False)
+    )
+
+
+def zoom_s2s_configured():
+    return zoom_client_configured() and bool(load_keychain_secret(ZOOM_ACCOUNT_ID_KEYCHAIN_SERVICE, required=False))
+
+
+def zoom_authorized():
+    return bool(load_keychain_secret(ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE, required=False))
+
+
+def zoom_api_base_from_token_payload(payload=None):
+    raw = str((payload or {}).get("api_url") or "https://api.zoom.us").rstrip("/")
+    return raw if raw.endswith("/v2") else raw + "/v2"
+
+
+def zoom_token_request(payload):
+    client_id = load_keychain_secret(ZOOM_CLIENT_ID_KEYCHAIN_SERVICE)
+    client_secret = load_keychain_secret(ZOOM_CLIENT_SECRET_KEYCHAIN_SERVICE)
+    basic = base64.b64encode(f"{client_id}:{client_secret}".encode("utf-8")).decode("ascii")
+    return form_json_request(
+        "https://zoom.us",
+        "/oauth/token",
+        {"Authorization": f"Basic {basic}", "Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+        payload=payload,
+        timeout=30,
+    )
+
+
+def zoom_access_token(force=False):
+    now_ts = time.time()
+    cached = ZOOM_TOKEN_CACHE.get("access_token") or ""
+    if cached and not force and float(ZOOM_TOKEN_CACHE.get("expires_at") or 0) > now_ts + 60:
+        return {
+            "access_token": cached,
+            "api_url": ZOOM_TOKEN_CACHE.get("api_url") or ZOOM_API_BASE,
+            "scope": ZOOM_TOKEN_CACHE.get("scope") or "",
+            "mode": ZOOM_TOKEN_CACHE.get("mode") or "unknown",
+            "cached": True,
+        }
+    refresh_token = load_keychain_secret(ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE, required=False)
+    mode = "user_oauth"
+    if refresh_token:
+        token_payload = zoom_token_request({"grant_type": "refresh_token", "refresh_token": refresh_token})
+        if token_payload.get("refresh_token"):
+            store_keychain_secret(ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE, token_payload["refresh_token"])
+    elif zoom_s2s_configured():
+        mode = "server_to_server_oauth"
+        token_payload = zoom_token_request(
+            {
+                "grant_type": "account_credentials",
+                "account_id": load_keychain_secret(ZOOM_ACCOUNT_ID_KEYCHAIN_SERVICE),
+            }
+        )
+    else:
+        raise ValueError("Zoom no esta autorizado. Abre https://kim.aipeople.app/oauth/zoom/start despues de configurar Client ID, Client Secret, Redirect URL y scopes.")
+    access_token = token_payload.get("access_token") or ""
+    if not access_token:
+        raise ValueError("Zoom no devolvio access_token.")
+    expires_in = int(token_payload.get("expires_in") or 3600)
+    api_url = zoom_api_base_from_token_payload(token_payload)
+    ZOOM_TOKEN_CACHE.update(
+        {
+            "access_token": access_token,
+            "api_url": api_url,
+            "expires_at": now_ts + max(60, expires_in - 60),
+            "scope": token_payload.get("scope") or "",
+            "mode": mode,
+        }
+    )
+    return {"access_token": access_token, "api_url": api_url, "scope": token_payload.get("scope") or "", "mode": mode, "cached": False}
+
+
+def zoom_request(path, method="GET", payload=None, params=None, token=None):
+    token = token or zoom_access_token()
+    return api_json_request(
+        token.get("api_url") or ZOOM_API_BASE,
+        path,
+        {"Authorization": f"Bearer {token['access_token']}"},
+        method=method,
+        payload=payload,
+        params=params,
+    )
+
+
+def normalize_zoom_user(item):
+    item = item or {}
+    return {
+        "id": item.get("id"),
+        "email": item.get("email"),
+        "first_name": item.get("first_name"),
+        "last_name": item.get("last_name"),
+        "display_name": " ".join(part for part in [item.get("first_name"), item.get("last_name")] if part).strip(),
+        "type": item.get("type"),
+        "status": item.get("status"),
+    }
+
+
+def zoom_oauth_redirect_uri(handler):
+    public_base = load_keychain_secret("codex.kim.public_base_url", required=False) or "https://kim.aipeople.app"
+    return public_base.rstrip("/") + "/oauth/zoom/callback"
+
+
+def zoom_oauth_start_url(handler):
+    if not zoom_client_configured():
+        raise ValueError("Faltan Client ID o Client Secret de Zoom en Keychain.")
+    state = secrets.token_urlsafe(32)
+    redirect_uri = zoom_oauth_redirect_uri(handler)
+    write_json_file(ZOOM_OAUTH_STATE_FILE, {"state": state, "redirect_uri": redirect_uri, "created_at": now_iso()})
+    params = {
+        "client_id": load_keychain_secret(ZOOM_CLIENT_ID_KEYCHAIN_SERVICE),
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "state": state,
+    }
+    return "https://zoom.us/oauth/authorize?" + urllib.parse.urlencode(params)
+
+
+def zoom_oauth_callback(handler, parsed):
+    params = urllib.parse.parse_qs(parsed.query)
+    if params.get("error"):
+        error = html.escape((params.get("error_description") or params.get("error") or ["OAuth cancelado"])[0])
+        write_text(
+            handler,
+            f"<h1>Zoom no autorizado</h1><p>{error}</p>",
+            status=400,
+            content_type="text/html; charset=utf-8",
+        )
+        return
+    code = (params.get("code") or [""])[0]
+    state = (params.get("state") or [""])[0]
+    expected, _ = load_json_any([ZOOM_OAUTH_STATE_FILE])
+    expected = expected or {}
+    if not code or not state or state != expected.get("state"):
+        write_text(
+            handler,
+            "<h1>Zoom OAuth invalido</h1><p>El estado OAuth no coincide. Vuelve a iniciar autorizacion desde Kim Live.</p>",
+            status=400,
+            content_type="text/html; charset=utf-8",
+        )
+        return
+    redirect_uri = expected.get("redirect_uri") or zoom_oauth_redirect_uri(handler)
+    try:
+        token = zoom_token_request({"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri})
+        if token.get("refresh_token"):
+            store_keychain_secret(ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE, token["refresh_token"])
+        ZOOM_TOKEN_CACHE.update({"access_token": "", "expires_at": 0.0})
+        profile = {}
+        try:
+            live_token = zoom_access_token(force=True)
+            profile = normalize_zoom_user(zoom_request("/users/me", token=live_token))
+        except Exception as exc:
+            profile = {"error": brief(str(exc), 300)}
+        append_memory("zoom_oauth_authorized", {"authorized": bool(token.get("refresh_token")), "profile": profile})
+        append_daily_note("Zoom OAuth autorizado para Kim Live.")
+        write_text(
+            handler,
+            "<h1>Zoom conectado con Kim Live</h1>"
+            "<p>Kim ya puede preparar y crear reuniones Zoom con confirmacion del doctor.</p>"
+            f"<pre>{html.escape(json.dumps(profile, ensure_ascii=False, indent=2))}</pre>",
+            content_type="text/html; charset=utf-8",
+        )
+    except Exception as exc:
+        write_text(
+            handler,
+            f"<h1>No pude conectar Zoom</h1><p>{html.escape(str(exc))}</p>"
+            "<p>Revisa que el Client Secret sea el de esta misma app y que el Redirect URL coincida exactamente.</p>",
+            status=500,
+            content_type="text/html; charset=utf-8",
+        )
+
+
+def zoom_list_users(parameters=None):
+    parameters = parameters or {}
+    token = zoom_access_token()
+    if token.get("mode") == "user_oauth":
+        return {"ok": True, "provider": "zoom", "action": "list_users", "mode": "user_oauth", "users": [normalize_zoom_user(zoom_request("/users/me", token=token))]}
+    page_size = min(max(int(first_value(parameters, "page_size", "limit", default=30) or 30), 1), 100)
+    payload = zoom_request(
+        "/users",
+        params={
+            "status": first_value(parameters, "status", default="active"),
+            "page_size": page_size,
+            "next_page_token": first_value(parameters, "next_page_token", "cursor", default=""),
+        },
+        token=token,
+    )
+    return {
+        "ok": True,
+        "provider": "zoom",
+        "action": "list_users",
+        "mode": token.get("mode"),
+        "users": [normalize_zoom_user(item) for item in payload.get("users", [])],
+        "page_count": payload.get("page_count"),
+        "total_records": payload.get("total_records"),
+        "next_page_token": payload.get("next_page_token"),
+    }
+
+
+def zoom_resolve_host(parameters=None, token=None):
+    parameters = parameters or {}
+    token = token or zoom_access_token()
+    if token.get("mode") == "user_oauth":
+        return {"host": "me", "source": "user_oauth_me"}
+    explicit = str(first_value(parameters, "host_user_id", "host_id", "host_email", "user_id", "user", "email", default="") or "").strip()
+    if explicit:
+        return {"host": explicit, "source": "parameters"}
+    configured = load_keychain_secret(ZOOM_DEFAULT_HOST_KEYCHAIN_SERVICE, required=False)
+    if configured:
+        return {"host": configured, "source": "keychain_default_host"}
+    users = zoom_list_users({"page_size": 1, "status": "active"}).get("users") or []
+    if not users:
+        raise ValueError("Zoom no devolvio usuarios activos para seleccionar host.")
+    user = users[0]
+    return {"host": user.get("id") or user.get("email"), "source": "first_active_user", "user": user}
+
+
+def zoom_parse_start(parameters=None):
+    parameters = parameters or {}
+    timezone_name = scheduler_timezone_name(parameters)
+    raw = first_value(parameters, "start_at", "start_time", "due_at", "scheduled_at", "datetime", "cuando", default="")
+    if not raw:
+        raise ValueError("Falta start_at/start_time para crear la reunion Zoom.")
+    start_iso = parse_due_at({"due_at": raw, "timezone": timezone_name})
+    parsed = parse_scheduled_datetime(start_iso, timezone_name)
+    return {"start_time": parsed.strftime("%Y-%m-%dT%H:%M:%S"), "timezone": timezone_name, "parsed": parsed}
+
+
+def zoom_meeting_duration(parameters=None, parsed_start=None):
+    parameters = parameters or {}
+    explicit = first_value(parameters, "duration", "duration_minutes", "minutes", "duracion", default="")
+    if explicit not in (None, ""):
+        return max(1, int(float(explicit)))
+    end_raw = first_value(parameters, "end_at", "end_time", "ends_at", default="")
+    if end_raw and parsed_start:
+        timezone_name = scheduler_timezone_name(parameters)
+        end_iso = parse_due_at({"due_at": end_raw, "timezone": timezone_name})
+        end_dt = parse_scheduled_datetime(end_iso, timezone_name)
+        return max(1, int((end_dt - parsed_start).total_seconds() // 60))
+    return 30
+
+
+def zoom_create_meeting_payload(parameters=None):
+    parameters = parameters or {}
+    start = zoom_parse_start(parameters)
+    duration = zoom_meeting_duration(parameters, parsed_start=start["parsed"])
+    topic = str(first_value(parameters, "topic", "title", "subject", "name", "asunto", default="Reunion con Dr. Yehoshua") or "").strip()
+    agenda = str(first_value(parameters, "agenda", "description", "content", "body", "objective", "objetivo", default="") or "").strip()
+    settings = dict(parameters.get("settings") or {})
+    settings.setdefault("waiting_room", True)
+    settings.setdefault("join_before_host", False)
+    settings.setdefault("approval_type", 2)
+    settings.setdefault("registrants_email_notification", True)
+    payload = {"topic": topic, "type": int(first_value(parameters, "type", "meeting_type_id", default=2) or 2), "start_time": start["start_time"], "duration": duration, "timezone": start["timezone"], "agenda": agenda, "settings": settings}
+    password = str(first_value(parameters, "password", "passcode", default="") or "").strip()
+    if password:
+        payload["password"] = password
+    return payload
+
+
+def zoom_safe_meeting_result(meeting):
+    meeting = meeting or {}
+    return {
+        "id": meeting.get("id"),
+        "uuid": meeting.get("uuid"),
+        "host_id": meeting.get("host_id"),
+        "host_email": meeting.get("host_email"),
+        "topic": meeting.get("topic"),
+        "type": meeting.get("type"),
+        "status": meeting.get("status"),
+        "start_time": meeting.get("start_time"),
+        "duration": meeting.get("duration"),
+        "timezone": meeting.get("timezone"),
+        "join_url": meeting.get("join_url"),
+        "password": meeting.get("password"),
+        "created_at": meeting.get("created_at"),
+    }
+
+
+def zoom_record_meeting(parameters, host, meeting):
+    record = {
+        "at": now_iso(),
+        "provider": "zoom",
+        "action": "create_meeting",
+        "host": host,
+        "parameters": sanitize_for_log(parameters),
+        "meeting": zoom_safe_meeting_result(meeting),
+    }
+    append_jsonl_any([ZOOM_MEETINGS_LOG, RUNTIME_ZOOM_MEETINGS_LOG], record)
+    append_memory("zoom_meeting_created", {"meeting_id": record["meeting"].get("id"), "topic": record["meeting"].get("topic"), "start_time": record["meeting"].get("start_time"), "join_url": record["meeting"].get("join_url")})
+    return record
+
+
+def zoom_create_meeting(parameters=None, confirm=False):
+    parameters = parameters or {}
+    token = zoom_access_token()
+    host = zoom_resolve_host(parameters, token=token)
+    payload = zoom_create_meeting_payload(parameters)
+    preview = {"host": host, "payload": payload}
+    if not confirm:
+        return confirmation_preview(
+            "zoom",
+            "create_meeting",
+            f"Crear reunion Zoom '{payload.get('topic')}' para {payload.get('start_time')} {payload.get('timezone')}.",
+            preview,
+            execution_parameters=parameters,
+        )
+    meeting = zoom_request(f"/users/{urllib.parse.quote(str(host['host']))}/meetings", method="POST", payload=payload, token=token)
+    safe = zoom_safe_meeting_result(meeting)
+    record = zoom_record_meeting(parameters, host, meeting)
+    return {"ok": True, "provider": "zoom", "action": "create_meeting", "meeting": safe, "join_url": safe.get("join_url"), "meeting_log": record, "confirmed": True}
+
+
+def zoom_list_meetings(parameters=None):
+    parameters = parameters or {}
+    token = zoom_access_token()
+    host = zoom_resolve_host(parameters, token=token)
+    payload = zoom_request(
+        f"/users/{urllib.parse.quote(str(host['host']))}/meetings",
+        params={
+            "type": first_value(parameters, "type", default="scheduled"),
+            "page_size": min(max(int(first_value(parameters, "page_size", "limit", default=30) or 30), 1), 100),
+            "next_page_token": first_value(parameters, "next_page_token", "cursor", default=""),
+        },
+        token=token,
+    )
+    return {
+        "ok": True,
+        "provider": "zoom",
+        "action": "list_meetings",
+        "host": host,
+        "meetings": [zoom_safe_meeting_result(item) for item in payload.get("meetings", [])],
+        "next_page_token": payload.get("next_page_token"),
+        "page_count": payload.get("page_count"),
+        "total_records": payload.get("total_records"),
+    }
+
+
+def zoom_status(live=False):
+    has_account = bool(load_keychain_secret(ZOOM_ACCOUNT_ID_KEYCHAIN_SERVICE, required=False))
+    has_client_id = bool(load_keychain_secret(ZOOM_CLIENT_ID_KEYCHAIN_SERVICE, required=False))
+    has_client_secret = bool(load_keychain_secret(ZOOM_CLIENT_SECRET_KEYCHAIN_SERVICE, required=False))
+    has_refresh = zoom_authorized()
+    status = {
+        "configured": has_client_id and has_client_secret,
+        "authorized": has_refresh,
+        "server_to_server_configured": has_account and has_client_id and has_client_secret,
+        "has_account_id": has_account,
+        "has_client_id": has_client_id,
+        "has_client_secret": has_client_secret,
+        "write_requires_confirmation": True,
+        "capabilities": ["status", "auth_url", "list_users", "list_meetings", "create_meeting"],
+        "auth_type": "user_oauth_or_server_to_server_oauth",
+        "auth_url": "https://kim.aipeople.app/oauth/zoom/start",
+        "docs": "https://developers.zoom.us/api-hub/",
+    }
+    if live and status["configured"]:
+        try:
+            token = zoom_access_token(force=True)
+            status["live_ok"] = True
+            status["mode"] = token.get("mode")
+            status["scope_preview"] = brief(token.get("scope") or "", 240)
+            status["default_host"] = zoom_resolve_host({}, token=token)
+        except Exception as exc:
+            status["live_ok"] = False
+            status["error"] = brief(str(exc), 500)
+    return status
+
+
+def run_zoom_bridge(action, parameters, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "me"}:
+        return {"ok": True, "provider": "zoom", "action": action, "status": zoom_status(live=True)}
+    if action in {"auth_url", "authorize", "connect"}:
+        return {"ok": True, "provider": "zoom", "action": action, "auth_url": "https://kim.aipeople.app/oauth/zoom/start"}
+    if action in {"list_users", "users"}:
+        return zoom_list_users(parameters)
+    if action in {"list_meetings", "meetings", "upcoming_meetings"}:
+        return zoom_list_meetings(parameters)
+    if action in {"create_meeting", "schedule_meeting", "meeting", "agendar_reunion", "agendar_reunión", "crear_reunion", "crear_reunión", "zoom_meeting"}:
+        return zoom_create_meeting(parameters, confirm=confirm)
+    raise ValueError(f"Accion Zoom no soportada: {action}")
+
+
 def pipedrive_request(path, method="GET", payload=None, params=None):
     params = dict(params or {})
     params["api_token"] = load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE)
@@ -2768,6 +3794,20 @@ def normalize_phone_number(value):
     return f"+{digits}" if digits else ""
 
 
+def phone_digits(value):
+    raw = str(value or "").strip()
+    if raw.lower().startswith("whatsapp:"):
+        raw = raw.split(":", 1)[1]
+    return re.sub(r"\D+", "", raw)
+
+
+def twilio_lookup_phone_number(value):
+    phone = normalize_phone_number(value)
+    if phone.lower().startswith("whatsapp:"):
+        return normalize_phone_number(phone.split(":", 1)[1])
+    return phone
+
+
 def crm_id(prefix):
     return prefix + "-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper()
 
@@ -2786,9 +3826,20 @@ def active_crm_db():
     return ACTIVE_CRM_DB or (active_crm_root() / "crm.sqlite")
 
 
+def crm_candidate_roots():
+    roots = [CRM_ROOT, RUNTIME_CRM_ROOT]
+    def score(root):
+        db = root / "crm.sqlite"
+        try:
+            return db.stat().st_mtime
+        except OSError:
+            return 0
+    return sorted(roots, key=score, reverse=True)
+
+
 def crm_connect():
     global ACTIVE_CRM_ROOT, ACTIVE_CRM_DB
-    candidates = [active_crm_root()] if ACTIVE_CRM_ROOT else [CRM_ROOT, RUNTIME_CRM_ROOT]
+    candidates = [active_crm_root()] if ACTIVE_CRM_ROOT else crm_candidate_roots()
     last_error = None
     for root in candidates:
         try:
@@ -3182,6 +4233,7 @@ def twilio_status(live=False):
             "latest_call",
             "list_calls",
             "sync_call_attempts",
+            "whatsapp_report",
         ],
     }
     if live and status["configured"]:
@@ -3203,6 +4255,15 @@ def twilio_status(live=False):
 def twilio_message_preview(parameters, channel="sms"):
     to = normalize_phone_number(first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario"))
     body = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+    media_raw = first_value(parameters, "media_url", "mediaUrl", "MediaUrl", "image_url", "imageUrl", default=None)
+    media_urls = media_raw if isinstance(media_raw, list) else ([media_raw] if media_raw else [])
+    media_urls = [str(item).strip() for item in media_urls if str(item or "").strip()]
+    content_sid = str(first_value(parameters, "content_sid", "ContentSid", "template_sid", default="") or "").strip()
+    content_variables_raw = first_value(parameters, "content_variables", "ContentVariables", "template_variables", default=None)
+    if isinstance(content_variables_raw, (dict, list)):
+        content_variables = json.dumps(content_variables_raw, ensure_ascii=False)
+    else:
+        content_variables = str(content_variables_raw or "").strip()
     from_number = normalize_phone_number(first_value(parameters, "from", "from_number", "sender", default=twilio_default_from_number()))
     messaging_service_sid = str(first_value(parameters, "messaging_service_sid", "service_sid", default="") or "").strip()
     if channel == "whatsapp":
@@ -3212,27 +4273,168 @@ def twilio_message_preview(parameters, channel="sms"):
             from_number = f"whatsapp:{from_number}"
     if not to:
         raise ValueError("Falta destinatario to para Twilio.")
-    if not body:
-        raise ValueError("Falta body/message para Twilio.")
+    if not body and not content_sid:
+        raise ValueError("Falta body/message o content_sid/template_sid para Twilio.")
     if not from_number and not messaging_service_sid:
         raise ValueError("Falta from_number o messaging_service_sid para Twilio.")
+    allow_unknown_contact = boolish(
+        first_value(
+            parameters or {},
+            "allow_unknown_contact",
+            "allow_unregistered_recipient",
+            "allow_ad_hoc_recipient",
+            default=False,
+        )
+    )
+    crm_lookup_phone = twilio_lookup_phone_number(to)
+    recipient_contact = crm_find_contact_by_phone(crm_lookup_phone) if crm_lookup_phone else {}
+    recipient_contact = recipient_contact or {}
+    pipedrive_guard = pipedrive_registered_person_for_phone(crm_lookup_phone)
+    doctor_control_recipient = crm_lookup_phone == DOCTOR_DUBAI_WHATSAPP_NUMBER
+    whatsapp_unknown_inbound_reply = channel == "whatsapp" and allow_unknown_contact
+    if not pipedrive_guard.get("registered") and not doctor_control_recipient and not whatsapp_unknown_inbound_reply:
+        append_memory(
+            "twilio_message_blocked_unregistered_pipedrive",
+            {
+                "to": crm_lookup_phone,
+                "channel": channel,
+                "reason": pipedrive_guard.get("reason"),
+                "message": pipedrive_guard.get("message"),
+                "candidate_names": [item.get("name") for item in pipedrive_guard.get("candidates") or []],
+            },
+        )
+        raise ValueError(
+            f"{pipedrive_guard.get('message')} "
+            "Regla activa: Kim solo puede enviar SMS, llamadas o WhatsApp proactivo a personas registradas en Pipedrive. "
+            "WhatsApp inbound iniciado por el usuario puede responderse con contexto publico y aislado. "
+            "Primero crea/sincroniza la persona en Pipedrive y vuelve a intentar."
+        )
+    recipient_label = (
+        recipient_contact.get("display_name")
+        or ("Dr. Yehoshua (Dubai control)" if doctor_control_recipient else "")
+        or crm_lookup_phone
+        or to
+    )
+    pipedrive_person = pipedrive_guard.get("person") or {}
+    preferred_pipedrive_id = str(first_value(parameters, "pipedrive_person_id", "person_id", default="") or "").strip()
+    if preferred_pipedrive_id:
+        for candidate in [pipedrive_person, *list(pipedrive_guard.get("candidates") or [])]:
+            if str((candidate or {}).get("id") or "") == preferred_pipedrive_id:
+                pipedrive_person = candidate or pipedrive_person
+                break
+    if pipedrive_person.get("name"):
+        recipient_label = pipedrive_person.get("name")
     return {
         "to": to,
         "from": from_number,
         "messaging_service_sid": messaging_service_sid,
+        "content_sid": content_sid,
+        "content_variables": content_variables,
         "body_preview": brief(body, 600),
         "body_length": len(body),
+        "media_urls": media_urls,
         "channel": channel,
+        "crm_lookup_phone": crm_lookup_phone,
+        "recipient_label": recipient_label,
+        "recipient_contact": {
+            "id": recipient_contact.get("id"),
+            "display_name": recipient_contact.get("display_name"),
+            "phone_e164": recipient_contact.get("phone_e164"),
+            "contact_type": recipient_contact.get("contact_type"),
+        } if recipient_contact else {},
+        "pipedrive_required": not whatsapp_unknown_inbound_reply,
+        "pipedrive_recipient": pipedrive_person,
+        "pipedrive_match": {
+            "registered": pipedrive_guard.get("registered"),
+            "reason": pipedrive_guard.get("reason"),
+            "message": pipedrive_guard.get("message"),
+        },
+        "allow_unknown_contact": allow_unknown_contact,
+        "whatsapp_unknown_inbound_reply": whatsapp_unknown_inbound_reply,
+        "doctor_control_recipient": doctor_control_recipient,
     }
+
+
+def record_outbound_context_expansion(parameters, preview, event, channel="sms"):
+    parameters = parameters or {}
+    body_preview = preview.get("body_preview") or brief(first_value(parameters, "body", "message", "text", "content", "mensaje", default=""), 500)
+    explicit_context_id = str(first_value(parameters, "context_id", "kim_context_id", "context_block_id", default="") or "").strip()
+    context_id = twilio_context_block_id({"context_id": explicit_context_id or f"EXPAND-{event.get('sid') or secrets.token_hex(4).upper()}"})
+    label = str(first_value(parameters, "contact_name", "client_name", "name", "nombre", default=preview.get("recipient_label") or preview.get("to")) or "").strip()
+    context = {
+        "id": context_id,
+        "context_block_id": context_id,
+        "status": "messaged",
+        "created_at": now_iso(),
+        "source": "kim_live_context_expansion",
+        "direction": "outbound",
+        "channel": channel,
+        "context_scope": "single_contact",
+        "workflow_target": "crm_then_memory",
+        "to": preview.get("to", ""),
+        "from": preview.get("from", ""),
+        "contact_name": label,
+        "relationship": first_value(parameters, "relationship", "relacion", "role", "rol", default="client"),
+        "company": first_value(parameters, "company", "empresa", default=""),
+        "objective": first_value(
+            parameters,
+            "objective",
+            "goal",
+            "objetivo",
+            default=f"Mantener hilo de seguimiento con {label or preview.get('to')}.",
+        ),
+        "call_context": (
+            "Expansion de campo de informacion humana: Kim envio o registro un recordatorio/mensaje saliente "
+            f"por {channel.upper()} para sembrar continuidad con esta persona. "
+            f"Mensaje enviado: {body_preview}. "
+            "Si esta persona llama despues, Kim debe responder desde este hilo propio, no desde memoria general, "
+            "y continuar el seguimiento con privacidad por contacto."
+        ),
+        "instructions": (
+            "Si el contacto llama, saluda por nombre si esta identificado, explica que tienes el seguimiento previo, "
+            "confirma que es la persona correcta y continua solo con sus asuntos propios. No reveles contexto de terceros."
+        ),
+        "questions": first_value(parameters, "questions", "preguntas", default="Pregunta si ya pudo revisar el mensaje y que necesita para avanzar."),
+        "message_to_deliver": body_preview,
+        "report_to_doctor": "Guardar respuesta, estado del seguimiento, objeciones y siguiente paso recomendado.",
+        "success_criteria": "El hilo del contacto queda listo para una llamada entrante futura con contexto propio.",
+        "next_step_hint": first_value(parameters, "next_step_hint", "followup_hint", default=body_preview),
+        "last_outbound_channel": channel,
+        "last_sms_sid": event.get("sid", ""),
+        "last_sms_status": event.get("status", ""),
+        "last_sms_body_preview": body_preview,
+        "last_sms_at": event.get("sent_at") or now_iso(),
+    }
+    store_twilio_call_context(context)
+    append_memory(
+        "human_information_field_expanded",
+        {
+            "context_id": context_id,
+            "channel": channel,
+            "to": preview.get("to", ""),
+            "contact_name": label,
+            "summary": brief(context["call_context"], 400),
+        },
+    )
+    return context_id
 
 
 def twilio_send_message(parameters, confirm=False, channel="sms"):
     parameters = parameters or {}
     preview = twilio_message_preview(parameters, channel=channel)
+    context_id = str(first_value(parameters, "context_id", "kim_context_id", "context_block_id", default="") or "").strip()
+    call_sid = str(first_value(parameters, "call_sid", default="") or "").strip()
     payload = {
         "To": preview["to"],
-        "Body": str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip(),
     }
+    if preview.get("content_sid"):
+        payload["ContentSid"] = preview["content_sid"]
+        if preview.get("content_variables"):
+            payload["ContentVariables"] = preview["content_variables"]
+    else:
+        payload["Body"] = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+    for media_url in preview.get("media_urls") or []:
+        payload.setdefault("MediaUrl", []).append(media_url)
     status_callback = str(first_value(parameters, "status_callback", "callback_url", default="https://kim.aipeople.app/twilio/status") or "").strip()
     if status_callback:
         payload["StatusCallback"] = status_callback
@@ -3245,7 +4447,7 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
         return confirmation_preview(
             "twilio",
             action,
-            f"Enviar {channel.upper()} Twilio a {preview['to']}.",
+            f"Enviar {channel.upper()} Twilio a {preview['recipient_label']}.",
             preview,
             execution_parameters={**parameters, "channel": channel, "from_number": preview["from"]},
         )
@@ -3259,13 +4461,36 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
         "status": result.get("status"),
         "to": result.get("to"),
         "from": result.get("from"),
+        "context_id": context_id,
+        "call_sid": call_sid,
+        "recipient_label": preview.get("recipient_label", ""),
+        "recipient_contact_id": (preview.get("recipient_contact") or {}).get("id", ""),
+        "pipedrive_person_id": (preview.get("pipedrive_recipient") or {}).get("id", ""),
+        "pipedrive_person_name": (preview.get("pipedrive_recipient") or {}).get("name", ""),
+        "content_sid": preview.get("content_sid", ""),
+        "media_urls": preview.get("media_urls") or [],
         "error_code": result.get("error_code"),
         "error_message": result.get("error_message"),
         "confirmed": True,
         "sent_at": now_iso(),
     }
+    if not context_id and not call_sid:
+        context_id = record_outbound_context_expansion(parameters, preview, event, channel=channel)
+        event["context_id"] = context_id
     append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
     append_memory("twilio_message_sent", event)
+    if context_id or call_sid:
+        update_twilio_call_context(
+            context_id=context_id,
+            call_sid=call_sid,
+            updates={
+                "last_outbound_channel": channel,
+                "last_sms_sid": result.get("sid", ""),
+                "last_sms_status": result.get("status", ""),
+                "last_sms_body_preview": preview.get("body_preview", ""),
+                "last_sms_at": event["sent_at"],
+            },
+        )
     crm_record_interaction(
         "whatsapp" if channel == "whatsapp" else "sms",
         "outbound",
@@ -3451,6 +4676,19 @@ def external_call_context_block_markdown(block):
         lines.append("- Sin intentos registrados todavia.")
     if block.get("summary"):
         lines.extend(["", "## Latest Summary", "", block.get("summary") or ""])
+    if any(block.get(key) for key in ["last_outbound_channel", "last_sms_sid", "last_sms_status", "last_sms_body_preview", "last_sms_at"]):
+        lines.extend(
+            [
+                "",
+                "## Latest Follow-up Sync",
+                "",
+                f"- Channel: {block.get('last_outbound_channel') or ''}",
+                f"- Message SID: {block.get('last_sms_sid') or ''}",
+                f"- Status: {block.get('last_sms_status') or ''}",
+                f"- Sent at: {block.get('last_sms_at') or ''}",
+                f"- Body preview: {block.get('last_sms_body_preview') or ''}",
+            ]
+        )
     if block.get("transcript_path"):
         lines.extend(["", "## Transcript Path", "", f"- {block.get('transcript_path')}"])
     return "\n".join(lines).strip() + "\n"
@@ -3496,7 +4734,7 @@ def sync_external_call_context_block(context):
         "title": current.get("title") or context.get("campaign_label") or context.get("contact_name") or context.get("to") or block_id,
         "status": status,
         "scope": twilio_context_scope(context),
-        "channel": "phone",
+        "channel": context.get("channel") or current.get("channel") or "phone",
         "tags": twilio_context_tags(context),
         "workflow_target": context.get("workflow_target") or current.get("workflow_target") or "pipedrive_then_clickup",
         "parent_context_id": context.get("parent_context_id") or current.get("parent_context_id") or "",
@@ -3515,6 +4753,11 @@ def sync_external_call_context_block(context):
         "report_to_doctor": context.get("report_to_doctor") or current.get("report_to_doctor") or "",
         "success_criteria": context.get("success_criteria") or current.get("success_criteria") or "",
         "next_step_hint": context.get("next_step_hint") or current.get("next_step_hint") or "",
+        "last_outbound_channel": context.get("last_outbound_channel") or current.get("last_outbound_channel") or "",
+        "last_sms_sid": context.get("last_sms_sid") or current.get("last_sms_sid") or "",
+        "last_sms_status": context.get("last_sms_status") or current.get("last_sms_status") or "",
+        "last_sms_body_preview": context.get("last_sms_body_preview") or current.get("last_sms_body_preview") or "",
+        "last_sms_at": context.get("last_sms_at") or current.get("last_sms_at") or "",
         "call_sid": call_sid or current.get("call_sid") or "",
         "transcript_path": context.get("transcript_path") or current.get("transcript_path") or "",
         "summary": context.get("summary") or current.get("summary") or "",
@@ -3538,6 +4781,26 @@ def sync_external_call_context_block(context):
     except Exception as exc:
         append_memory("person_context_index_error", {"error": brief(str(exc), 500), "context_block_id": block_id})
     return block
+
+
+def queue_twilio_realtime_sync(context, trigger="context_update", changed_fields=None):
+    context = context or {}
+    context_id = str(context.get("id") or context.get("context_block_id") or "").strip()
+    call_sid = str(context.get("call_sid") or "").strip()
+    if not context_id and not call_sid:
+        return {}
+    event = {
+        "event_id": "RTSYNC-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper(),
+        "at": now_iso(),
+        "trigger": str(trigger or "context_update").strip() or "context_update",
+        "context_id": context_id,
+        "call_sid": call_sid,
+        "status": str(context.get("status") or "").strip(),
+        "contact_name": str(context.get("contact_name") or "").strip(),
+        "changed_fields": sorted({str(item).strip() for item in (changed_fields or []) if str(item).strip()}),
+    }
+    append_jsonl_any([TWILIO_REALTIME_SYNC_QUEUE, RUNTIME_TWILIO_REALTIME_SYNC_QUEUE], event)
+    return event
 
 
 def person_context_key(name="", phone="", email=""):
@@ -3656,6 +4919,11 @@ def build_person_context_index():
     index = {}
     contacts_by_id = {}
     contacts_by_phone = {}
+    contacts_by_name = {}
+
+    def contact_by_name_hint(name):
+        return {}
+
     try:
         with crm_connect() as conn:
             contacts = [
@@ -3680,6 +4948,9 @@ def build_person_context_index():
                 phone = normalize_phone_number(contact.get("phone_e164"))
                 if phone:
                     contacts_by_phone[phone] = contact
+                name_key = normalize_security_text(contact.get("display_name"))
+                if name_key:
+                    contacts_by_name[name_key] = contact
                 for key, target in [
                     ("id", "contact_ids"),
                     ("contact_type", "contact_types"),
@@ -3690,6 +4961,42 @@ def build_person_context_index():
                     value = contact.get(key)
                     if value and value not in record[target]:
                         record[target].append(value)
+
+            def contact_by_name_hint(name):
+                clean_name = normalize_security_text(name)
+                if not clean_name:
+                    return {}
+                if contacts_by_name.get(clean_name):
+                    return contacts_by_name[clean_name]
+                terms = person_context_match_terms(clean_name)
+                best_score = 0
+                best_contact = {}
+                for contact in contacts_by_id.values():
+                    haystack = normalize_security_text(
+                        " ".join(
+                            str(contact.get(key) or "")
+                            for key in ["display_name", "email", "company_name", "contact_type", "notes"]
+                        )
+                    )
+                    compact_haystack = re.sub(r"[^a-z0-9]+", "", haystack)
+                    consonant_haystack = re.sub(r"[aeiou]+", "", compact_haystack)
+                    score = 0
+                    for term in terms:
+                        if not term:
+                            continue
+                        if term == normalize_security_text(contact.get("display_name")):
+                            score += 25
+                        elif term in haystack:
+                            score += 12 if " " in term else 7
+                        elif term in compact_haystack:
+                            score += 6
+                        elif len(term) >= 2 and term in consonant_haystack:
+                            score += 4
+                    if score > best_score:
+                        best_score = score
+                        best_contact = contact
+                return best_contact if best_score >= 6 else {}
+
             interactions = [
                 dict(row)
                 for row in conn.execute(
@@ -3733,11 +5040,16 @@ def build_person_context_index():
                 ).fetchall()
             ]
             for item in scheduled:
-                contact = contacts_by_id.get(item.get("contact_id")) or contacts_by_phone.get(normalize_phone_number(item.get("to_value"))) or {}
+                payload = parse_json_object_from_text(item.get("payload_json") or "")
+                target_parameters = payload.get("_target_parameters") if isinstance(payload.get("_target_parameters"), dict) else {}
+                scheduled_name = first_value(target_parameters, "contact_name", "client_name", "name", "nombre", default="")
+                named_contact = contact_by_name_hint(scheduled_name) if scheduled_name else {}
+                contact = named_contact or contacts_by_id.get(item.get("contact_id")) or contacts_by_phone.get(normalize_phone_number(item.get("to_value"))) or {}
+                record_phone = contact.get("phone_e164") or ("" if named_contact else item.get("to_value"))
                 record = ensure_person_context(
                     index,
-                    name=contact.get("display_name") or item.get("to_value"),
-                    phone=contact.get("phone_e164") or item.get("to_value"),
+                    name=contact.get("display_name") or scheduled_name or item.get("to_value"),
+                    phone=record_phone,
                     email=contact.get("email"),
                 )
                 record["scheduled_actions"].append(
@@ -3755,11 +5067,15 @@ def build_person_context_index():
     state = load_external_call_context_block_state()
     for block in state.get("blocks", {}).values():
         phone = normalize_phone_number(block.get("to"))
-        contact = contacts_by_phone.get(phone) or {}
+        block_name = str(block.get("contact_name") or "").strip()
+        named_contact = contact_by_name_hint(block_name) if block_name else {}
+        phone_contact = contacts_by_phone.get(phone) or {}
+        contact = named_contact or phone_contact
+        record_phone = contact.get("phone_e164") or ("" if named_contact else phone)
         record = ensure_person_context(
             index,
-            name=contact.get("display_name") or block.get("contact_name") or phone,
-            phone=contact.get("phone_e164") or phone,
+            name=contact.get("display_name") or block_name or phone,
+            phone=record_phone,
             email=contact.get("email"),
         )
         if block.get("company") and block.get("company") not in record["companies"]:
@@ -3836,6 +5152,255 @@ def person_context_record_for_phone(phone, rebuild=False):
     return {}
 
 
+def person_context_match_terms(value):
+    normalized = normalize_security_text(value)
+    compact = re.sub(r"[^a-z0-9]+", "", normalized)
+    consonants = re.sub(r"[aeiou]+", "", compact)
+    terms = [normalized, compact, consonants]
+    alias_map = {
+        "nomi": ["naomi", "naomi rodriguez"],
+        "naomi": ["nomi"],
+        "dr y": ["dr yehoshua", "yehoshua", "doctor yehoshua"],
+        "dr ye": ["dr yehoshua", "yehoshua", "doctor yehoshua"],
+    }
+    for alias in alias_map.get(normalized, []):
+        alias_normalized = normalize_security_text(alias)
+        alias_compact = re.sub(r"[^a-z0-9]+", "", alias_normalized)
+        alias_consonants = re.sub(r"[aeiou]+", "", alias_compact)
+        terms.extend([alias_normalized, alias_compact, alias_consonants])
+    return [term for term in compact_unique(terms, limit=12) if term]
+
+
+def person_context_record_blob(record):
+    parts = [
+        record.get("key"),
+        person_context_title(record),
+        " ".join(record.get("phones") or []),
+        " ".join(record.get("emails") or []),
+        " ".join(record.get("companies") or []),
+        " ".join(record.get("contact_types") or []),
+        " ".join(record.get("notes") or []),
+    ]
+    for block in record.get("context_blocks") or []:
+        parts.extend(
+            [
+                block.get("block_id"),
+                block.get("objective"),
+                block.get("call_context"),
+                block.get("next_step_hint"),
+                block.get("status"),
+            ]
+        )
+    for item in record.get("interactions") or []:
+        parts.extend([item.get("body"), item.get("external_sid"), item.get("status"), item.get("channel")])
+    return normalize_security_text(" ".join(str(part or "") for part in parts))
+
+
+def person_context_score(record, query):
+    query_terms = person_context_match_terms(query)
+    if not query_terms:
+        return 0
+    blob = person_context_record_blob(record)
+    compact_blob = re.sub(r"[^a-z0-9]+", "", blob)
+    consonant_blob = re.sub(r"[aeiou]+", "", compact_blob)
+    title = normalize_security_text(person_context_title(record))
+    query_norm = normalize_security_text(query)
+    query_phone = normalize_phone_number(query)
+    company_terms = [normalize_security_text(company) for company in record.get("companies") or []]
+    email_terms = [normalize_security_text(email) for email in record.get("emails") or []]
+    phone_terms = [normalize_phone_number(phone) for phone in record.get("phones") or []]
+    score = 0
+    if query_norm and query_norm == title:
+        score += 90
+    if query_phone and query_phone in phone_terms:
+        score += 100
+    if query_norm and query_norm in email_terms:
+        score += 90
+    if query_norm and query_norm in company_terms:
+        score += 42
+    for term in query_terms:
+        if not term:
+            continue
+        if term == title:
+            score += 70
+        elif term and term in title:
+            score += 36
+        elif term and any(term == company for company in company_terms):
+            score += 32
+        elif term and any(term in company for company in company_terms):
+            score += 18
+        elif term and any(term == email for email in email_terms):
+            score += 36
+        elif term and any(term in email for email in email_terms):
+            score += 18
+        elif query_phone and query_phone in phone_terms:
+            score += 80
+        elif term and term in blob:
+            score += 6 if " " in term else 3
+        elif term and term in compact_blob:
+            score += 3
+        elif len(term) >= 2 and term in consonant_blob:
+            score += 2
+    return score
+
+
+def find_person_context_records(query="", limit=5, rebuild=False):
+    query = str(query or "").strip()
+    people = load_person_context_people(rebuild=rebuild)
+    if not query:
+        return people[:limit]
+    scored = []
+    for record in people:
+        score = person_context_score(record, query)
+        if score > 0:
+            scored.append((score, record))
+    if not scored and not rebuild:
+        return find_person_context_records(query=query, limit=limit, rebuild=True)
+    scored.sort(key=lambda item: (item[0], item[1].get("latest_interaction_at") or ""), reverse=True)
+    return [record for _, record in scored[: max(1, min(int(limit or 5), 20))]]
+
+
+def person_context_transcript_reports(record, limit=5):
+    seen = set()
+    reports = []
+    candidates = []
+    for block in record.get("context_blocks") or []:
+        if block.get("transcript_path"):
+            candidates.append(
+                {
+                    "kind": "context_block",
+                    "status": block.get("status"),
+                    "path": block.get("transcript_path"),
+                    "at": block.get("updated_at") or block.get("created_at"),
+                    "label": block.get("block_id"),
+                }
+            )
+        for attempt in block.get("attempts") or []:
+            if attempt.get("transcript_path"):
+                candidates.append(
+                    {
+                        "kind": "call_attempt",
+                        "status": attempt.get("status"),
+                        "path": attempt.get("transcript_path"),
+                        "at": attempt.get("at"),
+                        "label": attempt.get("call_sid"),
+                    }
+                )
+    for item in record.get("interactions") or []:
+        if item.get("transcript_path"):
+            candidates.append(
+                {
+                    "kind": item.get("channel") or "interaction",
+                    "status": item.get("status"),
+                    "path": item.get("transcript_path"),
+                    "at": item.get("occurred_at") or item.get("created_at"),
+                    "label": item.get("external_sid") or item.get("id"),
+                }
+            )
+        elif item.get("body"):
+            candidates.append(
+                {
+                    "kind": item.get("channel") or "interaction",
+                    "status": item.get("status"),
+                    "body": item.get("body"),
+                    "at": item.get("occurred_at") or item.get("created_at"),
+                    "label": item.get("external_sid") or item.get("id"),
+                }
+            )
+    candidates.sort(key=lambda item: item.get("at") or "", reverse=True)
+    for item in candidates:
+        key = item.get("path") or item.get("label") or item.get("body")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        report = {key: item.get(key) for key in ["kind", "status", "path", "at", "label", "body"] if item.get(key)}
+        if item.get("path"):
+            path = pathlib.Path(item["path"])
+            text = read_text_tail(path, limit=18000)
+            if text:
+                report["excerpt"] = brief(text, 1800)
+        reports.append(report)
+        if len(reports) >= limit:
+            break
+    return reports
+
+
+def person_context_supervision_payload(query="", limit=1):
+    try:
+        requested_limit = int(limit or 1)
+    except (TypeError, ValueError):
+        requested_limit = 1
+    requested_limit = max(1, min(requested_limit, 10))
+    records = find_person_context_records(query=query, limit=requested_limit, rebuild=True)
+    people = []
+    for record in records:
+        title = person_context_title(record)
+        markdown_path = record.get("markdown_path") or str(PERSON_CONTEXT_DIR / f"{crm_slug(title)}.md")
+        markdown = read_text_tail(pathlib.Path(markdown_path), limit=18000) if markdown_path else ""
+        pending = person_context_pending_briefs(record, limit=5)
+        calls = person_context_transcript_reports(record, limit=6)
+        mode_prompt = (
+            f"Modo {title}: carga solo el hilo propio de {title}. "
+            "Usa CRM, context blocks, interacciones, transcripts y notas de esta ficha antes de contestar. "
+            "Si el doctor esta simulando una llamada, atiende como Kim con este contexto de persona; "
+            "no reveles datos de terceros ni pendientes generales del doctor. "
+            "Si falta informacion, dilo y registra que debe actualizarse la ficha."
+        )
+        people.append(
+            {
+                "key": record.get("key"),
+                "display_name": title,
+                "phones": record.get("phones") or [],
+                "emails": record.get("emails") or [],
+                "companies": record.get("companies") or [],
+                "contact_ids": record.get("contact_ids") or [],
+                "contact_types": record.get("contact_types") or [],
+                "latest_status": record.get("latest_status"),
+                "latest_interaction_at": record.get("latest_interaction_at"),
+                "next_step_hint": record.get("next_step_hint"),
+                "pending": pending,
+                "context_blocks": (record.get("context_blocks") or [])[:10],
+                "interactions": (record.get("interactions") or [])[:12],
+                "calls": calls,
+                "markdown_path": markdown_path,
+                "markdown_excerpt": brief(markdown, 2200),
+                "mode_prompt": mode_prompt,
+            }
+        )
+    active_person = people[0] if people else None
+    candidate_summaries = [
+        {
+            "display_name": item.get("display_name"),
+            "phones": item.get("phones") or [],
+            "companies": item.get("companies") or [],
+            "latest_interaction_at": item.get("latest_interaction_at"),
+        }
+        for item in people[1:]
+    ]
+    payload = {
+        "ok": True,
+        "provider": "crm",
+        "action": "person_context",
+        "query": query,
+        "count": len(people),
+        "active_person": active_person,
+        "active_context_id": active_person.get("key") if active_person else "",
+        "candidate_summaries": candidate_summaries,
+        "people": people,
+        "strict_mode": bool(active_person),
+        "rule": (
+            "Usa active_person como unico hilo conductor autorizado. "
+            "No mezcles terceros ni candidatos secundarios salvo que el doctor pida comparar o cambiar de persona. "
+            "Si necesitas otro hilo, llama de nuevo person_context con el nombre o telefono exacto."
+        ),
+    }
+    append_memory(
+        "person_context_supervision",
+        {"query": query, "count": len(people), "people": [item.get("display_name") for item in people]},
+    )
+    return payload
+
+
 def person_context_is_doctor(record):
     if not record:
         return False
@@ -3891,6 +5456,108 @@ def person_context_pending_briefs(record, limit=4):
     return pending[:limit]
 
 
+def markdown_title_from_text(text, fallback="Knowledge"):
+    for line in str(text or "").splitlines():
+        clean = line.strip()
+        if clean.startswith("# "):
+            return clean[2:].strip()
+    return fallback
+
+
+def markdown_section_summary(text, heading="## Sintesis", limit=360):
+    lines = str(text or "").splitlines()
+    capture = False
+    collected = []
+    for line in lines:
+        clean = line.strip()
+        if clean.lower() == heading.lower():
+            capture = True
+            continue
+        if capture and clean.startswith("## "):
+            break
+        if capture and clean:
+            collected.append(clean)
+    if not collected:
+        for line in lines:
+            clean = line.strip()
+            if clean and not clean.startswith("#") and not clean.startswith("- "):
+                collected.append(clean)
+            if len(" ".join(collected)) >= limit:
+                break
+    return brief(" ".join(collected), limit)
+
+
+def person_context_search_terms(record):
+    terms = []
+    title = person_context_title(record)
+    if title:
+        terms.append(title)
+        parts = [part for part in normalize_security_text(title).split() if len(part) >= 4]
+        terms.extend(parts[:3])
+    for company in record.get("companies") or []:
+        if company:
+            terms.append(company)
+    for phone in record.get("phones") or []:
+        clean = normalize_phone_number(phone)
+        if clean:
+            terms.append(clean)
+            terms.append(clean[-8:])
+    return [term for term in compact_unique(terms, limit=10) if str(term).strip()]
+
+
+def person_context_knowledge_briefs(record, limit=4):
+    if not record:
+        return []
+    terms = person_context_search_terms(record)
+    if not terms:
+        return []
+    roots = [MEMORY_KNOWLEDGE, RUNTIME_KNOWLEDGE]
+    scored = []
+    seen_paths = set()
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*.md"):
+            if str(path) in seen_paths:
+                continue
+            seen_paths.add(str(path))
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            haystack = f"{path.name}\n{text}".lower()
+            score = 0
+            for term in terms:
+                clean = str(term or "").strip().lower()
+                if clean and clean in haystack:
+                    score += 3 if " " in clean or clean.startswith("+") else 1
+            if score <= 0:
+                continue
+            scored.append(
+                {
+                    "score": score,
+                    "title": markdown_title_from_text(text, fallback=path.stem.replace("-", " ").title()),
+                    "summary": markdown_section_summary(text),
+                    "path": str(path),
+                }
+            )
+    scored.sort(key=lambda item: (item["score"], item["path"]), reverse=True)
+    output = []
+    for item in scored:
+        if item["summary"]:
+            output.append({key: item[key] for key in ["title", "summary", "path"]})
+        if len(output) >= limit:
+            break
+    return output
+
+
+def format_knowledge_briefs_for_prompt(briefs, limit=900):
+    if not briefs:
+        return "Sin knowledge cards especificas encontradas para este contacto."
+    text = "; ".join(f"{item.get('title')}: {item.get('summary')}" for item in briefs)
+    return brief(text, limit)
+
+
 def twilio_inbound_caller_profile(caller="", called=""):
     normalized_caller = normalize_phone_number(caller)
     record = person_context_record_for_phone(normalized_caller)
@@ -3900,6 +5567,7 @@ def twilio_inbound_caller_profile(caller="", called=""):
     companies = ", ".join(compact_unique(record.get("companies", []), limit=3)) if record else ""
     relationship = ", ".join(compact_unique(record.get("contact_types", []), limit=3)) if record else ""
     pending_briefs = person_context_pending_briefs(record, limit=3)
+    knowledge_briefs = person_context_knowledge_briefs(record, limit=4)
     return {
         "caller": normalized_caller,
         "called": normalize_phone_number(called),
@@ -3911,11 +5579,16 @@ def twilio_inbound_caller_profile(caller="", called=""):
         "relationship_summary": relationship,
         "pending_briefs": pending_briefs,
         "pending_summary": "; ".join(pending_briefs),
+        "knowledge_briefs": knowledge_briefs,
+        "knowledge_summary": format_knowledge_briefs_for_prompt(knowledge_briefs),
         "service_summary": INBOUND_CALL_SERVICE_SUMMARY,
         "sales_positioning": AI_PEOPLE_SALES_POSITIONING,
         "sales_playbook": AI_PEOPLE_SALES_PLAYBOOK,
         "sales_discovery_flow": AI_PEOPLE_DISCOVERY_FLOW,
         "commercial_guardrails": AI_PEOPLE_COMMERCIAL_GUARDRAILS,
+        "remote_secretary_bridge_policy": REMOTE_SECRETARY_BRIDGE_POLICY,
+        "inbound_relationship_goodwill_policy": INBOUND_RELATIONSHIP_GOODWILL_POLICY,
+        "whatsapp_sales_pr_meeting_playbook": WHATSAPP_SALES_PR_MEETING_PLAYBOOK,
         "privacy_summary": (
             "No compartir tareas de terceros ni pendientes generales del doctor sin identidad clara; "
             "solo dar contexto del propio llamante."
@@ -3930,20 +5603,29 @@ def twilio_inbound_caller_label(profile=None):
     return profile.get("display_name") or "Llamante"
 
 
+def twilio_label_looks_like_phone(label):
+    raw = str(label or "").strip()
+    normalized = normalize_phone_number(raw)
+    return bool(normalized and normalized == raw)
+
+
 def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None):
     profile = profile or twilio_inbound_caller_profile(caller, called)
     caller_number = profile.get("caller") or normalize_phone_number(caller)
     called_number = profile.get("called") or normalize_phone_number(called)
-    known = bool(profile.get("known_contact"))
     is_doctor = bool(profile.get("is_doctor"))
     label = twilio_inbound_caller_label(profile)
+    known = bool(profile.get("known_contact")) and not twilio_label_looks_like_phone(label)
     pending = profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
+    knowledge_summary = profile.get("knowledge_summary") or "Sin knowledge cards especificas encontradas para este contacto."
     if is_doctor:
-        objective = "Atender al Dr. Yehoshua como linea directa de Kim Live y recibir instrucciones operativas."
+        objective = "Atender al Dr. Yehoshua como linea directa de Kim Live y puente remoto de instrucciones operativas."
         instructions = (
             "Saluda como Kim de forma natural. Puedes asumir que el interlocutor es el doctor si el numero coincide. "
-            "Registra instrucciones, tareas y contexto en memoria local; si algo requiere ejecucion fuera de la llamada, "
-            "confirma que quedara registrado para seguimiento."
+            "Este canal debe funcionar aunque el doctor no este frente a la computadora: recibe instrucciones, tareas, "
+            "contexto, recados y solicitudes de seguimiento; registralas en memoria local, notifica Kim Live y prepara "
+            "acciones cuando corresponda. Si algo requiere ejecucion fuera de la llamada, confirma que quedara registrado "
+            "o preparado, pero no afirmes que ya se ejecuto si no existe resultado confirmado por API o scheduler."
         )
         questions = "Pregunta que necesita ejecutar o revisar ahora."
     elif known:
@@ -3953,6 +5635,7 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
         )
         instructions = (
             f"Si el numero ya esta vinculado a {label}, saluda por su nombre y continua el hilo de la conversacion anterior. "
+            f"Usa su hilo propio de BIFROST antes de contestar: {knowledge_summary}. "
             f"Primera frase recomendada: 'Hola, {label}, habla Kim, asistente del Dr. Yehoshua. Me da gusto saludarte de nuevo. "
             "¿Continuamos con lo que teniamos pendiente o en que puedo ayudarte hoy?'. "
             f"Confirma con suavidad que hablas con {label} si el contexto lo requiere. No reveles datos sensibles hasta que la persona "
@@ -4009,8 +5692,8 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
         "context_scope": "single_contact",
         "workflow_target": "crm_then_memory",
         "call_sid": call_sid or "",
-        "to": caller_number,
-        "from": called_number,
+        "from": caller_number,
+        "to": called_number,
         "contact_name": label if known or is_doctor else "",
         "relationship": profile.get("relationship_summary") or ("doctor" if is_doctor else ""),
         "company": profile.get("company_summary") or "",
@@ -4018,11 +5701,14 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             f"Llamada entrante desde {caller_number or caller}. "
             f"Perfil reconocido: {label if known or is_doctor else 'no identificado'}. "
             f"Pendientes propios disponibles: {pending}. "
+            f"Hilo BIFROST propio del llamante: {knowledge_summary}. "
             f"Servicios generales permitidos: {profile.get('service_summary') or INBOUND_CALL_SERVICE_SUMMARY}. "
             f"Posicionamiento Ai People: {profile.get('sales_positioning') or AI_PEOPLE_SALES_POSITIONING}. "
             f"Playbook comercial: {profile.get('sales_playbook') or AI_PEOPLE_SALES_PLAYBOOK}. "
             f"Discovery comercial: {profile.get('sales_discovery_flow') or AI_PEOPLE_DISCOVERY_FLOW}. "
             f"Guardrails comerciales: {profile.get('commercial_guardrails') or AI_PEOPLE_COMMERCIAL_GUARDRAILS}."
+            f" Politica secretaria/puente: {profile.get('remote_secretary_bridge_policy') or REMOTE_SECRETARY_BRIDGE_POLICY}."
+            f" Politica relacion/buen nombre: {profile.get('inbound_relationship_goodwill_policy') or INBOUND_RELATIONSHIP_GOODWILL_POLICY}."
         ),
         "objective": objective,
         "instructions": instructions,
@@ -4060,8 +5746,52 @@ def parse_json_object_from_text(text):
         return {}
 
 
-def synthesize_twilio_context_from_transcript(explicit, transcript):
-    transcript = (transcript or "").strip()
+def twilio_recent_transcript_window(transcript, max_lines=18, max_chars=2400):
+    lines = [str(line or "").rstrip() for line in str(transcript or "").splitlines() if str(line or "").strip()]
+    if not lines:
+        return ""
+    window = "\n".join(lines[-max_lines:]).strip()
+    if len(window) <= max_chars:
+        return window
+    return window[-max_chars:].lstrip()
+
+
+def twilio_names_compatible(expected, actual):
+    left = normalize_security_text(expected)
+    right = normalize_security_text(actual)
+    if not left or not right:
+        return False
+    if left == right or left in right or right in left:
+        return True
+    compact_left = re.sub(r"[^a-z0-9]+", "", left)
+    compact_right = re.sub(r"[^a-z0-9]+", "", right)
+    if compact_left and compact_right and (compact_left in compact_right or compact_right in compact_left):
+        return True
+    return bool(set(person_context_match_terms(left)) & set(person_context_match_terms(right)))
+
+
+def twilio_report_request_looks_like_outcome(text):
+    normalized = normalize_security_text(text)
+    if not normalized:
+        return False
+    request_markers = ["reportar", "informar", "decir", "compartir", "registrar", "guardar", "anotar"]
+    outcome_markers = ["confirmo que", "respondio que", "dijo que", "sugirio que", "confirmaron que", "respondieron que"]
+    return any(marker in normalized for marker in outcome_markers) and not any(marker in normalized for marker in request_markers)
+
+
+def twilio_report_request_fallback(contact_name="", questions="", objective=""):
+    label = contact_name or "la persona"
+    question_text = normalize_call_context_value(questions)
+    objective_text = normalize_call_context_value(objective)
+    if question_text:
+        return f"Reportar al doctor exactamente que se dijo y que respondio {label} a: {question_text}"
+    if objective_text:
+        return f"Reportar al doctor exactamente que se dijo y que respondio {label} respecto a: {brief(objective_text, 220)}"
+    return f"Reportar al doctor exactamente que se dijo y que respondio {label}."
+
+
+def synthesize_twilio_context_from_transcript(explicit, transcript, expected_contact_name="", expected_phone=""):
+    transcript = twilio_recent_transcript_window(transcript)
     if not transcript:
         return explicit
     missing = [key for key in ["contact_name", "call_context", "objective", "questions", "report_to_doctor"] if not explicit.get(key)]
@@ -4073,12 +5803,25 @@ def synthesize_twilio_context_from_transcript(explicit, transcript):
         "Campos: contact_name, relationship, company, call_context, objective, instructions, "
         "questions, message_to_deliver, report_to_doctor, success_criteria, tone.\n\n"
         "El objetivo es que Kim pueda llamar a una tercera persona con contexto y despues reportar al doctor "
-        "que se dijo y que respondio la persona.\n\n"
-        f"Conversacion activa:\n{brief(transcript, 7000)}"
+        "que se dijo y que respondio la persona.\n"
+        "Usa SOLO el tramo mas reciente y pertinente. Ignora hilos anteriores de otras personas.\n"
+        f"Destinatario esperado segun CRM/telefono: {expected_contact_name or '(sin resolver)'}\n"
+        f"Telefono objetivo: {expected_phone or '(sin telefono)'}\n\n"
+        f"Conversacion reciente:\n{brief(transcript, 3200)}"
     )
     try:
         response, model = openai_response_with_fallback(PHONE_REPLY_MODEL_CANDIDATES, {"input": prompt, "max_output_tokens": 700})
         parsed = parse_json_object_from_text(output_text_from_response(response))
+        parsed_name = normalize_call_context_value(parsed.get("contact_name"))
+        if expected_contact_name and parsed_name and not twilio_names_compatible(expected_contact_name, parsed_name):
+            append_memory(
+                "twilio_call_context_name_guard",
+                {
+                    "expected_contact_name": expected_contact_name,
+                    "parsed_contact_name": parsed_name,
+                },
+            )
+            parsed["contact_name"] = expected_contact_name
         for key in [
             "contact_name",
             "relationship",
@@ -4106,6 +5849,11 @@ def synthesize_twilio_context_from_transcript(explicit, transcript):
 def twilio_context_from_parameters(parameters, preview, transcript=""):
     parameters = parameters or {}
     transcript = transcript or str(first_value(parameters, "_conversation_transcript", "transcript", default="") or "")
+    recipient_contact = preview.get("recipient_contact") if isinstance(preview.get("recipient_contact"), dict) else {}
+    expected_contact_name = normalize_call_context_value(
+        recipient_contact.get("display_name") or preview.get("recipient_label") or preview.get("crm_lookup_phone") or preview.get("to")
+    )
+    expected_phone = preview.get("crm_lookup_phone") or preview.get("to") or ""
     explicit = {
         "contact_name": first_value(parameters, "contact_name", "client_name", "name", "nombre", default=""),
         "relationship": first_value(parameters, "relationship", "relacion", "role", "rol", default=""),
@@ -4127,11 +5875,43 @@ def twilio_context_from_parameters(parameters, preview, transcript=""):
     }
     explicit = {key: normalize_call_context_value(value) for key, value in explicit.items()}
     transcript_excerpt = brief(sanitize_text_for_log(transcript), 3200) if transcript else ""
-    if transcript_excerpt:
-        explicit = synthesize_twilio_context_from_transcript(explicit, transcript)
-    has_context = any(value for key, value in explicit.items() if key != "tone") or bool(transcript_excerpt)
-    if not has_context:
+    has_context_signal = any(
+        value
+        for key, value in explicit.items()
+        if key not in {"tone", "contact_name", "relationship", "company"}
+    ) or bool(transcript_excerpt)
+    if not has_context_signal:
         return {}
+    if expected_contact_name and not explicit.get("contact_name"):
+        explicit["contact_name"] = expected_contact_name
+    if recipient_contact.get("contact_type") and not explicit.get("relationship"):
+        explicit["relationship"] = normalize_call_context_value(recipient_contact.get("contact_type"))
+    company_name = recipient_contact.get("company") or recipient_contact.get("company_name") or ""
+    if company_name and not explicit.get("company"):
+        explicit["company"] = normalize_call_context_value(company_name)
+    if transcript_excerpt:
+        explicit = synthesize_twilio_context_from_transcript(
+            explicit,
+            transcript,
+            expected_contact_name=expected_contact_name,
+            expected_phone=expected_phone,
+        )
+    if expected_contact_name and explicit.get("contact_name") and not twilio_names_compatible(expected_contact_name, explicit.get("contact_name")):
+        append_memory(
+            "twilio_call_context_contact_guard",
+            {
+                "expected_contact_name": expected_contact_name,
+                "actual_contact_name": explicit.get("contact_name"),
+                "phone": expected_phone,
+            },
+        )
+        explicit["contact_name"] = expected_contact_name
+    if (not explicit.get("report_to_doctor")) or twilio_report_request_looks_like_outcome(explicit.get("report_to_doctor")):
+        explicit["report_to_doctor"] = twilio_report_request_fallback(
+            contact_name=explicit.get("contact_name") or expected_contact_name,
+            questions=explicit.get("questions"),
+            objective=explicit.get("objective"),
+        )
     if not explicit.get("tone"):
         explicit["tone"] = "amable, natural y profesional"
     if not explicit.get("workflow_target"):
@@ -4159,6 +5939,7 @@ def store_twilio_call_context(context):
     state["contexts"][context["id"]] = context
     save_twilio_call_context_state(state)
     sync_external_call_context_block(context)
+    queue_twilio_realtime_sync(context, trigger="context_prepared", changed_fields=sorted(context.keys()))
     append_memory("twilio_call_context_prepared", {"context_id": context["id"], "to": context.get("to"), "objective": brief(context.get("objective") or context.get("instructions") or context.get("call_context"), 240)})
     return context["id"]
 
@@ -4175,13 +5956,24 @@ def update_twilio_call_context(context_id="", call_sid="", updates=None):
                 break
     if not context:
         return None
-    context.update({key: value for key, value in updates.items() if value is not None})
+    before = dict(context)
+    changed_fields = []
+    for key, value in updates.items():
+        if value is None:
+            continue
+        if before.get(key) != value:
+            changed_fields.append(key)
+        context[key] = value
     if call_sid:
+        if before.get("call_sid") != call_sid:
+            changed_fields.append("call_sid")
         context["call_sid"] = call_sid
     context["updated_at"] = now_iso()
     state["contexts"][context_id] = context
     save_twilio_call_context_state(state)
     sync_external_call_context_block(context)
+    if changed_fields:
+        queue_twilio_realtime_sync(context, trigger="context_updated", changed_fields=changed_fields)
     return context
 
 
@@ -4768,6 +6560,55 @@ def call_transcript_from_text(text):
     return text
 
 
+def twilio_detect_outbound_recipient_mismatch(transcript_lines, call_context=None):
+    call_context = call_context or {}
+    if not call_context or call_context.get("direction") == "inbound":
+        return {}
+    expected_contact_name = str(call_context.get("contact_name") or "").strip()
+    if not expected_contact_name:
+        return {}
+    lines = [str(line or "").strip() for line in (transcript_lines or []) if str(line or "").strip()]
+    if not lines:
+        return {}
+    transcript_text = "\n".join(lines)
+    normalized = normalize_security_text(transcript_text)
+    actual_contact_name = ""
+    for line in lines:
+        if not line.lower().startswith("dr. yehoshua:"):
+            continue
+        match = re.search(
+            r"yo soy (?:la\s+señorita|la\s+senorita|la\s+señora|la\s+senora|el\s+señor|el\s+senor)?\s*([^.,;:!?]+)",
+            line,
+            flags=re.I,
+        )
+        if match:
+            actual_contact_name = match.group(1).strip()
+            break
+    if actual_contact_name and twilio_names_compatible(expected_contact_name, actual_contact_name):
+        return {}
+    mismatch_markers = [
+        "equivocada",
+        "llamada de error",
+        "no te puedo ayudar",
+        "yo soy la senorita",
+        "yo soy la senora",
+        "yo soy el senor",
+    ]
+    if actual_contact_name:
+        return {
+            "expected_contact_name": expected_contact_name,
+            "actual_contact_name": actual_contact_name,
+            "reason": "caller_identifies_as_different_person",
+        }
+    if any(marker in normalized for marker in mismatch_markers):
+        return {
+            "expected_contact_name": expected_contact_name,
+            "actual_contact_name": "",
+            "reason": "conversation_indicates_wrong_recipient",
+        }
+    return {}
+
+
 def twilio_context_for_entry(entry, text="", contexts=None):
     contexts = contexts or []
     haystack = "\n".join(
@@ -4867,6 +6708,8 @@ def twilio_call_report(parameters=None):
                 "objective": context.get("objective", ""),
                 "report_to_doctor": context.get("report_to_doctor", ""),
                 "call_context": brief(context.get("call_context", ""), 1000),
+                "delivery_outcome": context.get("delivery_outcome", ""),
+                "delivery_note": context.get("delivery_note", ""),
                 "context_block_id": context.get("context_block_id") or context.get("id", ""),
                 "parent_context_id": context.get("parent_context_id", ""),
                 "campaign_label": context.get("campaign_label", ""),
@@ -4943,12 +6786,40 @@ def twilio_call_preview(parameters):
         raise ValueError("Falta from_number para llamada Twilio.")
     if not url:
         raise ValueError("Falta url/voice_url para llamada Twilio.")
+    allow_unknown_contact = boolish(
+        first_value(
+            parameters or {},
+            "allow_unknown_contact",
+            "allow_unregistered_recipient",
+            "allow_ad_hoc_recipient",
+            default=False,
+        )
+    )
+    crm_lookup_phone = twilio_lookup_phone_number(to)
+    recipient_contact = crm_find_contact_by_phone(crm_lookup_phone) if crm_lookup_phone else {}
+    if crm_lookup_phone and not allow_unknown_contact and not recipient_contact:
+        raise ValueError(
+            f"El destinatario {crm_lookup_phone} no esta registrado en CRM local. "
+            "Guardalo o sincronizalo primero antes de llamar."
+        )
+    recipient_label = recipient_contact.get("display_name") or crm_lookup_phone or to
     return {
         "to": to,
         "from": from_number,
         "url": url,
         "status_callback": status_callback,
         "timeout": int(first_value(parameters, "timeout", default=35) or 35),
+        "crm_lookup_phone": crm_lookup_phone,
+        "recipient_label": recipient_label,
+        "recipient_contact": {
+            "id": recipient_contact.get("id"),
+            "display_name": recipient_contact.get("display_name"),
+            "phone_e164": recipient_contact.get("phone_e164"),
+            "contact_type": recipient_contact.get("contact_type"),
+            "company": recipient_contact.get("company") or recipient_contact.get("company_name"),
+            "notes": recipient_contact.get("notes"),
+        } if recipient_contact else {},
+        "allow_unknown_contact": allow_unknown_contact,
     }
 
 
@@ -4991,7 +6862,7 @@ def twilio_start_call(parameters, confirm=False):
         return confirmation_preview(
             "twilio",
             "call_phone",
-            f"Llamar por Twilio a {preview['to']} desde {preview['from']}.",
+            f"Llamar por Twilio a {preview['recipient_label']} desde {preview['from']}.",
             preview_with_context,
             execution_parameters=execution_parameters,
         )
@@ -5060,84 +6931,376 @@ def twilio_start_call(parameters, confirm=False):
     return event
 
 
+SPANISH_WEEKDAYS = {
+    "lunes": 0,
+    "monday": 0,
+    "martes": 1,
+    "tuesday": 1,
+    "miercoles": 2,
+    "miércoles": 2,
+    "wednesday": 2,
+    "jueves": 3,
+    "thursday": 3,
+    "viernes": 4,
+    "friday": 4,
+    "sabado": 5,
+    "sábado": 5,
+    "saturday": 5,
+    "domingo": 6,
+    "sunday": 6,
+}
+
+
+def scheduler_timezone_name(parameters=None):
+    parameters = parameters or {}
+    raw = str(first_value(parameters, "timezone", "tz", "zona_horaria", default=DEFAULT_SCHEDULER_TIMEZONE) or DEFAULT_SCHEDULER_TIMEZONE).strip()
+    aliases = {
+        "cdmx": "America/Mexico_City",
+        "mexico": "America/Mexico_City",
+        "mexico city": "America/Mexico_City",
+        "ciudad de mexico": "America/Mexico_City",
+        "dubai": "Asia/Dubai",
+        "uae": "Asia/Dubai",
+        "utc": "UTC",
+    }
+    normalized = normalize_security_text(raw)
+    return aliases.get(normalized, raw or DEFAULT_SCHEDULER_TIMEZONE)
+
+
+def scheduler_zone(parameters=None):
+    name = scheduler_timezone_name(parameters)
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        return ZoneInfo(DEFAULT_SCHEDULER_TIMEZONE)
+
+
+def scheduler_now(parameters=None):
+    return dt.datetime.now(scheduler_zone(parameters))
+
+
+def scheduler_parse_iso(raw, zone):
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    candidate = text.replace("Z", "+00:00")
+    if re.match(r"^\d{4}-\d{2}-\d{2}\s+\d", candidate):
+        candidate = candidate.replace(" ", "T", 1)
+    try:
+        parsed = dt.datetime.fromisoformat(candidate)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=zone)
+    return parsed.astimezone(zone)
+
+
+def scheduler_parse_date(raw, base):
+    text = str(raw or "").strip().lower()
+    normalized = normalize_security_text(text)
+    if "pasado manana" in normalized or "pasado maniana" in normalized or "day after tomorrow" in normalized:
+        return base.date() + dt.timedelta(days=2)
+    if "manana" in normalized or "tomorrow" in normalized:
+        return base.date() + dt.timedelta(days=1)
+    if "hoy" in normalized or "today" in normalized:
+        return base.date()
+    for word, weekday in SPANISH_WEEKDAYS.items():
+        if normalize_security_text(word) in normalized.split():
+            delta = (weekday - base.weekday()) % 7
+            if delta == 0 and any(token in normalized for token in ["proximo", "siguiente", "next"]):
+                delta = 7
+            return base.date() + dt.timedelta(days=delta)
+    match = re.search(r"\b(\d{4})[-/](\d{1,2})[-/](\d{1,2})\b", text)
+    if match:
+        return dt.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    match = re.search(r"\b(\d{1,2})[-/](\d{1,2})(?:[-/](\d{2,4}))?\b", text)
+    if match:
+        day = int(match.group(1))
+        month = int(match.group(2))
+        year = int(match.group(3) or base.year)
+        if year < 100:
+            year += 2000
+        return dt.date(year, month, day)
+    return None
+
+
+def scheduler_parse_time(raw, base, date_was_explicit=False):
+    text = str(raw or "").strip().lower()
+    normalized = normalize_security_text(text)
+    if "mediodia" in normalized or "medio dia" in normalized or "noon" in normalized:
+        return 12, 0
+    if "medianoche" in normalized or "midnight" in normalized:
+        return 0, 0
+    matches = list(
+        re.finditer(
+            r"(?<!\d)(\d{1,2})(?::(\d{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm)?(?!\d)",
+            text,
+        )
+    )
+    if not matches:
+        return (9, 0) if date_was_explicit else (None, None)
+    chosen = None
+    for match in reversed(matches):
+        suffix = (match.group(3) or "").replace(" ", "").replace(".", "")
+        prefix = text[max(0, match.start() - 12) : match.start()]
+        if suffix or "a las" in prefix or "alas" in prefix or "hora" in prefix or "at " in prefix:
+            chosen = match
+            break
+    chosen = chosen or matches[-1]
+    hour = int(chosen.group(1))
+    minute = int(chosen.group(2) or 0)
+    suffix = (chosen.group(3) or "").replace(" ", "").replace(".", "")
+    if suffix == "pm" and hour < 12:
+        hour += 12
+    elif suffix == "am" and hour == 12:
+        hour = 0
+    elif not suffix and ("tarde" in normalized or "noche" in normalized) and 1 <= hour < 12:
+        hour += 12
+    elif not suffix and 1 <= hour <= 7:
+        candidate = base.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        afternoon = candidate + dt.timedelta(hours=12)
+        if candidate <= base < afternoon:
+            hour += 12
+    if hour > 23 or minute > 59:
+        raise ValueError("Hora fuera de rango para programar la accion.")
+    return hour, minute
+
+
 def parse_due_at(parameters=None):
     parameters = parameters or {}
-    for key in ["delay_seconds", "in_seconds", "seconds"]:
+    zone = scheduler_zone(parameters)
+    base = dt.datetime.now(zone)
+    for key in ["delay_seconds", "in_seconds", "seconds", "segundos"]:
         value = first_value(parameters, key, default="")
         if value not in (None, ""):
-            return (dt.datetime.now() + dt.timedelta(seconds=int(float(value)))).isoformat(timespec="seconds")
-    for key in ["delay_minutes", "in_minutes", "minutes"]:
+            return (base + dt.timedelta(seconds=int(float(value)))).isoformat(timespec="seconds")
+    for key in ["delay_minutes", "in_minutes", "minutes", "minutos", "en_minutos"]:
         value = first_value(parameters, key, default="")
         if value not in (None, ""):
-            return (dt.datetime.now() + dt.timedelta(minutes=float(value))).isoformat(timespec="seconds")
+            return (base + dt.timedelta(minutes=float(value))).isoformat(timespec="seconds")
+    for key in ["delay_hours", "in_hours", "hours", "horas", "en_horas"]:
+        value = first_value(parameters, key, default="")
+        if value not in (None, ""):
+            return (base + dt.timedelta(hours=float(value))).isoformat(timespec="seconds")
+    for key in ["delay_days", "in_days", "days", "dias", "en_dias"]:
+        value = first_value(parameters, key, default="")
+        if value not in (None, ""):
+            return (base + dt.timedelta(days=float(value))).isoformat(timespec="seconds")
     raw = str(first_value(parameters, "due_at", "scheduled_at", "run_at", "datetime", "date_time", "cuando", default="") or "").strip()
     if not raw:
         date_value = str(first_value(parameters, "date", "fecha", default="") or "").strip()
         time_value = str(first_value(parameters, "time", "hora", default="") or "").strip()
-        raw = f"{date_value}T{time_value}" if date_value and time_value else date_value
+        raw = f"{date_value} {time_value}".strip()
     if not raw:
-        raise ValueError("Falta due_at/scheduled_at o delay_minutes para programar la accion.")
-    raw = raw.replace("Z", "+00:00")
-    try:
-        parsed = dt.datetime.fromisoformat(raw)
-    except ValueError as exc:
-        raise ValueError("No pude interpretar la fecha/hora programada. Usa ISO, por ejemplo 2026-05-14T09:30:00.") from exc
+        raise ValueError("Falta due_at/scheduled_at, una hora humana como 'mañana a las 9', o delay_minutes para programar la accion.")
+    relative = re.search(
+        r"(?:dentro de|en|in)\s+(\d+(?:\.\d+)?)\s*(segundos?|seconds?|minutos?|minutes?|horas?|hours?|dias?|días?|days?|semanas?|weeks?)",
+        raw,
+        flags=re.I,
+    )
+    if relative:
+        amount = float(relative.group(1))
+        unit = normalize_security_text(relative.group(2))
+        if unit.startswith(("segundo", "second")):
+            return (base + dt.timedelta(seconds=amount)).isoformat(timespec="seconds")
+        if unit.startswith(("minuto", "minute")):
+            return (base + dt.timedelta(minutes=amount)).isoformat(timespec="seconds")
+        if unit.startswith(("hora", "hour")):
+            return (base + dt.timedelta(hours=amount)).isoformat(timespec="seconds")
+        if unit.startswith(("semana", "week")):
+            return (base + dt.timedelta(weeks=amount)).isoformat(timespec="seconds")
+        return (base + dt.timedelta(days=amount)).isoformat(timespec="seconds")
+    parsed = scheduler_parse_iso(raw, zone)
+    if parsed:
+        return parsed.isoformat(timespec="seconds")
+    target_date = scheduler_parse_date(raw, base)
+    hour, minute = scheduler_parse_time(raw, base, date_was_explicit=bool(target_date))
+    if hour is None:
+        raise ValueError("No pude interpretar la hora programada. Ejemplos: 'mañana a las 9', 'hoy 5:30 pm' o '2026-05-29T17:30:00'.")
+    target_date = target_date or base.date()
+    parsed = dt.datetime.combine(target_date, dt.time(hour=hour, minute=minute), tzinfo=zone)
+    if not scheduler_parse_date(raw, base) and parsed <= base:
+        parsed = parsed + dt.timedelta(days=1)
     return parsed.isoformat(timespec="seconds")
 
 
-def due_at_is_ready(due_at):
-    parsed = dt.datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
-    now = dt.datetime.now(parsed.tzinfo) if parsed.tzinfo else dt.datetime.now()
-    return parsed <= now
+def parse_scheduled_datetime(value, timezone_name=DEFAULT_SCHEDULER_TIMEZONE):
+    zone = scheduler_zone({"timezone": timezone_name})
+    parsed = scheduler_parse_iso(value, zone)
+    if not parsed:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=zone)
+    return parsed.astimezone(zone)
 
 
-def schedule_twilio_action(action, parameters=None, confirm=False):
+def due_at_is_ready(due_at, timezone_name=DEFAULT_SCHEDULER_TIMEZONE):
+    parsed = parse_scheduled_datetime(due_at, timezone_name)
+    return parsed <= dt.datetime.now(parsed.tzinfo)
+
+
+def normalize_recurrence(value):
+    raw = str(value or "").strip()
+    normalized = normalize_security_text(raw)
+    mapping = {
+        "daily": "daily",
+        "diario": "daily",
+        "cada dia": "daily",
+        "cada dia diario": "daily",
+        "weekdays": "weekdays",
+        "lunes a viernes": "weekdays",
+        "laborales": "weekdays",
+        "dias laborales": "weekdays",
+        "weekly": "weekly",
+        "semanal": "weekly",
+        "cada semana": "weekly",
+        "hourly": "hourly",
+        "cada hora": "hourly",
+    }
+    return mapping.get(normalized, normalized if normalized in {"daily", "weekdays", "weekly", "hourly"} else "")
+
+
+def next_recurrence_due_at(due_at, recurrence, timezone_name=DEFAULT_SCHEDULER_TIMEZONE):
+    recurrence = normalize_recurrence(recurrence)
+    if not recurrence:
+        return ""
+    parsed = parse_scheduled_datetime(due_at, timezone_name)
+    if recurrence == "hourly":
+        return (parsed + dt.timedelta(hours=1)).isoformat(timespec="seconds")
+    if recurrence == "weekly":
+        return (parsed + dt.timedelta(days=7)).isoformat(timespec="seconds")
+    if recurrence == "weekdays":
+        candidate = parsed + dt.timedelta(days=1)
+        while candidate.weekday() >= 5:
+            candidate += dt.timedelta(days=1)
+        return candidate.isoformat(timespec="seconds")
+    return (parsed + dt.timedelta(days=1)).isoformat(timespec="seconds")
+
+
+def scheduled_target_from_parameters(parameters=None):
     parameters = dict(parameters or {})
-    target_action = "call_phone" if action in {"schedule_call", "programar_llamada", "agendar_llamada"} else "send_sms"
+    target_provider = str(first_value(parameters, "target_provider", "provider", "app", "tool", "herramienta", default="") or "").strip().lower()
+    target_action = str(first_value(parameters, "target_action", "api_action", "do", "task_action", "accion", "action", default="") or "").strip().lower()
+    nested = parameters.get("target_parameters")
+    if not isinstance(nested, dict):
+        nested = parameters.get("parameters")
+    target_parameters = dict(nested or {})
+    reserved = {
+        "target_provider", "provider", "app", "tool", "herramienta", "target_action", "api_action", "do",
+        "task_action", "accion", "action", "target_parameters", "parameters", "due_at", "scheduled_at",
+        "run_at", "datetime", "date_time", "cuando", "date", "fecha", "time", "hora", "timezone", "tz",
+        "zona_horaria", "delay_seconds", "in_seconds", "seconds", "segundos", "delay_minutes", "in_minutes",
+        "minutes", "minutos", "en_minutos", "delay_hours", "in_hours", "hours", "horas", "en_horas",
+        "delay_days", "in_days", "days", "dias", "en_dias", "recurrence", "repeat", "rrule", "repetir",
+        "schedule_label", "label",
+    }
+    for key, value in parameters.items():
+        if key not in reserved and key not in target_parameters:
+            target_parameters[key] = value
+    if target_provider in {"scheduler", "schedule", "time", "timer", "agenda"}:
+        target_provider = ""
+    if target_provider in {"", "all", "auto", "kim", "agent"}:
+        resolved_provider, resolved_action, resolved_parameters = agent_action_defaults(target_action, target_parameters)
+        target_provider = resolved_provider
+        target_action = resolved_action
+        target_parameters = resolved_parameters
+    if not target_provider or not target_action:
+        raise ValueError("No pude inferir que accion debe ejecutar Kim. Usa target_provider/target_action o action=send_sms, call_phone, create_task, send_email, etc.")
+    if target_action in {"schedule_action", "programar_accion", "schedule_task", "agendar_tarea"}:
+        raise ValueError("No se permite programar una accion programada dentro de otra.")
+    return target_provider, target_action, target_parameters
+
+
+def scheduled_target_preview(provider, action, parameters):
+    provider = (provider or "").strip().lower()
+    action = (action or "").strip().lower()
+    if provider in {"twilio", "sms", "phone", "telefono", "whatsapp"} and action in {"send_sms", "sms", "text_message", "mensaje_sms"}:
+        return twilio_message_preview(parameters, channel="sms")
+    if provider in {"twilio", "sms", "phone", "telefono", "whatsapp"} and action in {"send_whatsapp", "whatsapp", "whatsapp_message"}:
+        return twilio_message_preview(parameters, channel="whatsapp")
+    if provider in {"twilio", "sms", "phone", "telefono", "whatsapp"} and action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
+        return twilio_call_preview(parameters)
+    return {
+        "provider": provider,
+        "action": action,
+        "parameters": sanitize_for_log(parameters),
+        "to": first_value(parameters, "to", "phone", "telefono", "email", "correo", default=""),
+        "from": first_value(parameters, "from", "from_number", "mailbox", "sender", default=""),
+    }
+
+
+def schedule_api_bridge_action(parameters=None, confirm=False):
+    parameters = dict(parameters or {})
     due_at = parse_due_at(parameters)
-    if target_action == "call_phone":
-        preview = twilio_call_preview(parameters)
-        summary = f"Programar llamada a {preview['to']} para {due_at}."
-    else:
-        preview = twilio_message_preview(parameters, channel="sms")
-        summary = f"Programar SMS a {preview['to']} para {due_at}."
+    timezone_name = scheduler_timezone_name(parameters)
+    target_provider, target_action, target_parameters = scheduled_target_from_parameters(parameters)
+    recurrence = normalize_recurrence(first_value(parameters, "recurrence", "repeat", "repetir", "rrule", default=""))
+    preview = scheduled_target_preview(target_provider, target_action, target_parameters)
+    label = str(first_value(parameters, "schedule_label", "label", "title", "titulo", default="") or "").strip()
+    summary = label or f"Programar {target_provider}/{target_action} para {due_at}."
+    execution_parameters = {
+        "target_provider": target_provider,
+        "target_action": target_action,
+        "target_parameters": target_parameters,
+        "due_at": due_at,
+        "timezone": timezone_name,
+        "recurrence": recurrence,
+        "schedule_label": summary,
+    }
     if not confirm:
         return confirmation_preview(
-            "twilio",
-            action,
+            "scheduler",
+            "schedule_action",
             summary,
-            {**preview, "due_at": due_at, "target_action": target_action},
-            execution_parameters={**parameters, "due_at": due_at, "target_action": target_action},
+            {**preview, "due_at": due_at, "timezone": timezone_name, "recurrence": recurrence},
+            execution_parameters=execution_parameters,
         )
-    contact = crm_upsert_contact(
-        {
-            "phone": preview.get("to"),
-            "display_name": first_value(parameters, "contact_name", "name", "client_name", "nombre", default=preview.get("to")),
-            "company": first_value(parameters, "company", "empresa", default=""),
-            "contact_type": first_value(parameters, "contact_type", "tipo", default="client"),
-            "notes": "Contacto asociado a accion Twilio programada.",
-        },
-        source="twilio_schedule",
-    )
+    contact = {}
+    phone = first_value(target_parameters, "to", "phone", "telefono", "recipient", "destinatario", default="")
+    email = first_value(target_parameters, "email", "correo", "to_email", default="")
+    display_name = first_value(target_parameters, "contact_name", "client_name", "name", "nombre", default=phone or email)
+    if phone or email or display_name:
+        contact = crm_upsert_contact(
+            {
+                "phone": phone,
+                "email": email,
+                "display_name": display_name,
+                "company": first_value(target_parameters, "company", "empresa", "organization", default=""),
+                "contact_type": first_value(target_parameters, "contact_type", "tipo", default="client"),
+                "notes": "Contacto asociado a accion programada por Kim.",
+            },
+            source="kim_scheduler",
+        )
     schedule_id = crm_id("SC")
     now = now_iso()
-    payload = {**parameters, "due_at": due_at, "target_action": target_action}
+    payload = {
+        "_target_provider": target_provider,
+        "_target_action": target_action,
+        "_target_parameters": target_parameters,
+        "_schedule_label": summary,
+        "_recurrence": recurrence,
+        "_timezone": timezone_name,
+        "_created_by": "kim_live_scheduler",
+    }
+    to_value = first_value(target_parameters, "to", "phone", "telefono", "recipient", "destinatario", "email", "correo", default="")
+    from_value = first_value(target_parameters, "from", "from_number", "mailbox", "sender", default="")
     with crm_connect() as conn:
         conn.execute(
             """
             INSERT INTO scheduled_actions
             (id, status, provider, action, due_at, timezone, contact_id, company_id, to_value, from_value, payload_json, created_at, updated_at)
-            VALUES (?, 'pending', 'twilio', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 schedule_id,
+                target_provider,
                 target_action,
                 due_at,
-                str(first_value(parameters, "timezone", "tz", default="America/Mexico_City") or "America/Mexico_City"),
+                timezone_name,
                 contact.get("id"),
                 contact.get("company_id"),
-                preview.get("to"),
-                preview.get("from"),
+                normalize_call_context_value(to_value),
+                normalize_call_context_value(from_value),
                 json.dumps(payload, ensure_ascii=False),
                 now,
                 now,
@@ -5146,53 +7309,230 @@ def schedule_twilio_action(action, parameters=None, confirm=False):
         conn.commit()
     event = {
         "ok": True,
-        "provider": "twilio",
-        "action": action,
+        "provider": "scheduler",
+        "action": "schedule_action",
         "scheduled_action_id": schedule_id,
+        "target_provider": target_provider,
         "target_action": target_action,
         "due_at": due_at,
+        "timezone": timezone_name,
+        "recurrence": recurrence,
         "contact_id": contact.get("id"),
         "confirmed": True,
     }
-    append_memory("twilio_action_scheduled", event)
+    append_memory("kim_action_scheduled", event)
     return event
+
+
+def schedule_twilio_action(action, parameters=None, confirm=False):
+    parameters = dict(parameters or {})
+    target_action = "call_phone" if action in {"schedule_call", "programar_llamada", "agendar_llamada"} else "send_sms"
+    return schedule_api_bridge_action(
+        {
+            **parameters,
+            "target_provider": "twilio",
+            "target_action": target_action,
+            "target_parameters": {key: value for key, value in parameters.items()},
+        },
+        confirm=confirm,
+    )
 
 
 def due_scheduled_actions(limit=10):
     with crm_connect() as conn:
         rows = [dict(row) for row in conn.execute("SELECT * FROM scheduled_actions WHERE status='pending' ORDER BY due_at ASC LIMIT ?", (limit,)).fetchall()]
-    return [row for row in rows if due_at_is_ready(row["due_at"])]
+    return [row for row in rows if due_at_is_ready(row["due_at"], row.get("timezone") or DEFAULT_SCHEDULER_TIMEZONE)]
 
 
-def update_scheduled_action(schedule_id, status, result=None):
+def update_scheduled_action(schedule_id, status, result=None, increment_attempt=False):
     now = now_iso()
+    increment = 1 if increment_attempt else 0
     with crm_connect() as conn:
         conn.execute(
-            "UPDATE scheduled_actions SET status=?, result_json=?, attempts=attempts+1, updated_at=?, executed_at=? WHERE id=?",
-            (status, json.dumps(result or {}, ensure_ascii=False), now, now if status in {"done", "failed"} else "", schedule_id),
+            "UPDATE scheduled_actions SET status=?, result_json=?, attempts=attempts+?, updated_at=?, executed_at=? WHERE id=?",
+            (status, json.dumps(result or {}, ensure_ascii=False), increment, now, now if status in {"done", "failed", "cancelled"} else "", schedule_id),
         )
         conn.commit()
 
 
+def execute_confirmed_bridge_action(provider, action, parameters):
+    provider = (provider or "").strip().lower()
+    action = (action or "").strip().lower()
+    parameters = dict(parameters or {})
+    if provider in {"", "all", "auto", "kim", "agent"}:
+        provider, action, parameters = agent_action_defaults(action, parameters)
+    if provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
+        return run_twilio_bridge(action, parameters, confirm=True)
+    if provider == "clickup":
+        return run_clickup_bridge(action, parameters, confirm=True)
+    if provider == "notion":
+        return run_notion_bridge(action, parameters, confirm=True)
+    if provider in {"hostinger", "hostinger_mail", "tesca_mail", "business_mail", "imap", "smtp", "email", "mail", "correo"}:
+        return run_hostinger_mail_bridge(action, parameters, confirm=True)
+    if provider in {"pipedrive", "pipe_drive", "pd"}:
+        return run_pipedrive_bridge(action, parameters, confirm=True)
+    if provider in {"crm", "bifrost_crm", "clients", "clientes", "contacts", "contactos"}:
+        return run_crm_bridge(action, parameters, confirm=True)
+    if provider in {"gmail", "google_mail"}:
+        return run_gmail_bridge(action, parameters, confirm=False)
+    raise ValueError(f"Proveedor programado no soportado: {provider}/{action}")
+
+
+def clone_recurring_scheduled_action(row, result=None):
+    payload = json.loads(row.get("payload_json") or "{}")
+    recurrence = normalize_recurrence(payload.get("_recurrence") or "")
+    if not recurrence:
+        return None
+    next_due = next_recurrence_due_at(row.get("due_at"), recurrence, row.get("timezone") or DEFAULT_SCHEDULER_TIMEZONE)
+    if not next_due:
+        return None
+    schedule_id = crm_id("SC")
+    now = now_iso()
+    payload["_previous_schedule_id"] = row.get("id")
+    payload["_last_result_summary"] = brief(json.dumps(result or {}, ensure_ascii=False), 500)
+    with crm_connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO scheduled_actions
+            (id, status, provider, action, due_at, timezone, contact_id, company_id, to_value, from_value, payload_json, created_at, updated_at)
+            VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                schedule_id,
+                row.get("provider"),
+                row.get("action"),
+                next_due,
+                row.get("timezone") or DEFAULT_SCHEDULER_TIMEZONE,
+                row.get("contact_id"),
+                row.get("company_id"),
+                row.get("to_value") or "",
+                row.get("from_value") or "",
+                json.dumps(payload, ensure_ascii=False),
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    append_memory("kim_recurring_action_rescheduled", {"previous_id": row.get("id"), "next_id": schedule_id, "next_due_at": next_due, "recurrence": recurrence})
+    return schedule_id
+
+
 def execute_scheduled_action(row):
     payload = json.loads(row.get("payload_json") or "{}")
-    payload["from_number"] = payload.get("from_number") or row.get("from_value") or twilio_default_from_number()
-    if row.get("action") == "call_phone":
-        result = twilio_start_call(payload, confirm=True)
-    elif row.get("action") == "send_sms":
-        result = twilio_send_message(payload, confirm=True, channel="sms")
-    else:
-        raise ValueError(f"Accion programada no soportada: {row.get('action')}")
+    target_provider = payload.get("_target_provider") or row.get("provider")
+    target_action = payload.get("_target_action") or payload.get("target_action") or row.get("action")
+    target_parameters = dict(payload.get("_target_parameters") or payload)
+    if target_provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
+        target_parameters["from_number"] = target_parameters.get("from_number") or row.get("from_value") or twilio_default_from_number()
+    result = execute_confirmed_bridge_action(target_provider, target_action, target_parameters)
+    result["scheduled_action_id"] = row.get("id")
+    record_api_bridge_action(target_provider, target_action, target_parameters, result, session_id="kim-scheduler", transcript="")
     update_scheduled_action(row["id"], "done" if result.get("ok") else "failed", result)
+    if result.get("ok"):
+        clone_recurring_scheduled_action(row, result=result)
     return result
+
+
+def recover_stale_scheduled_actions():
+    cutoff = dt.datetime.now() - dt.timedelta(seconds=SCHEDULER_STALE_RUNNING_SECONDS)
+    recovered = []
+    with crm_connect() as conn:
+        rows = [dict(row) for row in conn.execute("SELECT * FROM scheduled_actions WHERE status='running'").fetchall()]
+        for row in rows:
+            try:
+                updated = dt.datetime.fromisoformat(str(row.get("updated_at") or row.get("created_at") or "").replace("Z", "+00:00"))
+            except ValueError:
+                updated = cutoff - dt.timedelta(seconds=1)
+            if updated.tzinfo is not None:
+                updated = updated.replace(tzinfo=None)
+            if updated <= cutoff:
+                conn.execute(
+                    "UPDATE scheduled_actions SET status='pending', result_json=?, updated_at=? WHERE id=?",
+                    (json.dumps({"recovered_from_stale_running": True, "at": now_iso()}, ensure_ascii=False), now_iso(), row.get("id")),
+                )
+                recovered.append(row.get("id"))
+        conn.commit()
+    if recovered:
+        append_memory("kim_scheduler_recovered_stale_actions", {"ids": recovered})
+    return recovered
+
+
+def compact_scheduled_payload(value, key_name=""):
+    if isinstance(value, dict):
+        return {key: compact_scheduled_payload(item, key) for key, item in value.items()}
+    if isinstance(value, list):
+        return [compact_scheduled_payload(item, key_name) for item in value[:20]]
+    if isinstance(value, str):
+        lowered = key_name.lower()
+        if "transcript" in lowered or "conversation" in lowered:
+            return brief(value, 240)
+        return brief(value, 500)
+    return value
+
+
+def list_scheduled_actions(status="", limit=100):
+    params = []
+    where = ""
+    if status:
+        where = "WHERE status=?"
+        params.append(status)
+    params.append(int(limit or 100))
+    with crm_connect() as conn:
+        rows = [
+            dict(row)
+            for row in conn.execute(
+                f"SELECT * FROM scheduled_actions {where} ORDER BY due_at ASC LIMIT ?",
+                params,
+            ).fetchall()
+        ]
+    for row in rows:
+        raw_payload = row.pop("payload_json", "")
+        raw_result = row.pop("result_json", "")
+        try:
+            row["payload"] = compact_scheduled_payload(sanitize_for_log(json.loads(raw_payload or "{}")))
+        except json.JSONDecodeError:
+            row["payload"] = {}
+        row["result_summary"] = brief(raw_result, 800)
+    return rows
+
+
+def cancel_scheduled_action(schedule_id):
+    schedule_id = str(schedule_id or "").strip()
+    if not schedule_id:
+        raise ValueError("Falta scheduled_action_id para cancelar.")
+    update_scheduled_action(schedule_id, "cancelled", {"cancelled_at": now_iso()}, increment_attempt=False)
+    append_memory("kim_scheduled_action_cancelled", {"scheduled_action_id": schedule_id})
+    return {"ok": True, "provider": "scheduler", "action": "cancel_schedule", "scheduled_action_id": schedule_id}
+
+
+def run_scheduler_bridge(action, parameters=None, confirm=False):
+    action = (action or "").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "list", "list_schedules", "scheduled_actions", "upcoming", "agenda"}:
+        return {
+            "ok": True,
+            "provider": "scheduler",
+            "action": action or "list_schedules",
+            "timezone": DEFAULT_SCHEDULER_TIMEZONE,
+            "actions": list_scheduled_actions(
+                status=str(first_value(parameters, "status", default="") or ""),
+                limit=int(first_value(parameters, "limit", default=100) or 100),
+            ),
+        }
+    if action in {"schedule_action", "programar_accion", "schedule_task", "agendar_tarea", "hacer_luego"}:
+        return schedule_api_bridge_action(parameters, confirm=confirm)
+    if action in {"cancel", "cancel_schedule", "cancel_action", "cancelar", "cancelar_accion"}:
+        return cancel_scheduled_action(first_value(parameters, "scheduled_action_id", "schedule_id", "id", default=""))
+    raise ValueError("Accion scheduler no soportada. Usa schedule_action, list_schedules o cancel_schedule.")
 
 
 def scheduler_loop():
     while True:
         try:
+            recover_stale_scheduled_actions()
             for row in due_scheduled_actions():
                 try:
-                    update_scheduled_action(row["id"], "running", {"started_at": now_iso()})
+                    update_scheduled_action(row["id"], "running", {"started_at": now_iso()}, increment_attempt=True)
                     execute_scheduled_action(row)
                 except Exception as exc:
                     update_scheduled_action(row["id"], "failed", {"error": brief(str(exc), 800)})
@@ -5224,6 +7564,15 @@ def run_twilio_bridge(action, parameters, confirm=False):
     if action in {"send_sms", "sms", "text_message", "mensaje_sms"}:
         return twilio_send_message(parameters, confirm=confirm, channel="sms")
     if action in {"send_whatsapp", "whatsapp", "whatsapp_message"}:
+        if not first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario"):
+            parameters = {
+                **parameters,
+                "to": DOCTOR_DUBAI_WHATSAPP_TO,
+                "contact_name": first_value(parameters, "contact_name", "client_name", "name", default="Dr. Yehoshua Dubai"),
+                "relationship": first_value(parameters, "relationship", default="doctor_control"),
+                "company": first_value(parameters, "company", default="AI People"),
+                "context_id": first_value(parameters, "context_id", "kim_context_id", default="DOCTOR-WHATSAPP-" + today()),
+            }
         return twilio_send_message(parameters, confirm=confirm, channel="whatsapp")
     if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
         return twilio_start_call(parameters, confirm=confirm)
@@ -5233,6 +7582,8 @@ def run_twilio_bridge(action, parameters, confirm=False):
         if action in {"latest_call", "ultima_llamada"}:
             parameters = {**parameters, "limit": 1}
         return twilio_call_report(parameters)
+    if action in {"whatsapp_report", "list_whatsapp_threads", "whatsapp_threads", "recent_whatsapp", "whatsapp_inbox"}:
+        return twilio_whatsapp_report(parameters)
     if action in {"sync_call_attempts", "reconcile_calls", "reconcile_call_attempts", "sincronizar_intentos"}:
         return twilio_reconcile_call_attempts(parameters)
     raise ValueError(f"Accion Twilio no soportada: {action}")
@@ -5245,6 +7596,11 @@ def run_crm_bridge(action, parameters, confirm=False):
         return crm_status()
     if action in {"list_contacts", "contacts", "clientes", "contactos", "search_contacts"}:
         return crm_list_contacts(parameters)
+    if action in {"person_context", "get_person_context", "supervise_person", "modo", "mode"}:
+        return person_context_supervision_payload(
+            query=first_value(parameters, "query", "q", "name", "nombre", "contact_name", "person", "persona", default=""),
+            limit=int(first_value(parameters, "limit", default=1) or 1),
+        )
     if action in {"upsert_contact", "create_contact", "save_contact", "guardar_contacto", "crear_contacto"}:
         preview = {
             "display_name": first_value(parameters, "display_name", "name", "nombre", "client_name", "contact_name", default=""),
@@ -5378,8 +7734,11 @@ def pipedrive_person_id_from_local_contact(contact):
     if not contact:
         return ""
     notes = str(contact.get("notes") or "")
-    match = re.search(r"\bPipedrive\s+person_id=(\d+)\b", notes, flags=re.IGNORECASE)
-    return match.group(1) if match else ""
+    canonical = re.search(r"\bcanonical_pipedrive_person_id=(\d+)\b", notes, flags=re.IGNORECASE)
+    if canonical:
+        return canonical.group(1)
+    matches = re.findall(r"\bPipedrive\s+person_id=(\d+)\b", notes, flags=re.IGNORECASE)
+    return matches[-1] if matches else ""
 
 
 def pipedrive_person_candidates(term="", limit=25):
@@ -5483,6 +7842,242 @@ def pipedrive_find_person_id(parameters=None, required=False):
     if required:
         raise ValueError("No encontre una persona unica en Pipedrive. Usa person_id o confirma una coincidencia.")
     return "", {"source": "not_found", "candidates": persons[:5]}
+
+
+def pipedrive_person_phone_values(person):
+    values = []
+    if person.get("phone"):
+        values.append(person.get("phone"))
+    values.extend(person.get("phones") or [])
+    return compact_unique(values, limit=20)
+
+
+def pipedrive_person_has_phone(person, phone):
+    target = twilio_lookup_phone_number(phone)
+    target_digits = phone_digits(target)
+    if not target_digits:
+        return False
+    for value in pipedrive_person_phone_values(person):
+        candidate = twilio_lookup_phone_number(value)
+        if candidate and candidate == target:
+            return True
+        if phone_digits(candidate) == target_digits:
+            return True
+    return False
+
+
+def pipedrive_phone_index_is_fresh(payload, max_age_seconds=21600):
+    try:
+        updated = dt.datetime.fromisoformat(str(payload.get("updated_at") or "").replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return False
+    now = dt.datetime.now(updated.tzinfo) if updated.tzinfo else dt.datetime.now()
+    return (now - updated).total_seconds() <= max_age_seconds
+
+
+def load_pipedrive_phone_index(max_age_seconds=21600):
+    payload = read_json_file_any([RUNTIME_PIPEDRIVE_PHONE_INDEX, PIPEDRIVE_PHONE_INDEX], {})
+    if payload:
+        payload["stale"] = not pipedrive_phone_index_is_fresh(payload, max_age_seconds=max_age_seconds)
+        return payload
+    return {}
+
+
+def build_pipedrive_phone_index(max_records=1000):
+    index = {}
+    people = []
+    checked = 0
+    start = 0
+    page_limit = 100
+    while checked < max_records:
+        payload = pipedrive_request("/persons", params={"start": start, "limit": page_limit})
+        data = payload.get("data") or []
+        if not data:
+            break
+        for item in data:
+            person = normalize_pipedrive_person(item)
+            checked += 1
+            if not person.get("id"):
+                continue
+            people.append(person)
+            for value in pipedrive_person_phone_values(person):
+                digits = phone_digits(value)
+                if not digits:
+                    continue
+                index.setdefault(digits, []).append(person)
+        pagination = ((payload.get("additional_data") or {}).get("pagination") or {})
+        if not pagination.get("more_items_in_collection"):
+            break
+        next_start = pagination.get("next_start")
+        if next_start is None:
+            break
+        start = int(next_start)
+    payload = {
+        "ok": True,
+        "updated_at": now_iso(),
+        "checked": checked,
+        "phone_count": len(index),
+        "phones": index,
+    }
+    write_json_file_both(PIPEDRIVE_PHONE_INDEX, RUNTIME_PIPEDRIVE_PHONE_INDEX, payload)
+    append_memory("pipedrive_phone_index_refreshed", {"checked": checked, "phone_count": len(index)})
+    return payload
+
+
+def pipedrive_exact_phone_scan(phone, max_records=1000):
+    normalized_phone = twilio_lookup_phone_number(phone)
+    digits = phone_digits(normalized_phone)
+    if not digits:
+        return []
+    payload = load_pipedrive_phone_index()
+    if not payload:
+        payload = build_pipedrive_phone_index(max_records=max_records)
+    matches = (payload.get("phones") or {}).get(digits) or []
+    if matches:
+        return matches
+    if payload.get("stale"):
+        run_background_task("refresh-pipedrive-phone-index", build_pipedrive_phone_index, max_records)
+    return []
+
+
+def pipedrive_registered_person_for_phone(phone, limit=25):
+    normalized_phone = twilio_lookup_phone_number(phone)
+    if not normalized_phone:
+        return {
+            "registered": False,
+            "reason": "missing_phone",
+            "message": "Falta telefono para validar registro en Pipedrive.",
+            "person": None,
+            "candidates": [],
+        }
+    candidates = []
+    local_contact = crm_find_contact_by_phone(normalized_phone)
+    local_person_id = pipedrive_person_id_from_local_contact(local_contact)
+    if local_person_id:
+        try:
+            payload = pipedrive_request(f"/persons/{urllib.parse.quote(str(local_person_id))}")
+            person = normalize_pipedrive_person(pipedrive_payload_data(payload) or {})
+            if person.get("id"):
+                candidates.append(person)
+        except Exception as exc:
+            append_memory(
+                "pipedrive_message_guard_local_lookup_error",
+                {"phone": normalized_phone, "person_id": local_person_id, "error": brief(str(exc), 500)},
+            )
+    try:
+        exact_scan = pipedrive_exact_phone_scan(normalized_phone)
+        if len(exact_scan) == 1:
+            return {
+                "registered": True,
+                "reason": "exact_pipedrive_phone_scan",
+                "message": "Contacto validado en Pipedrive por telefono exacto.",
+                "person": exact_scan[0],
+                "candidates": exact_scan,
+            }
+        if len(exact_scan) > 1:
+            exact_scan = sorted(exact_scan, key=lambda item: item.get("update_time") or item.get("add_time") or "", reverse=True)
+            return {
+                "registered": True,
+                "reason": "duplicate_exact_pipedrive_phone_match",
+                "message": "Contacto validado en Pipedrive por telefono exacto, pero hay duplicados que conviene limpiar.",
+                "person": exact_scan[0],
+                "candidates": exact_scan[:5],
+            }
+        search = pipedrive_search_persons({"phone": normalized_phone, "term": normalized_phone, "limit": limit})
+        for person in search.get("persons") or []:
+            if person.get("id") and not person.get("phones"):
+                try:
+                    payload = pipedrive_request(f"/persons/{urllib.parse.quote(str(person.get('id')))}")
+                    person = normalize_pipedrive_person(pipedrive_payload_data(payload) or {})
+                except Exception:
+                    pass
+            candidates.append(person)
+    except Exception as exc:
+        return {
+            "registered": False,
+            "reason": "pipedrive_lookup_error",
+            "message": f"No pude validar Pipedrive antes de enviar mensaje: {brief(str(exc), 240)}",
+            "person": None,
+            "candidates": [],
+            "error": brief(str(exc), 800),
+        }
+    seen = {}
+    for person in candidates:
+        if person.get("id") and person.get("id") not in seen:
+            seen[person["id"]] = person
+    candidates = list(seen.values())
+    exact = [person for person in candidates if pipedrive_person_has_phone(person, normalized_phone)]
+    if len(exact) == 1:
+        return {
+            "registered": True,
+            "reason": "exact_pipedrive_phone_match",
+            "message": "Contacto validado en Pipedrive por telefono exacto.",
+            "person": exact[0],
+            "candidates": candidates[:5],
+        }
+    if len(exact) > 1:
+        exact = sorted(exact, key=lambda item: item.get("update_time") or item.get("add_time") or "", reverse=True)
+        return {
+            "registered": True,
+            "reason": "duplicate_exact_pipedrive_phone_match",
+            "message": "Contacto validado en Pipedrive por telefono exacto, pero hay duplicados que conviene limpiar.",
+            "person": exact[0],
+            "candidates": exact[:5],
+        }
+    return {
+        "registered": False,
+        "reason": "not_registered_in_pipedrive",
+        "message": f"El destinatario {normalized_phone} no esta registrado en Pipedrive con telefono exacto.",
+        "person": None,
+        "candidates": candidates[:5],
+    }
+
+
+def pipedrive_registered_person_for_phone_fast(phone):
+    normalized_phone = twilio_lookup_phone_number(phone)
+    if not normalized_phone:
+        return {
+            "registered": False,
+            "reason": "missing_phone",
+            "message": "Falta telefono para validar registro en Pipedrive.",
+            "person": None,
+            "candidates": [],
+        }
+    local_contact = crm_find_contact_by_phone(normalized_phone)
+    local_person_id = pipedrive_person_id_from_local_contact(local_contact)
+    if local_person_id:
+        person = {
+            "id": int(local_person_id),
+            "name": (local_contact or {}).get("display_name") or normalized_phone,
+            "phone": normalized_phone,
+            "phones": [normalized_phone],
+            "organization": "",
+        }
+        return {
+            "registered": True,
+            "reason": "local_crm_pipedrive_person_id",
+            "message": "Contacto validado por CRM local con Pipedrive person_id.",
+            "person": person,
+            "candidates": [person],
+        }
+    payload = load_pipedrive_phone_index(max_age_seconds=60 * 60 * 24 * 30)
+    matches = ((payload.get("phones") or {}).get(phone_digits(normalized_phone)) or []) if payload else []
+    if matches:
+        matches = sorted(matches, key=lambda item: item.get("update_time") or item.get("add_time") or "", reverse=True)
+        return {
+            "registered": True,
+            "reason": "cached_pipedrive_phone_index",
+            "message": "Contacto validado por indice local de Pipedrive.",
+            "person": matches[0],
+            "candidates": matches[:5],
+        }
+    return {
+        "registered": False,
+        "reason": "not_in_fast_cache",
+        "message": "El telefono no aparece en CRM local ni en el indice local de Pipedrive.",
+        "person": None,
+        "candidates": [],
+    }
 
 
 def pipedrive_find_organization_id(parameters=None):
@@ -7051,6 +9646,69 @@ def notion_default_parent_config():
     return config if isinstance(config, dict) else {}
 
 
+def notion_access_inventory_data():
+    data = read_json_file_any(
+        [MEMORY_CONTEXT_DIR / "notion_access_inventory.json", RUNTIME_CONTEXT / "notion_access_inventory.json"],
+        {},
+    )
+    return data if isinstance(data, dict) else {}
+
+
+def notion_inventory_database_map():
+    items = notion_access_inventory_data().get("databases") or []
+    mapping = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if name:
+            mapping[name.lower()] = item
+    return mapping
+
+
+def notion_inventory_database_name_for_id(database_id):
+    database_id = str(database_id or "").strip()
+    if not database_id:
+        return ""
+    for key, item in notion_inventory_database_map().items():
+        if str(item.get("id") or "").strip() == database_id:
+            return str(item.get("name") or key).strip()
+    return ""
+
+
+def notion_resolved_parent_from_config(config, source="configured_default"):
+    config = config if isinstance(config, dict) else {}
+    if config.get("parent_page_id"):
+        resolved = {"type": "page_id", "page_id": str(config["parent_page_id"]), "source": source}
+        for key in ["title_property", "date_property", "type_property", "url", "note"]:
+            if config.get(key):
+                resolved[key] = config.get(key)
+        return resolved
+    if config.get("parent_database_id"):
+        resolved = {"type": "database_id", "database_id": str(config["parent_database_id"]), "source": source}
+        for key in ["title_property", "date_property", "type_property", "url", "note"]:
+            if config.get(key):
+                resolved[key] = config.get(key)
+        name = notion_inventory_database_name_for_id(config.get("parent_database_id"))
+        if name:
+            resolved["name"] = name
+        return resolved
+    return {}
+
+
+def notion_resolved_parent_from_inventory(name, source="inventory_route"):
+    item = notion_inventory_database_map().get(str(name or "").strip().lower())
+    if not item:
+        return {}
+    resolved = {"type": "database_id", "database_id": str(item.get("id") or ""), "source": source, "url": item.get("url", "")}
+    for key in ["title_property", "date_property", "type_property", "recommended_use"]:
+        if item.get(key):
+            resolved[key] = item.get(key)
+    if item.get("name"):
+        resolved["name"] = item.get("name")
+    return resolved
+
+
 def notion_event_like(parameters=None):
     parameters = parameters or {}
     blob = " ".join(
@@ -7076,6 +9734,68 @@ def notion_event_like(parameters=None):
         "cita",
     ]
     return any(keyword in text for keyword in keywords)
+
+
+def notion_infer_inventory_destination(parameters=None):
+    parameters = parameters or {}
+    if notion_event_like(parameters):
+        return "Reuniones"
+
+    explicit_fields = [
+        str(first_value(parameters, "notion_parent_query", "parent_query", "workspace", "parent", "domain") or "").strip(),
+        str(first_value(parameters, "target_database", "database_name", "destination", "bucket") or "").strip(),
+    ]
+    for raw in explicit_fields:
+        key = raw.lower()
+        if key in notion_inventory_database_map():
+            return notion_inventory_database_map()[key].get("name") or raw
+
+    blob = normalize_security_text(
+        " ".join(
+            [
+                str(first_value(parameters, "title", "name", "subject", "asunto", "page_title") or ""),
+                str(first_value(parameters, "content", "body", "text", "message", "description", "summary") or ""),
+                str(first_value(parameters, "notion_parent_query", "parent_query", "workspace", "parent", "domain") or ""),
+            ]
+        )
+    )
+    if not blob:
+        return "Wiki"
+
+    if any(
+        keyword in blob
+        for keyword in [
+            "contrato",
+            "proposal",
+            "propuesta",
+            "reporte",
+            "report",
+            "documento",
+            "document",
+            "archivo",
+            "pdf",
+            "brief",
+            "cotizacion",
+            "cotización",
+            "invoice",
+        ]
+    ):
+        return "Documentos"
+    if any(
+        keyword in blob
+        for keyword in [
+            "project",
+            "proyecto",
+            "roadmap",
+            "milestone",
+            "hito",
+            "launch",
+            "lanzamiento",
+            "backlog",
+        ]
+    ):
+        return "Projects"
+    return "Wiki"
 
 
 def notion_parent_config_value(parameters=None, resolved=None, *keys, default=""):
@@ -7138,21 +9858,23 @@ def semantic_notion_parent(value):
 def notion_resolve_default_parent(parameters=None):
     parameters = parameters or {}
     config = notion_default_parent_config()
-    if config.get("parent_page_id"):
-        resolved = {"type": "page_id", "page_id": str(config["parent_page_id"]), "source": "configured_default"}
-        for key in ["title_property", "date_property", "type_property", "url", "note"]:
-            if config.get(key):
-                resolved[key] = config.get(key)
-        return resolved
-    if config.get("parent_database_id"):
-        resolved = {"type": "database_id", "database_id": str(config["parent_database_id"]), "source": "configured_default"}
-        for key in ["title_property", "date_property", "type_property", "url", "note"]:
-            if config.get(key):
-                resolved[key] = config.get(key)
-        return resolved
+    configured = notion_resolved_parent_from_config(config)
+    configured_name = str(configured.get("name") or "").strip().lower()
+    preferred_name = str(notion_infer_inventory_destination(parameters) or "").strip()
+    preferred_key = preferred_name.lower()
+    if preferred_name:
+        if configured and configured_name == preferred_key:
+            return configured
+        resolved = notion_resolved_parent_from_inventory(preferred_name, source=f"inventory:{preferred_key}")
+        if resolved:
+            return resolved
+    if configured:
+        return configured
     query_terms = []
+    if preferred_name:
+        query_terms.append(preferred_name)
     if notion_event_like(parameters):
-        query_terms.extend(["Reuniones", "Meetings", "Calendario"])
+        query_terms.extend(["Meetings", "Calendario"])
     for key in ["notion_parent_query", "parent_query", "workspace", "domain"]:
         value = str(parameters.get(key) or "").strip()
         if value:
@@ -7432,6 +10154,8 @@ def execute_prepared_action(action_id="", session_id="", transcript=""):
 def agent_action_defaults(action, parameters):
     data = dict(parameters or {})
     action = (action or "").strip().lower()
+    if action in {"schedule_action", "programar_accion", "schedule_task", "agendar_tarea", "hacer_luego", "programar", "agenda"}:
+        return "scheduler", "schedule_action", data
     if action in {"send_email", "send_mail", "email", "correo", "enviar_correo", "mandar_correo"}:
         if not first_value(data, "subject", "title", "name", "asunto"):
             data["subject"] = hostinger_default_subject(hostinger_mailbox_from_parameters(data), reply=False)
@@ -7449,7 +10173,33 @@ def agent_action_defaults(action, parameters):
     if action in {"send_sms", "sms", "text_message", "mensaje_sms", "mandar_sms"}:
         return "twilio", "send_sms", data
     if action in {"send_whatsapp", "whatsapp", "whatsapp_message", "mandar_whatsapp"}:
+        if not first_value(data, "to", "recipient", "phone", "telefono", "destinatario"):
+            data["to"] = DOCTOR_DUBAI_WHATSAPP_TO
+            data.setdefault("contact_name", "Dr. Yehoshua Dubai")
+            data.setdefault("relationship", "doctor_control")
+            data.setdefault("company", "AI People")
+            data.setdefault("context_id", "DOCTOR-WHATSAPP-" + today())
         return "twilio", "send_whatsapp", data
+    if action in {
+        "send_portfolio",
+        "send_portfolio_report",
+        "portfolio_report",
+        "enviar_portafolio",
+        "mandar_portafolio",
+        "enviame_portafolio_actualizado",
+        "sr_eli_portfolio",
+        "send_sr_eli_portfolio",
+    }:
+        return "portfolio", "send_whatsapp_report", data
+    if action in {
+        "fundamental_report",
+        "portfolio_fundamental_report",
+        "reporte_fundamental",
+        "reporte_fundamental_sr_eli",
+        "catalizadores_portafolio",
+        "sr_eli_fundamental",
+    }:
+        return "portfolio", "fundamental_report", data
     if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
         return "twilio", "call_phone", data
     if action in {"call_report", "latest_call", "get_call", "call_summary", "reporte_llamada", "ultima_llamada"}:
@@ -7460,6 +10210,10 @@ def agent_action_defaults(action, parameters):
         return "twilio", "schedule_call", data
     if action in {"schedule_sms", "programar_sms", "agendar_sms"}:
         return "twilio", "schedule_sms", data
+    if action in {"create_zoom_meeting", "schedule_zoom_meeting", "zoom_meeting", "agendar_zoom", "crear_zoom", "reunion_zoom", "reunión_zoom"}:
+        if not first_value(data, "topic", "title", "subject", "name", "asunto"):
+            data["topic"] = generated_title("Reunion Zoom Kim")
+        return "zoom", "create_meeting", data
     if action in {"save_contact", "create_contact", "upsert_contact", "guardar_contacto", "crear_contacto"}:
         return "crm", "upsert_contact", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
@@ -7496,11 +10250,15 @@ def api_bridge_templates():
                 "reply_email",
                 "send_sms",
                 "send_whatsapp",
+                "send_portfolio_report",
+                "fundamental_report",
                 "call_phone",
                 "call_report",
                 "sync_call_attempts",
+                "schedule_action",
                 "schedule_call",
                 "schedule_sms",
+                "create_zoom_meeting",
                 "save_contact",
                 "mark_spam",
                 "move_to_trash",
@@ -7538,11 +10296,61 @@ def api_bridge_templates():
                 },
                 {
                     "provider": "all",
+                    "action": "create_zoom_meeting",
+                    "parameters": {
+                        "topic": "Diagnostico AI People con Dr. Yehoshua",
+                        "start_at": "mañana a las 11",
+                        "duration": 30,
+                        "timezone": "America/Mexico_City",
+                        "agenda": "Llamada diagnostica para entender dolor operativo y siguiente paso.",
+                    },
+                    "confirm": False,
+                },
+                {
+                    "provider": "all",
+                    "action": "schedule_action",
+                    "parameters": {
+                        "target_provider": "twilio",
+                        "target_action": "send_sms",
+                        "target_parameters": {"to": "+525500000000", "body": "Recordatorio de Kim Live."},
+                        "due_at": "mañana a las 9",
+                    },
+                    "confirm": False,
+                },
+                {
+                    "provider": "all",
                     "action": "schedule_call",
                     "parameters": {"to": "+525500000000", "contact_name": "Cliente", "delay_minutes": 30},
                     "confirm": False,
                 },
             ],
+        },
+        "scheduler": {
+            "schedule_action": {
+                "required": ["target_action", "due_at or delay_minutes"],
+                "aliases": {
+                    "target_provider": ["provider", "app", "tool", "herramienta"],
+                    "target_action": ["action", "api_action", "accion"],
+                    "target_parameters": ["parameters", "payload"],
+                    "due_at": ["scheduled_at", "run_at", "datetime", "cuando"],
+                    "timezone": ["tz", "zona_horaria"],
+                    "recurrence": ["repeat", "repetir"],
+                },
+                "rule": (
+                    "Usa esta accion cuando el doctor diga 'haz esto a tal hora'. "
+                    "Preparar con confirm=false; al confirmar queda en BIFROST/CRM/scheduled_actions y el runtime Kim Live la ejecuta aunque Codex este cerrado. "
+                    "Soporta target_provider/target_action para twilio, clickup, notion, pipedrive, hostinger_mail y crm. "
+                    "Horarios aceptan ISO o lenguaje humano: 'hoy 5:30 pm', 'mañana a las 9', 'lunes a las 8', 'en 2 horas'."
+                ),
+            },
+            "list_schedules": {
+                "optional": ["status", "limit"],
+                "rule": "Lista acciones programadas locales sin ejecutar nada.",
+            },
+            "cancel_schedule": {
+                "required": ["scheduled_action_id"],
+                "rule": "Cancela una accion programada local.",
+            },
         },
         "crm": {
             "status": {
@@ -7551,6 +10359,16 @@ def api_bridge_templates():
             "list_contacts": {
                 "optional": ["query", "contact_type", "limit"],
                 "rule": "Consulta clientes/contactos guardados en BIFROST/CRM antes de llamar, mandar SMS o registrar notas.",
+            },
+            "person_context": {
+                "optional": ["query", "name", "phone", "limit"],
+                "aliases": {
+                    "query": ["q", "name", "nombre", "contact_name", "person", "persona"],
+                },
+                "rule": (
+                    "Carga el modo de una persona: ficha BIFROST, CRM, context blocks, interacciones, transcripts y pendientes. "
+                    "Usar cuando el doctor diga 'modo Naomi', 'modo Ilian' o antes de llamar/responder con contexto propio."
+                ),
             },
             "upsert_contact": {
                 "required": ["display_name or phone or email"],
@@ -7574,6 +10392,78 @@ def api_bridge_templates():
                     "phone": ["telefono", "to", "client_phone"],
                 },
                 "rule": "Registra una nota interna asociada al contacto si se conoce telefono o correo.",
+            },
+        },
+        "portfolio": {
+            "client_report": {
+                "optional": ["include_units", "providers"],
+                "rule": (
+                    "Genera reporte deterministico Sr. Eli: monto invertido, entrada, precio actual validado, variacion y balance. "
+                    "No envia mensajes. Por defecto usa Binance y CoinGecko; CoinMarketCap se suma si su API key existe."
+                ),
+            },
+            "fundamental_report": {
+                "optional": ["query", "providers", "max_queries", "dry_run"],
+                "defaults": {
+                    "providers": ["binance", "coinmarketcap", "coingecko"],
+                    "max_queries": 3,
+                    "dry_run": False,
+                },
+                "rule": (
+                    "Usar cuando el doctor pida reporte fundamental, catalizadores, oportunidades o contexto macro del Portafolio Sr. Eli. "
+                    "Primero genera el client_report validado, despues investiga fuentes actuales y estructura: catalizadores internacionales, "
+                    "narrativas cripto populares, catalizadores por activo, oportunidades, riesgos/fuentes y siguiente accion. "
+                    "No envia WhatsApp automaticamente y no debe inventar catalizadores sin fuente reciente."
+                ),
+            },
+            "send_whatsapp_report": {
+                "optional": ["to", "providers", "dry_run"],
+                "defaults": {
+                    "to": DOCTOR_DUBAI_WHATSAPP_TO,
+                    "providers": ["binance", "coinmarketcap", "coingecko"],
+                },
+                "rule": (
+                    "Usar cuando el doctor diga 'enviame el portafolio actualizado' o pida mandar el portafolio Sr. Eli. "
+                    "Calcula con el ledger, valida al menos dos fuentes frescas y manda lineas separadas por WhatsApp. "
+                    "Si el destino es el WhatsApp Dubai del doctor, no requiere confirmacion; cualquier otro destino prepara confirmacion."
+                ),
+            },
+        },
+        "zoom": {
+            "status": {
+                "rule": "Valida Client ID, Client Secret, autorizacion OAuth y host disponible sin crear reuniones.",
+            },
+            "auth_url": {
+                "rule": "Devuelve https://kim.aipeople.app/oauth/zoom/start para autorizar Zoom cuando falte refresh_token.",
+            },
+            "list_users": {
+                "optional": ["limit", "page_size"],
+                "rule": "Con OAuth de usuario devuelve /users/me; con Server-to-Server lista usuarios activos si el scope lo permite.",
+            },
+            "list_meetings": {
+                "optional": ["type", "limit", "page_size"],
+                "rule": "Lista reuniones programadas del usuario autorizado o host configurado.",
+            },
+            "create_meeting": {
+                "required": ["topic or title", "start_at"],
+                "aliases": {
+                    "topic": ["title", "subject", "name", "asunto"],
+                    "start_at": ["start_time", "due_at", "scheduled_at", "datetime", "cuando"],
+                    "duration": ["duration_minutes", "minutes", "duracion"],
+                    "agenda": ["description", "content", "body", "objective", "objetivo"],
+                    "timezone": ["tz", "zona_horaria"],
+                    "host_user_id": ["host_id", "host_email", "user_id", "user", "email"],
+                },
+                "defaults": {
+                    "duration": 30,
+                    "timezone": DEFAULT_SCHEDULER_TIMEZONE,
+                    "settings": {"waiting_room": True, "join_before_host": False},
+                },
+                "rule": (
+                    "Preparar con confirm=false. Al confirmar crea una reunion Zoom real y guarda meeting_id/join_url "
+                    "en BIFROST/MEMORY/context/zoom_meetings.jsonl. Usa OAuth de usuario si se autorizo desde /oauth/zoom/start; "
+                    "si se usa Server-to-Server, no uses 'me' y pasa host_user_id/host_email o deja que Kim elija usuario activo."
+                ),
             },
         },
         "pipedrive": {
@@ -7660,8 +10550,14 @@ def api_bridge_templates():
                 "rule": "Preparar con confirm=false. Enviar SMS requiere confirmacion explicita y luego confirm_prepared o confirm=true.",
             },
             "send_whatsapp": {
-                "required": ["to", "body", "from or messaging_service_sid"],
-                "rule": "Usa formato whatsapp:+numero. Requiere sender WhatsApp aprobado o sandbox Twilio; preparar con confirm=false.",
+                "required": ["to", "body or content_sid", "from or messaging_service_sid"],
+                "aliases": {
+                    "to": ["recipient", "phone", "telefono", "destinatario"],
+                    "body": ["message", "text", "content", "mensaje"],
+                    "content_sid": ["ContentSid", "template_sid"],
+                    "content_variables": ["ContentVariables", "template_variables"],
+                },
+                "rule": "Usa formato whatsapp:+numero. Fuera de la ventana de 24h requiere template aprobado con content_sid y content_variables; texto libre solo funciona despues de mensaje inbound del usuario.",
             },
             "call_phone": {
                 "required": ["to"],
@@ -7891,6 +10787,59 @@ def api_bridge_self_test():
                 "body": "Dry run sin escritura.",
             },
             confirm=False,
+        ),
+    )
+    run_case(
+        "notion_wiki_route_payload",
+        lambda: (
+            lambda payload: {
+                "ok": payload.get("parent", {}).get("database_id") == "10a5954b-05ab-4836-b33b-828c00fad57c",
+                "parent": payload.get("parent"),
+                "property_keys": sorted(payload.get("properties", {}).keys()),
+            }
+        )(
+            build_notion_create_page_payload(
+                {
+                    "title": "AI Spirits - Capítulo 6",
+                    "content": "Knowledge chapter sync.",
+                }
+            )
+        ),
+    )
+    run_case(
+        "notion_documents_route_payload",
+        lambda: (
+            lambda payload: {
+                "ok": payload.get("parent", {}).get("database_id") == "1413f254-cf3d-4cf6-8809-88ebd0dedc70",
+                "parent": payload.get("parent"),
+                "property_keys": sorted(payload.get("properties", {}).keys()),
+            }
+        )(
+            build_notion_create_page_payload(
+                {
+                    "title": "Contrato AI People",
+                    "content": "Documento contractual para firma.",
+                }
+            )
+        ),
+    )
+    run_case(
+        "notion_meeting_route_payload",
+        lambda: (
+            lambda payload: {
+                "ok": payload.get("parent", {}).get("database_id") == "f901a42b-7cd7-4a61-8efc-0b8c22128b4c",
+                "parent": payload.get("parent"),
+                "property_keys": sorted(payload.get("properties", {}).keys()),
+            }
+        )(
+            build_notion_create_page_payload(
+                {
+                    "title": "Reunión de prueba",
+                    "start_at": "2026-05-25T09:00:00",
+                    "end_at": "2026-05-25T09:30:00",
+                    "meeting_type": "Brainstorming",
+                }
+            )
         ),
     )
     run_case(
@@ -8324,6 +11273,21 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         )
     elif (action in {"status_all", "bridge_status"} or provider == "status" or (provider in {"", "all"} and action == "status") or (provider == "all" and not action)):
         result = {"ok": True, "provider": "all", "action": "status", "status": api_bridge_config_status(live=True)}
+    elif provider in {"scheduler", "schedule", "time", "timer", "agenda"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
+        result = run_scheduler_bridge(action, parameters, confirm=confirm)
     elif provider == "clickup":
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -8386,6 +11350,21 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"zoom", "zoom_meetings", "zoom_calendar"}:
+        security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+        if not security.get("authorized"):
+            result = {
+                "ok": False,
+                "provider": provider,
+                "action": action,
+                "requires_security_phrase": True,
+                "security": security,
+                "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+            }
+            record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+            result["action_log"] = record
+            return result
+        result = run_zoom_bridge(action, parameters, confirm=confirm)
     elif provider in {"pipedrive", "pipe_drive", "pd"}:
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -8416,6 +11395,46 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             result["action_log"] = record
             return result
         result = run_crm_bridge(action, parameters, confirm=confirm)
+    elif provider in {"portfolio", "portafolio", "ignis_portfolio", "sr_eli"}:
+        send_action = action in {
+            "send_whatsapp_report",
+            "send_updated_portfolio",
+            "send_portfolio",
+            "enviar_portafolio",
+            "mandar_portafolio",
+            "enviame_portafolio_actualizado",
+        }
+        target = portfolio_default_whatsapp_target(parameters) if send_action else ""
+        doctor_control_send = send_action and portfolio_target_is_doctor_control(target)
+        read_only_actions = {
+            "status",
+            "summary",
+            "client_report",
+            "eli_client_report",
+            "sr_eli_report",
+            "fundamental_report",
+            "portfolio_fundamental_report",
+            "reporte_fundamental",
+            "reporte_fundamental_sr_eli",
+            "catalizadores_portafolio",
+            "sr_eli_fundamental",
+        }
+        sensitive_action = action not in read_only_actions and not doctor_control_send
+        if sensitive_action:
+            security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+            if not security.get("authorized"):
+                result = {
+                    "ok": False,
+                    "provider": provider,
+                    "action": action,
+                    "requires_security_phrase": True,
+                    "security": security,
+                    "message": "Accion sensible bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+                }
+                record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+                result["action_log"] = record
+                return result
+        result = portfolio_cli(action, {**parameters, "confirm": confirm or boolish(parameters.get("confirm"))})
     elif provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
         if action in {"call_phone", "call", "make_call", "llamar", "llamada", "schedule_call", "programar_llamada", "agendar_llamada"} and transcript:
             parameters = dict(parameters or {})
@@ -8449,7 +11468,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, twilio, crm o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, twilio, crm o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -8546,6 +11565,24 @@ def portfolio_cli(action, parameters=None):
         result = module.portfolio_summary_json()
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
         result = portfolio_client_report(module.portfolio_summary_json(), parameters)
+    elif action in {
+        "fundamental_report",
+        "portfolio_fundamental_report",
+        "reporte_fundamental",
+        "reporte_fundamental_sr_eli",
+        "catalizadores_portafolio",
+        "sr_eli_fundamental",
+    }:
+        result = portfolio_fundamental_report(module.portfolio_summary_json(), parameters)
+    elif action in {
+        "send_whatsapp_report",
+        "send_updated_portfolio",
+        "send_portfolio",
+        "enviar_portafolio",
+        "mandar_portafolio",
+        "enviame_portafolio_actualizado",
+    }:
+        result = portfolio_send_whatsapp_report(module.portfolio_summary_json(), parameters)
     elif action == "init":
         result = module.init_db()
     elif action in {"record_consultation", "record_market_consultation"}:
@@ -9011,6 +12048,7 @@ def context_brief(limit=9000):
         "Identidad: Dr. Yehoshua trabaja con Kim como interfaz verbal y Codex como ejecutor.",
         "Arquitectura: BIFROST es el traje local; Notion es memoria/base de conocimiento; ClickUp es ejecucion/proyectos; Telegram notifica; Codex ejecuta.",
         "Objetivo operativo: Kim Live debe conversar con memoria local, consultar contexto, compilar tareas y enviarlas a Codex al cerrar conversacion.",
+        "Version viva:\n" + version_memory_snapshot(),
     ]
     context_text = read_text_tail_any([CONTEXT_MEMORY, RUNTIME_CONTEXT / "kim_context.md"], 2200)
     if context_text:
@@ -9018,6 +12056,9 @@ def context_brief(limit=9000):
     eval_text = read_text_tail_any([NOTION_CLICKUP_EVAL, RUNTIME_CONTEXT / "notion_vs_clickup_evaluation.md"], 1200)
     if eval_text:
         parts.append("Criterio Notion/ClickUp:\n" + eval_text)
+    multitenant_plan = read_text_tail_any([MULTITENANT_AGENT_PLAN, RUNTIME_MULTITENANT_AGENT_PLAN], 1800)
+    if multitenant_plan:
+        parts.append("Plan multiempresa Kim:\n" + multitenant_plan)
     inbound_spec = read_text_tail_any([INBOUND_CALL_PRIVACY_SPEC, RUNTIME_INBOUND_CALL_PRIVACY_SPEC], 1400)
     if inbound_spec:
         parts.append("Politica de llamadas entrantes:\n" + inbound_spec)
@@ -9063,6 +12104,13 @@ def context_brief(limit=9000):
     task_names = clickup_task_names_context()
     if task_names:
         parts.append("Memoria de nombres de tareas ClickUp:\n" + task_names)
+    backlog = kim_product_backlog_summary()
+    if backlog.get("top_priority"):
+        parts.append(
+            "Kim product backlog:\n"
+            f"- Foco: {backlog.get('focus')}\n"
+            f"- Prioridad actual: {backlog.get('top_priority')} [{backlog.get('top_priority_status') or 'planned'}]"
+        )
     api_spec = read_text_tail_any([API_BRIDGE_SPEC, RUNTIME_API_BRIDGE_SPEC], 1600)
     if api_spec:
         parts.append("Kim API bridge:\n" + api_spec)
@@ -9081,14 +12129,17 @@ def context_brief(limit=9000):
 
 
 def load_context_bundle():
+    backlog = load_kim_product_backlog_payload()
     sources = []
     for path in [
         CONTEXT_MEMORY,
         daily_memory_path(),
         OPERATING_MODEL,
         NOTION_CLICKUP_EVAL,
+        MULTITENANT_AGENT_PLAN,
         INBOUND_CALL_PRIVACY_SPEC,
         RUNTIME_INBOUND_CALL_PRIVACY_SPEC,
+        RUNTIME_MULTITENANT_AGENT_PLAN,
         CLICKUP_INVENTORY,
         CLICKUP_TASKS_JSON,
         CLICKUP_TASKS_MARKDOWN,
@@ -9096,6 +12147,11 @@ def load_context_bundle():
         RUNTIME_CLICKUP_TASKS_MARKDOWN,
         API_BRIDGE_SPEC,
         API_BRIDGE_LOG,
+        KIM_PRODUCT_BACKLOG_SPEC,
+        KIM_PRODUCT_BACKLOG_JSON,
+        KIM_PRODUCT_BACKLOG_MD,
+        RUNTIME_KIM_PRODUCT_BACKLOG_JSON,
+        RUNTIME_KIM_PRODUCT_BACKLOG_MD,
     ]:
         sources.append(
             {
@@ -9113,9 +12169,245 @@ def load_context_bundle():
         "latest_kim_live_notes": latest_kim_live_notes(),
         "clickup": clickup_context(),
         "api_bridge": api_bridge_config_status(live=False),
+        "product_backlog": kim_product_backlog_summary(backlog),
         "research_sources": load_research_source_cache().get("items", [])[-12:],
         "sources": sources,
     }
+
+
+def load_bifrost_export_state():
+    state = read_json_file(BIFROST_EXPORT_TOKENS, {"tokens": {}})
+    if not isinstance(state, dict):
+        state = {"tokens": {}}
+    state.setdefault("tokens", {})
+    return state
+
+
+def save_bifrost_export_state(state):
+    BIFROST_EXPORT_TOKENS.parent.mkdir(parents=True, exist_ok=True)
+    state["updated_at"] = now_iso()
+    write_json_file(BIFROST_EXPORT_TOKENS, state)
+
+
+def cleanup_bifrost_exports():
+    now_ts = dt.datetime.now(dt.timezone.utc).timestamp()
+    state = load_bifrost_export_state()
+    changed = False
+    for digest, item in list((state.get("tokens") or {}).items()):
+        expired = float(item.get("expires_at_ts") or 0) <= now_ts
+        exhausted = int(item.get("download_count") or 0) >= int(item.get("max_downloads") or BIFROST_EXPORT_MAX_DOWNLOADS)
+        path = pathlib.Path(item.get("path") or "")
+        manifest_path = pathlib.Path(item.get("manifest_path") or "")
+        if expired or exhausted or not path.exists():
+            state["tokens"].pop(digest, None)
+            changed = True
+            try:
+                if path.exists() and path.is_file() and path.parent == BIFROST_EXPORT_DIR:
+                    path.unlink()
+            except OSError:
+                pass
+            try:
+                if manifest_path.exists() and manifest_path.is_file() and manifest_path.parent == BIFROST_EXPORT_DIR:
+                    manifest_path.unlink()
+            except OSError:
+                pass
+    if changed:
+        save_bifrost_export_state(state)
+
+
+def bifrost_export_should_skip(path):
+    try:
+        rel = path.relative_to(BIFROST)
+    except ValueError:
+        return True
+    if path.is_symlink():
+        return True
+    if any(part in BIFROST_EXPORT_SKIP_NAMES for part in rel.parts):
+        return True
+    if path.is_file() and path.suffix.lower() in BIFROST_EXPORT_SKIP_SUFFIXES:
+        return True
+    return False
+
+
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def create_bifrost_export_zip(label=""):
+    if not BIFROST.exists():
+        raise ValueError(f"No existe BIFROST en {BIFROST}.")
+    cleanup_bifrost_exports()
+    BIFROST_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"BIFROST-{stamp}.zip"
+    manifest_filename = f"BIFROST-{stamp}-manifest.json"
+    export_path = BIFROST_EXPORT_DIR / filename
+    manifest_path = BIFROST_EXPORT_DIR / manifest_filename
+    files = 0
+    raw_bytes = 0
+    manifest = {
+        "created_at": now_iso(),
+        "app_version": APP_VERSION,
+        "manifest_name": "BIFROST_EXPORT_MANIFEST",
+        "source_root": str(BIFROST),
+        "archive_filename": filename,
+        "label": brief(label, 120),
+        "notes": [
+            "This archive contains BIFROST source, memory and docs.",
+            "It does not include macOS Keychain secrets, active LaunchAgents, browser sessions, ~/.kim_live or ~/.kim_telegram.",
+            "Restore secrets and services using BIFROST/docs/MIGRATION_RUNBOOK.md.",
+        ],
+    }
+    with zipfile.ZipFile(export_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("BIFROST_EXPORT_MANIFEST.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+        for path in sorted(BIFROST.rglob("*")):
+            if bifrost_export_should_skip(path) or not path.is_file():
+                continue
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            archive.write(path, path.relative_to(BIFROST.parent).as_posix())
+            files += 1
+            raw_bytes += stat.st_size
+    with zipfile.ZipFile(export_path, "r") as archive:
+        bad_member = archive.testzip()
+    if bad_member:
+        try:
+            export_path.unlink()
+        except OSError:
+            pass
+        raise ValueError(f"El ZIP BIFROST se genero corrupto en {bad_member}.")
+    size = export_path.stat().st_size
+    sha256 = file_sha256(export_path)
+    token = secrets.token_urlsafe(32)
+    expires = dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=BIFROST_EXPORT_TTL_SECONDS)
+    manifest.update(
+        {
+            "generated_status": "ok",
+            "archive_size_bytes": size,
+            "archive_sha256": sha256,
+            "source_file_count": files,
+            "source_bytes": raw_bytes,
+            "expires_at": expires.isoformat(),
+            "ttl_seconds": BIFROST_EXPORT_TTL_SECONDS,
+            "max_downloads": BIFROST_EXPORT_MAX_DOWNLOADS,
+            "migration_start_here": "BIFROST/AGENT_HANDOFF.md",
+        }
+    )
+    write_json_file(manifest_path, manifest)
+    state = load_bifrost_export_state()
+    state.setdefault("tokens", {})[token_hash(token)] = {
+        "created_at": now_iso(),
+        "expires_at": expires.isoformat(),
+        "expires_at_ts": expires.timestamp(),
+        "path": str(export_path),
+        "manifest_path": str(manifest_path),
+        "filename": filename,
+        "manifest_filename": manifest_filename,
+        "size_bytes": size,
+        "sha256": sha256,
+        "source_file_count": files,
+        "source_bytes": raw_bytes,
+        "download_count": 0,
+        "max_downloads": BIFROST_EXPORT_MAX_DOWNLOADS,
+    }
+    save_bifrost_export_state(state)
+    append_memory(
+        "bifrost_export_created",
+        {
+            "filename": filename,
+            "size_bytes": size,
+            "source_file_count": files,
+            "expires_at": expires.isoformat(),
+        },
+    )
+    append_daily_note(f"Se genero respaldo descargable temporal de BIFROST: {filename}.")
+    return {
+        "ok": True,
+        "filename": filename,
+        "manifest_filename": manifest_filename,
+        "size_bytes": size,
+        "sha256": sha256,
+        "source_file_count": files,
+        "source_bytes": raw_bytes,
+        "expires_at": expires.isoformat(),
+        "ttl_seconds": BIFROST_EXPORT_TTL_SECONDS,
+        "max_downloads": BIFROST_EXPORT_MAX_DOWNLOADS,
+        "download_url": "/api/bifrost-export/download?token=" + urllib.parse.quote(token),
+        "manifest_url": "/api/bifrost-export/manifest?token=" + urllib.parse.quote(token),
+    }
+
+
+def get_bifrost_export_item(token):
+    cleanup_bifrost_exports()
+    digest = token_hash(token)
+    item = (load_bifrost_export_state().get("tokens") or {}).get(digest)
+    if not item:
+        raise ValueError("El enlace de descarga no existe o expiro.")
+    if int(item.get("download_count") or 0) >= int(item.get("max_downloads") or BIFROST_EXPORT_MAX_DOWNLOADS):
+        raise ValueError("El enlace de descarga llego al limite de descargas.")
+    if float(item.get("expires_at_ts") or 0) <= dt.datetime.now(dt.timezone.utc).timestamp():
+        raise ValueError("El enlace de descarga expiro.")
+    path = pathlib.Path(item.get("path") or "")
+    if path.parent != BIFROST_EXPORT_DIR or not path.exists() or not path.is_file():
+        raise ValueError("El archivo temporal de BIFROST ya no esta disponible.")
+    return item, path
+
+
+def mark_bifrost_export_downloaded(token):
+    digest = token_hash(token)
+    state = load_bifrost_export_state()
+    item = (state.get("tokens") or {}).get(digest)
+    if item:
+        item["last_downloaded_at"] = now_iso()
+        item["download_count"] = int(item.get("download_count") or 0) + 1
+        save_bifrost_export_state(state)
+
+
+def send_bifrost_export_download(handler, token):
+    item, path = get_bifrost_export_item(token)
+    filename = item.get("filename") or path.name
+    handler.send_response(200)
+    handler.send_header("Content-Type", "application/zip")
+    handler.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Accept-Ranges", "none")
+    handler.send_header("Content-Length", str(path.stat().st_size))
+    handler.end_headers()
+    with path.open("rb") as handle:
+        shutil.copyfileobj(handle, handler.wfile)
+    mark_bifrost_export_downloaded(token)
+    append_memory(
+        "bifrost_export_downloaded",
+        {
+            "filename": filename,
+            "size_bytes": item.get("size_bytes"),
+            "download_count": int(item.get("download_count") or 0) + 1,
+            "max_downloads": int(item.get("max_downloads") or BIFROST_EXPORT_MAX_DOWNLOADS),
+        },
+    )
+
+
+def send_bifrost_export_manifest(handler, token):
+    item, _path = get_bifrost_export_item(token)
+    manifest_path = pathlib.Path(item.get("manifest_path") or "")
+    if manifest_path.parent != BIFROST_EXPORT_DIR or not manifest_path.exists() or not manifest_path.is_file():
+        raise ValueError("El manifest temporal de BIFROST ya no esta disponible.")
+    filename = item.get("manifest_filename") or manifest_path.name
+    data = manifest_path.read_bytes()
+    handler.send_response(200)
+    handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    handler.wfile.write(data)
+    append_memory("bifrost_export_manifest_downloaded", {"filename": filename, "archive_filename": item.get("filename")})
 
 
 def speak(text):
@@ -9188,6 +12480,10 @@ def twiml_response(inner):
     return '<?xml version="1.0" encoding="UTF-8"?><Response>' + inner + "</Response>"
 
 
+def twilio_say(text):
+    return f'<Say language="es-MX" voice="{TWILIO_POLLY_VOICE}">{twiml_escape(text)}</Say>'
+
+
 def twilio_public_base(handler):
     proto = handler.headers.get("X-Forwarded-Proto") or "https"
     host = handler.headers.get("X-Forwarded-Host") or handler.headers.get("Host") or "localhost"
@@ -9203,6 +12499,102 @@ def twilio_media_ws_url(handler, params=None):
         return configured
     base = twilio_public_base(handler)
     return base.replace("https://", "wss://").replace("http://", "ws://") + "/twilio/media"
+
+
+def iso_age_seconds(value):
+    if not value:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    now = dt.datetime.now(parsed.tzinfo) if parsed.tzinfo else dt.datetime.now()
+    return max(0.0, (now - parsed).total_seconds())
+
+
+def notify_kim_live(kind, title, body="", severity="info", metadata=None):
+    event = {
+        "id": "NTF-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper(),
+        "at": now_iso(),
+        "kind": brief(kind, 80),
+        "title": brief(title, 180),
+        "body": brief(body, 1200),
+        "severity": brief(severity, 24),
+        "metadata": metadata or {},
+        "acknowledged": False,
+    }
+    for path in [RUNTIME_KIM_LIVE_NOTIFICATIONS, KIM_LIVE_NOTIFICATIONS]:
+        try:
+            append_jsonl(path, event)
+        except (PermissionError, OSError):
+            continue
+    return event
+
+
+def list_kim_live_notifications(limit=25):
+    try:
+        limit = max(1, min(int(limit or 25), 100))
+    except (TypeError, ValueError):
+        limit = 25
+    entries = []
+    seen = set()
+    for path in [RUNTIME_KIM_LIVE_NOTIFICATIONS, KIM_LIVE_NOTIFICATIONS]:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (FileNotFoundError, PermissionError, OSError):
+            continue
+        for line in reversed(lines):
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            item_id = item.get("id") or f"{item.get('at')}:{item.get('title')}"
+            if item_id in seen:
+                continue
+            seen.add(item_id)
+            entries.append(item)
+            if len(entries) >= limit:
+                return entries
+    return entries
+
+
+def set_twilio_realtime_health(status="ok", reason="", metadata=None, notify=True):
+    payload = {
+        "ok": status == "ok",
+        "status": status,
+        "reason": brief(reason, 300),
+        "metadata": metadata or {},
+        "updated_at": now_iso(),
+    }
+    write_json_file_both(TWILIO_REALTIME_HEALTH, RUNTIME_TWILIO_REALTIME_HEALTH, payload)
+    if status != "ok" and notify:
+        notify_kim_live(
+            "twilio_realtime_health",
+            "Twilio voice fallback activated",
+            f"Realtime no esta disponible para llamadas. Motivo: {payload['reason'] or status}.",
+            severity="warning",
+            metadata=payload,
+        )
+    return payload
+
+
+def twilio_realtime_health_status(max_age_seconds=300):
+    payload = read_json_file_any([RUNTIME_TWILIO_REALTIME_HEALTH, TWILIO_REALTIME_HEALTH], {})
+    if not payload:
+        return {"ok": True, "status": "unknown", "available": True, "recent": False}
+    age = iso_age_seconds(payload.get("updated_at"))
+    recent = age is not None and age <= max_age_seconds
+    unavailable = payload.get("status") != "ok" and recent
+    return {
+        **payload,
+        "ok": not unavailable,
+        "available": not unavailable,
+        "recent": recent,
+        "age_seconds": age,
+        "max_age_seconds": max_age_seconds,
+    }
 
 
 def gmail_oauth_redirect_uri(handler):
@@ -9287,7 +12679,9 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
     if caller_profile.get("is_doctor"):
         phone_mode = (
             "Estas hablando por telefono con el Dr Yehoshua. "
-            "Puedes asumir continuidad operativa y tomar instrucciones directas."
+            "Puedes asumir continuidad operativa y tomar instrucciones directas. "
+            "Eres puente remoto hacia Kim Live: registra contexto, tareas y recados; notifica Kim Live; "
+            "prepara acciones si corresponde, pero no afirmes ejecucion externa sin resultado confirmado."
         )
     else:
         pending_summary = caller_profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
@@ -9304,10 +12698,14 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
             f"| empresa={caller_profile.get('company_summary') or 'N/A'} | relacion={caller_profile.get('relationship_summary') or 'N/A'}\n"
             f"Pendientes propios conocidos: {pending_summary}\n"
             f"Servicios generales permitidos: {caller_profile.get('service_summary')}\n"
+            f"Politica secretaria/puente: {caller_profile.get('remote_secretary_bridge_policy') or REMOTE_SECRETARY_BRIDGE_POLICY}\n"
+            f"Politica relacion/buen nombre: {caller_profile.get('inbound_relationship_goodwill_policy') or INBOUND_RELATIONSHIP_GOODWILL_POLICY}\n"
+            f"Playbook ventas/RP a reunion: {caller_profile.get('whatsapp_sales_pr_meeting_playbook') or WHATSAPP_SALES_PR_MEETING_PLAYBOOK}\n"
             f"Politica de privacidad: {caller_profile.get('privacy_summary')}"
         )
     prompt = (
         "Eres Kim Live hablando por telefono. "
+        f"{active_voice_style()} "
         "Responde en espanol mexicano, con una frase breve y accionable, idealmente menor a 45 palabras. "
         "Si la instruccion requiere trabajo largo, confirma que la guardaras para ejecucion en Kim Live/Codex. "
         "No inventes que ya hiciste acciones externas si solo las estas recibiendo por telefono.\n\n"
@@ -9428,6 +12826,63 @@ def append_twilio_call_record(params, user_text="", reply_text=""):
         return path, None
 
 
+def twilio_voice_fallback_twiml(handler, params=None, reason="", call_context=None, caller_profile=None):
+    params = dict(params or {})
+    base = twilio_public_base(handler)
+    session_id = phone_session_id(params)
+    caller = params.get("From", "")
+    called = params.get("To", "")
+    profile = caller_profile or {}
+    label = twilio_inbound_caller_label(profile) if profile else "la persona que llama"
+    known = bool(profile.get("known_contact") or profile.get("is_doctor")) and not twilio_label_looks_like_phone(label)
+    if profile.get("is_doctor"):
+        intro = (
+            "Hola doctor, habla Kim. Mi canal de voz inteligente esta temporalmente en modo seguro, "
+            "pero puedo tomar tu instruccion y dejarla registrada."
+        )
+        prompt = "Dime que necesitas que deje guardado o que revise al volver el canal realtime."
+    elif known:
+        intro = (
+            f"Hola {label}, habla Kim, asistente del Dr. Yehoshua. "
+            "Tengo el canal de voz inteligente en modo seguro, pero puedo tomar tu recado."
+        )
+        prompt = "Por favor dime en que puedo ayudarte y que mensaje quieres que le deje al doctor."
+    else:
+        intro = (
+            "Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos con automatizacion con IA, "
+            "consultoria tecnologica, procesos, branding y analisis financiero."
+        )
+        prompt = "Te puedo preguntar tu nombre, empresa y motivo de tu llamada?"
+    event = {
+        "session_id": session_id,
+        "call_sid": params.get("CallSid", ""),
+        "from": caller,
+        "to": called,
+        "context_id": (call_context or {}).get("id") or params.get("kim_context_id", ""),
+        "reason": brief(reason, 500),
+        "known_contact": known,
+        "label": label,
+    }
+    append_memory("twilio_voice_fallback", event)
+    notify_kim_live(
+        "twilio_voice_fallback",
+        "Twilio answered in safe mode",
+        f"Llamada {params.get('CallSid', '') or session_id} atendida sin Realtime. {event['reason']}",
+        severity="warning",
+        metadata=event,
+    )
+    action = f"{base}/twilio/gather"
+    return twiml_response(
+        twilio_say(intro)
+        +
+        f'<Gather input="speech" language="es-MX" speechTimeout="auto" timeout="7" '
+        f'action="{twiml_escape(action)}" method="POST">'
+        + twilio_say(prompt)
+        + "</Gather>"
+        + twilio_say("Gracias. Dejo registrada la llamada para el doctor.")
+    )
+
+
 def twilio_voice_twiml(handler, params=None):
     params = dict(params or {})
     query_params = {key: values[-1] for key, values in urllib.parse.parse_qs(urllib.parse.urlparse(handler.path).query).items()}
@@ -9436,11 +12891,11 @@ def twilio_voice_twiml(handler, params=None):
     session_id = phone_session_id(params)
     caller = params.get("From", "")
     called = params.get("To", "")
-    caller_profile = twilio_inbound_caller_profile(caller, called)
-    context_id = params.get("kim_context_id", "")
-    call_context = load_twilio_call_context(call_sid=params.get("CallSid", ""), context_id=context_id)
     default_from = normalize_phone_number(twilio_default_from_number())
     is_outbound_leg = default_from and normalize_phone_number(caller) == default_from
+    caller_profile = {} if is_outbound_leg else twilio_inbound_caller_profile(caller, called)
+    context_id = params.get("kim_context_id", "")
+    call_context = load_twilio_call_context(call_sid=params.get("CallSid", ""), context_id=context_id)
     if not call_context and not is_outbound_leg:
         call_context = twilio_inbound_call_context(
             caller=caller,
@@ -9452,7 +12907,18 @@ def twilio_voice_twiml(handler, params=None):
     elif call_context and not context_id:
         context_id = call_context.get("id") or call_context.get("context_block_id") or ""
     media_ws = twilio_media_ws_url(handler, params)
-    append_memory(
+    realtime_health = twilio_realtime_health_status(max_age_seconds=300)
+    if not realtime_health.get("available", True):
+        return twilio_voice_fallback_twiml(
+            handler,
+            params={**params, "kim_context_id": context_id},
+            reason=f"recent realtime health: {realtime_health.get('reason') or realtime_health.get('status')}",
+            call_context=call_context,
+            caller_profile=caller_profile,
+        )
+    run_background_task(
+        "phone-call-started-memory",
+        append_memory,
         "phone_call_started",
         {
             "session_id": session_id,
@@ -9490,17 +12956,35 @@ def twilio_gather_twiml(handler, params):
     user_text = params.get("SpeechResult", "")
     caller = params.get("From", "")
     called = params.get("To", "")
-    reply = kim_phone_reply(user_text, caller=caller, called=called, session_id=session_id)
+    try:
+        reply = kim_phone_reply(user_text, caller=caller, called=called, session_id=session_id)
+    except Exception as exc:
+        reply = (
+            "Recibi tu mensaje. En este momento tuve un problema temporal para responder con inteligencia completa, "
+            "pero la llamada quedo registrada para el Dr. Yehoshua."
+        )
+        notify_kim_live(
+            "twilio_gather_error",
+            "Twilio gather saved without AI reply",
+            brief(str(exc), 700),
+            severity="warning",
+            metadata={"session_id": session_id, "from": caller, "to": called},
+        )
+        append_memory(
+            "twilio_gather_reply_error",
+            {"session_id": session_id, "from": caller, "to": called, "error": brief(str(exc), 800)},
+        )
     append_twilio_call_record(params, user_text=user_text, reply_text=reply)
     action = f"{base}/twilio/gather"
     again = "Puedes decir otra instruccion, o colgar si terminamos."
     return twiml_response(
-        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(reply)}</Say>'
+        twilio_say(reply)
+        +
         f'<Gather input="speech" language="es-MX" speechTimeout="auto" timeout="6" '
         f'action="{twiml_escape(action)}" method="POST">'
-        f'<Say language="es-MX" voice="Polly.Mia">{twiml_escape(again)}</Say>'
-        "</Gather>"
-        '<Say language="es-MX" voice="Polly.Mia">Listo doctor. Corto la llamada y dejo memoria local.</Say>'
+        + twilio_say(again)
+        + "</Gather>"
+        + twilio_say("Listo doctor. Corto la llamada y dejo memoria local.")
     )
 
 
@@ -9568,21 +13052,1348 @@ def twilio_status_callback(params):
     return event
 
 
+def twilio_inbound_message_channel(params):
+    values = " ".join(str(params.get(key, "")) for key in ["From", "To", "MessagingServiceSid"])
+    return "whatsapp" if "whatsapp:" in values.lower() else "sms"
+
+
+def twilio_message_response_twiml(text):
+    return twiml_response(f"<Message>{twiml_escape(text)}</Message>") if text else twiml_response("")
+
+
+def whatsapp_thread_id_for_phone(phone):
+    digits = phone_digits(phone)
+    return f"wa-{digits}" if digits else "wa-unknown"
+
+
+def whatsapp_thread_json_paths(thread_id):
+    name = f"{crm_slug(thread_id)}.json"
+    return WHATSAPP_THREAD_DIR / name, RUNTIME_WHATSAPP_THREAD_DIR / name
+
+
+def whatsapp_thread_markdown_paths(thread_id):
+    name = f"{crm_slug(thread_id)}.md"
+    return WHATSAPP_THREAD_DIR / name, RUNTIME_WHATSAPP_THREAD_DIR / name
+
+
+def whatsapp_company_from_person(person):
+    organization = person.get("organization") if isinstance(person, dict) else ""
+    if isinstance(organization, dict):
+        return str(organization.get("name") or organization.get("value") or "").strip()
+    return str(organization or "").strip()
+
+
+def whatsapp_contact_origin(person, local_contact, caller_profile):
+    sources = []
+    if isinstance(person, dict) and person.get("id"):
+        sources.append("pipedrive")
+    if isinstance(local_contact, dict) and local_contact.get("id"):
+        sources.append("crm_local")
+    if isinstance(caller_profile, dict) and (
+        caller_profile.get("known_contact")
+        or caller_profile.get("display_name")
+        or caller_profile.get("knowledge_summary")
+        or caller_profile.get("pending_summary")
+    ):
+        sources.append("person_context")
+    return compact_unique(sources or ["unknown"], limit=4)
+
+
+def whatsapp_contact_company_scope(person, local_contact, caller_profile):
+    scope = []
+    company_name = whatsapp_company_from_person(person)
+    if not company_name and isinstance(local_contact, dict):
+        company_name = str(local_contact.get("company") or local_contact.get("company_name") or "").strip()
+    if not company_name and isinstance(caller_profile, dict):
+        company_name = str(caller_profile.get("company_summary") or "").strip()
+    if company_name:
+        scope.append(company_name)
+    fallback = ["AI People", "Tesca Elements", "Dr. Yehoshua"]
+    if "ignis" in normalize_security_text(company_name):
+        fallback.insert(2, "Ignis International")
+    return compact_unique(scope + fallback, limit=6)
+
+
+def whatsapp_contact_seller_mode(person, local_contact, caller_profile):
+    if isinstance(caller_profile, dict) and caller_profile.get("is_doctor"):
+        return "doctor_control"
+    if (isinstance(person, dict) and person.get("id")) or (isinstance(local_contact, dict) and local_contact.get("id")):
+        return "threaded_contact"
+    return "seller_generalist"
+
+
+def whatsapp_contact_knowledge_sources(person, local_contact, caller_profile):
+    sources = []
+    if isinstance(caller_profile, dict) and caller_profile.get("knowledge_summary"):
+        sources.append("person_context")
+    if isinstance(local_contact, dict) and local_contact.get("id"):
+        sources.append("crm_local")
+    if isinstance(person, dict) and person.get("id"):
+        sources.append("pipedrive")
+    sources.append("seller_pack_public")
+    return compact_unique(sources, limit=6)
+
+
+def whatsapp_thread_stats(thread):
+    events = thread.get("events") if isinstance(thread.get("events"), list) else []
+    inbound = [item for item in events if item.get("direction") == "inbound"]
+    outbound = [item for item in events if item.get("direction") == "outbound"]
+    latest_inbound = inbound[-1] if inbound else {}
+    latest_outbound = outbound[-1] if outbound else {}
+    return {
+        "total_messages": len(events),
+        "inbound_messages": len(inbound),
+        "outbound_messages": len(outbound),
+        "latest_inbound_at": latest_inbound.get("at") or "",
+        "latest_outbound_at": latest_outbound.get("at") or "",
+        "latest_inbound_preview": brief(latest_inbound.get("body") or latest_inbound.get("reply") or "", 180),
+        "latest_outbound_preview": brief(latest_outbound.get("reply") or latest_outbound.get("body") or "", 180),
+    }
+
+
+def list_whatsapp_thread_summaries(limit=12):
+    index = read_json_file_any([WHATSAPP_THREAD_INDEX, RUNTIME_WHATSAPP_THREAD_INDEX], {"threads": []})
+    if not isinstance(index, dict):
+        index = {"threads": []}
+    rows = []
+    for item in (index.get("threads") or [])[: max(1, int(limit or 12))]:
+        if not isinstance(item, dict):
+            continue
+        thread_id = item.get("thread_id") or ""
+        primary, runtime = whatsapp_thread_json_paths(thread_id)
+        thread = read_json_file_any([primary, runtime], {})
+        if not isinstance(thread, dict):
+            thread = {}
+        contact = thread.get("contact") if isinstance(thread.get("contact"), dict) else {}
+        stats = whatsapp_thread_stats(thread)
+        rows.append(
+            {
+                "thread_id": thread_id,
+                "display_name": contact.get("display_name") or item.get("display_name") or thread_id,
+                "phone": contact.get("phone") or item.get("phone") or "",
+                "company": contact.get("company") or item.get("company") or "",
+                "known_contact": bool(contact.get("known_contact") if contact else item.get("known_contact")),
+                "origin": contact.get("contact_origin") or item.get("origin") or [],
+                "origin_summary": contact.get("origin_summary") or item.get("origin_summary") or "",
+                "seller_mode": contact.get("seller_mode") or item.get("seller_mode") or "",
+                "company_scope": contact.get("company_scope") or item.get("company_scope") or [],
+                "knowledge_sources": contact.get("knowledge_sources") or item.get("knowledge_sources") or [],
+                "open_items": len([row for row in (thread.get("open_items") or []) if row.get("status") in ("open", "pending_review")]),
+                "latest_at": thread.get("updated_at") or item.get("latest_at") or "",
+                **stats,
+            }
+        )
+    return rows
+
+
+def whatsapp_overview_text(limit=12):
+    rows = list_whatsapp_thread_summaries(limit=limit)
+    if not rows:
+        return "No hay hilos de WhatsApp registrados todavia."
+    lines = [f"Hilos WhatsApp registrados: {len(rows)}."]
+    for item in rows:
+        name = item.get("display_name") or item.get("thread_id")
+        latest = item.get("latest_at") or "sin fecha"
+        counts = f"inbound={item.get('inbound_messages', 0)} outbound={item.get('outbound_messages', 0)} open={item.get('open_items', 0)}"
+        preview = item.get("latest_inbound_preview") or item.get("latest_outbound_preview") or "sin mensaje reciente"
+        lines.append(f"- {name} ({item.get('phone') or 'sin telefono'}) {counts} latest={latest} :: {preview}")
+    return "\n".join(lines)
+
+
+def seller_context_pack_for_prompt(limit=6400):
+    payload = load_seller_context_pack_payload()
+    if not payload:
+        return "Paquete seller aun no cargado; usar informacion publica general de Ai People, Tesca Elements e Ignis sin inventar."
+    lines = []
+    for key in ["mission", "positioning", "voice_style", "priority_focus", "sales_method", "guardrails"]:
+        value = payload.get(key)
+        if isinstance(value, list):
+            value = "; ".join(str(item) for item in value if item)
+        if value:
+            lines.append(f"{key}: {value}")
+    top_collateral = payload.get("collateral") if isinstance(payload.get("collateral"), dict) else {}
+    top_links = top_collateral.get("approved_links") if isinstance(top_collateral.get("approved_links"), list) else []
+    if top_links:
+        rendered_links = []
+        for item in top_links[:6]:
+            if isinstance(item, dict) and item.get("url"):
+                rendered_links.append(f"{item.get('label') or 'link'}={item.get('url')}")
+        if rendered_links:
+            lines.append("Approved public links: " + "; ".join(rendered_links))
+    if top_collateral.get("send_policy"):
+        lines.append("Collateral send policy: " + brief(top_collateral.get("send_policy") or "", 360))
+    companies = payload.get("companies") if isinstance(payload.get("companies"), dict) else {}
+    for name, info in companies.items():
+        if not isinstance(info, dict):
+            continue
+        summary = info.get("summary") or ""
+        offers = info.get("offers") or []
+        guardrails = info.get("guardrails") or []
+        line = f"{name}: {summary}"
+        if offers:
+            line += " Servicios: " + "; ".join(str(item) for item in offers[:7])
+        if guardrails:
+            line += " Limites: " + "; ".join(str(item) for item in guardrails[:4])
+        lines.append(line)
+    dr = payload.get("dr_yehoshua") if isinstance(payload.get("dr_yehoshua"), dict) else {}
+    if dr:
+        lines.append("Dr Yehoshua: " + brief(dr.get("summary") or "", 520))
+        if dr.get("public_bio"):
+            lines.append("Dr Yehoshua public bio: " + brief(dr.get("public_bio") or "", 620))
+        credibility = dr.get("credibility_points") if isinstance(dr.get("credibility_points"), list) else []
+        if credibility:
+            lines.append("Dr Yehoshua credibility points: " + "; ".join(str(item) for item in credibility[:6] if item))
+    response_rules = payload.get("public_response_rules") if isinstance(payload.get("public_response_rules"), list) else []
+    if response_rules:
+        lines.append("Public response rules: " + "; ".join(str(item) for item in response_rules[:8] if item))
+    public_knowledge = payload.get("public_knowledge") if isinstance(payload.get("public_knowledge"), dict) else {}
+    for name, info in public_knowledge.items():
+        if not isinstance(info, dict):
+            continue
+        summary = info.get("summary") or ""
+        talking_points = info.get("talking_points") if isinstance(info.get("talking_points"), list) else []
+        line = f"{name}: {summary}"
+        if talking_points:
+            line += " Points: " + "; ".join(str(item) for item in talking_points[:6] if item)
+        lines.append(line)
+    collateral = payload.get("collateral") if isinstance(payload.get("collateral"), dict) else {}
+    links = collateral.get("approved_links") if isinstance(collateral.get("approved_links"), list) else []
+    if links:
+        rendered_links = []
+        for item in links[:6]:
+            if isinstance(item, dict) and item.get("url"):
+                rendered_links.append(f"{item.get('label') or 'link'}={item.get('url')} ({item.get('use') or 'public link'})")
+        if rendered_links:
+            lines.append("Approved public links: " + "; ".join(rendered_links))
+    documents = collateral.get("available_documents") if isinstance(collateral.get("available_documents"), list) else []
+    if documents:
+        rendered_docs = []
+        for item in documents[:6]:
+            if isinstance(item, dict):
+                rendered_docs.append(f"{item.get('label')}: {item.get('status')}")
+        lines.append("Available collateral docs: " + "; ".join(rendered_docs))
+    if collateral.get("send_policy"):
+        lines.append("Collateral send policy: " + brief(collateral.get("send_policy") or "", 420))
+    orbit = payload.get("mu_kim_orbit") if isinstance(payload.get("mu_kim_orbit"), dict) else {}
+    if orbit:
+        lines.append("Modelo Mu/Kim/Orbit: " + brief(orbit.get("summary") or "", 520))
+    return brief("\n".join(lines), limit)
+
+
+def media_extension_for_type(content_type, url="", fallback=".bin"):
+    mime = (content_type or "").split(";", 1)[0].strip().lower()
+    guessed = mimetypes.guess_extension(mime) if mime else ""
+    if guessed:
+        return guessed
+    path_ext = pathlib.PurePosixPath(urllib.parse.urlparse(url or "").path).suffix
+    if path_ext and re.fullmatch(r"\.[A-Za-z0-9]{1,8}", path_ext):
+        return path_ext.lower()
+    return fallback
+
+
+def whatsapp_media_is_audio(content_type, url=""):
+    mime = (content_type or "").split(";", 1)[0].strip().lower()
+    if mime.startswith("audio/"):
+        return True
+    suffix = pathlib.PurePosixPath(urllib.parse.urlparse(url or "").path).suffix.lower()
+    return suffix in {".ogg", ".oga", ".mp3", ".mpeg", ".m4a", ".aac", ".amr", ".wav", ".webm", ".mp4"}
+
+
+def twilio_download_media(media_url):
+    if not str(media_url or "").startswith("http"):
+        raise RuntimeError("MediaUrl de Twilio invalido.")
+    headers = twilio_headers()
+    headers.pop("X-Kim-Twilio-Auth-Mode", None)
+    request = urllib.request.Request(media_url, headers=headers, method="GET")
+    with urllib.request.urlopen(request, timeout=90) as response:
+        data = response.read()
+        content_type = response.headers.get("Content-Type", "") or ""
+    if not data:
+        raise RuntimeError("Twilio media vacio.")
+    return data, content_type
+
+
+def whatsapp_media_paths(direction, thread_id, message_sid, index, content_type, media_url):
+    date_slug = dt.datetime.now(ZoneInfo(DEFAULT_SCHEDULER_TIMEZONE)).strftime("%Y-%m-%d")
+    ext = media_extension_for_type(content_type, media_url, fallback=".bin")
+    base = f"{crm_slug(thread_id)}-{crm_slug(message_sid or 'message')}-{index}{ext}"
+    return (
+        WHATSAPP_MEDIA_DIR / direction / date_slug / base,
+        RUNTIME_WHATSAPP_MEDIA_DIR / direction / date_slug / base,
+    )
+
+
+def process_whatsapp_inbound_media(event, thread_id):
+    media_urls = event.get("media_urls") if isinstance(event.get("media_urls"), list) else []
+    media_types = event.get("media_content_types") if isinstance(event.get("media_content_types"), list) else []
+    if not media_urls:
+        return {"items": [], "has_audio": False}
+    items = []
+    first_audio = None
+    for index, media_url in enumerate(media_urls):
+        content_type = media_types[index] if index < len(media_types) else ""
+        item = {"index": index, "url": media_url, "content_type": content_type, "is_audio": whatsapp_media_is_audio(content_type, media_url)}
+        try:
+            data, detected_type = twilio_download_media(media_url)
+            item["downloaded"] = True
+            item["bytes"] = len(data)
+            item["detected_content_type"] = detected_type
+            primary, runtime = whatsapp_media_paths("inbound", thread_id, event.get("message_sid", ""), index, detected_type or content_type, media_url)
+            item["stored_paths"] = write_bytes_file_both(primary, runtime, data)
+            if item["is_audio"] and first_audio is None:
+                transcription = openai_audio_transcribe(primary.name, data, detected_type or content_type)
+                item["audio_transcript"] = transcription.get("text", "")
+                item["transcription_model"] = transcription.get("model", "")
+                first_audio = item
+        except Exception as exc:
+            item["error"] = brief(str(exc), 700)
+            append_memory(
+                "whatsapp_media_processing_error",
+                {
+                    "thread_id": thread_id,
+                    "message_sid": event.get("message_sid", ""),
+                    "media_url": media_url,
+                    "content_type": content_type,
+                    "error": item["error"],
+                },
+            )
+        items.append(item)
+    return {
+        "items": items,
+        "has_audio": any(item.get("is_audio") for item in items),
+        "audio_transcript": (first_audio or {}).get("audio_transcript", ""),
+        "transcription_model": (first_audio or {}).get("transcription_model", ""),
+    }
+
+
+def whatsapp_public_audio_url(filename):
+    public_host = (load_keychain_secret("codex.kim.public_base_url", required=False) or "https://kim.aipeople.app").rstrip("/")
+    return f"{public_host}{WHATSAPP_PUBLIC_AUDIO_PATH_PREFIX}/{urllib.parse.quote(pathlib.Path(filename).name)}"
+
+
+def generate_whatsapp_reply_audio(text, session_id, voice=None):
+    speech = openai_audio_speech(text, voice=voice)
+    filename = f"{crm_slug(session_id or 'whatsapp-reply')}-{secrets.token_hex(3)}.mp3"
+    public_path = WHATSAPP_PUBLIC_AUDIO_DIR / filename
+    write_bytes_file(public_path, speech.get("data") or b"")
+    archive_path = WHATSAPP_MEDIA_DIR / "outbound" / dt.datetime.now(ZoneInfo(DEFAULT_SCHEDULER_TIMEZONE)).strftime("%Y-%m-%d") / filename
+    write_bytes_file(archive_path, speech.get("data") or b"")
+    return {
+        "url": whatsapp_public_audio_url(filename),
+        "public_path": str(public_path),
+        "archive_path": str(archive_path),
+        "model": speech.get("model"),
+        "voice": speech.get("voice"),
+        "content_type": speech.get("content_type"),
+    }
+
+
+def public_whatsapp_audio_candidates(path):
+    raw = urllib.parse.unquote(str(path or "").rsplit("/", 1)[-1])
+    if not raw or not re.fullmatch(r"[A-Za-z0-9_.-]+", raw):
+        return []
+    return [WHATSAPP_PUBLIC_AUDIO_DIR / raw]
+
+
+def doctor_public_availability_summary():
+    payload = read_json_file_any([DOCTOR_AVAILABILITY, RUNTIME_DOCTOR_AVAILABILITY], {})
+    if not isinstance(payload, dict) or not payload:
+        return (
+            "No tengo una agenda confirmada en tiempo real para afirmar si el doctor esta en reunion. "
+            "Puedo tomar el recado, marcarlo como prioritario y pedir horario de seguimiento."
+        )
+    status = normalize_security_text(payload.get("status") or payload.get("availability") or "")
+    busy_until = str(payload.get("busy_until") or payload.get("until") or "").strip()
+    if busy_until:
+        try:
+            parsed = dt.datetime.fromisoformat(busy_until.replace("Z", "+00:00"))
+            now = dt.datetime.now(parsed.tzinfo) if parsed.tzinfo else dt.datetime.now()
+            if parsed > now:
+                return "El doctor aparece ocupado por ahora. Puedo tomar el recado y dejarlo listo para seguimiento."
+        except ValueError:
+            pass
+    public_summary = str(payload.get("public_summary") or payload.get("summary") or "").strip()
+    if public_summary:
+        return brief(public_summary, 300)
+    if status in {"busy", "ocupado", "in_meeting", "meeting", "reunion"}:
+        return "El doctor aparece ocupado por ahora. Puedo tomar el recado sin compartir detalles de su agenda."
+    if status in {"available", "free", "disponible"}:
+        return "El doctor aparece disponible o sin bloqueo publico confirmado. Puedo tomar el mensaje y pedir seguimiento."
+    return (
+        "No tengo una lectura confiable de agenda en este momento. "
+        "Puedo tomar el recado y dejarlo priorizado para el doctor."
+    )
+
+
+def whatsapp_classify_intent(text):
+    normalized = normalize_security_text(text)
+    has_any = lambda words: any(word in normalized for word in words)
+    asks_availability = has_any(
+        [
+            "esta en reunion",
+            "estas en reunion",
+            "esta ocupado",
+            "estas ocupado",
+            "esta disponible",
+            "estas disponible",
+            "puede hablar",
+            "te puede llamar",
+            "agenda",
+            "calendario",
+        ]
+    )
+    asks_status = has_any(["estatus", "status", "seguimiento", "pendiente", "como va", "actualizacion", "update"])
+    leaves_message = has_any(["avisa", "dile", "informale", "recado", "mensaje para", "por favor dile"])
+    asks_action = has_any(
+        [
+            "agenda",
+            "agendar",
+            "llamame",
+            "llamar",
+            "manda",
+            "enviar",
+            "revisa",
+            "cambia",
+            "actualiza",
+            "crear",
+            "tarea",
+            "cotizacion",
+            "propuesta",
+            "urgente",
+            "follow up",
+            "follow-up",
+        ]
+    )
+    return {
+        "availability_request": asks_availability,
+        "status_request": asks_status,
+        "message_for_doctor": leaves_message,
+        "actionable": asks_action or asks_status or leaves_message,
+        "labels": [
+            label
+            for label, active in [
+                ("availability_request", asks_availability),
+                ("status_request", asks_status),
+                ("message_for_doctor", leaves_message),
+                ("actionable", asks_action),
+            ]
+            if active
+        ],
+    }
+
+
+def whatsapp_thread_contact_profile(phone, person=None, called=""):
+    normalized = twilio_lookup_phone_number(phone)
+    person = person or {}
+    caller_profile = twilio_inbound_caller_profile(normalized, called)
+    local_contact = crm_find_contact_by_phone(normalized) if normalized else {}
+    local_contact = local_contact or {}
+    display_name = (
+        str(person.get("name") or "").strip()
+        or local_contact.get("display_name")
+        or caller_profile.get("display_name")
+        or normalized
+        or "Contacto WhatsApp"
+    )
+    company = whatsapp_company_from_person(person) or caller_profile.get("company_summary") or ""
+    origin = whatsapp_contact_origin(person, local_contact, caller_profile)
+    company_scope = whatsapp_contact_company_scope(person, local_contact, caller_profile)
+    seller_mode = whatsapp_contact_seller_mode(person, local_contact, caller_profile)
+    knowledge_sources = whatsapp_contact_knowledge_sources(person, local_contact, caller_profile)
+    notes = []
+    if local_contact.get("notes"):
+        notes.append(local_contact.get("notes"))
+    if caller_profile.get("pending_summary"):
+        notes.append("Pendientes propios: " + caller_profile.get("pending_summary"))
+    return {
+        "phone": normalized,
+        "display_name": display_name,
+        "company": company,
+        "contact_id": local_contact.get("id", ""),
+        "contact_type": local_contact.get("contact_type") or (caller_profile.get("relationship_summary") or ""),
+        "pipedrive_person_id": str(person.get("id") or ""),
+        "pipedrive_person_name": str(person.get("name") or ""),
+        "known_contact": bool(person.get("id") or local_contact or caller_profile.get("known_contact")),
+        "is_doctor": bool(caller_profile.get("is_doctor")),
+        "contact_origin": origin,
+        "origin_summary": ", ".join(origin),
+        "seller_mode": seller_mode,
+        "company_scope": company_scope,
+        "company_scope_summary": ", ".join(company_scope),
+        "knowledge_sources": knowledge_sources,
+        "pending_summary": caller_profile.get("pending_summary") or "",
+        "knowledge_summary": caller_profile.get("knowledge_summary") or "",
+        "notes": compact_unique(notes, limit=6),
+    }
+
+
+def load_whatsapp_thread(phone, person=None, called=""):
+    thread_id = whatsapp_thread_id_for_phone(phone)
+    primary, runtime = whatsapp_thread_json_paths(thread_id)
+    thread = read_json_file_any([primary, runtime], {})
+    if not isinstance(thread, dict) or not thread:
+        thread = {
+            "thread_id": thread_id,
+            "channel": "whatsapp",
+            "created_at": now_iso(),
+            "updated_at": now_iso(),
+            "privacy_scope": "single_contact",
+            "status": "active",
+            "contact": {},
+            "summary": "",
+            "open_items": [],
+            "events": [],
+        }
+    contact = whatsapp_thread_contact_profile(phone, person=person, called=called)
+    current_contact = thread.get("contact") if isinstance(thread.get("contact"), dict) else {}
+    merged_contact = {**current_contact, **{key: value for key, value in contact.items() if value not in ("", None, [], {})}}
+    thread["contact"] = merged_contact
+    thread["updated_at"] = now_iso()
+    return thread
+
+
+def whatsapp_thread_markdown(thread):
+    contact = thread.get("contact") or {}
+    open_items = thread.get("open_items") or []
+    events = thread.get("events") or []
+    lines = [
+        f"# WhatsApp Thread - {contact.get('display_name') or thread.get('thread_id')}",
+        "",
+        f"- Thread ID: {thread.get('thread_id')}",
+        f"- Channel: {thread.get('channel') or 'whatsapp'}",
+        f"- Phone: {contact.get('phone') or ''}",
+        f"- Company: {contact.get('company') or ''}",
+        f"- CRM contact: {contact.get('contact_id') or ''}",
+        f"- Pipedrive person: {contact.get('pipedrive_person_id') or ''}",
+        f"- Known contact: {contact.get('known_contact')}",
+        f"- Origin: {contact.get('origin_summary') or ''}",
+        f"- Seller mode: {contact.get('seller_mode') or ''}",
+        f"- Company scope: {contact.get('company_scope_summary') or ''}",
+        f"- Knowledge sources: {', '.join(contact.get('knowledge_sources') or [])}",
+        f"- Privacy scope: {thread.get('privacy_scope') or 'single_contact'}",
+        f"- Updated: {thread.get('updated_at')}",
+        "",
+        "## Secretary Rule",
+        "",
+        "Kim may discuss only this contact's own follow-up, public service information, and non-sensitive availability. "
+        "Kim must not reveal third-party context, private agenda details, financial/private information, or the doctor's internal tasks.",
+        "",
+        "## Summary",
+        "",
+        thread.get("summary") or "No summary yet.",
+        "",
+        "## Open Items",
+        "",
+    ]
+    if open_items:
+        for item in open_items[-12:]:
+            lines.append(f"- [{item.get('status') or 'open'}] {item.get('title') or item.get('body_preview') or item.get('intent')}")
+    else:
+        lines.append("- No open items captured yet.")
+    lines.extend(["", "## Recent Events", ""])
+    for item in events[-40:]:
+        direction = item.get("direction") or ""
+        label = "Contact" if direction == "inbound" else "Kim"
+        if direction == "system":
+            label = "System"
+        lines.append(f"### {item.get('at') or ''} - {label}")
+        lines.append("")
+        if item.get("body"):
+            lines.append(item.get("body"))
+            lines.append("")
+        if item.get("reply"):
+            lines.append("Kim reply:")
+            lines.append("")
+            lines.append(item.get("reply"))
+            lines.append("")
+        if item.get("intent"):
+            lines.append(f"Intent: {', '.join(item.get('intent') or [])}")
+            lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def save_whatsapp_thread(thread):
+    thread = dict(thread or {})
+    events = thread.get("events") if isinstance(thread.get("events"), list) else []
+    thread["events"] = events[-220:]
+    thread["open_items"] = (thread.get("open_items") or [])[-80:]
+    thread["updated_at"] = now_iso()
+    thread_id = thread.get("thread_id") or whatsapp_thread_id_for_phone((thread.get("contact") or {}).get("phone"))
+    thread["thread_id"] = thread_id
+    primary_json, runtime_json = whatsapp_thread_json_paths(thread_id)
+    primary_md, runtime_md = whatsapp_thread_markdown_paths(thread_id)
+    written_json = write_json_file_both(primary_json, runtime_json, thread)
+    markdown = whatsapp_thread_markdown(thread)
+    written_md = write_text_file_both(primary_md, runtime_md, markdown)
+    index = read_json_file_any([WHATSAPP_THREAD_INDEX, RUNTIME_WHATSAPP_THREAD_INDEX], {"threads": []})
+    if not isinstance(index, dict):
+        index = {"threads": []}
+    threads = [item for item in index.get("threads", []) if item.get("thread_id") != thread_id]
+    contact = thread.get("contact") or {}
+    stats = whatsapp_thread_stats(thread)
+    threads.append(
+        {
+            "thread_id": thread_id,
+            "display_name": contact.get("display_name"),
+            "phone": contact.get("phone"),
+            "company": contact.get("company"),
+            "known_contact": contact.get("known_contact"),
+            "origin": contact.get("contact_origin") or [],
+            "origin_summary": contact.get("origin_summary") or "",
+            "pipedrive_person_id": contact.get("pipedrive_person_id"),
+            "seller_mode": contact.get("seller_mode") or "",
+            "company_scope": contact.get("company_scope") or [],
+            "knowledge_sources": contact.get("knowledge_sources") or [],
+            "latest_at": thread.get("updated_at"),
+            "open_items": len([item for item in thread.get("open_items") or [] if item.get("status") in ("open", "pending_review")]),
+            "markdown_path": str(primary_md),
+            "runtime_markdown_path": str(runtime_md),
+            **stats,
+        }
+    )
+    threads.sort(key=lambda item: item.get("latest_at") or "", reverse=True)
+    write_json_file_both(
+        WHATSAPP_THREAD_INDEX,
+        RUNTIME_WHATSAPP_THREAD_INDEX,
+        {
+            "updated_at": now_iso(),
+            "count": len(threads),
+            "purpose": "Indice de hilos conductores WhatsApp por persona/contacto.",
+            "rule": "Antes de responder por WhatsApp, Kim debe cargar el thread_id exacto y no mezclar terceros.",
+            "threads": threads[:500],
+        },
+    )
+    return {"json": written_json, "markdown": written_md, "thread": thread}
+
+
+def whatsapp_thread_recent_messages(thread, limit=6):
+    rows = []
+    for item in (thread.get("events") or [])[-limit:]:
+        direction = item.get("direction") or ""
+        speaker = "contact" if direction == "inbound" else "kim"
+        if direction == "system":
+            speaker = "system"
+        text = item.get("body") or item.get("reply") or ""
+        rows.append(
+            {
+                "at": item.get("at") or "",
+                "direction": direction or "unknown",
+                "speaker": speaker,
+                "text": brief(text, 280),
+                "status": item.get("status") or "",
+                "intent": item.get("intent") or [],
+            }
+        )
+    return rows
+
+
+def whatsapp_threads_report(limit=8, thread_id="", phone=""):
+    try:
+        limit = max(1, min(int(limit or 8), 50))
+    except (TypeError, ValueError):
+        limit = 8
+    index = read_json_file_any([WHATSAPP_THREAD_INDEX, RUNTIME_WHATSAPP_THREAD_INDEX], {"threads": []})
+    threads = index.get("threads", []) if isinstance(index, dict) else []
+    requested_thread_id = str(thread_id or "").strip()
+    requested_phone = twilio_lookup_phone_number(phone or "")
+    selected = []
+    for item in threads:
+        candidate_thread_id = str(item.get("thread_id") or "").strip()
+        candidate_phone = twilio_lookup_phone_number(item.get("phone") or "")
+        if requested_thread_id and candidate_thread_id != requested_thread_id:
+            continue
+        if requested_phone and candidate_phone != requested_phone:
+            continue
+        selected.append(item)
+    if not requested_thread_id and not requested_phone:
+        selected = threads[:limit]
+    rows = []
+    for meta in selected[:limit]:
+        candidate_thread_id = str(meta.get("thread_id") or "").strip()
+        primary_json, runtime_json = whatsapp_thread_json_paths(candidate_thread_id)
+        thread = newest_json_payload([primary_json, runtime_json])
+        if not isinstance(thread, dict):
+            thread = {}
+        contact = thread.get("contact") if isinstance(thread.get("contact"), dict) else {}
+        rows.append(
+            {
+                "thread_id": candidate_thread_id,
+                "display_name": contact.get("display_name") or meta.get("display_name") or "",
+                "phone": contact.get("phone") or meta.get("phone") or "",
+                "company": contact.get("company") or meta.get("company") or "",
+                "known_contact": bool(contact.get("known_contact") or meta.get("known_contact")),
+                "summary": thread.get("summary") or "",
+                "open_items": thread.get("open_items") or [],
+                "latest_at": thread.get("updated_at") or meta.get("latest_at") or "",
+                "recent_messages": whatsapp_thread_recent_messages(thread, limit=6),
+                "markdown_path": meta.get("markdown_path") or "",
+            }
+        )
+    return {
+        "ok": True,
+        "count": len(threads),
+        "returned": len(rows),
+        "purpose": "Reporte rapido de hilos conductores de WhatsApp por contacto.",
+        "filters": {
+            "thread_id": requested_thread_id,
+            "phone": requested_phone,
+            "limit": limit,
+        },
+        "threads": rows,
+    }
+
+
+def load_whatsapp_thread_index():
+    payload = read_json_file_any([WHATSAPP_THREAD_INDEX, RUNTIME_WHATSAPP_THREAD_INDEX], {"threads": []})
+    if not isinstance(payload, dict):
+        return {"threads": []}
+    if not isinstance(payload.get("threads"), list):
+        payload["threads"] = []
+    return payload
+
+
+def whatsapp_thread_matches_query(meta, query):
+    if not query:
+        return True
+    normalized = normalize_security_text(query)
+    if not normalized:
+        return True
+    fields = [
+        meta.get("thread_id"),
+        meta.get("display_name"),
+        meta.get("phone"),
+        meta.get("company"),
+        meta.get("pipedrive_person_id"),
+    ]
+    blob = " ".join(str(item or "") for item in fields)
+    return normalized in normalize_security_text(blob)
+
+
+def whatsapp_recent_inbound_events(thread, limit=3):
+    rows = []
+    for item in reversed(thread.get("events") or []):
+        if item.get("direction") != "inbound":
+            continue
+        body = str(item.get("body") or "").strip()
+        if not body:
+            continue
+        rows.append(
+            {
+                "at": item.get("at") or "",
+                "status": item.get("status") or "",
+                "body_preview": brief(body, 280),
+                "intent": item.get("intent") or [],
+                "external_sid": item.get("external_sid") or "",
+            }
+        )
+        if len(rows) >= limit:
+            break
+    rows.reverse()
+    return rows
+
+
+def twilio_whatsapp_report(parameters=None):
+    parameters = parameters or {}
+    limit = max(1, min(int(first_value(parameters, "limit", "page_size", default=10) or 10), 50))
+    event_limit = max(1, min(int(first_value(parameters, "event_limit", "events", default=3) or 3), 8))
+    query = str(first_value(parameters, "query", "q", "phone", "contact", "name", default="") or "").strip()
+    actionable_only = boolish(first_value(parameters, "actionable_only", "open_only", "pending_only", default=False))
+    index = load_whatsapp_thread_index()
+    rows = []
+    for meta in index.get("threads", []):
+        if not isinstance(meta, dict) or not whatsapp_thread_matches_query(meta, query):
+            continue
+        if actionable_only and int(meta.get("open_items") or 0) <= 0:
+            continue
+        thread_id = str(meta.get("thread_id") or "").strip()
+        primary, runtime = whatsapp_thread_json_paths(thread_id)
+        thread = read_json_file_any([primary, runtime], {})
+        if not isinstance(thread, dict):
+            thread = {}
+        contact = thread.get("contact") if isinstance(thread.get("contact"), dict) else {}
+        open_items = thread.get("open_items") if isinstance(thread.get("open_items"), list) else []
+        rows.append(
+            {
+                "thread_id": thread_id,
+                "display_name": contact.get("display_name") or meta.get("display_name") or "",
+                "phone": contact.get("phone") or meta.get("phone") or "",
+                "company": contact.get("company") or meta.get("company") or "",
+                "known_contact": bool(contact.get("known_contact") if contact else meta.get("known_contact")),
+                "pipedrive_person_id": contact.get("pipedrive_person_id") or meta.get("pipedrive_person_id") or "",
+                "latest_at": meta.get("latest_at") or thread.get("updated_at") or "",
+                "summary": thread.get("summary") or "",
+                "open_items_count": len([item for item in open_items if item.get("status") in ("open", "pending_review")]),
+                "open_items": [
+                    {
+                        "status": item.get("status") or "",
+                        "title": item.get("title") or item.get("body_preview") or "",
+                        "created_at": item.get("created_at") or "",
+                    }
+                    for item in open_items[-5:]
+                ],
+                "recent_inbound": whatsapp_recent_inbound_events(thread, limit=event_limit),
+            }
+        )
+        if len(rows) >= limit:
+            break
+    total_threads = len(index.get("threads", []))
+    actionable_threads = len([item for item in index.get("threads", []) if int((item or {}).get("open_items") or 0) > 0])
+    return {
+        "ok": True,
+        "provider": "twilio",
+        "action": "whatsapp_report",
+        "count": len(rows),
+        "total_threads": total_threads,
+        "actionable_threads": actionable_threads,
+        "query": query,
+        "actionable_only": actionable_only,
+        "threads": rows,
+        "message": (
+            f"Reporte local de WhatsApp generado desde BIFROST ({len(rows)} hilo(s) devueltos, {total_threads} total). "
+            "Se basa en hilos guardados localmente, no en listado historico directo de Twilio Conversations."
+        ),
+    }
+
+
+def whatsapp_recent_history_for_prompt(thread, limit=8):
+    rows = []
+    for item in (thread.get("events") or [])[-limit:]:
+        direction = item.get("direction") or ""
+        speaker = "Contacto" if direction == "inbound" else "Kim"
+        text = item.get("body") or item.get("reply") or ""
+        if text:
+            rows.append(f"{item.get('at') or ''} {speaker}: {brief(text, 260)}")
+    return "\n".join(rows) or "Sin historial conversacional previo en este hilo."
+
+
+def whatsapp_prepare_clickup_outbox(thread, event_entry, intent):
+    if not intent.get("actionable"):
+        return {}
+    contact = thread.get("contact") or {}
+    body = event_entry.get("body") or ""
+    title_prefix = "WhatsApp seguimiento"
+    if intent.get("availability_request"):
+        title_prefix = "WhatsApp agenda/disponibilidad"
+    elif intent.get("message_for_doctor"):
+        title_prefix = "WhatsApp recado para doctor"
+    title = brief(f"{title_prefix} - {contact.get('display_name') or contact.get('phone')}: {body}", 120)
+    description = (
+        f"Fuente: WhatsApp inbound\n"
+        f"Thread ID: {thread.get('thread_id')}\n"
+        f"Contacto: {contact.get('display_name') or ''}\n"
+        f"Telefono: {contact.get('phone') or ''}\n"
+        f"Empresa: {contact.get('company') or ''}\n"
+        f"Pipedrive person_id: {contact.get('pipedrive_person_id') or ''}\n"
+        f"MessageSid: {event_entry.get('external_sid') or ''}\n"
+        f"Intent: {', '.join(intent.get('labels') or [])}\n\n"
+        f"Mensaje:\n{body}\n\n"
+        "Siguiente paso sugerido: revisar desde Kim Live y sincronizar a ClickUp si corresponde."
+    )
+    try:
+        defaults = clickup_apply_operational_defaults(
+            {
+                "title": title,
+                "description": description,
+                "space_name": "Ai people",
+                "list_name": "Client Follow-up",
+                "contact_name": contact.get("display_name") or "",
+                "company": contact.get("company") or "",
+            }
+        )
+    except Exception as exc:
+        defaults = {"title": title, "description": description, "routing_error": brief(str(exc), 320)}
+    outbox = {
+        "id": "WA-CLK-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper(),
+        "at": now_iso(),
+        "status": "pending_review",
+        "provider": "clickup",
+        "action": "create_task",
+        "source": "whatsapp_thread",
+        "thread_id": thread.get("thread_id"),
+        "contact": contact,
+        "intent": intent,
+        "parameters": defaults,
+        "message": body,
+        "external_sid": event_entry.get("external_sid") or "",
+        "sync_policy": "review_in_kim_live_before_external_write",
+    }
+    append_jsonl_any([WHATSAPP_CLICKUP_OUTBOX, RUNTIME_WHATSAPP_CLICKUP_OUTBOX], outbox)
+    notify_kim_live(
+        "whatsapp_clickup_outbox",
+        "WhatsApp follow-up ready for ClickUp",
+        f"{contact.get('display_name') or contact.get('phone')}: {brief(body, 220)}",
+        severity="info",
+        metadata={"outbox_id": outbox["id"], "thread_id": thread.get("thread_id")},
+    )
+    return outbox
+
+
+def record_whatsapp_thread_event(event, person=None, direction="inbound", reply="", status="received", metadata=None):
+    event = dict(event or {})
+    sender = twilio_lookup_phone_number(event.get("from", ""))
+    called = twilio_lookup_phone_number(event.get("to", ""))
+    thread_phone = sender if direction == "inbound" else called
+    thread = load_whatsapp_thread(thread_phone, person=person, called=called)
+    media_urls = event.get("media_urls") if isinstance(event.get("media_urls"), list) else []
+    body = (event.get("body") or "").strip()
+    if not body and media_urls:
+        body = f"Mensaje de WhatsApp con {len(media_urls)} archivo(s) adjuntos."
+    if direction == "outbound":
+        body = ""
+    event_id = (
+        event.get("message_sid")
+        or event.get("send_sid")
+        or event.get("sid")
+        or f"{direction}-{dt.datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
+    )
+    existing_ids = {str(item.get("event_id") or "") for item in thread.get("events") or []}
+    if event_id in existing_ids:
+        thread["_last_event_saved"] = False
+        return thread
+    intent = whatsapp_classify_intent(body if direction == "inbound" else reply or body)
+    entry = {
+        "event_id": event_id,
+        "at": event.get("at") or now_iso(),
+        "direction": direction,
+        "status": status,
+        "external_sid": event.get("message_sid") or event.get("send_sid") or event.get("sid") or "",
+        "from": event.get("from", ""),
+        "to": event.get("to", ""),
+        "body": body,
+        "reply": reply,
+        "intent": intent.get("labels") or [],
+        "metadata": {**(metadata or {}), "media_urls": media_urls},
+    }
+    thread.setdefault("events", []).append(entry)
+    if body and direction == "inbound":
+        thread["summary"] = brief(f"Ultimo mensaje de {thread.get('contact', {}).get('display_name') or sender}: {body}", 520)
+        if intent.get("actionable"):
+            thread.setdefault("open_items", []).append(
+                {
+                    "id": "WA-OPEN-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3).upper(),
+                    "created_at": now_iso(),
+                    "status": "pending_review",
+                    "intent": ", ".join(intent.get("labels") or []),
+                    "title": brief(body, 120),
+                    "body_preview": brief(body, 400),
+                    "external_sid": entry.get("external_sid"),
+                }
+            )
+            outbox = whatsapp_prepare_clickup_outbox(thread, entry, intent)
+            if outbox:
+                entry["clickup_outbox_id"] = outbox.get("id")
+    elif reply and direction == "outbound":
+        thread["summary"] = brief(f"Kim respondio por WhatsApp: {reply}", 520)
+    save_whatsapp_thread(thread)
+    append_memory(
+        "whatsapp_thread_event",
+        {
+            "thread_id": thread.get("thread_id"),
+            "direction": direction,
+            "status": status,
+            "event_id": event_id,
+            "intent": intent.get("labels") or [],
+            "body_preview": brief(body or reply, 300),
+        },
+    )
+    thread["_last_event_saved"] = True
+    thread["_last_event"] = entry
+    return thread
+
+
+def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=None):
+    clean = (user_text or "").strip()
+    if not clean:
+        return "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado para seguimiento."
+    thread = thread or load_whatsapp_thread(sender, called=called)
+    contact = thread.get("contact") or {}
+    route = memory_router("classify_whatsapp", clean, session_id=session_id)
+    intent = whatsapp_classify_intent(clean)
+    availability = doctor_public_availability_summary()
+    seller_context = seller_context_pack_for_prompt()
+    seller_mode = contact.get("seller_mode") or ("threaded_contact" if contact.get("known_contact") else "seller_generalist")
+    seller_focus = (
+        "Este contacto ya tiene hilo conductor propio. Prioriza su historial, pendientes y knowledge especifico antes de usar el paquete seller general."
+        if seller_mode == "threaded_contact"
+        else "Este contacto no esta plenamente identificado. Entra en modo comercial generalista: primero AI People, luego Tesca Elements si aporta contexto, y usa la trayectoria del Dr. Yehoshua solo como respaldo breve. Tu objetivo inmediato es identificar nombre, empresa y necesidad."
+    )
+    if contact.get("is_doctor"):
+        secretary_mode = (
+            "Estas hablando por WhatsApp con el Dr Yehoshua. Puedes recibir instrucciones directas, "
+            "guardar contexto y preparar acciones. Si algo requiere API externa sensible, no digas que ya se ejecuto "
+            "salvo que exista resultado confirmado. Eres puente remoto hacia Kim Live: registra instrucciones, "
+            "recados, tareas y contexto; notifica Kim Live; y deja preparado el siguiente paso para ejecucion o revision."
+        )
+    else:
+        pending = contact.get("pending_summary") or "Sin pendientes propios sintetizados todavia."
+        secretary_mode = (
+            "Estas atendiendo WhatsApp como secretaria ejecutiva del Dr. Yehoshua. "
+            "Usa solo el hilo de esta persona y su contexto propio. Puedes recibir informacion, tomar recados, "
+            "dar seguimiento a tareas propias del contacto, explicar servicios generales de Ai People/Tesca/Ignis "
+            "sin revelar informacion privada, responder preguntas publicas sobre la trayectoria general del Dr. Yehoshua, "
+            "y responder disponibilidad publica de forma no sensible. "
+            "No compartas nombres de reuniones, terceros, inversionistas, clientes, agenda privada, datos financieros "
+            "ni pendientes generales del doctor. Si piden saber si el doctor esta en reunion, usa el resumen de "
+            "disponibilidad publica y ofrece tomar recado o pedir horario. Si el contacto no esta plenamente "
+            "identificado, pide nombre completo antes de compartir cualquier seguimiento. Si piden folletos, links o documentos, "
+            "ofrece enviarlos solo desde el collateral aprobado y no digas que ya los enviaste sin confirmacion tecnica.\n"
+            f"Contacto: {contact.get('display_name') or sender}; empresa={contact.get('company') or 'N/A'}; "
+            f"conocido={contact.get('known_contact')}; Pipedrive={contact.get('pipedrive_person_id') or 'N/A'}.\n"
+            f"Origen autorizado del hilo: {contact.get('origin_summary') or 'unknown'}.\n"
+            f"Modo comercial: {seller_mode}.\n"
+            f"Scope comercial permitido: {contact.get('company_scope_summary') or 'AI People, Tesca Elements, Dr. Yehoshua'}.\n"
+            f"Fuentes de conocimiento cargadas: {', '.join(contact.get('knowledge_sources') or ['seller_pack_public'])}.\n"
+            f"Politica secretaria/puente: {REMOTE_SECRETARY_BRIDGE_POLICY}\n"
+            f"Politica relacion/buen nombre: {INBOUND_RELATIONSHIP_GOODWILL_POLICY}\n"
+            f"Playbook ventas/RP a reunion: {WHATSAPP_SALES_PR_MEETING_PLAYBOOK}\n"
+            f"Regla de enfoque: {seller_focus}\n"
+            f"Pendientes propios conocidos: {pending}\n"
+            f"Disponibilidad publica del doctor: {availability}\n"
+            f"Knowledge especifico: {contact.get('knowledge_summary') or 'Sin knowledge especifico.'}\n"
+            f"Paquete seller autorizado:\n{seller_context}"
+        )
+    prompt = (
+        "Eres Kim Live respondiendo por WhatsApp. Responde en espanol mexicano, como una secretaria calida, "
+        "profesional, femenina y discretamente seductora en el ritmo verbal. Usa 1 a 4 frases. "
+        "Si preguntan por empresas, servicios, trayectoria o filosofia, da una respuesta breve con sustancia y ofrece link, folleto o cita. "
+        "Escribe para que pueda leerse en voz alta con naturalidad. No uses markdown. No prometas acciones externas ya ejecutadas "
+        "si solo dejaste una tarea o recado registrado.\n\n"
+        f"{secretary_mode}\n\n"
+        f"Thread ID: {thread.get('thread_id')}\n"
+        f"Session: {session_id}\n"
+        f"Ruta de memoria detectada: {route.get('route', {}).get('domain')}\n"
+        f"Intent detectado: {', '.join(intent.get('labels') or []) or 'general'}\n\n"
+        "Historial reciente del hilo:\n"
+        f"{whatsapp_recent_history_for_prompt(thread)}\n\n"
+        f"Mensaje entrante:\n{clean}"
+    )
+    try:
+        response, model = openai_response_with_fallback(
+            PHONE_REPLY_MODEL_CANDIDATES,
+            {"input": prompt, "max_output_tokens": 260},
+        )
+        reply = output_text_from_response(response)
+        if not reply:
+            raise RuntimeError("Respuesta vacia.")
+    except Exception as exc:
+        reply = (
+            "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado "
+            "para darle seguimiento con el doctor."
+        )
+        append_memory(
+            "whatsapp_reply_error",
+            {"session_id": session_id, "thread_id": thread.get("thread_id"), "error": brief(str(exc), 500)},
+        )
+    append_memory(
+        "whatsapp_reply_generated",
+        {
+            "session_id": session_id,
+            "thread_id": thread.get("thread_id"),
+            "contact": contact.get("display_name"),
+            "user_text": brief(clean, 400),
+            "reply": brief(reply, 500),
+        },
+    )
+    return brief(reply, 900)
+
+
+def twilio_whatsapp_async_reply(event, person):
+    event = dict(event or {})
+    person = dict(person or {})
+    sender = twilio_lookup_phone_number(event.get("from", ""))
+    called = twilio_lookup_phone_number(event.get("to", ""))
+    message_sid = event.get("message_sid", "")
+    session_id = "WA-" + (message_sid or dt.datetime.now().strftime("%Y%m%d%H%M%S"))
+    media_urls = event.get("media_urls") if isinstance(event.get("media_urls"), list) else []
+    body = (event.get("body") or "").strip()
+    if not body:
+        body = f"Mensaje de WhatsApp con {len(media_urls)} archivo(s) adjuntos." if media_urls else "Mensaje de WhatsApp sin texto."
+
+    def worker():
+        working_event = dict(event)
+        body_for_reply = body
+        media_processing = {}
+        if media_urls:
+            thread_id = whatsapp_thread_id_for_phone(sender)
+            media_processing = process_whatsapp_inbound_media(working_event, thread_id)
+            transcript = str(media_processing.get("audio_transcript") or "").strip()
+            if transcript:
+                body_for_reply = "Audio de WhatsApp transcrito: " + transcript
+                working_event["body"] = body_for_reply
+            elif media_processing.get("has_audio"):
+                body_for_reply = (
+                    "Mensaje de WhatsApp con audio adjunto. No se pudo transcribir automaticamente; "
+                    "pedir al contacto que lo envie de nuevo o que escriba el punto principal."
+                )
+                working_event["body"] = body_for_reply
+            working_event["media_processing"] = media_processing
+        thread = record_whatsapp_thread_event(
+            working_event,
+            person=person,
+            direction="inbound",
+            status="received",
+            metadata={"media_processing": media_processing} if media_processing else {},
+        )
+        try:
+            reply = kim_whatsapp_reply(body_for_reply, sender=sender, called=called, session_id=session_id, thread=thread)
+        except Exception as exc:
+            reply = (
+                "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado "
+                "para darle seguimiento."
+            )
+            append_memory(
+                "twilio_whatsapp_async_reply_error",
+                {"from": sender, "message_sid": message_sid, "error": brief(str(exc), 500)},
+            )
+        reply_audio = {}
+        if media_processing.get("audio_transcript"):
+            try:
+                reply_audio = generate_whatsapp_reply_audio(reply, session_id)
+            except Exception as exc:
+                reply_audio = {"error": brief(str(exc), 700)}
+                append_memory(
+                    "whatsapp_reply_audio_error",
+                    {"from": sender, "message_sid": message_sid, "session_id": session_id, "error": reply_audio["error"]},
+                )
+        outbound_event = {
+            "at": now_iso(),
+            "provider": "twilio",
+            "kind": "async_auto_reply",
+            "channel": "whatsapp",
+            "from": event.get("to", ""),
+            "to": event.get("from", ""),
+            "body": reply,
+            "in_reply_to": message_sid,
+            "pipedrive_person_id": person.get("id"),
+            "pipedrive_person_name": person.get("name"),
+            "reply_audio": reply_audio,
+            "inbound_media_processing": media_processing,
+        }
+        try:
+            send_parameters = {
+                "to": sender,
+                "body": reply,
+                "contact_name": person.get("name", "") or thread.get("contact", {}).get("display_name") or sender,
+                "pipedrive_person_id": person.get("id", ""),
+                "relationship": "whatsapp conversation",
+                "company": person.get("organization", ""),
+                "objective": f"Responder WhatsApp inbound {message_sid}",
+                "context_id": session_id,
+                "allow_unknown_contact": True,
+                "allow_unknown_reason": "WhatsApp inbound reply inside user-initiated conversation window.",
+            }
+            if reply_audio.get("url"):
+                send_parameters["media_url"] = reply_audio["url"]
+            send_result = twilio_send_message(
+                send_parameters,
+                confirm=True,
+                channel="whatsapp",
+            )
+            outbound_event["send_sid"] = send_result.get("sid", "")
+            outbound_event["send_status"] = send_result.get("status", "")
+            outbound_event["send_error_code"] = send_result.get("error_code")
+            outbound_event["send_error_message"] = send_result.get("error_message")
+        except Exception as exc:
+            outbound_event["send_error"] = brief(str(exc), 800)
+            notify_kim_live(
+                "twilio_whatsapp_async_reply_failed",
+                "WhatsApp async reply failed",
+                f"No pude responder WhatsApp a {sender}: {brief(str(exc), 240)}",
+                severity="error",
+                metadata=outbound_event,
+            )
+        record_whatsapp_thread_event(
+            {
+                "at": outbound_event.get("at"),
+                "from": outbound_event.get("from"),
+                "to": outbound_event.get("to"),
+                "body": reply,
+                "send_sid": outbound_event.get("send_sid") or outbound_event.get("in_reply_to"),
+            },
+            person=person,
+            direction="outbound",
+            reply=reply,
+            status=outbound_event.get("send_status", "async_auto_reply"),
+            metadata=outbound_event,
+        )
+        append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], outbound_event)
+        append_memory("twilio_whatsapp_async_auto_reply", outbound_event)
+        crm_record_interaction(
+            "whatsapp",
+            "outbound",
+            from_value=outbound_event.get("from", ""),
+            to_value=outbound_event.get("to", ""),
+            status=outbound_event.get("send_status", "async_auto_reply"),
+            body=reply,
+            external_sid=outbound_event.get("send_sid") or message_sid,
+            metadata=outbound_event,
+            contact_hint={
+                "display_name": person.get("name", ""),
+                "company": person.get("organization", ""),
+                "notes": f"Pipedrive person_id={person.get('id')}.",
+            },
+        )
+
+    threading.Thread(target=worker, name=f"kim-whatsapp-reply-{message_sid or secrets.token_hex(3)}", daemon=True).start()
+    append_memory(
+        "twilio_whatsapp_async_reply_started",
+        {
+            "from": sender,
+            "to": called,
+            "message_sid": message_sid,
+            "session_id": session_id,
+            "body_preview": brief(body, 400),
+            "media_count": len(media_urls),
+        },
+    )
+    return True
+
+
+def twilio_whatsapp_auto_reply(params, event):
+    sender = twilio_lookup_phone_number(event.get("from", ""))
+    guard = pipedrive_registered_person_for_phone_fast(sender)
+    if not guard.get("registered"):
+        notify_kim_live(
+            "twilio_whatsapp_unknown_inbound",
+            "WhatsApp inbound from new contact",
+            f"{sender} escribio por WhatsApp y Kim respondera en modo publico/comercial aunque no este en Pipedrive.",
+            severity="info",
+            metadata={
+                "from": sender,
+                "to": twilio_lookup_phone_number(event.get("to", "")),
+                "message_sid": event.get("message_sid", ""),
+                "reason": guard.get("reason"),
+                "candidates": [
+                    {"id": item.get("id"), "name": item.get("name"), "phone": item.get("phone")}
+                    for item in (guard.get("candidates") or [])[:5]
+                ],
+            },
+        )
+        append_memory(
+            "twilio_whatsapp_inbound_unknown_contact_allowed",
+            {
+                "from": sender,
+                "message_sid": event.get("message_sid", ""),
+                "body_preview": brief(event.get("body", ""), 400),
+                "reason": guard.get("reason"),
+                "message": guard.get("message"),
+                "policy": "WhatsApp inbound may be answered using public seller pack and isolated thread memory.",
+            },
+        )
+        twilio_whatsapp_async_reply(event, {})
+        return ""
+    twilio_whatsapp_async_reply(event, guard.get("person") or {})
+    return ""
+
+
+def kim_sms_reply(user_text, sender="", called="", session_id=""):
+    clean = (user_text or "").strip()
+    profile = twilio_inbound_caller_profile(sender, called)
+    intent = whatsapp_classify_intent(clean)
+    route = memory_router("classify_sms", clean, session_id=session_id)
+    seller_context = seller_context_pack_for_prompt(limit=3400)
+    if profile.get("is_doctor"):
+        mode = (
+            "Estas respondiendo SMS al Dr Yehoshua. Este SMS debe funcionar como canal remoto de emergencia hacia Kim Live. "
+            "Recibe instrucciones, recados, tareas y contexto; deja registro en memoria; notifica Kim Live; y si algo requiere "
+            "ejecucion por API o scheduler, indica que queda preparado/registrado, no que ya se ejecuto salvo confirmacion real."
+        )
+        fallback = "Recibido, doctor. Lo dejo registrado en Kim Live para seguimiento."
+    else:
+        mode = (
+            "Estas respondiendo SMS como Kim, secretaria ejecutiva del Dr Yehoshua. Usa solo el hilo propio de este numero. "
+            "Puedes tomar recados, preguntar disponibilidad publica sin revelar agenda privada, orientar clientes, desarrollar "
+            "relacion comercial, explicar ofertas y servicios generales de AI People, Tesca Elements e Ignis, y proponer una cita. "
+            "Si no conoces a la persona, pide nombre, empresa y necesidad antes de hablar de seguimientos. No reveles datos privados."
+        )
+        fallback = "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje; dime tu nombre, empresa y como puedo ayudarte."
+    prompt = (
+        "Eres Kim respondiendo por SMS. Responde en espanol mexicano, breve, claro y profesional. "
+        "Maximo 2 frases. No uses markdown. No prometas acciones externas no confirmadas.\n\n"
+        f"{mode}\n\n"
+        f"Politica secretaria/puente: {REMOTE_SECRETARY_BRIDGE_POLICY}\n\n"
+        f"Politica relacion/buen nombre: {INBOUND_RELATIONSHIP_GOODWILL_POLICY}\n\n"
+        f"Playbook ventas/RP a reunion: {WHATSAPP_SALES_PR_MEETING_PLAYBOOK}\n\n"
+        f"Perfil: {profile.get('display_name')} | conocido={profile.get('known_contact')} | doctor={profile.get('is_doctor')} "
+        f"| empresa={profile.get('company_summary') or 'N/A'} | relacion={profile.get('relationship_summary') or 'N/A'}\n"
+        f"Pendientes propios: {profile.get('pending_summary') or 'Sin pendientes sintetizados.'}\n"
+        f"Disponibilidad publica: {doctor_public_availability_summary()}\n"
+        f"Ruta de memoria detectada: {route.get('route', {}).get('domain')}\n"
+        f"Intent: {', '.join(intent.get('labels') or []) or 'general'}\n"
+        f"Paquete seller publico:\n{seller_context}\n\n"
+        f"SMS entrante:\n{clean or '(sin texto)'}"
+    )
+    try:
+        response, _model = openai_response_with_fallback(
+            PHONE_REPLY_MODEL_CANDIDATES,
+            {"input": prompt, "max_output_tokens": 140},
+        )
+        reply = output_text_from_response(response) or fallback
+    except Exception as exc:
+        reply = fallback
+        append_memory("sms_reply_error", {"session_id": session_id, "from": sender, "error": brief(str(exc), 500)})
+    reply = brief(reply, 500)
+    append_memory(
+        "sms_reply_generated",
+        {
+            "session_id": session_id,
+            "from": sender,
+            "to": called,
+            "is_doctor": profile.get("is_doctor"),
+            "known_contact": profile.get("known_contact"),
+            "intent": intent.get("labels") or [],
+            "body_preview": brief(clean, 300),
+            "reply": reply,
+        },
+    )
+    notify_kim_live(
+        "sms_inbound",
+        "SMS inbound handled by Kim",
+        f"{profile.get('display_name') or sender}: {brief(clean, 180)}",
+        severity="info",
+        metadata={
+            "session_id": session_id,
+            "from": sender,
+            "to": called,
+            "is_doctor": profile.get("is_doctor"),
+            "known_contact": profile.get("known_contact"),
+            "reply": reply,
+        },
+    )
+    return reply
+
+
 def twilio_sms_twiml(params):
+    channel = twilio_inbound_message_channel(params)
     event = {
         "at": now_iso(),
         "provider": "twilio",
-        "kind": "inbound_sms",
+        "kind": f"inbound_{channel}",
+        "channel": channel,
         "message_sid": params.get("MessageSid", "") or params.get("SmsSid", ""),
         "from": params.get("From", ""),
         "to": params.get("To", ""),
         "body": params.get("Body", ""),
         "num_media": params.get("NumMedia", ""),
     }
+    try:
+        media_count = int(event.get("num_media") or 0)
+    except (TypeError, ValueError):
+        media_count = 0
+    event["media_urls"] = [
+        params.get(f"MediaUrl{index}", "")
+        for index in range(media_count)
+        if params.get(f"MediaUrl{index}", "")
+    ]
+    event["media_content_types"] = [
+        params.get(f"MediaContentType{index}", "")
+        for index in range(media_count)
+        if params.get(f"MediaContentType{index}", "")
+    ]
     append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
-    append_memory("twilio_inbound_sms", event)
+    append_memory(f"twilio_inbound_{channel}", event)
     crm_record_interaction(
-        "sms",
+        channel,
         "inbound",
         from_value=event.get("from", ""),
         to_value=event.get("to", ""),
@@ -9591,7 +14402,38 @@ def twilio_sms_twiml(params):
         external_sid=event.get("message_sid", ""),
         metadata=event,
     )
-    return twiml_response("")
+    if channel == "whatsapp":
+        return twilio_message_response_twiml(twilio_whatsapp_auto_reply(params, event))
+    session_id = "SMS-" + (event.get("message_sid") or dt.datetime.now().strftime("%Y%m%d%H%M%S"))
+    reply = kim_sms_reply(
+        event.get("body", ""),
+        sender=event.get("from", ""),
+        called=event.get("to", ""),
+        session_id=session_id,
+    )
+    outbound_event = {
+        "at": now_iso(),
+        "provider": "twilio",
+        "kind": "inbound_sms_twiml_reply",
+        "channel": "sms",
+        "from": event.get("to", ""),
+        "to": event.get("from", ""),
+        "body": reply,
+        "in_reply_to": event.get("message_sid", ""),
+        "session_id": session_id,
+    }
+    append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], outbound_event)
+    crm_record_interaction(
+        "sms",
+        "outbound",
+        from_value=outbound_event.get("from", ""),
+        to_value=outbound_event.get("to", ""),
+        status="twiml_reply",
+        body=reply,
+        external_sid=event.get("message_sid", ""),
+        metadata=outbound_event,
+    )
+    return twilio_message_response_twiml(reply)
 
 
 def realtime_session_config():
@@ -9602,6 +14444,7 @@ def realtime_session_config():
             "model": REALTIME_MODEL,
             "instructions": (
                 "Eres Kim, asistente personal de Dr Yehoshua. "
+        f"{active_voice_style()} "
                 "Habla siempre en femenino, en espanol mexicano, con tono calido, directo y util. "
                 "Responde breve en conversacion viva. Si el doctor te dicta una "
                 "tarea, confirma la accion y sugiere guardarla o ejecutarla desde Kim Live. "
@@ -9622,12 +14465,12 @@ def realtime_session_config():
                 "una imagen o datos. Para mercado o grafica activa, usa kim_market_snapshot con EMAs "
                 "personalizadas cuando el doctor las pida, incluyendo EMA34 por temporalidad, y analiza "
                 "con esos datos cuantitativos; si hace falta lectura visual de velas, pide captura. "
-                "Para ClickUp, Notion, Pipedrive o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
+                "Para ClickUp, Notion, Pipedrive, portafolio o correo, usa kim_api_bridge. Si dudas del formato, llama action=templates; "
                 "para probar plantillas sin escribir ni enviar, llama action=self_test. "
                 "y usa el template exacto. Para ClickUp no le pidas IDs al doctor: pasa el texto, nombre, descripcion, "
                 "cliente o dominio, y el bridge usara el catalogo operativo para elegir team/space/list. "
                 "Si el doctor te pide actuar de forma directa, puedes usar provider=all con action send_email, "
-                "create_task, update_task, comment_task, create_page, mark_spam, move_to_trash o archive_email; "
+                "create_task, update_task, comment_task, create_page, send_portfolio_report, mark_spam, move_to_trash o archive_email; "
                 "el servidor enruta a la API correcta. "
                 "No digas que falta subject/title/list_id/parent_id sin haber llamado la herramienta: el bridge genera "
                 "subjects/titles, enruta ClickUp y guarda Notion outbox local si falta parent. "
@@ -9648,12 +14491,35 @@ def realtime_session_config():
                 "selected_mailbox en las siguientes acciones. "
                 "Para correo basura, primero identifica el UID con list_messages/search_messages y prepara mark_spam "
                 "o move_to_trash; no borres permanentemente. "
+                "Para Zoom usa provider zoom: status, auth_url, list_users, list_meetings o create_meeting. "
+                "Si el prospecto quiere reunion con el Dr. Yehoshua, primero captura nombre, empresa, correo, zona horaria, objetivo y dos horarios posibles; "
+                "si ya hay horario claro, prepara provider=zoom action=create_meeting con topic/start_at/duration/timezone/agenda y confirm=false. "
+                "No digas que hay liga Zoom hasta que Zoom devuelva join_url. Si Zoom no esta autorizado, pide abrir /oauth/zoom/start. "
                 "Para llamadas, SMS y WhatsApp usa provider twilio: status, list_numbers, send_sms, send_whatsapp, "
-                "call_phone, call_report, latest_call, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
-                "y requieren confirmacion explicita antes de ejecutar. Si llamas a una tercera persona, no basta con to: "
-                "primero usa kim_memory_search con el nombre/telefono para consultar person_contexts, context blocks y transcripts; "
+                "call_phone, call_report, latest_call, whatsapp_report, schedule_call o schedule_sms. SMS/WhatsApp/llamadas siempre se preparan con confirm=false "
+                "y requieren confirmacion explicita antes de ejecutar, excepto send_whatsapp_report del portafolio Sr. Eli al WhatsApp Dubai del doctor. Regla dura: SMS, llamadas y WhatsApp proactivo solo pueden enviarse a personas registradas "
+                "en Pipedrive con telefono exacto; si no existe la persona, primero prepara provider=pipedrive action=upsert_person y no envies el mensaje. "
+                "Excepcion: si una persona escribe primero por WhatsApp, Kim puede responder aunque no este en CRM/Pipedrive, usando solo el paquete publico seller y el hilo aislado de ese numero; debe pedir nombre/empresa y no revelar seguimiento privado hasta identificarla. "
+                "Si el doctor pide saber quien escribio por WhatsApp o que mensajes entraron, usa action=whatsapp_report; "
+                "ese reporte sale de hilos guardados en BIFROST, no de un inbox remoto de Twilio. "
+                "No uses allow_unknown_contact para saltarte mensajes proactivos; solo es valido para responder un WhatsApp inbound iniciado por el usuario. Si el doctor dice que revises como lo mando por WhatsApp, "
+                "primero usa kim_memory_search sobre whatsapp_threads, person_contexts o transcripts para recuperar el formato y las correcciones recientes "
+                "antes de contestar. Si el destino es el propio doctor y ya existe un hilo doctor_control/is_doctor o un person_context con ese numero, "
+                "no pidas registrarlo otra vez, no digas que falta CRM/Pipedrive y no pidas PIN/frase salvo que una confirmacion real devuelva "
+                "requires_security_phrase. Si el doctor pide el portafolio en 11 mensajes, devuelve o prepara una linea por orden y no lo mezcles "
+                "en un solo bloque narrativo. Si llamas a una tercera persona, no basta con to: "
+                "primero usa kim_person_context o kim_api_bridge provider=crm action=person_context con el nombre/telefono para consultar person_contexts, context blocks y transcripts; "
                 "despues debes pasar contact_name, relationship, call_context, objective, questions/report_to_doctor y cualquier mensaje "
                 "que el doctor quiera transmitir; ese contexto se inyecta al prompt telefonico. "
+                "Si el doctor dice 'modo Naomi', 'modo Ilian' o 'abre el modo de X', llama kim_person_context con query=X, "
+                "carga active_person como unico hilo aislado y responde 'Modo X cargado' con pendientes, ultimas interacciones y ruta de memoria. "
+                "Ese modo es para supervision o simulacion; no mezcles contexto de terceros ni uses candidate_summaries como memoria activa. "
+                "Si el doctor pregunta cuantas personas escribieron por WhatsApp, que mensajes hay o quiere revisar un hilo puntual, "
+                "llama kim_whatsapp_threads antes de responder para contar contactos y leer snippets reales del hilo. "
+                "Si el doctor dice 'haz esto a tal hora', 'recuérdame', 'manda este mensaje mañana' o algo equivalente, "
+                "usa kim_api_bridge con provider=all action=schedule_action y target_provider/target_action/target_parameters. "
+                "Ese scheduler vive dentro de Kim Live y no depende de Codex; acepta horarios como 'mañana a las 9', "
+                "'hoy 5:30 pm', 'lunes a las 8' o 'en 2 horas'. "
                 "Si el doctor pregunta que paso en una llamada o pide resumen/transcripcion, llama provider=twilio action=latest_call "
                 "o action=call_report con phone/call_sid/context_id antes de responder; estos reportes incluyen llamadas no contestadas, busy, failed o sin audio. "
                 "Si sospechas que faltan intentos viejos, usa provider=twilio action=sync_call_attempts con since/limit; esa accion no llama a nadie. "
@@ -9668,11 +14534,16 @@ def realtime_session_config():
                 "solo lectura: status, profile, list_messages o get_message. Si falta autorizacion OAuth, "
                 "entrega el link de autorizacion y no inventes correos. "
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Si el doctor pide "
-                "el portafolio del Sr. Eli o pregunta cuales ordenes ya entraron, primero llama "
+                "'enviame el portafolio actualizado', 'manda el portafolio' o algo equivalente, llama "
+                "kim_portfolio_record con action=send_whatsapp_report; por defecto lo envia al WhatsApp Dubai del doctor "
+                "sin PIN ni confirmacion. Si solo pregunta por el portafolio o cuales ordenes ya entraron, llama "
                 "kim_portfolio_record con action=client_report. El formato por defecto es monto invertido, "
                 "precio de entrada, precio actual validado y variacion porcentual. No menciones unidades "
                 "salvo que el doctor las pida. Para ordenes pendientes de compra, indica si el precio actual "
-                "ya toco la entrada o sigue por encima. Guarda consultas "
+                "ya toco la entrada o sigue por encima; su distancia vs entrada no es P/L ni ganancia. Si el doctor pide reporte fundamental, catalizadores, "
+                "oportunidades o vision macro del Sr. Eli, llama kim_portfolio_record con action=fundamental_report; "
+                "ese reporte no envia WhatsApp por defecto y debe incluir fuentes validadas, catalizadores internacionales, "
+                "narrativas cripto populares, oportunidades, riesgos e invalidaciones. No inventes catalizadores sin fuente reciente. Guarda consultas "
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
                 "Para cancelar o sustituir una orden pendiente, usa replace_draft_order o cancel_transaction; "
@@ -9680,7 +14551,9 @@ def realtime_session_config():
                 "Para preguntas de memoria o contexto, primero usa kim_memory_search para consultar transcripts "
                 "literales y cita snippets/rutas como fuente primaria; los resumenes son derivados. Usa "
                 "kim_memory_router solo para decidir dominio cuando no sepas si va a portafolio, tareas, CRM, "
-                "voz remota o memoria general. No intentes cargar todo BIFROST. "
+                "voz remota o memoria general. No intentes cargar todo BIFROST. Si el doctor pregunta por la "
+                "version de Kim Live, usa la version viva del backend incluida en el contexto; si ves notas "
+                "historicas como 1.5.43 o 1.5.45, aclara que son hitos viejos y no el estado actual. "
                 "Para seguimiento comercial en Pipedrive, usa provider=pipedrive: search_persons/list_persons antes de decir que no existe un contacto; "
                 "upsert_person, create_deal, create_activity y create_note requieren confirm=false y luego confirm_prepared. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
@@ -9723,7 +14596,7 @@ def realtime_session_config():
                     "type": "function",
                     "name": "kim_api_bridge",
                     "description": (
-                        "Lee o modifica ClickUp/Notion/Pipedrive, lee Gmail, maneja correo Hostinger, CRM local, prepara Twilio llamadas/SMS/WhatsApp y consulta reportes/transcripciones de llamadas desde Kim Live. Las operaciones de escritura "
+                        "Lee o modifica ClickUp/Notion/Pipedrive, lee Gmail, maneja correo Hostinger, CRM local, Zoom, portafolio Ignis, prepara Twilio llamadas/SMS/WhatsApp y consulta reportes/transcripciones de llamadas desde Kim Live. Las operaciones de escritura "
                         "requieren confirmacion explicita del doctor y confirm=true."
                     ),
                     "parameters": {
@@ -9731,7 +14604,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, pipedrive, gmail, hostinger_mail, twilio, crm o all.",
+                                "description": "Proveedor: clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, twilio, scheduler, crm o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -9744,8 +14617,11 @@ def realtime_session_config():
                                     "profile, list_messages, get_message. Hostinger Mail: status, list_mailboxes, "
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
+                                    "Zoom: status, auth_url, list_users, list_meetings, create_meeting. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
-                                    "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, sync_call_attempts, schedule_call, schedule_sms. "
+                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report. "
+                                    "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
+                                    "Scheduler: schedule_action, list_schedules, cancel_schedule. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
                                 ),
                             },
@@ -9792,13 +14668,13 @@ def realtime_session_config():
                 {
                     "type": "function",
                     "name": "kim_portfolio_record",
-                    "description": "Registra o consulta el portafolio Sr. Eli 2026 en BIFROST local.",
+                    "description": "Registra, consulta o envia por WhatsApp el portafolio Sr. Eli 2026 en BIFROST local.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "description": "status, summary, client_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
+                                "description": "status, summary, client_report, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -9808,7 +14684,10 @@ def realtime_session_config():
                                     "add_transaction requiere symbol y side. cancel_transaction acepta transaction_id o symbol. "
                                     "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount. "
                                     "client_report acepta include_units=true si el doctor las pide; por defecto devuelve "
-                                    "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes."
+                                    "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes. "
+                                    "fundamental_report genera analisis con fuentes, catalizadores internacionales, narrativas cripto populares, oportunidades y riesgos, sin enviar mensajes por defecto. "
+                                    "send_whatsapp_report calcula y manda lineas separadas al WhatsApp Dubai del doctor por defecto; "
+                                    "para probar sin enviar usa dry_run=true."
                                 ),
                             },
                         },
@@ -9856,6 +14735,47 @@ def realtime_session_config():
                         },
                     },
                 },
+                {
+                    "type": "function",
+                    "name": "kim_person_context",
+                    "description": "Carga el hilo aislado de una persona desde BIFROST/CRM para modo Naomi/Ilian, supervision de llamadas, pendientes y transcripts.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Nombre, alias, telefono o empresa de la persona. Ejemplos: Naomi, Nomi, Ilian.",
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Numero maximo de personas candidatas. Usa 1 salvo que el doctor pida comparar candidatos.",
+                            },
+                        },
+                        "required": ["query"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_whatsapp_threads",
+                    "description": "Lista hilos conductores de WhatsApp y devuelve snippets reales de mensajes recientes por contacto.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "limit": {
+                                "type": "integer",
+                                "description": "Numero maximo de hilos a devolver.",
+                            },
+                            "thread_id": {
+                                "type": "string",
+                                "description": "Opcional: thread_id exacto como wa-52155....",
+                            },
+                            "phone": {
+                                "type": "string",
+                                "description": "Opcional: telefono para ubicar el hilo exacto.",
+                            },
+                        },
+                    },
+                },
             ],
             "tool_choice": "auto",
             "audio": {
@@ -9875,7 +14795,7 @@ def realtime_session_config():
                     },
                 },
                 "output": {
-                    "voice": REALTIME_VOICE,
+                    "voice": active_realtime_voice(),
                 },
             },
         },
@@ -10045,6 +14965,128 @@ def provider_price(name, price, fetched_at=None, updated_at=None, stale_after=MA
     }
 
 
+def crypto_base_symbols(symbols):
+    clean = []
+    seen = set()
+    for symbol in symbols or []:
+        _, _, base, _ = normalize_crypto_ticker(str(symbol or ""))
+        if base and base not in seen:
+            clean.append(base)
+            seen.add(base)
+    return clean
+
+
+def market_batch_cache_is_fresh(cache, key):
+    if cache.get("key") != key:
+        return False
+    loaded_at = float(cache.get("loaded_at") or 0)
+    return loaded_at > 0 and (time.time() - loaded_at) <= MARKET_PRICE_BATCH_CACHE_TTL_SECONDS
+
+
+def fetch_coingecko_prices_batch(bases):
+    clean_bases = [str(base or "").strip().upper() for base in bases or [] if str(base or "").strip()]
+    id_pairs = [(base, COINGECKO_IDS_BY_SYMBOL.get(base)) for base in clean_bases]
+    id_pairs = [(base, coin_id) for base, coin_id in id_pairs if coin_id]
+    if not id_pairs:
+        return {}
+    cache_key = ",".join(sorted({coin_id for _, coin_id in id_pairs}))
+    if market_batch_cache_is_fresh(COINGECKO_BATCH_PRICE_CACHE, cache_key):
+        return dict(COINGECKO_BATCH_PRICE_CACHE.get("items") or {})
+    payload = api_json_request(
+        "https://api.coingecko.com",
+        "/api/v3/simple/price",
+        {},
+        params={
+            "ids": ",".join(dict.fromkeys(coin_id for _, coin_id in id_pairs)),
+            "vs_currencies": "usd",
+            "include_last_updated_at": "true",
+            "precision": "full",
+        },
+        timeout=20,
+    )
+    items = {}
+    for base, coin_id in id_pairs:
+        item = payload.get(coin_id) or {}
+        price = item.get("usd")
+        if price is None:
+            continue
+        items[base] = provider_price(
+            "coingecko",
+            price,
+            updated_at=item.get("last_updated_at"),
+            stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
+            extra={"coin_id": coin_id, "symbol": base},
+        )
+    COINGECKO_BATCH_PRICE_CACHE.update({"key": cache_key, "loaded_at": time.time(), "items": dict(items)})
+    return items
+
+
+def fetch_coinmarketcap_prices_batch(bases):
+    clean_bases = [str(base or "").strip().upper() for base in bases or [] if str(base or "").strip()]
+    clean_bases = list(dict.fromkeys(clean_bases))
+    if not clean_bases:
+        return {}
+    api_key = load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False)
+    if not api_key:
+        raise RuntimeError("Falta API key de CoinMarketCap en Keychain.")
+    cache_key = ",".join(sorted(clean_bases))
+    if market_batch_cache_is_fresh(COINMARKETCAP_BATCH_PRICE_CACHE, cache_key):
+        return dict(COINMARKETCAP_BATCH_PRICE_CACHE.get("items") or {})
+    payload = api_json_request(
+        "https://pro-api.coinmarketcap.com",
+        "/v3/cryptocurrency/quotes/latest",
+        {"X-CMC_PRO_API_KEY": api_key},
+        params={"symbol": ",".join(clean_bases), "convert": "USD"},
+        timeout=20,
+    )
+    data = payload.get("data") or {}
+    rows_by_symbol = {}
+    if isinstance(data, list):
+        for row in data:
+            rows_by_symbol.setdefault(str(row.get("symbol") or "").upper(), row)
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            symbol = str(key or "").upper()
+            row = value[0] if isinstance(value, list) and value else value if isinstance(value, dict) else {}
+            if isinstance(row, dict):
+                rows_by_symbol.setdefault(str(row.get("symbol") or symbol).upper(), row)
+    items = {}
+    for base in clean_bases:
+        row = rows_by_symbol.get(base) or {}
+        quote = (row.get("quote") or {}).get("USD") or {}
+        price = quote.get("price")
+        if price is None:
+            continue
+        items[base] = provider_price(
+            "coinmarketcap",
+            price,
+            updated_at=quote.get("last_updated") or row.get("last_updated"),
+            stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
+            extra={"symbol": base, "cmc_id": row.get("id"), "name": row.get("name")},
+        )
+    COINMARKETCAP_BATCH_PRICE_CACHE.update({"key": cache_key, "loaded_at": time.time(), "items": dict(items)})
+    return items
+
+
+def warm_market_price_sources(symbols, providers=None):
+    requested = {str(provider or "").strip().lower() for provider in (providers or [])}
+    bases = crypto_base_symbols(symbols)
+    warmed = {"coingecko": False, "coinmarketcap": False, "failures": []}
+    if not requested or "coingecko" in requested:
+        try:
+            fetch_coingecko_prices_batch(bases)
+            warmed["coingecko"] = True
+        except Exception as exc:
+            warmed["failures"].append({"provider": "coingecko", "error": brief(str(exc), 260)})
+    if "coinmarketcap" in requested:
+        try:
+            fetch_coinmarketcap_prices_batch(bases)
+            warmed["coinmarketcap"] = True
+        except Exception as exc:
+            warmed["failures"].append({"provider": "coinmarketcap", "error": brief(str(exc), 260)})
+    return warmed
+
+
 def fetch_binance_spot_price(ticker):
     payload = api_json_request(
         "https://api.binance.com",
@@ -10063,67 +15105,23 @@ def fetch_coingecko_price(base):
     coin_id = COINGECKO_IDS_BY_SYMBOL.get(base)
     if not coin_id:
         raise RuntimeError(f"No tengo CoinGecko API ID para {base}.")
-    payload = api_json_request(
-        "https://api.coingecko.com",
-        "/api/v3/simple/price",
-        {},
-        params={
-            "ids": coin_id,
-            "vs_currencies": "usd",
-            "include_last_updated_at": "true",
-            "precision": "full",
-        },
-        timeout=20,
-    )
-    item = payload.get(coin_id) or {}
-    price = item.get("usd")
-    if price is None:
+    cached = (COINGECKO_BATCH_PRICE_CACHE.get("items") or {}).get(base)
+    if cached and (time.time() - float(COINGECKO_BATCH_PRICE_CACHE.get("loaded_at") or 0)) <= MARKET_PRICE_BATCH_CACHE_TTL_SECONDS:
+        return cached
+    fetched = fetch_coingecko_prices_batch([base]).get(base)
+    if not fetched:
         raise RuntimeError(f"CoinGecko no devolvio precio USD para {coin_id}.")
-    return provider_price(
-        "coingecko",
-        price,
-        updated_at=item.get("last_updated_at"),
-        stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
-        extra={"coin_id": coin_id, "symbol": base},
-    )
+    return fetched
 
 
 def fetch_coinmarketcap_price(base):
-    api_key = load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False)
-    if not api_key:
-        raise RuntimeError("Falta API key de CoinMarketCap en Keychain.")
-    payload = api_json_request(
-        "https://pro-api.coinmarketcap.com",
-        "/v3/cryptocurrency/quotes/latest",
-        {"X-CMC_PRO_API_KEY": api_key},
-        params={"symbol": base, "convert": "USD"},
-        timeout=20,
-    )
-    data = payload.get("data") or {}
-    row = {}
-    if isinstance(data, list):
-        matches = [item for item in data if str(item.get("symbol", "")).upper() == base]
-        row = (matches or data or [{}])[0]
-    elif isinstance(data, dict):
-        rows = data.get(base) or data.get(base.upper())
-        if isinstance(rows, list):
-            row = rows[0] if rows else {}
-        elif isinstance(rows, dict):
-            row = rows
-        else:
-            values = list(data.values())
-            row = values[0] if values and isinstance(values[0], dict) else {}
-    quote = (row.get("quote") or {}).get("USD") or {}
-    price = quote.get("price")
-    if price is None:
+    cached = (COINMARKETCAP_BATCH_PRICE_CACHE.get("items") or {}).get(base)
+    if cached and (time.time() - float(COINMARKETCAP_BATCH_PRICE_CACHE.get("loaded_at") or 0)) <= MARKET_PRICE_BATCH_CACHE_TTL_SECONDS:
+        return cached
+    fetched = fetch_coinmarketcap_prices_batch([base]).get(base)
+    if not fetched:
         raise RuntimeError(f"CoinMarketCap no devolvio precio USD para {base}.")
-    return provider_price(
-        "coinmarketcap",
-        price,
-        updated_at=quote.get("last_updated") or row.get("last_updated"),
-        stale_after=MARKET_PRICE_MAX_AGE_SECONDS,
-        extra={"symbol": base, "cmc_id": row.get("id"), "name": row.get("name")},
-    )
+    return fetched
 
 
 def validate_market_prices(symbol, providers=None):
@@ -10315,6 +15313,14 @@ def format_usd_amount(value):
     return text.rstrip("0").rstrip(".")
 
 
+def signed_usd_text(value):
+    if value is None:
+        return "N/D"
+    value = float(value)
+    sign = "+" if value >= 0 else "-"
+    return f"{sign}{format_usd_amount(abs(value))} USD"
+
+
 def signed_percent_text(value):
     if value is None:
         return "N/D"
@@ -10358,11 +15364,382 @@ def pending_entry_status(side, entry_price, current_price, approved):
     return "sin clasificar"
 
 
+def portfolio_report_override_config(summary=None):
+    payload = read_json_file_any(
+        [PORTFOLIO_REPORT_OVERRIDES, RUNTIME_PORTFOLIO_REPORT_OVERRIDES],
+        {},
+    )
+    if not isinstance(payload, dict):
+        return {}
+    expected_portfolio = str(payload.get("portfolio_id") or "").strip()
+    current_portfolio = str((summary or {}).get("portfolio_id") or "").strip()
+    if expected_portfolio and current_portfolio and expected_portfolio != current_portfolio:
+        return {}
+    return payload
+
+
+def portfolio_fundamental_report_standard():
+    return {
+        "purpose": "Reporte fundamental Sr. Eli/Ignis con fuentes actuales, catalizadores reales y separacion entre datos, interpretacion y riesgos.",
+        "required_sections": [
+            "Resumen ejecutivo",
+            "Estado cuantitativo del Portafolio A",
+            "Catalizadores internacionales",
+            "Catalizadores cripto y narrativas populares",
+            "Catalizadores por activo relevante",
+            "Oportunidades",
+            "Riesgos e invalidaciones",
+            "Fuentes validadas",
+            "Siguiente accion sugerida",
+        ],
+        "source_policy": [
+            "No usar precios recordados ni reportes viejos como precios actuales.",
+            "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
+            "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
+            "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
+            "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos.",
+            "Si las fuentes no son suficientes, declarar la brecha y pedir validacion manual.",
+        ],
+        "market_scope": [
+            "Macro internacional: tasas, Fed, liquidez, dolar, riesgo geopolitico, regulacion y apetito de riesgo.",
+            "Cripto popular: BTC, ETH, SOL, XRP, DOGE, ADA, memecoins, ETF/regulacion y narrativas de mercado con volumen/interes real.",
+            "Portafolio A: ADA, DOGE, FTT, XRP, LUNC, APT, DOT, TRUMP, PEPE, HBAR y NEAR.",
+        ],
+    }
+
+
+def portfolio_standard_markdown(payload):
+    active = payload.get("standard_positions", {}).get("active", [])
+    pending = payload.get("standard_positions", {}).get("pending", [])
+    lines = [
+        "# Portafolio Sr. Eli - Estandar Operativo",
+        "",
+        f"- Version Kim Live: {payload.get('app_version')}",
+        f"- Guardado: {payload.get('standard_saved_at')}",
+        f"- Portfolio ID: {payload.get('portfolio_id')}",
+        f"- Etiqueta: {payload.get('portfolio_label')}",
+        "",
+        "## Reglas Canonicas",
+    ]
+    for rule in payload.get("doctor_rules", []):
+        lines.append(f"- {rule}")
+    lines.extend(["", "## Posiciones Activas"])
+    for item in active:
+        marker = f" {item.get('credit_mark')}" if item.get("credit_mark") else ""
+        lines.append(
+            f"- {item.get('identifier')}. {item.get('label')}: {item.get('invested_usd')} USD "
+            f"a {item.get('entry_price_display')}{marker}; estado precio={item.get('price_validation_status')}."
+        )
+    lines.extend(["", "## Ordenes Pendientes"])
+    if pending:
+        for item in pending:
+            marker = f" {item.get('credit_mark')}" if item.get("credit_mark") else ""
+            lines.append(
+                f"- {item.get('identifier')}. {item.get('label')}: {item.get('invested_usd')} USD "
+                f"a {item.get('entry_price_display')}{marker}; {item.get('entry_status')}."
+            )
+    else:
+        lines.append("- Sin ordenes pendientes.")
+    lines.extend(["", "## Balance"])
+    lines.append(payload.get("balance_line") or "Balance pendiente de generar.")
+    lines.extend(["", "## Formato WhatsApp Estandar"])
+    for item in payload.get("whatsapp_messages", []):
+        lines.append(f"- {item}")
+    lines.extend(["", "## Reporte Fundamental"])
+    standard = payload.get("fundamental_report_standard", {})
+    lines.append(standard.get("purpose", ""))
+    for section in standard.get("required_sections", []):
+        lines.append(f"- {section}")
+    lines.extend(["", "## Fuentes De Memoria"])
+    for source in payload.get("source_memory", []):
+        lines.append(f"- {source}")
+    return "\n".join(lines).strip() + "\n"
+
+
+def portfolio_save_current_standard(summary, report):
+    override_config = portfolio_report_override_config(summary)
+    identifier_prefix = str(override_config.get("identifier_prefix") or "").strip()
+
+    def position_payload(item):
+        order = item.get("resolved_report_order") or item.get("report_order")
+        identifier = f"{identifier_prefix}{order}" if identifier_prefix and order not in (None, "") else str(order or "")
+        return {
+            "identifier": identifier,
+            "symbol": item.get("symbol"),
+            "label": item.get("label"),
+            "state": "pending" if item.get("entry_status") is not None and item.get("current_value_usd") is None else "active",
+            "invested_usd": item.get("invested_usd"),
+            "entry_price": item.get("entry_price"),
+            "entry_price_display": item.get("entry_price_display"),
+            "credit": bool(item.get("credit")),
+            "credit_usd": item.get("credit_usd"),
+            "firm_usd": item.get("firm_usd"),
+            "credit_mark": item.get("credit_mark"),
+            "price_validation_status": item.get("price_validation_status"),
+            "current_price_display": item.get("current_price_display"),
+            "variation_display": item.get("variation_display"),
+            "entry_status": item.get("entry_status"),
+            "notes": item.get("notes"),
+        }
+
+    payload = {
+        "app_version": APP_VERSION,
+        "standard_version": "KIM-0087",
+        "standard_saved_at": now_iso(),
+        "portfolio_id": summary.get("portfolio_id"),
+        "portfolio_label": override_config.get("portfolio_label") or "A",
+        "identifier_prefix": identifier_prefix or "A",
+        "default_whatsapp_target": DOCTOR_DUBAI_WHATSAPP_TO,
+        "never_auto_send_without_doctor_instruction": True,
+        "doctor_rules": override_config.get("doctor_rules", []),
+        "report_overrides": override_config,
+        "standard_positions": {
+            "active": [position_payload(item) for item in report.get("active_positions", [])],
+            "pending": [position_payload(item) for item in report.get("pending_orders", [])],
+        },
+        "balance": report.get("balance", {}),
+        "balance_line": report.get("balance_line", ""),
+        "whatsapp_messages": report.get("whatsapp_messages", []),
+        "balance_rules": [
+            "valor total del portafolio = posiciones activas ejecutadas + ordenes pendientes abiertas.",
+            "monto a credito = credito asociado a posiciones activas y pendientes.",
+            "monto en firme = valor total del portafolio - monto a credito.",
+            "valor actual del portafolio = solo posiciones activas con precios validados.",
+            "P/L total = P/L no realizado solo de posiciones activas con precios validados.",
+            "Las ordenes pendientes no entran al P/L hasta ejecutarse.",
+        ],
+        "fundamental_report_standard": portfolio_fundamental_report_standard(),
+        "source_memory": [
+            str(BIFROST / "docs" / "kim_0085_portafolio_a_identifiers_2026-06-02.md"),
+            str(BIFROST / "docs" / "KIM-0086_portafolio_sr_eli_balance_credito.md"),
+            str(MEMORY_CONTEXT_DIR / "kim_live_portafolio_a_2026-06-02.md"),
+            str(PORTFOLIO_SR_ELI_MEMORY_DIR / "whatsapp_report_sends.jsonl"),
+        ],
+    }
+    json_paths = write_json_file_both(PORTFOLIO_SR_ELI_STANDARD_JSON, RUNTIME_PORTFOLIO_SR_ELI_STANDARD_JSON, payload)
+    md_paths = write_text_file_both(PORTFOLIO_SR_ELI_STANDARD_MD, RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD, portfolio_standard_markdown(payload))
+    append_memory("portfolio_sr_eli_standard_saved", {"standard_version": payload["standard_version"], "json_paths": json_paths, "md_paths": md_paths})
+    return {"json_paths": json_paths, "markdown_paths": md_paths, "standard_version": payload["standard_version"]}
+
+
+def portfolio_override_sort_key(item, preferred):
+    explicit = item.get("report_order")
+    resolved = None
+    if explicit not in (None, ""):
+        try:
+            resolved = int(explicit)
+        except (TypeError, ValueError):
+            resolved = None
+    token = str(item.get("symbol") or "").upper()
+    if resolved is None:
+        try:
+            resolved = preferred.index(token) + 1
+        except ValueError:
+            resolved = len(preferred) + 100
+    try:
+        canonical_index = preferred.index(token) + 1
+    except ValueError:
+        canonical_index = len(preferred) + 100
+    return (resolved, canonical_index, token)
+
+
+def portfolio_report_explicit_order(item):
+    explicit = item.get("report_order")
+    if explicit in (None, ""):
+        return None
+    try:
+        return int(explicit)
+    except (TypeError, ValueError):
+        return None
+
+
+def portfolio_resolve_line_identifier(item, next_index, used_orders, identifier_prefix):
+    resolved = portfolio_report_explicit_order(item)
+    if resolved is None or resolved in used_orders:
+        resolved = next_index
+        while resolved in used_orders:
+            resolved += 1
+    used_orders.add(resolved)
+    item["resolved_report_order"] = resolved
+    line_id = f"{identifier_prefix}{resolved}" if identifier_prefix else str(resolved)
+    return line_id, max(next_index, resolved + 1)
+
+
+def portfolio_resolve_credit_breakdown(invested_usd, credit_usd, full_mark="(c)", partial_mark="(c parcial)"):
+    invested = max(0.0, float(invested_usd or 0))
+    credit = max(0.0, float(credit_usd or 0))
+    if invested:
+        credit = min(credit, invested)
+    else:
+        credit = 0.0
+    firm = max(0.0, invested - credit)
+    if invested and credit >= invested:
+        mark = full_mark
+    elif credit > 0:
+        mark = partial_mark
+    else:
+        mark = ""
+    return {
+        "credit": credit > 0,
+        "credit_usd": round_opt(credit, 2),
+        "firm_usd": round_opt(firm, 2),
+        "credit_mark": mark,
+    }
+
+
+def portfolio_apply_manual_overrides(summary, active_items, pending_items, include_units, canonical_order, load_validation):
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return active_items, pending_items, config
+
+    suppressed_symbols = {
+        str(symbol or "").upper()
+        for symbol in config.get("suppress_symbols", [])
+        if str(symbol or "").strip()
+    }
+    credit_symbols = {
+        str(symbol or "").upper()
+        for symbol in config.get("credit_symbols", [])
+        if str(symbol or "").strip()
+    }
+    credit_amount_overrides = {
+        str(symbol or "").upper(): float(amount or 0)
+        for symbol, amount in (config.get("credit_amounts") or {}).items()
+        if str(symbol or "").strip()
+    }
+    credit_mark = str(config.get("credit_mark") or "(c)").strip() or "(c)"
+    partial_credit_mark = str(config.get("partial_credit_mark") or "(c parcial)").strip() or "(c parcial)"
+    manual_entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    manual_symbols = {
+        str(entry.get("symbol") or "").upper()
+        for entry in manual_entries
+        if isinstance(entry, dict) and str(entry.get("symbol") or "").strip()
+    }
+
+    filtered_active = [
+        item
+        for item in active_items
+        if str(item.get("symbol") or "").upper() not in suppressed_symbols
+        and str(item.get("symbol") or "").upper() not in manual_symbols
+    ]
+    filtered_pending = [
+        item
+        for item in pending_items
+        if str(item.get("symbol") or "").upper() not in suppressed_symbols
+        and str(item.get("symbol") or "").upper() not in manual_symbols
+    ]
+
+    for item in [*filtered_active, *filtered_pending]:
+        symbol = str(item.get("symbol") or "").upper()
+        invested_usd = float(item.get("invested_usd") or 0)
+        credit_amount = item.get("credit_usd")
+        if credit_amount in (None, ""):
+            if symbol in credit_amount_overrides:
+                credit_amount = credit_amount_overrides[symbol]
+            elif bool(item.get("credit")) or symbol in credit_symbols:
+                credit_amount = invested_usd
+            else:
+                credit_amount = 0
+        item.update(
+            portfolio_resolve_credit_breakdown(
+                invested_usd,
+                credit_amount,
+                full_mark=credit_mark,
+                partial_mark=partial_credit_mark,
+            )
+        )
+
+    for entry in manual_entries:
+        if not isinstance(entry, dict):
+            continue
+        symbol = str(entry.get("symbol") or "").upper().strip()
+        if not symbol:
+            continue
+        state = str(entry.get("state") or "active").strip().lower()
+        notes = str(entry.get("notes") or "").strip()
+        label = str(entry.get("label") or portfolio_symbol_label(symbol, notes)).strip() or symbol
+        invested_raw = float(entry.get("invested_usd") or 0)
+        entry_price = float(entry.get("entry_price")) if entry.get("entry_price") not in (None, "") else None
+        quantity = float(entry.get("quantity") or 0)
+        if not quantity and invested_raw and entry_price not in (None, 0):
+            quantity = invested_raw / float(entry_price)
+        validation = load_validation(symbol)
+        current_price = validation.get("reference_price")
+        approved = bool(validation.get("approved_for_client_report"))
+        variation_pct = price_variation_pct(entry_price, current_price if approved else None)
+        current_value_usd = (quantity * float(current_price)) if approved and quantity else None
+        unrealized_pnl_usd = (current_value_usd - invested_raw) if current_value_usd is not None else None
+        credit_amount = entry.get("credit_usd")
+        if credit_amount in (None, ""):
+            if symbol in credit_amount_overrides:
+                credit_amount = credit_amount_overrides[symbol]
+            elif boolish(entry.get("credit")) or symbol in credit_symbols:
+                credit_amount = invested_raw
+            else:
+                credit_amount = 0
+        credit_fields = portfolio_resolve_credit_breakdown(
+            invested_raw,
+            credit_amount,
+            full_mark=credit_mark,
+            partial_mark=partial_credit_mark,
+        )
+        base_item = {
+            "symbol": symbol,
+            "label": label,
+            "invested_usd": round_opt(invested_raw, 2),
+            "entry_price": round_price(entry_price),
+            "entry_price_display": format_price(entry_price),
+            "current_price": round_price(current_price) if approved else None,
+            "current_price_display": validation.get("reference_price_display") if approved else None,
+            "price_validation_status": validation.get("status"),
+            "approved_for_client_report": approved,
+            "variation_pct": round_opt(variation_pct, 2),
+            "variation_display": signed_percent_text(variation_pct),
+            "reference_quantity": round_opt(quantity, 8) if include_units and quantity else None,
+            "notes": notes,
+            "report_order": entry.get("order"),
+            "override_source": "portfolio_report_overrides",
+            **credit_fields,
+        }
+        if state == "pending":
+            filtered_pending.append(
+                {
+                    **base_item,
+                    "id": entry.get("id") or f"manual-{symbol.lower()}",
+                    "side": str(entry.get("side") or "BUY").upper(),
+                    "entry_status": str(entry.get("entry_status") or "").strip()
+                    or pending_entry_status(str(entry.get("side") or "BUY").upper(), entry_price, current_price, approved),
+                    "source": str(entry.get("source") or "manual_override"),
+                }
+            )
+            continue
+        filtered_active.append(
+            {
+                **base_item,
+                "current_value_usd": round_opt(current_value_usd, 2),
+                "unrealized_pnl_usd": round_opt(unrealized_pnl_usd, 2),
+                "unrealized_pnl_display": signed_usd_text(unrealized_pnl_usd),
+                "merged_with_pending": boolish(entry.get("merged_with_pending")),
+                "sources": [str(entry.get("source") or "manual_override")],
+                "transaction_ids": [str(entry.get("transaction_id") or "")] if entry.get("transaction_id") else [],
+            }
+        )
+
+    filtered_active.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
+    filtered_pending.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
+    return filtered_active, filtered_pending, config
+
+
 def portfolio_client_report(summary, parameters=None):
     parameters = parameters or {}
     include_units = bool(parameters.get("include_units"))
-    providers = parameters.get("providers") or ["binance", "coingecko"]
-    active_order = [
+    provider_warnings = []
+    providers = parameters.get("providers") or ["binance", "coinmarketcap", "coingecko"]
+    providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
+    if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
+        providers = [provider for provider in providers if provider != "coinmarketcap"]
+        provider_warnings.append("CoinMarketCap no se uso porque falta API key en Keychain.")
+    canonical_order = [
         "ADAUSDT",
         "DOGEUSDT",
         "FTTUSDT",
@@ -10371,13 +15748,31 @@ def portfolio_client_report(summary, parameters=None):
         "APTUSDT",
         "DOTUSDT",
         "TRUMPUSDT",
+        "PEPEUSDT",
+        "HBARUSDT",
+        "NEARUSDT",
+        "ONDOUSDT",
+        "TRXUSDT",
+        "ICPUSDT",
+        "AVAXUSDT",
     ]
-    pending_order = ["ONDOUSDT", "LUNCUSDT"]
     final_transactions = summary.get("final_transactions") or []
     draft_transactions = summary.get("draft_transactions") or []
     positions = summary.get("positions") or []
     position_map = {str(item.get("symbol") or "").upper(): item for item in positions}
     symbol_validations = {}
+    merged_draft_keys = set()
+    report_symbols = [
+        str(tx.get("symbol") or "").upper()
+        for tx in [*final_transactions, *draft_transactions, *positions]
+        if str(tx.get("symbol") or "").strip()
+    ]
+    source_warmup = warm_market_price_sources(report_symbols, providers=providers)
+    failed_warmup_providers = {str(item.get("provider") or "").lower() for item in source_warmup.get("failures") or []}
+    if failed_warmup_providers:
+        for failure in source_warmup.get("failures") or []:
+            provider_warnings.append(f"{failure.get('provider')}: {failure.get('error')}")
+        providers = [provider for provider in providers if provider not in failed_warmup_providers]
 
     def load_validation(symbol):
         token = str(symbol or "").upper()
@@ -10391,6 +15786,14 @@ def portfolio_client_report(summary, parameters=None):
             return (0, preferred.index(token))
         except ValueError:
             return (1, token)
+
+    def draft_row_key(row):
+        return (
+            str((row or {}).get("symbol") or "").upper(),
+            str((row or {}).get("occurred_at") or ""),
+            str((row or {}).get("source") or ""),
+            str((row or {}).get("notes") or ""),
+        )
 
     active_by_symbol = {}
     for tx in final_transactions:
@@ -10412,22 +15815,50 @@ def portfolio_client_report(summary, parameters=None):
         bucket["transaction_ids"].append(str(tx.get("id") or ""))
         if tx.get("occurred_at"):
             bucket["occurred_at"] = tx.get("occurred_at")
+
+    def can_merge_same_symbol_drafts(symbol, draft_rows):
+        if not draft_rows:
+            return False
+        note_blob = " ".join(str(row.get("notes") or "") for row in draft_rows).lower()
+        if symbol == "LUNCUSDT":
+            return True
+        return "refuerzo" in note_blob or "ya incluido" in note_blob
+
+    draft_rows_by_symbol = {}
+    for tx in draft_transactions:
+        symbol = str(tx.get("symbol") or "").upper()
+        draft_rows_by_symbol.setdefault(symbol, []).append(tx)
+
     active_items = []
     executed_preliminary = []
-    for symbol, bucket in sorted(active_by_symbol.items(), key=lambda item: sort_key(item[0], active_order)):
+    for symbol, bucket in sorted(active_by_symbol.items(), key=lambda item: sort_key(item[0], canonical_order)):
         position = position_map.get(symbol) or {}
+        merged_drafts = draft_rows_by_symbol.get(symbol) or []
+        merged_with_pending = can_merge_same_symbol_drafts(symbol, merged_drafts)
+        total_invested = float(bucket["gross_amount"] or 0)
+        total_quantity = float(position.get("quantity") or 0)
+        merged_notes = [note for note in bucket["notes"] if note]
+        if merged_with_pending:
+            for draft_row in merged_drafts:
+                merged_draft_keys.add(draft_row_key(draft_row))
+                total_invested += float(draft_row.get("gross_amount") or 0)
+                total_quantity += float(draft_row.get("quantity") or 0)
+                if draft_row.get("notes"):
+                    merged_notes.append(str(draft_row.get("notes") or ""))
         validation = load_validation(symbol)
         current_price = validation.get("reference_price")
         approved = bool(validation.get("approved_for_client_report"))
-        entry_price = position.get("average_cost")
+        entry_price = (total_invested / total_quantity) if total_quantity else position.get("average_cost")
         variation_pct = price_variation_pct(entry_price, current_price if approved else None)
-        notes = "\n".join(note for note in bucket["notes"] if note).strip()
+        current_value_usd = (total_quantity * float(current_price)) if approved and total_quantity else None
+        unrealized_pnl_usd = (current_value_usd - total_invested) if current_value_usd is not None else None
+        notes = "\n".join(merged_notes).strip()
         sources = [source for source in bucket["sources"] if source]
         is_preliminary_fill = any("credit_filled" in source for source in sources) or "antes pendiente" in notes.lower()
         item = {
             "symbol": symbol,
             "label": portfolio_symbol_label(symbol, notes),
-            "invested_usd": round_opt(bucket["gross_amount"], 2),
+            "invested_usd": round_opt(total_invested, 2),
             "entry_price": round_price(entry_price),
             "entry_price_display": format_price(entry_price),
             "current_price": round_price(current_price) if approved else None,
@@ -10436,7 +15867,11 @@ def portfolio_client_report(summary, parameters=None):
             "approved_for_client_report": approved,
             "variation_pct": round_opt(variation_pct, 2),
             "variation_display": signed_percent_text(variation_pct),
-            "reference_quantity": round_opt(position.get("quantity"), 8) if include_units else None,
+            "current_value_usd": round_opt(current_value_usd, 2),
+            "unrealized_pnl_usd": round_opt(unrealized_pnl_usd, 2),
+            "unrealized_pnl_display": signed_usd_text(unrealized_pnl_usd),
+            "reference_quantity": round_opt(total_quantity, 8) if include_units else None,
+            "merged_with_pending": merged_with_pending,
             "notes": notes,
             "sources": sources,
             "transaction_ids": bucket["transaction_ids"],
@@ -10446,7 +15881,9 @@ def portfolio_client_report(summary, parameters=None):
             executed_preliminary.append(item)
 
     pending_items = []
-    for tx in sorted(draft_transactions, key=lambda item: sort_key(item.get("symbol"), pending_order)):
+    for tx in sorted(draft_transactions, key=lambda item: sort_key(item.get("symbol"), canonical_order)):
+        if draft_row_key(tx) in merged_draft_keys:
+            continue
         symbol = str(tx.get("symbol") or "").upper()
         validation = load_validation(symbol)
         current_price = validation.get("reference_price")
@@ -10474,18 +15911,48 @@ def portfolio_client_report(summary, parameters=None):
         }
         pending_items.append(item)
 
-    lines = ["Portafolio Sr. Eli", "", "Posiciones activas:"]
-    for index, item in enumerate(active_items, start=1):
-        line = (
-            f"{index}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
-            f"{item['entry_price_display']}."
+    active_items, pending_items, override_config = portfolio_apply_manual_overrides(
+        summary,
+        active_items,
+        pending_items,
+        include_units,
+        canonical_order,
+        load_validation,
+    )
+    if override_config.get("provider_note"):
+        provider_warnings.append(str(override_config.get("provider_note")))
+
+    message_lines = []
+    portfolio_title = "Portafolio Sr. Eli"
+    if override_config.get("portfolio_label"):
+        portfolio_title += f" - {override_config.get('portfolio_label')}"
+    identifier_prefix = str(override_config.get("identifier_prefix") or "").strip()
+    lines = [portfolio_title, "", "Posiciones activas:"]
+    used_report_orders = set()
+    next_report_order = 1
+    for item in active_items:
+        line_id, next_report_order = portfolio_resolve_line_identifier(
+            item,
+            next_report_order,
+            used_report_orders,
+            identifier_prefix,
         )
+        amount_text = (
+            f"total {format_usd_amount(item['invested_usd'])} USD"
+            if item.get("merged_with_pending")
+            else f"{format_usd_amount(item['invested_usd'])} USD"
+        )
+        credit_mark = f" {item['credit_mark']}" if item.get("credit_mark") else ""
+        line = f"{line_id}. {item['label']}: {amount_text} a {item['entry_price_display']}{credit_mark}."
         if item["approved_for_client_report"]:
             line += f" Precio actual {item['current_price_display']}. Variación {item['variation_display']}."
         else:
             line += " Precio actual no validado. Variación N/D."
+        if item.get("merged_with_pending"):
+            line += " Refuerzo ya incluido."
         if include_units and item.get("reference_quantity") is not None:
             line += f" Unidades de referencia: {item['reference_quantity']}."
+        message_lines.append(line)
         lines.append(line)
     if executed_preliminary:
         lines.append("")
@@ -10497,40 +15964,376 @@ def portfolio_client_report(summary, parameters=None):
     lines.append("")
     lines.append("Órdenes pendientes:")
     if pending_items:
-        start_index = len(active_items) + 1
-        for offset, item in enumerate(pending_items, start=start_index):
+        for item in pending_items:
+            line_id, next_report_order = portfolio_resolve_line_identifier(
+                item,
+                next_report_order,
+                used_report_orders,
+                identifier_prefix,
+            )
+            credit_mark = f" {item['credit_mark']}" if item.get("credit_mark") else ""
             line = (
-                f"{offset}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
-                f"{item['entry_price_display']}."
+                f"{line_id}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
+                f"{item['entry_price_display']}{credit_mark}."
             )
             if item["approved_for_client_report"]:
                 line += (
                     f" Precio actual {item['current_price_display']}. Estado: {item['entry_status']}. "
-                    f"Variación {item['variation_display']}."
+                    f"Distancia vs entrada {item['variation_display']}."
                 )
             else:
                 line += " Precio actual no validado. Estado: precio actual no validado. Variación N/D."
             if include_units and item.get("reference_quantity") is not None:
                 line += f" Unidades de referencia: {item['reference_quantity']}."
+            message_lines.append(line)
             lines.append(line)
     else:
         lines.append("Sin órdenes pendientes.")
     lines.append("")
+    approved_active = [item for item in active_items if item.get("approved_for_client_report") and item.get("current_value_usd") is not None]
+    unapproved_active = [item for item in active_items if not item.get("approved_for_client_report")]
+    active_invested_usd = sum(float(item.get("invested_usd") or 0) for item in active_items)
+    active_current_value_usd = sum(float(item.get("current_value_usd") or 0) for item in approved_active)
+    active_unrealized_pnl_usd = sum(float(item.get("unrealized_pnl_usd") or 0) for item in approved_active)
+    active_unrealized_pct = (
+        (active_unrealized_pnl_usd / sum(float(item.get("invested_usd") or 0) for item in approved_active) * 100)
+        if approved_active
+        else None
+    )
+    pending_total_usd = sum(float(item.get("invested_usd") or 0) for item in pending_items)
+    total_portfolio_usd = active_invested_usd + pending_total_usd
+    total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
+    total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
+    margin_total_pct = (
+        (active_unrealized_pnl_usd / total_portfolio_usd * 100)
+        if total_portfolio_usd
+        else None
+    )
+    margin_firm_pct = (
+        (active_unrealized_pnl_usd / total_firm_usd * 100)
+        if total_firm_usd
+        else None
+    )
+    balance = {
+        "portfolio_total_usd": round_opt(total_portfolio_usd, 2),
+        "credit_total_usd": round_opt(total_credit_usd, 2),
+        "firm_total_usd": round_opt(total_firm_usd, 2),
+        "active_invested_usd": round_opt(active_invested_usd, 2),
+        "portfolio_current_value_usd_validated_only": round_opt(active_current_value_usd, 2),
+        "portfolio_unrealized_pnl_usd_validated_only": round_opt(active_unrealized_pnl_usd, 2),
+        "margin_total_pct_validated_only": round_opt(margin_total_pct, 2),
+        "margin_firm_pct_validated_only": round_opt(margin_firm_pct, 2),
+        "active_current_value_usd_validated_only": round_opt(active_current_value_usd, 2),
+        "active_unrealized_pnl_usd_validated_only": round_opt(active_unrealized_pnl_usd, 2),
+        "active_unrealized_pct_validated_only": round_opt(active_unrealized_pct, 2),
+        "pending_orders_usd": round_opt(pending_total_usd, 2),
+        "approved_active_count": len(approved_active),
+        "active_count": len(active_items),
+        "unapproved_active_symbols": [item.get("label") or item.get("symbol") for item in unapproved_active],
+    }
+    balance_line = (
+        "Balance validado Sr. Eli: "
+        f"valor total del portafolio {format_usd_amount(balance['portfolio_total_usd'])} USD; "
+        f"monto a crédito {format_usd_amount(balance['credit_total_usd'])} USD; "
+        f"monto en firme {format_usd_amount(balance['firm_total_usd'])} USD; "
+        f"valor actual del portafolio {format_usd_amount(balance['portfolio_current_value_usd_validated_only'])} USD; "
+        f"P/L total {signed_usd_text(balance['portfolio_unrealized_pnl_usd_validated_only'])}; "
+        f"margen total {signed_percent_text(balance['margin_total_pct_validated_only'])}; "
+        f"margen sobre monto en firme {signed_percent_text(balance['margin_firm_pct_validated_only'])}."
+    )
+    if pending_items:
+        balance_line += (
+            f" Pendientes abiertos {format_usd_amount(balance['pending_orders_usd'])} USD; "
+            "no entran al P/L hasta ejecutarse."
+        )
+    if unapproved_active:
+        balance_line += " Balance parcial: faltan precios validados para " + ", ".join(balance["unapproved_active_symbols"]) + "."
+    lines.append(balance_line)
     lines.append("Regla de salida: no reportar unidades salvo que el doctor las pida.")
 
-    return {
+    result = {
         "ok": True,
         "report_type": "sr_eli_client_report",
         "generated_at": utc_now().isoformat(),
         "portfolio_id": summary.get("portfolio_id"),
         "hide_units_by_default": not include_units,
         "providers_used": providers,
+        "provider_warnings": provider_warnings,
+        "source_warmup": source_warmup,
+        "report_overrides": override_config,
         "active_positions": active_items,
         "executed_preliminary_orders": executed_preliminary,
         "pending_orders": pending_items,
+        "balance": balance,
+        "balance_line": balance_line,
+        "message_lines": message_lines,
+        "whatsapp_messages": [*message_lines, balance_line],
         "summary": "\n".join(lines),
         "portfolio_summary": summary,
     }
+    if boolish(first_value(parameters, "save_standard", "guardar_estandar", default=True)):
+        result["portfolio_standard"] = portfolio_save_current_standard(summary, result)
+    return result
+
+
+def portfolio_fundamental_report_queries(report, parameters=None):
+    parameters = parameters or {}
+    symbols = []
+    for item in [*(report.get("active_positions") or []), *(report.get("pending_orders") or [])]:
+        symbol = str(item.get("symbol") or "").upper()
+        if symbol and symbol not in symbols:
+            symbols.append(symbol.replace("USDT", ""))
+    portfolio_tokens = ", ".join(symbols or ["ADA", "DOGE", "FTT", "XRP", "LUNC", "APT", "DOT", "TRUMP", "PEPE", "HBAR", "NEAR"])
+    date_label = dt.datetime.now(ZoneInfo(DEFAULT_SCHEDULER_TIMEZONE)).strftime("%Y-%m-%d")
+    custom_query = str(first_value(parameters, "query", "question", "pregunta", "tema", default="")).strip()
+    queries = [
+        (
+            f"{date_label} crypto market macro catalysts Fed liquidity dollar risk appetite regulation ETF "
+            "Bitcoin Ethereum Solana XRP meme coins latest"
+        ),
+        (
+            f"{date_label} latest catalysts and risks for crypto tokens {portfolio_tokens} "
+            "Aptos Polkadot Hedera Near Pepe Official Trump Terra Luna Classic"
+        ),
+        (
+            f"{date_label} most popular crypto market narratives opportunities BTC ETH SOL XRP DOGE ADA "
+            "memecoins DeFi AI ETF regulation"
+        ),
+    ]
+    if custom_query:
+        queries.insert(0, f"{date_label} {custom_query}")
+    return queries
+
+
+def portfolio_fundamental_fallback_text(report, research_results):
+    source_count = sum(len(item.get("sources") or []) for item in research_results if isinstance(item, dict))
+    lines = [
+        "Reporte fundamental Sr. Eli/Ignis",
+        "",
+        "Resumen ejecutivo",
+        "Kim preparo la base cuantitativa del Portafolio A y dejo separadas las fuentes disponibles. No debe presentarse como recomendacion financiera personalizada.",
+        "",
+        "Estado cuantitativo del Portafolio A",
+        report.get("balance_line") or "Balance pendiente de generar.",
+        "",
+        "Catalizadores internacionales",
+        "Pendiente de ampliar con fuentes actuales si la investigacion web no devolvio suficientes referencias verificables.",
+        "",
+        "Catalizadores cripto y narrativas populares",
+        "Revisar BTC, ETH, SOL, XRP, DOGE, ADA, ETF/regulacion, liquidez y narrativas de memecoins/altcoins antes de enviar al cliente.",
+        "",
+        "Oportunidades",
+        "Identificar solo oportunidades sustentadas por precio validado, volumen, catalizador real y riesgo medible.",
+        "",
+        "Riesgos e invalidaciones",
+        "Si hay menos de dos fuentes frescas o el catalizador no esta confirmado, marcarlo como pendiente de validacion.",
+        "",
+        "Fuentes validadas",
+        f"Fuentes registradas en este intento: {source_count}.",
+    ]
+    return "\n".join(lines)
+
+
+def portfolio_fundamental_report(summary, parameters=None):
+    parameters = dict(parameters or {})
+    report = portfolio_client_report(summary, {**parameters, "save_standard": True})
+    dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", "skip_research", default=False))
+    try:
+        max_queries = int(first_value(parameters, "max_queries", "research_queries", default=3) or 3)
+    except (TypeError, ValueError):
+        max_queries = 3
+    max_queries = max(1, min(max_queries, 5))
+    queries = portfolio_fundamental_report_queries(report, parameters)[:max_queries]
+    research_results = []
+    if not dry_run:
+        for query in queries:
+            try:
+                research_results.append(research_with_openai(query, session_id=str(parameters.get("session_id") or "portfolio_sr_eli_fundamental")))
+            except Exception as exc:
+                research_results.append({"query": query, "error": brief(str(exc), 500), "sources": []})
+
+    sources = []
+    seen_urls = set()
+    for item in research_results:
+        for source in item.get("sources") or []:
+            url = str(source.get("url") or "").strip()
+            if not url or url in seen_urls:
+                continue
+            seen_urls.add(url)
+            sources.append({"title": source.get("title") or url, "url": url})
+
+    if dry_run:
+        synthesis_model = "local-preview"
+        fundamental_text = portfolio_fundamental_fallback_text(report, research_results)
+    else:
+        prompt = (
+            "Redacta un reporte fundamental profesional para el Dr. Yehoshua sobre el Portafolio A del Sr. Eli. "
+            "Responde en español, claro y ejecutivo. No des asesoria financiera personalizada ni prometas rendimientos. "
+            "Usa solo el reporte cuantitativo y la investigacion incluida. Si un catalizador no esta sustentado por fuente, "
+            "marcalo como pendiente o no lo incluyas. Separa hechos verificados, inferencias y riesgos. "
+            "Regla critica: las ordenes pendientes no son posiciones activas, no entran al P/L y su 'distancia vs entrada' "
+            "no debe describirse como ganancia/rendimiento. NEAR A11 sigue pendiente hasta que el ledger diga lo contrario. "
+            "Estructura exacta requerida: Resumen ejecutivo; Estado cuantitativo del Portafolio A; Catalizadores internacionales; "
+            "Catalizadores cripto y narrativas populares; Catalizadores por activo relevante; Oportunidades; Riesgos e invalidaciones; "
+            "Fuentes validadas; Siguiente accion sugerida.\n\n"
+            "REPORTE CUANTITATIVO:\n"
+            f"{brief(report.get('summary', ''), 9000)}\n\n"
+            "ESTADO ESTRUCTURADO DE POSICIONES:\n"
+            f"{brief(json.dumps({'active_positions': report.get('active_positions', []), 'pending_orders': report.get('pending_orders', []), 'balance': report.get('balance', {})}, ensure_ascii=False), 9000)}\n\n"
+            "INVESTIGACION Y FUENTES:\n"
+            f"{brief(json.dumps(research_results, ensure_ascii=False), 18000)}\n\n"
+            "ESTANDAR FUNDAMENTAL:\n"
+            f"{json.dumps(portfolio_fundamental_report_standard(), ensure_ascii=False, indent=2)}"
+        )
+        try:
+            response, synthesis_model = openai_response_with_fallback(
+                DOCUMENT_MODEL_CANDIDATES,
+                {"input": prompt, "max_output_tokens": 2200},
+            )
+            fundamental_text = output_text_from_response(response) or portfolio_fundamental_fallback_text(report, research_results)
+        except Exception as exc:
+            synthesis_model = "local-fallback"
+            fundamental_text = portfolio_fundamental_fallback_text(report, research_results)
+            research_results.append({"query": "synthesis", "error": brief(str(exc), 500), "sources": []})
+
+    report_id = "sr_eli_fundamental_" + re.sub(r"[^0-9A-Za-z]+", "_", utc_now().isoformat()).strip("_")
+    markdown = (
+        f"# Reporte Fundamental Sr. Eli\n\n"
+        f"- Report ID: {report_id}\n"
+        f"- Generado: {now_iso()}\n"
+        f"- Modelo sintesis: {synthesis_model}\n"
+        f"- Fuentes validadas: {len(sources)}\n\n"
+        f"{fundamental_text.strip()}\n\n"
+        "## Fuentes\n"
+        + "\n".join(f"- [{source.get('title')}]({source.get('url')})" for source in sources)
+        + "\n"
+    )
+    md_paths = write_text_file_both(
+        PORTFOLIO_SR_ELI_MEMORY_DIR / f"{report_id}.md",
+        RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / f"{report_id}.md",
+        markdown,
+    )
+    result = {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "fundamental_report",
+        "report_id": report_id,
+        "generated_at": now_iso(),
+        "dry_run": dry_run,
+        "portfolio_report": report,
+        "queries": queries,
+        "research_results": research_results,
+        "sources": sources,
+        "source_count": len(sources),
+        "fundamental_report": fundamental_text,
+        "markdown_paths": md_paths,
+        "standard": portfolio_fundamental_report_standard(),
+    }
+    append_jsonl_any([PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG, RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG], {k: v for k, v in result.items() if k != "portfolio_report"})
+    append_memory("portfolio_fundamental_report", {"report_id": report_id, "source_count": len(sources), "dry_run": dry_run, "markdown_paths": md_paths})
+    return result
+
+
+def portfolio_default_whatsapp_target(parameters=None):
+    parameters = parameters or {}
+    raw = first_value(parameters, "to", "recipient", "phone", "telefono", "destinatario", default=DOCTOR_DUBAI_WHATSAPP_TO)
+    target = str(raw or DOCTOR_DUBAI_WHATSAPP_TO).strip()
+    if target and not target.startswith("whatsapp:"):
+        normalized = normalize_phone_number(target)
+        target = f"whatsapp:{normalized}" if normalized else target
+    return target or DOCTOR_DUBAI_WHATSAPP_TO
+
+
+def portfolio_target_is_doctor_control(target):
+    return twilio_lookup_phone_number(target) == DOCTOR_DUBAI_WHATSAPP_NUMBER
+
+
+def portfolio_send_whatsapp_report(summary, parameters=None):
+    parameters = dict(parameters or {})
+    target = portfolio_default_whatsapp_target(parameters)
+    doctor_control = portfolio_target_is_doctor_control(target)
+    dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", default=False))
+    confirmed = doctor_control or boolish(first_value(parameters, "confirm", "confirmed", "confirmed_by_doctor", "allow_send", default=False))
+    report = portfolio_client_report(summary, parameters)
+    messages = list(report.get("whatsapp_messages") or report.get("message_lines") or [])
+    if not messages:
+        raise ValueError("No se generaron lineas de portafolio para enviar.")
+    preview = {
+        "to": target,
+        "doctor_control_recipient": doctor_control,
+        "message_count": len(messages),
+        "first_message": messages[0],
+        "balance_line": report.get("balance_line", ""),
+        "providers_used": report.get("providers_used", []),
+        "provider_warnings": report.get("provider_warnings", []),
+    }
+    if dry_run:
+        return {
+            "ok": True,
+            "provider": "portfolio",
+            "action": "send_whatsapp_report",
+            "dry_run": True,
+            "preview": preview,
+            "messages": messages,
+            "report": report,
+        }
+    if not confirmed:
+        return confirmation_preview(
+            "portfolio",
+            "send_whatsapp_report",
+            f"Enviar reporte actualizado Sr. Eli por WhatsApp a {target}.",
+            preview,
+            execution_parameters={**parameters, "to": target, "confirm": True},
+        )
+    context_id = str(first_value(parameters, "context_id", "kim_context_id", default="PORTFOLIO-SR-ELI-" + today()) or "").strip()
+    send_results = []
+    errors = []
+    for index, message in enumerate(messages, start=1):
+        try:
+            event = twilio_send_message(
+                {
+                    "to": target,
+                    "body": message,
+                    "from": first_value(parameters, "from", "from_number", "sender", default=""),
+                    "messaging_service_sid": first_value(parameters, "messaging_service_sid", "service_sid", default=""),
+                    "context_id": context_id,
+                    "contact_name": first_value(parameters, "contact_name", "client_name", "name", default="Dr. Yehoshua"),
+                    "relationship": first_value(parameters, "relationship", default="doctor_control"),
+                    "company": first_value(parameters, "company", default="Ignis Stock Financials"),
+                    "objective": first_value(parameters, "objective", default="Enviar portafolio actualizado del Sr. Eli."),
+                    "next_step_hint": first_value(parameters, "next_step_hint", default="Revisar reporte recibido en WhatsApp Dubai."),
+                },
+                confirm=True,
+                channel="whatsapp",
+            )
+            send_results.append({"index": index, "sid": event.get("sid"), "status": event.get("status"), "to": event.get("to")})
+            time.sleep(0.2)
+        except Exception as exc:
+            errors.append({"index": index, "error": brief(str(exc), 500), "message": brief(message, 220)})
+            break
+    result = {
+        "ok": not errors,
+        "provider": "portfolio",
+        "action": "send_whatsapp_report",
+        "to": target,
+        "doctor_control_recipient": doctor_control,
+        "context_id": context_id,
+        "message_count": len(messages),
+        "sent_count": len(send_results),
+        "send_results": send_results,
+        "errors": errors,
+        "report": report,
+        "sent_at": now_iso(),
+    }
+    append_jsonl_any(
+        [
+            MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "whatsapp_report_sends.jsonl",
+            RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026_whatsapp_report_sends.jsonl",
+        ],
+        result,
+    )
+    append_memory("portfolio_whatsapp_report_sent", {k: v for k, v in result.items() if k != "report"})
+    return result
 
 
 def multipart_field(boundary, name, value, content_type=None):
@@ -10586,6 +16389,19 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        if parsed.path in PUBLIC_ASSETS:
+            write_file_response(self, PUBLIC_ASSETS[parsed.path])
+            return
+        if parsed.path.startswith("/assets/kim/"):
+            candidates = public_kim_asset_candidates(parsed.path)
+            if candidates:
+                write_file_response(self, candidates)
+                return
+        if parsed.path.startswith(WHATSAPP_PUBLIC_AUDIO_PATH_PREFIX + "/"):
+            candidates = public_whatsapp_audio_candidates(parsed.path)
+            if candidates:
+                write_file_response(self, candidates, content_type="audio/mpeg", cache_control="public, max-age=86400")
+                return
         if parsed.path == "/api/auth/status":
             status = site_auth_status(self)
             write_json(
@@ -10602,6 +16418,22 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path.startswith("/api/") and not is_public_get_path(parsed.path) and not site_auth_is_valid(self):
             write_json(self, {"ok": False, "error": "AUTH_REQUIRED"}, status=401)
+            return
+        if parsed.path == "/api/bifrost-export/download":
+            params = urllib.parse.parse_qs(parsed.query)
+            token = (params.get("token") or [""])[0]
+            try:
+                send_bifrost_export_download(self, token)
+            except Exception as exc:
+                write_json(self, {"ok": False, "error": str(exc)}, status=403)
+            return
+        if parsed.path == "/api/bifrost-export/manifest":
+            params = urllib.parse.parse_qs(parsed.query)
+            token = (params.get("token") or [""])[0]
+            try:
+                send_bifrost_export_manifest(self, token)
+            except Exception as exc:
+                write_json(self, {"ok": False, "error": str(exc)}, status=403)
             return
         if parsed.path == "/setup-openai-key":
             data = (APP_DIR / "setup-openai-key.html").read_bytes()
@@ -10630,6 +16462,25 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/oauth/google/callback":
             gmail_oauth_callback(self, parsed)
             return
+        if parsed.path == "/oauth/zoom/start":
+            try:
+                url = zoom_oauth_start_url(self)
+            except Exception as exc:
+                write_text(
+                    self,
+                    f"<h1>No pude iniciar Zoom OAuth</h1><p>{html.escape(str(exc))}</p>",
+                    status=500,
+                    content_type="text/html; charset=utf-8",
+                )
+                return
+            self.send_response(302)
+            self.send_header("Location", url)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
+        if parsed.path == "/oauth/zoom/callback":
+            zoom_oauth_callback(self, parsed)
+            return
         if parsed.path == "/api/status":
             write_json(
                 self,
@@ -10642,21 +16493,39 @@ class Handler(BaseHTTPRequestHandler):
                     "telegram_bridge": str(TELEGRAM_BRIDGE),
                     "openai_realtime": True,
                     "realtime_model": REALTIME_MODEL,
-                    "realtime_voice": REALTIME_VOICE,
+                    "realtime_voice": active_realtime_voice(),
+                    "voice_profile": active_voice_profile(),
                 },
             )
             return
         if parsed.path == "/twilio/voice":
             params = {key: values[-1] for key, values in urllib.parse.parse_qs(parsed.query).items()}
-            write_xml(self, twilio_voice_twiml(self, params))
+            try:
+                response = twilio_voice_twiml(self, params)
+            except Exception as exc:
+                append_memory(
+                    "twilio_voice_twiml_error",
+                    {
+                        "call_sid": params.get("CallSid", ""),
+                        "from": params.get("From", ""),
+                        "to": params.get("To", ""),
+                        "method": "GET",
+                        "error": brief(str(exc), 800),
+                    },
+                )
+                response = twilio_voice_fallback_twiml(self, params, reason=brief(str(exc), 500))
+            write_xml(self, response)
             return
         if parsed.path == "/twilio/status":
             params = {key: values[-1] for key, values in urllib.parse.parse_qs(parsed.query).items()}
-            twilio_status_callback(params)
+            run_background_task("twilio-status-callback", twilio_status_callback, params)
             write_text(self, "", content_type="text/plain; charset=utf-8")
             return
         if parsed.path == "/twilio/health":
-            write_json(self, {"ok": True, "service": "kim_twilio", "version": APP_VERSION})
+            write_json(self, {"ok": True, "service": "kim_twilio", "version": APP_VERSION, "realtime": twilio_realtime_health_status()})
+            return
+        if parsed.path == "/twilio/realtime-health":
+            write_json(self, {"ok": True, "service": "kim_twilio_realtime", "version": APP_VERSION, "realtime": twilio_realtime_health_status()})
             return
         if parsed.path == "/api/openai-status":
             model = openai_json(f"/models/{REALTIME_MODEL}")
@@ -10666,15 +16535,33 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True,
                     "configured": True,
                     "model": model.get("id", REALTIME_MODEL),
-                    "realtime_voice": REALTIME_VOICE,
+                    "realtime_voice": active_realtime_voice(),
+                    "voice_profile": active_voice_profile(),
                 },
             )
+            return
+        if parsed.path == "/api/voice-profile":
+            write_json(self, {"ok": True, "profile": active_voice_profile(), "options": KIM_VOICE_OPTIONS})
             return
         if parsed.path == "/api/context":
             write_json(self, load_context_bundle())
             return
         if parsed.path == "/api/api-bridge/status":
             write_json(self, {"ok": True, "status": api_bridge_config_status(live=True)})
+            return
+        if parsed.path == "/api/schedules":
+            params = urllib.parse.parse_qs(parsed.query)
+            write_json(
+                self,
+                {
+                    "ok": True,
+                    "timezone": DEFAULT_SCHEDULER_TIMEZONE,
+                    "schedules": list_scheduled_actions(
+                        status=(params.get("status") or [""])[0],
+                        limit=int((params.get("limit") or ["100"])[0] or 100),
+                    ),
+                },
+            )
             return
         if parsed.path == "/api/gmail/status":
             write_json(self, {"ok": True, "status": gmail_status(live=True)})
@@ -10707,6 +16594,43 @@ class Handler(BaseHTTPRequestHandler):
             session_id = (params.get("session_id") or [""])[0]
             write_json(self, {"ok": True, "conversation": load_conversation(session_id)})
             return
+        if parsed.path == "/api/person-context":
+            params = urllib.parse.parse_qs(parsed.query)
+            query = (params.get("query") or params.get("q") or params.get("name") or [""])[0]
+            limit = int((params.get("limit") or ["1"])[0] or 1)
+            write_json(self, person_context_supervision_payload(query=query, limit=limit))
+            return
+        if parsed.path == "/api/whatsapp/threads":
+            params = urllib.parse.parse_qs(parsed.query)
+            write_json(
+                self,
+                whatsapp_threads_report(
+                    limit=(params.get("limit") or ["8"])[0],
+                    thread_id=(params.get("thread_id") or [""])[0],
+                    phone=(params.get("phone") or params.get("from") or [""])[0],
+                ),
+            )
+            return
+        if parsed.path == "/api/notifications":
+            params = urllib.parse.parse_qs(parsed.query)
+            limit = int((params.get("limit") or ["25"])[0] or 25)
+            write_json(self, {"ok": True, "notifications": list_kim_live_notifications(limit=limit)})
+            return
+        if parsed.path == "/api/whatsapp-summary":
+            params = urllib.parse.parse_qs(parsed.query)
+            limit = int((params.get("limit") or ["12"])[0] or 12)
+            rows = list_whatsapp_thread_summaries(limit=limit)
+            write_json(
+                self,
+                {
+                    "ok": True,
+                    "generated_at": now_iso(),
+                    "count": len(rows),
+                    "overview": whatsapp_overview_text(limit=limit),
+                    "threads": rows,
+                },
+            )
+            return
         if parsed.path == "/api/memory-analytics":
             write_json(self, memory_analytics())
             return
@@ -10718,7 +16642,7 @@ class Handler(BaseHTTPRequestHandler):
             )
             append_memory(
                 "realtime_token_minted",
-                {"model": REALTIME_MODEL, "voice": REALTIME_VOICE},
+                {"model": REALTIME_MODEL, "voice": active_realtime_voice()},
             )
             write_json(self, token)
             return
@@ -10765,7 +16689,20 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/twilio/voice":
                 params = read_form(self)
-                write_xml(self, twilio_voice_twiml(self, params))
+                try:
+                    response = twilio_voice_twiml(self, params)
+                except Exception as exc:
+                    append_memory(
+                        "twilio_voice_twiml_error",
+                        {
+                            "call_sid": params.get("CallSid", ""),
+                            "from": params.get("From", ""),
+                            "to": params.get("To", ""),
+                            "error": brief(str(exc), 800),
+                        },
+                )
+                    response = twilio_voice_fallback_twiml(self, params, reason=brief(str(exc), 500))
+                write_xml(self, response)
                 return
             if parsed.path == "/twilio/gather":
                 params = read_form(self)
@@ -10773,7 +16710,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/twilio/status":
                 params = read_form(self)
-                twilio_status_callback(params)
+                run_background_task("twilio-status-callback", twilio_status_callback, params)
                 write_text(self, "", content_type="text/plain; charset=utf-8")
                 return
             if parsed.path == "/twilio/sms":
@@ -10793,7 +16730,7 @@ class Handler(BaseHTTPRequestHandler):
                 answer_sdp = openai_realtime_call(offer_sdp)
                 append_memory(
                     "realtime_call_started",
-                    {"model": REALTIME_MODEL, "voice": REALTIME_VOICE, "transport": "unified"},
+                    {"model": REALTIME_MODEL, "voice": active_realtime_voice(), "transport": "unified"},
                 )
                 write_text(self, answer_sdp, content_type="application/sdp")
                 return
@@ -10809,6 +16746,24 @@ class Handler(BaseHTTPRequestHandler):
                 write_json(self, {"ok": True})
                 return
             body = read_body(self)
+            if parsed.path == "/api/bifrost-export":
+                validate_bifrost_export_authorization(
+                    pin=body.get("pin", ""),
+                    phrase=body.get("phrase", ""),
+                )
+                result = create_bifrost_export_zip(label=body.get("label", "Kim Live secure export"))
+                write_json(self, result)
+                return
+            if parsed.path == "/api/voice-profile":
+                profile = save_voice_profile(body)
+                write_json(self, {"ok": True, "profile": profile, "options": KIM_VOICE_OPTIONS})
+                return
+            if parsed.path == "/api/voice-preview":
+                voice = str(body.get("voice") or active_tts_voice()).strip()
+                text = str(body.get("text") or "Hola, soy Kim. Esta es una prueba breve de mi voz.").strip()
+                audio = generate_whatsapp_reply_audio(brief(text, 420), "VOICE-PREVIEW-" + secrets.token_hex(3).upper(), voice=voice)
+                write_json(self, {"ok": True, "audio": audio, "voice": voice_option(voice)})
+                return
             if parsed.path == "/api/say":
                 text = body.get("text", "")
                 speak(text)
@@ -10872,6 +16827,10 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 write_json(self, {"ok": True, "result": result})
                 return
+            if parsed.path == "/api/schedules/cancel":
+                result = cancel_scheduled_action(body.get("scheduled_action_id") or body.get("schedule_id") or body.get("id"))
+                write_json(self, {"ok": True, "result": result})
+                return
             if parsed.path == "/api/portfolio":
                 try:
                     result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
@@ -10902,6 +16861,21 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 write_json(self, {"ok": True, "result": result})
                 return
+            if parsed.path == "/api/person-context":
+                result = person_context_supervision_payload(
+                    query=body.get("query") or body.get("name") or body.get("text") or "",
+                    limit=body.get("limit", 1),
+                )
+                write_json(self, {"ok": True, "result": result})
+                return
+            if parsed.path == "/api/whatsapp/threads":
+                result = whatsapp_threads_report(
+                    limit=body.get("limit", 8),
+                    thread_id=body.get("thread_id") or body.get("id") or "",
+                    phone=body.get("phone") or body.get("from") or "",
+                )
+                write_json(self, {"ok": True, "result": result})
+                return
             if parsed.path == "/api/conversation-review":
                 result = conversation_review(
                     text=body.get("text", ""),
@@ -10925,6 +16899,8 @@ class Handler(BaseHTTPRequestHandler):
                 write_json(self, {"ok": True, "service": OPENAI_KEYCHAIN_SERVICE})
                 return
             self.send_error(404)
+        except (BrokenPipeError, ConnectionResetError):
+            return
         except Exception as exc:
             write_json(self, {"ok": False, "error": str(exc)}, status=500)
 

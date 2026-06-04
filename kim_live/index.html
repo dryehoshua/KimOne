@@ -56,6 +56,10 @@
       gap: 16px;
     }
 
+    header > div {
+      min-width: 0;
+    }
+
     h1,
     h2,
     h3,
@@ -98,6 +102,29 @@
       white-space: nowrap;
     }
 
+    header .pill {
+      max-width: 48vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #appVersion,
+    .public-version {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      margin-left: 6px;
+      border: 1px solid #cbd5dc;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #ffffff;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 750;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
     main {
       min-height: 0;
       padding: 18px;
@@ -117,7 +144,9 @@
     .control-panel {
       display: grid;
       grid-template-rows: auto auto auto minmax(0, 1fr);
-      overflow: hidden;
+      overflow: auto;
+      align-content: start;
+      scrollbar-gutter: stable;
     }
 
     .kim-stage {
@@ -138,17 +167,134 @@
       width: 124px;
       height: 124px;
       border-radius: 8px;
-      background: #f0f7f6;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.18), transparent 28%),
+        linear-gradient(145deg, #061614, #123f3c 48%, #d9eeea);
       border: 1px solid #cfe2df;
       display: grid;
       place-items: center;
       overflow: hidden;
+      position: relative;
+      isolation: isolate;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.34),
+        0 12px 30px rgba(15, 118, 110, 0.16);
     }
 
-    .portrait svg {
-      width: 124px;
-      height: 124px;
-      display: block;
+    .portrait::before,
+    .portrait::after {
+      content: "";
+      position: absolute;
+      inset: -18%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .portrait::before {
+      background:
+        linear-gradient(90deg, rgba(196, 255, 246, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(196, 255, 246, 0.06) 1px, transparent 1px),
+        radial-gradient(circle at 44% 28%, rgba(139, 255, 235, 0.28), transparent 28%),
+        radial-gradient(circle at 72% 70%, rgba(255, 255, 255, 0.18), transparent 24%);
+      background-size: 18px 18px, 18px 18px, auto, auto;
+      animation: kimPortraitDrift 12s ease-in-out infinite;
+      opacity: 0.82;
+    }
+
+    .portrait::after {
+      background:
+        linear-gradient(115deg, transparent 0 44%, rgba(255,255,255,0.28) 48%, transparent 54%),
+        linear-gradient(180deg, transparent 0 60%, rgba(5, 24, 22, 0.34) 100%);
+      mix-blend-mode: screen;
+      animation: kimPortraitSweep 5.8s ease-in-out infinite;
+      opacity: 0.58;
+    }
+
+    .kim-avatar-image {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 48%;
+      transform: scale(1.16) translateY(1px);
+      filter: saturate(1.04) contrast(1.03);
+      animation: kimAvatarIdle 7.5s ease-in-out infinite;
+    }
+
+    .kim-avatar-glow {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background:
+        radial-gradient(circle at 50% 39%, transparent 0 26%, rgba(129, 243, 226, 0.12) 28%, transparent 56%),
+        radial-gradient(circle at 50% 63%, transparent 0 38%, rgba(255, 255, 255, 0.18) 40%, transparent 58%),
+        linear-gradient(180deg, transparent 0 64%, rgba(7, 32, 30, 0.48));
+      pointer-events: none;
+    }
+
+    .kim-speech-field {
+      position: absolute;
+      z-index: 4;
+      left: 14px;
+      right: 14px;
+      bottom: 10px;
+      height: 22px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 4px;
+      pointer-events: none;
+      opacity: 0.42;
+    }
+
+    .kim-speech-field i {
+      width: 3px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(204, 255, 246, 0.86);
+      box-shadow: 0 0 10px rgba(94, 234, 212, 0.46);
+      transform-origin: bottom;
+    }
+
+    .kim-speech-field i:nth-child(2) { height: 12px; }
+    .kim-speech-field i:nth-child(3) { height: 16px; }
+    .kim-speech-field i:nth-child(4) { height: 10px; }
+    .kim-speech-field i:nth-child(5) { height: 14px; }
+
+    body[data-voice-state="listening"] .kim-avatar-image,
+    body[data-voice-state="speaking"] .kim-avatar-image,
+    body[data-voice-state="working"] .kim-avatar-image {
+      animation-duration: 4.2s;
+    }
+
+    body[data-voice-state="speaking"] .kim-speech-field,
+    body[data-voice-state="listening"] .kim-speech-field {
+      opacity: 0.9;
+    }
+
+    body[data-voice-state="speaking"] .kim-speech-field i,
+    body[data-voice-state="listening"] .kim-speech-field i {
+      animation: kimSignalVoice 0.82s ease-in-out infinite alternate;
+    }
+
+    body[data-voice-state="speaking"] .kim-speech-field i:nth-child(2) { animation-delay: 0.08s; }
+    body[data-voice-state="speaking"] .kim-speech-field i:nth-child(3) { animation-delay: 0.15s; }
+    body[data-voice-state="speaking"] .kim-speech-field i:nth-child(4) { animation-delay: 0.23s; }
+    body[data-voice-state="speaking"] .kim-speech-field i:nth-child(5) { animation-delay: 0.31s; }
+
+    body[data-voice-state="working"] .portrait::before {
+      animation-duration: 6s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .portrait::before,
+      .portrait::after,
+      .kim-avatar-image,
+      .kim-speech-field i {
+        animation: none !important;
+      }
     }
 
     .kim-meta {
@@ -227,6 +373,27 @@
 
     .wave:nth-child(2) {
       animation-delay: 0.35s;
+    }
+
+    @keyframes kimPortraitDrift {
+      0%, 100% { transform: translate3d(-4px, -3px, 0) scale(1.02); }
+      50% { transform: translate3d(5px, 4px, 0) scale(1.06); }
+    }
+
+    @keyframes kimPortraitSweep {
+      0%, 100% { transform: translateX(-28%) translateY(-8%); opacity: 0.34; }
+      50% { transform: translateX(24%) translateY(6%); opacity: 0.7; }
+    }
+
+    @keyframes kimAvatarIdle {
+      0%, 100% { transform: scale(1.16) translateY(1px); filter: saturate(1.04) contrast(1.03); }
+      45% { transform: scale(1.19) translateY(-1px); filter: saturate(1.1) contrast(1.05); }
+      68% { transform: scale(1.175) translateY(2px); }
+    }
+
+    @keyframes kimSignalVoice {
+      0% { transform: scaleY(0.55); opacity: 0.42; }
+      100% { transform: scaleY(1.28); opacity: 1; }
     }
 
     .wave:nth-child(3) {
@@ -405,6 +572,7 @@
       border-bottom: 1px solid var(--line);
       display: grid;
       gap: 8px;
+      min-width: 0;
     }
 
     .context-card {
@@ -422,6 +590,63 @@
     .context-card strong {
       color: var(--teal-dark);
       font-size: 13px;
+    }
+
+    .bifrost-export-card {
+      background: #ffffff;
+      border-color: #d7dde3;
+    }
+
+    .person-mode-card {
+      background: #ffffff;
+      border-color: #d7dde3;
+    }
+
+    .person-mode-result {
+      color: var(--muted);
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .export-fields {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .export-fields input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 8px 9px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .download-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: var(--teal-dark);
+      background: var(--soft-teal);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .export-status {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .workspace {
@@ -1233,7 +1458,7 @@
 
       .control-panel {
         display: grid;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto auto auto;
         overflow: visible;
       }
 
@@ -1315,7 +1540,12 @@
         grid-template-columns: 1fr 1fr;
       }
 
-      .context-box,
+      .context-box {
+        display: grid;
+        padding: 10px;
+        border-top: 1px solid var(--line);
+      }
+
       .thread-list {
         display: none;
       }
@@ -1433,6 +1663,11 @@
         padding: 6px 8px;
       }
 
+      #appVersion {
+        margin-left: 0;
+        margin-top: 4px;
+      }
+
       main {
         padding: 8px;
         gap: 8px;
@@ -1547,6 +1782,7 @@
         <div class="landing-brand">
           <span class="brand-mark">K</span>
           <span>Ai People / Kim</span>
+          <span class="public-version" id="publicVersion">v1.5.58</span>
         </div>
         <small>Intelligent reception, operational memory, and AI agents for teams that execute.</small>
       </nav>
@@ -1602,7 +1838,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.23</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.58</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1612,23 +1848,11 @@
       <section class="kim-stage" aria-label="Kim Live">
         <div class="portrait-wrap">
           <div class="portrait" aria-label="Imagen de Kim">
-            <svg viewBox="0 0 124 124" role="img" aria-label="Kim, asistente ejecutiva">
-              <rect width="124" height="124" fill="#e7f5f3"/>
-              <circle cx="62" cy="42" r="26" fill="#27272a"/>
-              <path d="M27 112c3-24 18-39 35-39s32 15 35 39" fill="#0f766e"/>
-              <path d="M41 82c5 9 13 14 21 14s16-5 21-14c-4-6-12-10-21-10s-17 4-21 10z" fill="#ffffff"/>
-              <path d="M44 47c0-16 8-27 19-27s19 11 19 27c0 18-9 30-19 30S44 65 44 47z" fill="#f2c8a7"/>
-              <path d="M42 44c6-12 16-18 30-17 8 4 12 10 14 19-4-15-14-26-27-26-11 0-19 8-17 24z" fill="#18181b"/>
-              <path d="M37 49c1-20 11-34 26-34 18 0 29 14 29 35 0 14-5 25-11 31 5-17 1-30-5-39-11 4-23 4-39 7z" fill="#202124"/>
-              <circle cx="54" cy="51" r="2.2" fill="#202124"/>
-              <circle cx="70" cy="51" r="2.2" fill="#202124"/>
-              <path d="M55 63c4 3 10 3 14 0" fill="none" stroke="#8a4b35" stroke-width="2" stroke-linecap="round"/>
-              <path d="M35 112h54l-8-26H43z" fill="#123f3d"/>
-              <path d="M50 89h25l-4 23H54z" fill="#ffffff"/>
-              <path d="M54 92l8 9 8-9" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="94" cy="28" r="7" fill="#be123c"/>
-              <path d="M92 27h4M94 25v4" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+            <img class="kim-avatar-image" src="/assets/kim/kim_avatar_selected_02.png" alt="Kim, asistente digital">
+            <span class="kim-avatar-glow"></span>
+            <span class="kim-speech-field" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i>
+            </span>
           </div>
           <div class="kim-meta">
             <p class="kim-name">Kim</p>
@@ -1677,6 +1901,17 @@
           <div class="level-meter" aria-hidden="true"><span id="micLevel"></span></div>
           <span class="device-state" id="micState">Selecciona el microfono real si Kim no te escucha.</span>
         </div>
+        <div class="device-panel voice-panel" aria-label="Voz de Kim">
+          <label for="voiceSelect">Voz de Kim</label>
+          <select id="voiceSelect">
+            <option value="coral">Coral · alegre</option>
+          </select>
+          <div class="device-actions">
+            <button class="secondary inline-button" id="saveVoice" type="button">Aplicar</button>
+            <button class="secondary inline-button" id="previewVoice" type="button">Probar</button>
+          </div>
+          <span class="device-state" id="voiceState">Voz actual: cargando...</span>
+        </div>
         <button class="secondary" id="save">
           <span class="button-icon">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1710,6 +1945,31 @@
         <div class="context-card">
           <strong id="contextStatus">Cargando contexto BIFROST...</strong>
           <span id="contextSummary">Kim consultara memoria local antes de conversar y pedira confirmacion antes de modificar ClickUp o Notion.</span>
+        </div>
+        <div class="context-card person-mode-card">
+          <strong>Modo persona</strong>
+          <span>Carga una ficha aislada para supervisar llamadas, pendientes y contexto propio.</span>
+          <div class="export-fields">
+            <input id="personModeQuery" type="text" autocomplete="off" placeholder="Naomi, Nomi, Ilian, telefono...">
+          </div>
+          <button class="secondary inline-button" id="loadPersonMode" type="button">Cargar modo</button>
+          <small class="person-mode-result" id="personModeStatus">Sin persona cargada.</small>
+        </div>
+        <div class="context-card">
+          <strong>Notificaciones Kim</strong>
+          <span id="kimNotificationStatus">Sin alertas nuevas.</span>
+        </div>
+        <div class="context-card bifrost-export-card">
+          <strong>Respaldo BIFROST</strong>
+          <span>Genera un ZIP temporal para migrar memoria, docs, CRM y codigo. Requiere PIN y frase.</span>
+          <div class="export-fields">
+            <input id="bifrostExportPin" type="password" autocomplete="one-time-code" placeholder="PIN de seguridad">
+            <input id="bifrostExportPhrase" type="password" autocomplete="off" placeholder="Frase de seguridad">
+          </div>
+          <button class="secondary inline-button" id="prepareBifrostExport" type="button">Generar descarga</button>
+          <a class="download-link" id="bifrostDownloadLink" href="#" download hidden>Descargar BIFROST</a>
+          <a class="download-link" id="bifrostManifestLink" href="#" download hidden>Descargar manifest JSON</a>
+          <small class="export-status" id="bifrostExportStatus">El enlace expira en 30 minutos y permite hasta 5 descargas.</small>
         </div>
       </section>
 
@@ -1856,6 +2116,8 @@
     let apiToneTimer = null;
     let tradingViewScriptPromise = null;
     let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
+    let voiceOptions = [];
+    let activeVoiceProfile = null;
     let micTestStream = null;
     let autoSaveTimer = null;
     let autoSaveInFlight = false;
@@ -1898,6 +2160,19 @@
       return transcript.value.trim();
     }
 
+    function formatBytes(bytes) {
+      const value = Number(bytes || 0);
+      if (!value) return "0 B";
+      const units = ["B", "KB", "MB", "GB"];
+      let size = value;
+      let unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size = size / 1024;
+        unitIndex += 1;
+      }
+      return size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1) + " " + units[unitIndex];
+    }
+
     async function post(path, payload) {
       const response = await fetch(path, {
         method: "POST",
@@ -1907,6 +2182,65 @@
       const data = await response.json();
       if (!data.ok) throw new Error(data.error || "Error");
       return data;
+    }
+
+    function renderVoiceProfile(data) {
+      voiceOptions = data.options || [];
+      activeVoiceProfile = data.profile || {};
+      const select = $("voiceSelect");
+      select.innerHTML = "";
+      voiceOptions.forEach((option) => {
+        const item = document.createElement("option");
+        item.value = option.id;
+        item.textContent = option.label + " · " + (option.mood || option.id) + (option.recommended ? " · recomendada" : "");
+        select.appendChild(item);
+      });
+      select.value = activeVoiceProfile.voice || "coral";
+      $("voiceState").textContent = "Voz actual: " + (activeVoiceProfile.label || select.value) + " · " + (activeVoiceProfile.mood || "lista");
+    }
+
+    async function loadVoiceProfile() {
+      try {
+        const response = await fetch("/api/voice-profile", {cache: "no-store"});
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || "No pude leer voces.");
+        renderVoiceProfile(data);
+      } catch (error) {
+        $("voiceState").textContent = "No pude cargar selector de voz.";
+      }
+    }
+
+    async function saveVoiceProfile() {
+      const voice = $("voiceSelect").value || "coral";
+      $("voiceState").textContent = "Aplicando voz...";
+      try {
+        const data = await post("/api/voice-profile", {voice});
+        renderVoiceProfile(data);
+        setStatus("Voz de Kim actualizada a " + (data.profile.label || voice) + ".", conversationActive ? "listening" : "idle");
+      } catch (error) {
+        $("voiceState").textContent = "No pude aplicar voz: " + error.message;
+      }
+    }
+
+    async function previewVoiceProfile() {
+      const voice = $("voiceSelect").value || "coral";
+      $("voiceState").textContent = "Generando prueba de voz...";
+      try {
+        const data = await post("/api/voice-preview", {
+          voice,
+          text: "Hola, soy Kim. Esta es una prueba breve de mi voz: mas alegre, femenina y cercana."
+        });
+        const audioUrl = data.audio && data.audio.url;
+        if (!audioUrl) throw new Error("No llego URL de audio.");
+        $("voiceState").textContent = "Reproduciendo prueba: " + (data.voice.label || voice);
+        const player = new Audio(audioUrl);
+        player.play().catch(() => {
+          $("voiceState").textContent = "Prueba generada. Abre el audio si el navegador bloqueo autoplay.";
+          appendMessage("Kim", "Prueba de voz lista: " + audioUrl, "kim");
+        });
+      } catch (error) {
+        $("voiceState").textContent = "No pude probar voz: " + error.message;
+      }
     }
 
     function renderPendingApiAction(action) {
@@ -2169,6 +2503,58 @@
       return message;
     }
 
+    function speakerTypeFromLabel(label) {
+      const safe = (label || "").trim().toLowerCase();
+      if (!safe) return "kim";
+      if (safe.startsWith("dr.") || safe.startsWith("doctor") || safe.startsWith("arturo")) return "user";
+      if (safe.startsWith("codex")) return "codex";
+      if (safe.startsWith("kim")) return "kim";
+      return "kim";
+    }
+
+    function parseTranscriptMessages(text) {
+      const normalized = (text || "").replace(/\r\n?/g, "\n").trim();
+      if (!normalized) return [];
+      const rows = normalized.split("\n");
+      const messages = [];
+      const speakerPattern = /^([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 ._-]{2,40}):\s*(.*)$/;
+      let activeSpeaker = "";
+      let activeLines = [];
+      const flush = () => {
+        const body = activeLines.join("\n").trim();
+        if (!activeSpeaker || !body) return;
+        messages.push({
+          speaker: activeSpeaker,
+          text: body,
+          type: speakerTypeFromLabel(activeSpeaker),
+        });
+      };
+      for (const row of rows) {
+        const clean = row.trimEnd();
+        const match = clean.match(speakerPattern);
+        if (match) {
+          flush();
+          activeSpeaker = match[1].trim();
+          activeLines = [match[2] || ""];
+          continue;
+        }
+        if (!activeSpeaker && clean.trim()) {
+          activeSpeaker = "Kim";
+        }
+        activeLines.push(clean);
+      }
+      flush();
+      return messages;
+    }
+
+    function renderTranscriptMessages(text) {
+      const messages = parseTranscriptMessages(text);
+      for (const item of messages) {
+        appendMessage(item.speaker, item.text, item.type, false);
+      }
+      return messages.length;
+    }
+
     function normalizeTradingViewSymbol(value) {
       return (value || "BINANCE:BTCUSDT").trim().toUpperCase().replace(/\s+/g, "");
     }
@@ -2332,9 +2718,14 @@
         autoSaveEnabled = false;
         appendMessage("Kim", "Resumen guardado:\n" + (record.summary || "Sin resumen disponible."), "kim", false);
         transcript.value = record.transcript || "";
+        const renderedMessages = renderTranscriptMessages(transcript.value);
+        if (!renderedMessages && transcript.value.trim()) {
+          appendMessage("Kim", "Transcripcion recuperada en compilado, pero no pude reconstruirla como burbujas.", "kim", false);
+        }
         lastPersistedTranscript = currentTranscriptText();
         updateLineCount();
         setStatus("Conversacion cargada.", "idle");
+        focusWorkspaceOnMobile();
       } catch (error) {
         setStatus("No pude abrir historial: " + error.message, "idle");
       }
@@ -2607,6 +2998,71 @@
       }
     }
 
+    function summarizePersonMode(result) {
+      const people = result.people || [];
+      if (!people.length) return "No encontre una ficha para esa persona.";
+      const person = people[0];
+      const pending = (person.pending || []).slice(0, 3).join(" | ") || "sin pendientes sintetizados";
+      const company = (person.companies || []).join(", ") || "sin empresa";
+      const phone = (person.phones || []).join(", ") || "sin telefono";
+      const calls = (person.calls || []).length;
+      return "Modo " + person.display_name + " cargado.\n"
+        + "Empresa: " + company + "\n"
+        + "Telefono: " + phone + "\n"
+        + "Pendientes: " + pending + "\n"
+        + "Llamadas/interacciones con transcript: " + calls + "\n"
+        + "Ruta: " + (person.markdown_path || "sin ruta");
+    }
+
+    async function loadPersonMode(query, callId = null) {
+      const q = (query || $("personModeQuery").value || "").trim();
+      if (!q) {
+        $("personModeQuery").focus();
+        return {error: "Falta nombre o telefono."};
+      }
+      $("personModeStatus").textContent = "Cargando modo " + q + "...";
+      $("apiBridgeState").textContent = "crm / person_context";
+      try {
+        const data = await post("/api/person-context", {query: q, limit: 1});
+        const result = data.result || data;
+        const summary = summarizePersonMode(result);
+        $("personModeStatus").textContent = summary;
+        appendMessage("Codex", summary + "\n\n" + JSON.stringify(result.people?.[0] || {}, null, 2).slice(0, 1800), "codex", false);
+        if (callId) sendRealtimeToolOutput(callId, result);
+        return result;
+      } catch (error) {
+        const payload = {error: error.message, query: q};
+        $("personModeStatus").textContent = "No pude cargar modo: " + error.message;
+        appendMessage("Codex", "No pude cargar modo persona: " + error.message, "codex", false);
+        if (callId) sendRealtimeToolOutput(callId, payload);
+        return payload;
+      }
+    }
+
+    async function runWhatsappThreadsTool(args, callId = null) {
+      const payload = {
+        limit: args.limit || 8,
+        thread_id: args.thread_id || "",
+        phone: args.phone || args.from || ""
+      };
+      try {
+        const data = await post("/api/whatsapp/threads", payload);
+        const result = data.result || data;
+        const first = (result.threads || [])[0];
+        const summary = "WhatsApp: " + (result.count || 0) + " hilo(s), mostrando " + (result.returned || 0)
+          + (first ? ". Primero: " + (first.display_name || first.phone || first.thread_id) : ".");
+        $("apiBridgeState").textContent = "WhatsApp: " + (result.returned || 0);
+        appendMessage("Codex", summary + "\n\n" + JSON.stringify(result, null, 2).slice(0, 2200), "codex", false);
+        if (callId) sendRealtimeToolOutput(callId, result);
+        return result;
+      } catch (error) {
+        const failure = {error: error.message, tool: "kim_whatsapp_threads"};
+        appendMessage("Codex", "No pude leer hilos de WhatsApp: " + error.message, "codex", false);
+        if (callId) sendRealtimeToolOutput(callId, failure);
+        return failure;
+      }
+    }
+
     async function reviewConversationForActions(options = {}) {
       if (autoReviewInFlight) return null;
       const text = currentTranscriptText();
@@ -2687,6 +3143,12 @@
       }
       if (name === "kim_memory_search") {
         await runMemorySearchTool(args, callId);
+      }
+      if (name === "kim_person_context") {
+        await loadPersonMode(args.query || args.name || args.person || "", callId);
+      }
+      if (name === "kim_whatsapp_threads") {
+        await runWhatsappThreadsTool(args, callId);
       }
     }
 
@@ -2969,6 +3431,14 @@
 
     $("save").onclick = () => saveCurrentConversation();
 
+    $("loadPersonMode").onclick = () => loadPersonMode();
+    $("personModeQuery").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        loadPersonMode();
+      }
+    });
+
     async function uploadSingleFile(file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -3085,6 +3555,45 @@
       $("apiBridgeState").textContent = "Accion descartada en pantalla";
     };
 
+    $("prepareBifrostExport").onclick = async () => {
+      const pin = $("bifrostExportPin").value.trim();
+      const phrase = $("bifrostExportPhrase").value.trim();
+      $("bifrostDownloadLink").hidden = true;
+      $("bifrostDownloadLink").removeAttribute("href");
+      $("bifrostManifestLink").hidden = true;
+      $("bifrostManifestLink").removeAttribute("href");
+      if (!pin || !phrase) {
+        $("bifrostExportStatus").textContent = "Escribe PIN y frase para generar el respaldo.";
+        return;
+      }
+      $("prepareBifrostExport").disabled = true;
+      $("bifrostExportStatus").textContent = "Generando ZIP temporal de BIFROST...";
+      setStatus("Preparando descarga segura de BIFROST...", "working");
+      try {
+        const data = await post("/api/bifrost-export", {
+          pin,
+          phrase,
+          label: "Kim Live UI export"
+        });
+        $("bifrostExportPin").value = "";
+        $("bifrostExportPhrase").value = "";
+        $("bifrostDownloadLink").href = data.download_url;
+        $("bifrostDownloadLink").download = data.filename || "BIFROST.zip";
+        $("bifrostDownloadLink").textContent = "Descargar " + (data.filename || "BIFROST.zip") + " (" + formatBytes(data.size_bytes) + ")";
+        $("bifrostDownloadLink").hidden = false;
+        $("bifrostManifestLink").href = data.manifest_url;
+        $("bifrostManifestLink").download = data.manifest_filename || "BIFROST_EXPORT_MANIFEST.json";
+        $("bifrostManifestLink").textContent = "Descargar " + (data.manifest_filename || "BIFROST_EXPORT_MANIFEST.json");
+        $("bifrostManifestLink").hidden = false;
+        $("bifrostExportStatus").textContent = "Listo: " + (data.source_file_count || 0) + " archivos. SHA-256: " + (data.sha256 || "").slice(0, 12) + "... El enlace expira en 30 minutos.";
+      } catch (error) {
+        $("bifrostExportStatus").textContent = error.message;
+      } finally {
+        $("prepareBifrostExport").disabled = false;
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    };
+
     $("execute").onclick = async () => {
       const text = transcript.value.trim();
       if (!text) {
@@ -3138,6 +3647,8 @@
     };
     $("refreshMics").onclick = refreshMicrophones;
     $("testMic").onclick = testMicrophoneLevel;
+    $("saveVoice").onclick = saveVoiceProfile;
+    $("previewVoice").onclick = previewVoiceProfile;
     $("micSelect").addEventListener("change", () => {
       selectedMicDeviceId = $("micSelect").value;
       if (selectedMicDeviceId) {
@@ -3279,6 +3790,25 @@
       }
     }
 
+    async function refreshKimNotifications() {
+      const target = $("kimNotificationStatus");
+      if (!target) return;
+      try {
+        const response = await fetch("/api/notifications?limit=5", {cache: "no-store"});
+        const data = await response.json();
+        if (!data.ok) return;
+        const items = data.notifications || [];
+        if (!items.length) {
+          target.textContent = "Sin alertas nuevas.";
+          return;
+        }
+        const latest = items[0];
+        target.textContent = (latest.severity || "info").toUpperCase() + ": " + (latest.title || "Notificacion") + " · " + (latest.body || latest.at || "");
+      } catch (error) {
+        target.textContent = "No pude cargar notificaciones.";
+      }
+    }
+
     async function initializeApp() {
       if (appInitialized) return;
       appInitialized = true;
@@ -3287,10 +3817,14 @@
         .then((data) => {
           $("mode").textContent = data.mode + " v" + (data.version || "1.5.24");
           $("appVersion").textContent = "v" + (data.version || "1.5.24");
+          if ($("publicVersion")) $("publicVersion").textContent = "v" + (data.version || "1.5.24");
         })
         .catch(() => {
           $("mode").textContent = "Sin conexion local";
         });
+      refreshKimNotifications();
+      setInterval(refreshKimNotifications, 30000);
+      loadVoiceProfile();
 
       fetch("/api/context")
         .then((r) => r.json())
@@ -3325,6 +3859,12 @@
       try {
         const response = await fetch("/api/auth/status", {cache: "no-store"});
         const data = await response.json();
+        if (data.version && $("publicVersion")) {
+          $("publicVersion").textContent = "v" + data.version;
+        }
+        if (data.version && $("appVersion")) {
+          $("appVersion").textContent = "v" + data.version;
+        }
         if (data.authenticated) {
           setAuthState("authenticated");
           await initializeApp();
