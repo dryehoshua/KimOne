@@ -1,0 +1,96 @@
+{
+  "portfolio_id": "sr_eli_2026",
+  "portfolio_label": "A",
+  "standard_version": "KIM-0087",
+  "updated_at": "2026-06-02",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: respeta KIM-0085/KIM-0086 y usa este archivo antes que conversaciones viejas o reportes anteriores.",
+  "identifier_prefix": "A",
+  "credit_mark": "(c)",
+  "credit_symbols": [
+    "APTUSDT",
+    "DOTUSDT",
+    "TRUMPUSDT",
+    "PEPEUSDT",
+    "HBARUSDT"
+  ],
+  "credit_amounts": {
+    "LUNCUSDT": 800,
+    "APTUSDT": 1800,
+    "DOTUSDT": 1800,
+    "TRUMPUSDT": 1800,
+    "PEPEUSDT": 1800,
+    "HBARUSDT": 1800
+  },
+  "manual_entries": [
+    {
+      "symbol": "APTUSDT",
+      "state": "active",
+      "order": 6,
+      "label": "APT/USDT",
+      "invested_usd": 1800,
+      "entry_price": 0.99,
+      "credit": true,
+      "notes": "Regla manual del doctor: usar APT 0.99 como orden canonica mientras se reconcilia el ledger viejo con APT 1.99."
+    },
+    {
+      "symbol": "HBARUSDT",
+      "state": "active",
+      "order": 10,
+      "label": "HBAR/USDT",
+      "invested_usd": 1800,
+      "entry_price": 0.09009,
+      "notes": "HBAR ya ejecutada; no reportarla como pendiente."
+    },
+    {
+      "symbol": "PEPEUSDT",
+      "state": "active",
+      "order": 9,
+      "label": "PEPE/USDT",
+      "invested_usd": 2700,
+      "entry_price": 0.000003156434135364,
+      "notes": "KIM-0090: PEPE es A9 aglomerada. Base 1800 USD a 0.00000324 + refuerzo 9.1 / orden fuente 13 de 900 USD a 0.0000030016. Credito visible actual: 1800 USD; los 900 vienen de ajuste/refuerzo y no deben registrarse como venta ni retiro."
+    },
+    {
+      "symbol": "NEARUSDT",
+      "state": "pending",
+      "order": 11,
+      "label": "NEAR/USDT",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 2.25,
+      "notes": "NEAR sigue como orden pendiente A11 en Portafolio A."
+    }
+  ],
+  "suppress_symbols": [],
+  "provider_note": "Se aplicaron reglas manuales del doctor para APT, PEPE, HBAR y NEAR mientras se implementa la reconciliacion completa del ledger.",
+  "doctor_rules": [
+    "Respetar identificadores de orden; no renumerar por moneda.",
+    "Usar portafolio A y prefijos A1, A2, A3...",
+    "Marcar credito con (c) solo donde corresponda; si el credito es parcial, mostrarlo como credito parcial.",
+    "PEPE es A9, HBAR es A10 y NEAR pendiente es A11 hasta que el ledger quede reconciliado.",
+    "LUNC conserva 1000 USD en firme y 800 USD a credito; NEAR sigue en firme hasta que se ejecute.",
+    "Cuando una operacion de la misma moneda se aglomera, el doctor decide el ID canonico que sobrevive; las subordenes quedan como ID.n y el precio de entrada se calcula como costo total dividido entre unidades totales.",
+    "Una correccion de aglomeracion o de precio no es venta, retiro ni devolucion salvo instruccion literal de venta/retiro/devolucion.",
+    "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor."
+  ],
+  "fundamental_report_standard": {
+    "required_sections": [
+      "Resumen ejecutivo",
+      "Estado cuantitativo del Portafolio A",
+      "Catalizadores internacionales",
+      "Catalizadores cripto y narrativas populares",
+      "Catalizadores por activo relevante",
+      "Oportunidades",
+      "Riesgos e invalidaciones",
+      "Fuentes validadas",
+      "Siguiente accion sugerida"
+    ],
+    "source_policy": [
+      "No usar precios recordados ni reportes viejos como precios actuales.",
+      "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
+      "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
+      "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
+      "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos."
+    ]
+  }
+}

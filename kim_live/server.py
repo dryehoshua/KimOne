@@ -230,7 +230,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.67"
+APP_VERSION = "1.5.68"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -416,6 +416,7 @@ COINGECKO_IDS_BY_SYMBOL = {
     "ONDO": "ondo-finance",
     "PEPE": "pepe",
     "SHIB": "shiba-inu",
+    "SOL": "solana",
     "TRUMP": "official-trump",
     "TRX": "tron",
     "WLD": "worldcoin-wld",
@@ -11544,6 +11545,9 @@ def portfolio_cli(action, parameters=None):
         "add_transaction",
         "cancel_transaction",
         "replace_draft_order",
+        "aggregate_order",
+        "agglomerate_order",
+        "agglomerate_orders",
         "set_position",
     }
     spec = importlib.util.spec_from_file_location("kim_portfolio_db", PORTFOLIO_TOOL)
@@ -11675,6 +11679,31 @@ def portfolio_cli(action, parameters=None):
                 rationale=parameters.get("rationale"),
                 reason=parameters.get("reason"),
                 related_consultation_id=parameters.get("related_consultation_id"),
+            )
+        )
+    elif action in {"aggregate_order", "agglomerate_order", "agglomerate_orders"}:
+        members = parameters.get("members") or parameters.get("members_json")
+        if isinstance(members, (dict, list)):
+            members = json.dumps(members, ensure_ascii=False)
+        result = module.aggregate_order(
+            ns(
+                portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                canonical_order=parameters.get("canonical_order") or parameters.get("order_id") or parameters.get("base_order"),
+                symbol=parameters.get("symbol"),
+                label=parameters.get("label"),
+                status=parameters.get("status") or "active",
+                notes=parameters.get("notes"),
+                members=members,
+                member_order=parameters.get("member_order") or parameters.get("sub_order"),
+                source_order=parameters.get("source_order") or parameters.get("from_order"),
+                transaction_id=parameters.get("transaction_id") or parameters.get("id"),
+                role=parameters.get("role") or "reinforcement",
+                amount_usd=parameters.get("amount_usd") or parameters.get("gross_amount") or parameters.get("amount") or parameters.get("usd_amount"),
+                price=parameters.get("price"),
+                quantity=parameters.get("quantity"),
+                include_in_average=not boolish(parameters.get("exclude_from_average")),
+                member_status=parameters.get("member_status") or "active",
+                member_notes=parameters.get("member_notes") or parameters.get("notes"),
             )
         )
     elif action == "set_position":
@@ -14547,7 +14576,12 @@ def realtime_session_config():
                 "como record_consultation; solo registra record_final_change o add_transaction cuando el "
                 "doctor diga que es cambio final, operacion final, compra final, venta final o equivalente. "
                 "Para cancelar o sustituir una orden pendiente, usa replace_draft_order o cancel_transaction; "
-                "no intentes simular una cancelacion creando varias notas sueltas. "
+                "no intentes simular una cancelacion creando varias notas sueltas. Si el doctor dice refuerzo, "
+                "aglomera, promedia, agrega a la misma moneda o conserva una orden principal con subordenes, usa "
+                "kim_portfolio_record action=aggregate_order con canonical_order, symbol y members. El doctor decide "
+                "que ID canonico sobrevive; el promedio se calcula por costo total / unidades totales. Una correccion "
+                "de precio, monto o aglomeracion no es venta, retiro ni devolucion salvo que el doctor diga literalmente "
+                "vendimos, retirar, retiro, devolucion o venta final. "
                 "Para preguntas de memoria o contexto, primero usa kim_memory_search para consultar transcripts "
                 "literales y cita snippets/rutas como fuente primaria; los resumenes son derivados. Usa "
                 "kim_memory_router solo para decidir dominio cuando no sepas si va a portafolio, tareas, CRM, "
@@ -14619,7 +14653,7 @@ def realtime_session_config():
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
-                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report. "
+                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
                                     "Scheduler: schedule_action, list_schedules, cancel_schedule. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
@@ -14674,7 +14708,7 @@ def realtime_session_config():
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "description": "status, summary, client_report, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order o set_position.",
+                                    "description": "status, summary, client_report, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order, aggregate_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -14683,6 +14717,7 @@ def realtime_session_config():
                                     "snapshot_json, analysis, decision, is_final. record_final_change requiere summary. "
                                     "add_transaction requiere symbol y side. cancel_transaction acepta transaction_id o symbol. "
                                     "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount. "
+                                    "aggregate_order requiere canonical_order, symbol y members; members puede incluir member_order, source_order, amount_usd, price y quantity. "
                                     "client_report acepta include_units=true si el doctor las pide; por defecto devuelve "
                                     "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes. "
                                     "fundamental_report genera analisis con fuentes, catalizadores internacionales, narrativas cripto populares, oportunidades y riesgos, sin enviar mensajes por defecto. "
@@ -15342,6 +15377,64 @@ def portfolio_symbol_label(symbol, notes=""):
     return label
 
 
+def portfolio_clean_aggregation_notes(notes):
+    text = str(notes or "").strip()
+    if not text:
+        return ""
+    kept = []
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if line.startswith("AGGREGATION_METADATA:"):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def merge_pending_draft_rows(rows):
+    group = [dict(row) for row in (rows or []) if row]
+    if not group:
+        return None
+    if len(group) == 1:
+        row = dict(group[0])
+        row["draft_suborder_count"] = 1
+        row["draft_suborder_ids"] = [row.get("id")] if row.get("id") else []
+        row["notes"] = portfolio_clean_aggregation_notes(row.get("notes"))
+        return row
+    latest = dict(group[-1])
+    total_gross = 0.0
+    has_gross = False
+    total_quantity = 0.0
+    has_quantity = False
+    deduped_notes = []
+    seen_notes = set()
+    for row in group:
+        gross_amount = row.get("gross_amount")
+        if gross_amount not in (None, ""):
+            total_gross += float(gross_amount)
+            has_gross = True
+        quantity = row.get("quantity")
+        if quantity in (None, "") and gross_amount not in (None, "", 0) and row.get("price") not in (None, "", 0):
+            quantity = float(gross_amount) / float(row.get("price"))
+        if quantity not in (None, ""):
+            total_quantity += float(quantity)
+            has_quantity = True
+        note = portfolio_clean_aggregation_notes(row.get("notes"))
+        if note and note not in seen_notes:
+            deduped_notes.append(note)
+            seen_notes.add(note)
+    merged_price = latest.get("price")
+    if has_gross and has_quantity and total_quantity:
+        merged_price = total_gross / total_quantity
+    merged = dict(latest)
+    merged["gross_amount"] = round(total_gross, 12) if has_gross else latest.get("gross_amount")
+    merged["quantity"] = round(total_quantity, 12) if has_quantity else latest.get("quantity")
+    merged["price"] = round(float(merged_price), 12) if merged_price not in (None, "") else latest.get("price")
+    merged["draft_suborder_count"] = len(group)
+    merged["draft_suborder_ids"] = [row.get("id") for row in group if row.get("id")]
+    merged["notes"] = "\n".join(deduped_notes).strip()
+    return merged
+
+
 def price_variation_pct(entry_price, current_price):
     if entry_price in (None, "", 0) or current_price in (None, ""):
         return None
@@ -15430,6 +15523,8 @@ def portfolio_standard_markdown(payload):
             f"- {item.get('identifier')}. {item.get('label')}: {item.get('invested_usd')} USD "
             f"a {item.get('entry_price_display')}{marker}; estado precio={item.get('price_validation_status')}."
         )
+        if item.get("aggregation_summary"):
+            lines.append(f"  - Aglomeracion: {item.get('aggregation_summary')}.")
     lines.extend(["", "## Ordenes Pendientes"])
     if pending:
         for item in pending:
@@ -15479,6 +15574,8 @@ def portfolio_save_current_standard(summary, report):
             "current_price_display": item.get("current_price_display"),
             "variation_display": item.get("variation_display"),
             "entry_status": item.get("entry_status"),
+            "aggregation": item.get("aggregation"),
+            "aggregation_summary": item.get("aggregation_summary"),
             "notes": item.get("notes"),
         }
 
@@ -15585,6 +15682,150 @@ def portfolio_resolve_credit_breakdown(invested_usd, credit_usd, full_mark="(c)"
         "firm_usd": round_opt(firm, 2),
         "credit_mark": mark,
     }
+
+
+def portfolio_aggregation_member_label(member):
+    order = str((member or {}).get("member_order") or "").strip()
+    source = str((member or {}).get("source_order") or "").strip()
+    role = str((member or {}).get("role") or "").strip()
+    if order and source and order != source:
+        return f"{order} desde {source}"
+    if order:
+        return order
+    if source:
+        return source
+    return role or "suborden"
+
+
+def portfolio_aggregation_summary_text(aggregation):
+    members = aggregation.get("members") or []
+    labels = [portfolio_aggregation_member_label(member) for member in members if member]
+    labels = [label for label in labels if label]
+    if not labels:
+        return "historial de subordenes guardado"
+    return " + ".join(labels)
+
+
+def portfolio_recompute_credit_fields(item, override_config):
+    symbol = str(item.get("symbol") or "").upper()
+    credit_amount_overrides = {
+        str(key or "").upper(): float(value or 0)
+        for key, value in (override_config.get("credit_amounts") or {}).items()
+        if str(key or "").strip()
+    }
+    credit_symbols = {
+        str(symbol_item or "").upper()
+        for symbol_item in override_config.get("credit_symbols", [])
+        if str(symbol_item or "").strip()
+    }
+    invested_usd = float(item.get("invested_usd") or 0)
+    if symbol in credit_amount_overrides:
+        credit_amount = credit_amount_overrides[symbol]
+    elif bool(item.get("credit")) or symbol in credit_symbols:
+        credit_amount = invested_usd
+    else:
+        credit_amount = item.get("credit_usd") or 0
+    credit_mark = str(override_config.get("credit_mark") or "(c)").strip() or "(c)"
+    partial_credit_mark = str(override_config.get("partial_credit_mark") or "(c parcial)").strip() or "(c parcial)"
+    item.update(portfolio_resolve_credit_breakdown(invested_usd, credit_amount, credit_mark, partial_credit_mark))
+    return item
+
+
+def portfolio_apply_order_aggregations(summary, active_items, pending_items, include_units, canonical_order, load_validation, override_config):
+    aggregations = summary.get("order_aggregations") or []
+    if not aggregations:
+        return active_items, pending_items
+    by_symbol_active = {str(item.get("symbol") or "").upper(): item for item in active_items}
+    by_symbol_pending = {str(item.get("symbol") or "").upper(): item for item in pending_items}
+    suppress_pending_symbols = set()
+    for aggregation in aggregations:
+        if str(aggregation.get("status") or "active").lower() != "active":
+            continue
+        symbol = str(aggregation.get("symbol") or "").upper().strip()
+        if not symbol:
+            continue
+        total_amount = aggregation.get("total_amount_usd")
+        average_price = aggregation.get("weighted_average_price")
+        total_quantity = aggregation.get("total_quantity")
+        if total_amount in (None, ""):
+            continue
+        if average_price in (None, "") and total_quantity not in (None, "", 0):
+            average_price = float(total_amount) / float(total_quantity)
+        if total_quantity in (None, "") and average_price not in (None, "", 0):
+            total_quantity = float(total_amount) / float(average_price)
+        target = by_symbol_active.get(symbol)
+        state = "active"
+        if target is None:
+            target = by_symbol_pending.get(symbol)
+            state = "pending"
+        if target is None:
+            validation = load_validation(symbol)
+            current_price = validation.get("reference_price")
+            approved = bool(validation.get("approved_for_client_report"))
+            current_value_usd = (float(total_quantity) * float(current_price)) if approved and total_quantity else None
+            unrealized_pnl_usd = (current_value_usd - float(total_amount)) if current_value_usd is not None else None
+            target = {
+                "symbol": symbol,
+                "label": str(aggregation.get("label") or portfolio_symbol_label(symbol)).strip() or portfolio_symbol_label(symbol),
+                "current_price": round_price(current_price) if approved else None,
+                "current_price_display": validation.get("reference_price_display") if approved else None,
+                "price_validation_status": validation.get("status"),
+                "approved_for_client_report": approved,
+                "current_value_usd": round_opt(current_value_usd, 2),
+                "unrealized_pnl_usd": round_opt(unrealized_pnl_usd, 2),
+                "unrealized_pnl_display": signed_usd_text(unrealized_pnl_usd),
+                "sources": ["order_aggregation"],
+                "transaction_ids": [],
+            }
+            active_items.append(target)
+            by_symbol_active[symbol] = target
+            state = "active"
+        current_price = target.get("current_price")
+        approved = bool(target.get("approved_for_client_report"))
+        variation_pct = price_variation_pct(average_price, current_price if approved else None)
+        current_value_usd = (float(total_quantity) * float(current_price)) if approved and total_quantity else None
+        unrealized_pnl_usd = (current_value_usd - float(total_amount)) if current_value_usd is not None else None
+        target.update(
+            {
+                "invested_usd": round_opt(total_amount, 2),
+                "entry_price": round_price(average_price),
+                "entry_price_display": format_price(average_price),
+                "variation_pct": round_opt(variation_pct, 2),
+                "variation_display": signed_percent_text(variation_pct),
+                "reference_quantity": round_opt(total_quantity, 8) if include_units and total_quantity else target.get("reference_quantity"),
+                "report_order": aggregation.get("canonical_order") or target.get("report_order"),
+                "aggregation": aggregation,
+                "aggregation_summary": portfolio_aggregation_summary_text(aggregation),
+                "notes": "\n".join(
+                    part
+                    for part in [
+                        str(target.get("notes") or "").strip(),
+                        str(aggregation.get("notes") or "").strip(),
+                    ]
+                    if part
+                ),
+            }
+        )
+        if state == "active":
+            target.update(
+                {
+                    "current_value_usd": round_opt(current_value_usd, 2),
+                    "unrealized_pnl_usd": round_opt(unrealized_pnl_usd, 2),
+                    "unrealized_pnl_display": signed_usd_text(unrealized_pnl_usd),
+                    "merged_with_pending": True,
+                }
+            )
+            suppress_pending_symbols.add(symbol)
+        portfolio_recompute_credit_fields(target, override_config)
+    if suppress_pending_symbols:
+        pending_items = [
+            item
+            for item in pending_items
+            if str(item.get("symbol") or "").upper() not in suppress_pending_symbols
+        ]
+    active_items.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
+    pending_items.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
+    return active_items, pending_items
 
 
 def portfolio_apply_manual_overrides(summary, active_items, pending_items, include_units, canonical_order, load_validation):
@@ -15880,9 +16121,20 @@ def portfolio_client_report(summary, parameters=None):
         if is_preliminary_fill:
             executed_preliminary.append(item)
 
-    pending_items = []
+    grouped_pending_rows = {}
     for tx in sorted(draft_transactions, key=lambda item: sort_key(item.get("symbol"), canonical_order)):
         if draft_row_key(tx) in merged_draft_keys:
+            continue
+        group_key = (
+            str(tx.get("symbol") or "").upper(),
+            str(tx.get("side") or "").upper(),
+        )
+        grouped_pending_rows.setdefault(group_key, []).append(tx)
+
+    pending_items = []
+    for (_symbol, _side), grouped_rows in sorted(grouped_pending_rows.items(), key=lambda item: sort_key(item[0][0], canonical_order)):
+        tx = merge_pending_draft_rows(grouped_rows)
+        if not tx:
             continue
         symbol = str(tx.get("symbol") or "").upper()
         validation = load_validation(symbol)
@@ -15908,6 +16160,8 @@ def portfolio_client_report(summary, parameters=None):
             "reference_quantity": round_opt(tx.get("quantity"), 8) if include_units else None,
             "notes": tx.get("notes") or "",
             "source": tx.get("source") or "",
+            "draft_suborder_count": int(tx.get("draft_suborder_count") or 1),
+            "draft_suborder_ids": tx.get("draft_suborder_ids") or [],
         }
         pending_items.append(item)
 
@@ -15918,6 +16172,15 @@ def portfolio_client_report(summary, parameters=None):
         include_units,
         canonical_order,
         load_validation,
+    )
+    active_items, pending_items = portfolio_apply_order_aggregations(
+        summary,
+        active_items,
+        pending_items,
+        include_units,
+        canonical_order,
+        load_validation,
+        override_config,
     )
     if override_config.get("provider_note"):
         provider_warnings.append(str(override_config.get("provider_note")))
@@ -15950,6 +16213,8 @@ def portfolio_client_report(summary, parameters=None):
             line += " Precio actual no validado. Variación N/D."
         if item.get("merged_with_pending"):
             line += " Refuerzo ya incluido."
+        if item.get("aggregation"):
+            line += f" Aglomeracion: {item.get('aggregation_summary')}."
         if include_units and item.get("reference_quantity") is not None:
             line += f" Unidades de referencia: {item['reference_quantity']}."
         message_lines.append(line)
@@ -15983,6 +16248,8 @@ def portfolio_client_report(summary, parameters=None):
                 )
             else:
                 line += " Precio actual no validado. Estado: precio actual no validado. Variación N/D."
+            if int(item.get("draft_suborder_count") or 1) > 1:
+                line += f" Aglomerada de {int(item.get('draft_suborder_count') or 1)} subórdenes."
             if include_units and item.get("reference_quantity") is not None:
                 line += f" Unidades de referencia: {item['reference_quantity']}."
             message_lines.append(line)

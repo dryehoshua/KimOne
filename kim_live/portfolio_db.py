@@ -125,6 +125,39 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS order_aggregations (
+  id TEXT PRIMARY KEY,
+  portfolio_id TEXT NOT NULL REFERENCES portfolios(id),
+  canonical_order TEXT NOT NULL,
+  symbol TEXT NOT NULL,
+  label TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  weighted_average_price REAL,
+  total_quantity REAL,
+  total_amount_usd REAL,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (portfolio_id, canonical_order)
+);
+
+CREATE TABLE IF NOT EXISTS order_aggregation_members (
+  id TEXT PRIMARY KEY,
+  aggregation_id TEXT NOT NULL REFERENCES order_aggregations(id),
+  transaction_id TEXT REFERENCES transactions(id),
+  member_order TEXT,
+  source_order TEXT,
+  role TEXT NOT NULL DEFAULT 'reinforcement',
+  amount_usd REAL,
+  price REAL,
+  quantity REAL,
+  include_in_average INTEGER NOT NULL DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'active',
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE (aggregation_id, member_order)
+);
+
 CREATE TABLE IF NOT EXISTS market_consultations (
   id TEXT PRIMARY KEY,
   portfolio_id TEXT NOT NULL REFERENCES portfolios(id),
@@ -195,6 +228,19 @@ def now():
 
 def new_id(prefix):
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
+def as_float(value):
+    if value in (None, ""):
+        return None
+    return float(value)
+
+
+def normalize_symbol(symbol):
+    token = str(symbol or "").upper().strip()
+    if token and not token.endswith("USDT") and token.isalpha():
+        return f"{token}USDT"
+    return token
 
 
 def connect():
@@ -329,6 +375,7 @@ No registrar como operacion final hasta que el doctor confirme cantidades, preci
         "market_consultations.jsonl",
         "final_changes.jsonl",
         "transactions.jsonl",
+        "order_aggregations.jsonl",
         "positions.jsonl",
         "snapshots.jsonl",
     ]:
@@ -348,6 +395,8 @@ def status_json():
             "watchlist",
             "positions",
             "transactions",
+            "order_aggregations",
+            "order_aggregation_members",
             "market_consultations",
             "final_changes",
             "portfolio_snapshots",
@@ -382,7 +431,7 @@ def portfolio_summary_json():
     with conn:
         final_rows = conn.execute(
             """
-            SELECT symbol, side, quantity, price, gross_amount, currency, occurred_at, notes
+            SELECT id, symbol, side, quantity, price, gross_amount, currency, occurred_at, source, notes
             FROM transactions
             WHERE portfolio_id = ? AND status = 'final'
             ORDER BY occurred_at, created_at
@@ -391,7 +440,7 @@ def portfolio_summary_json():
         ).fetchall()
         draft_rows = conn.execute(
             """
-            SELECT symbol, side, quantity, price, gross_amount, currency, occurred_at, source, notes
+            SELECT id, symbol, side, quantity, price, gross_amount, currency, occurred_at, source, notes
             FROM transactions
             WHERE portfolio_id = ? AND status = 'draft'
             ORDER BY occurred_at, created_at
@@ -407,30 +456,34 @@ def portfolio_summary_json():
             """,
             (DEFAULT_PORTFOLIO_ID,),
         ).fetchall()
+        aggregations = order_aggregations_json(conn, DEFAULT_PORTFOLIO_ID)
     final_transactions = [
         {
-            "symbol": row[0],
-            "side": row[1],
-            "quantity": row[2],
-            "price": row[3],
-            "gross_amount": row[4],
-            "currency": row[5],
-            "occurred_at": row[6],
-            "notes": row[7],
+            "id": row[0],
+            "symbol": row[1],
+            "side": row[2],
+            "quantity": row[3],
+            "price": row[4],
+            "gross_amount": row[5],
+            "currency": row[6],
+            "occurred_at": row[7],
+            "source": row[8],
+            "notes": row[9],
         }
         for row in final_rows
     ]
     draft_transactions = [
         {
-            "symbol": row[0],
-            "side": row[1],
-            "quantity": row[2],
-            "price": row[3],
-            "gross_amount": row[4],
-            "currency": row[5],
-            "occurred_at": row[6],
-            "source": row[7],
-            "notes": row[8],
+            "id": row[0],
+            "symbol": row[1],
+            "side": row[2],
+            "quantity": row[3],
+            "price": row[4],
+            "gross_amount": row[5],
+            "currency": row[6],
+            "occurred_at": row[7],
+            "source": row[8],
+            "notes": row[9],
         }
         for row in draft_rows
     ]
@@ -458,6 +511,7 @@ def portfolio_summary_json():
         "positions": positions,
         "final_transactions": final_transactions,
         "draft_transactions": draft_transactions,
+        "order_aggregations": aggregations,
     }
 
 
@@ -519,6 +573,267 @@ def record_final_change(args):
         audit(conn, "record_final_change", item)
     write_jsonl(CLIENT_PATH / "final_changes.jsonl", item)
     return {"ok": True, "record": item, "database": str(DB_PATH)}
+
+
+def parse_aggregation_members(args):
+    raw = getattr(args, "members", None) or getattr(args, "members_json", None)
+    if raw:
+        if isinstance(raw, str):
+            members = json.loads(raw)
+        else:
+            members = raw
+        if not isinstance(members, list):
+            raise ValueError("members debe ser una lista JSON.")
+        return members
+    member = {
+        "member_order": getattr(args, "member_order", None),
+        "source_order": getattr(args, "source_order", None),
+        "transaction_id": getattr(args, "transaction_id", None),
+        "role": getattr(args, "role", None) or "reinforcement",
+        "amount_usd": getattr(args, "amount_usd", None),
+        "price": getattr(args, "price", None),
+        "quantity": getattr(args, "quantity", None),
+        "include_in_average": getattr(args, "include_in_average", True),
+        "status": getattr(args, "member_status", None) or "active",
+        "notes": getattr(args, "member_notes", None) or getattr(args, "notes", None),
+    }
+    if not any(member.get(key) not in (None, "") for key in ("member_order", "transaction_id", "amount_usd", "price", "quantity")):
+        return []
+    return [member]
+
+
+def load_transaction_for_member(conn, portfolio_id, transaction_id):
+    if not transaction_id:
+        return None
+    return conn.execute(
+        """
+        SELECT id, symbol, side, quantity, price, gross_amount, status, source, notes
+        FROM transactions
+        WHERE id = ? AND portfolio_id = ?
+        """,
+        (transaction_id, portfolio_id),
+    ).fetchone()
+
+
+def coerce_member_payload(conn, portfolio_id, member):
+    transaction_id = str(member.get("transaction_id") or "").strip() or None
+    tx = load_transaction_for_member(conn, portfolio_id, transaction_id)
+    amount = as_float(member.get("amount_usd") if member.get("amount_usd") not in (None, "") else member.get("gross_amount"))
+    price = as_float(member.get("price"))
+    quantity = as_float(member.get("quantity"))
+    if tx:
+        quantity = quantity if quantity is not None else as_float(tx[3])
+        price = price if price is not None else as_float(tx[4])
+        amount = amount if amount is not None else as_float(tx[5])
+    if quantity is None and amount is not None and price not in (None, 0):
+        quantity = amount / price
+    if amount is None and quantity is not None and price is not None:
+        amount = quantity * price
+    include = member.get("include_in_average", True)
+    if isinstance(include, str):
+        include = include.strip().lower() not in {"0", "false", "no", "off"}
+    return {
+        "id": str(member.get("id") or "").strip() or new_id("aggmem"),
+        "transaction_id": transaction_id,
+        "member_order": str(member.get("member_order") or "").strip() or None,
+        "source_order": str(member.get("source_order") or "").strip() or None,
+        "role": str(member.get("role") or "reinforcement").strip() or "reinforcement",
+        "amount_usd": amount,
+        "price": price,
+        "quantity": quantity,
+        "include_in_average": 1 if include else 0,
+        "status": str(member.get("status") or "active").strip().lower() or "active",
+        "notes": str(member.get("notes") or "").strip(),
+    }
+
+
+def recalculate_order_aggregation(conn, aggregation_id):
+    rows = conn.execute(
+        """
+        SELECT id, member_order, source_order, role, amount_usd, price, quantity, include_in_average, status, notes, transaction_id
+        FROM order_aggregation_members
+        WHERE aggregation_id = ?
+        ORDER BY created_at, member_order
+        """,
+        (aggregation_id,),
+    ).fetchall()
+    total_amount = 0.0
+    priced_amount = 0.0
+    total_quantity = 0.0
+    missing_pricing = []
+    members = []
+    for row in rows:
+        amount = as_float(row[4])
+        price = as_float(row[5])
+        quantity = as_float(row[6])
+        if amount is None and quantity is not None and price is not None:
+            amount = quantity * price
+        if quantity is None and amount is not None and price not in (None, 0):
+            quantity = amount / price
+        active = row[8] == "active" and bool(row[7])
+        if active and amount is not None:
+            total_amount += amount
+        if active and amount is not None and quantity is not None and quantity > 0:
+            priced_amount += amount
+            total_quantity += quantity
+        elif active:
+            missing_pricing.append(row[1] or row[10] or row[0])
+        members.append(
+            {
+                "id": row[0],
+                "member_order": row[1],
+                "source_order": row[2],
+                "role": row[3],
+                "amount_usd": amount,
+                "price": price,
+                "quantity": quantity,
+                "include_in_average": bool(row[7]),
+                "status": row[8],
+                "notes": row[9],
+                "transaction_id": row[10],
+            }
+        )
+    weighted_average = None
+    if not missing_pricing and total_quantity > 0:
+        weighted_average = total_amount / total_quantity
+    elif total_quantity > 0 and priced_amount > 0:
+        weighted_average = priced_amount / total_quantity
+    conn.execute(
+        """
+        UPDATE order_aggregations
+        SET weighted_average_price = ?, total_quantity = ?, total_amount_usd = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (weighted_average, total_quantity or None, total_amount or None, now(), aggregation_id),
+    )
+    return {
+        "weighted_average_price": weighted_average,
+        "total_quantity": total_quantity or None,
+        "total_amount_usd": total_amount or None,
+        "missing_pricing_members": missing_pricing,
+        "members": members,
+    }
+
+
+def order_aggregations_json(conn, portfolio_id=DEFAULT_PORTFOLIO_ID):
+    rows = conn.execute(
+        """
+        SELECT id, portfolio_id, canonical_order, symbol, label, status, weighted_average_price, total_quantity, total_amount_usd, notes, created_at, updated_at
+        FROM order_aggregations
+        WHERE portfolio_id = ?
+        ORDER BY CAST(canonical_order AS REAL), canonical_order
+        """,
+        (portfolio_id,),
+    ).fetchall()
+    aggregations = []
+    for row in rows:
+        recalculated = recalculate_order_aggregation(conn, row[0])
+        aggregations.append(
+            {
+                "id": row[0],
+                "portfolio_id": row[1],
+                "canonical_order": row[2],
+                "symbol": row[3],
+                "label": row[4],
+                "status": row[5],
+                "weighted_average_price": recalculated["weighted_average_price"],
+                "total_quantity": recalculated["total_quantity"],
+                "total_amount_usd": recalculated["total_amount_usd"],
+                "missing_pricing_members": recalculated["missing_pricing_members"],
+                "members": recalculated["members"],
+                "notes": row[9],
+                "created_at": row[10],
+                "updated_at": now(),
+            }
+        )
+    return aggregations
+
+
+def aggregate_order(args):
+    init_db()
+    portfolio_id = getattr(args, "portfolio_id", None) or DEFAULT_PORTFOLIO_ID
+    canonical_order = str(getattr(args, "canonical_order", None) or getattr(args, "order_id", None) or "").strip()
+    symbol = normalize_symbol(getattr(args, "symbol", None))
+    if not canonical_order:
+        raise ValueError("Falta canonical_order para aglomerar la orden.")
+    if not symbol:
+        raise ValueError("Falta symbol para aglomerar la orden.")
+    members = parse_aggregation_members(args)
+    if not members:
+        raise ValueError("Falta al menos un miembro/suborden para aglomerar.")
+    stamp = now()
+    aggregation_id = str(getattr(args, "aggregation_id", None) or "").strip() or new_id("agg")
+    label = str(getattr(args, "label", None) or "").strip() or symbol
+    status = str(getattr(args, "status", None) or "active").strip().lower() or "active"
+    notes = str(getattr(args, "notes", None) or "").strip()
+    conn = connect()
+    with conn:
+        existing = conn.execute(
+            """
+            SELECT id FROM order_aggregations
+            WHERE portfolio_id = ? AND canonical_order = ?
+            """,
+            (portfolio_id, canonical_order),
+        ).fetchone()
+        if existing:
+            aggregation_id = existing[0]
+        conn.execute(
+            """
+            INSERT INTO order_aggregations
+            (id, portfolio_id, canonical_order, symbol, label, status, notes, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(portfolio_id, canonical_order) DO UPDATE SET
+              symbol=excluded.symbol,
+              label=excluded.label,
+              status=excluded.status,
+              notes=CASE
+                WHEN excluded.notes IS NOT NULL AND excluded.notes != '' THEN excluded.notes
+                ELSE order_aggregations.notes
+              END,
+              updated_at=excluded.updated_at
+            """,
+            (aggregation_id, portfolio_id, canonical_order, symbol, label, status, notes, stamp, stamp),
+        )
+        written_members = []
+        for member in members:
+            payload = coerce_member_payload(conn, portfolio_id, member)
+            if not payload["member_order"]:
+                payload["member_order"] = payload["source_order"] or payload["transaction_id"] or new_id("sub")
+            payload["aggregation_id"] = aggregation_id
+            payload["created_at"] = stamp
+            conn.execute(
+                """
+                INSERT INTO order_aggregation_members
+                (id, aggregation_id, transaction_id, member_order, source_order, role, amount_usd, price, quantity, include_in_average, status, notes, created_at)
+                VALUES (:id, :aggregation_id, :transaction_id, :member_order, :source_order, :role, :amount_usd, :price, :quantity, :include_in_average, :status, :notes, :created_at)
+                ON CONFLICT(aggregation_id, member_order) DO UPDATE SET
+                  transaction_id=excluded.transaction_id,
+                  source_order=excluded.source_order,
+                  role=excluded.role,
+                  amount_usd=excluded.amount_usd,
+                  price=excluded.price,
+                  quantity=excluded.quantity,
+                  include_in_average=excluded.include_in_average,
+                  status=excluded.status,
+                  notes=excluded.notes
+                """,
+                payload,
+            )
+            written_members.append(payload)
+        aggregate = recalculate_order_aggregation(conn, aggregation_id)
+        record = {
+            "id": aggregation_id,
+            "portfolio_id": portfolio_id,
+            "canonical_order": canonical_order,
+            "symbol": symbol,
+            "label": label,
+            "status": status,
+            "notes": notes,
+            **aggregate,
+        }
+        audit(conn, "aggregate_order", record)
+    write_jsonl(CLIENT_PATH / "order_aggregations.jsonl", record)
+    return {"ok": True, "record": record, "members_written": written_members, "database": str(DB_PATH)}
 
 
 def apply_final_transaction_to_position(conn, item):
@@ -880,6 +1195,26 @@ def build_parser():
     replace.add_argument("--reason", default=None)
     replace.add_argument("--related-consultation-id", default=None)
     replace.set_defaults(func=replace_draft_order)
+
+    aggregate = sub.add_parser("aggregate-order", help="Create or update a weighted order aggregation")
+    aggregate.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)
+    aggregate.add_argument("--canonical-order", required=True)
+    aggregate.add_argument("--symbol", required=True)
+    aggregate.add_argument("--label", default=None)
+    aggregate.add_argument("--status", default="active")
+    aggregate.add_argument("--notes", default=None)
+    aggregate.add_argument("--members-json", dest="members", default=None)
+    aggregate.add_argument("--member-order", default=None)
+    aggregate.add_argument("--source-order", default=None)
+    aggregate.add_argument("--transaction-id", default=None)
+    aggregate.add_argument("--role", default="reinforcement")
+    aggregate.add_argument("--amount-usd", type=float, default=None)
+    aggregate.add_argument("--price", type=float, default=None)
+    aggregate.add_argument("--quantity", type=float, default=None)
+    aggregate.add_argument("--member-status", default="active")
+    aggregate.add_argument("--member-notes", default=None)
+    aggregate.add_argument("--exclude-from-average", dest="include_in_average", action="store_false")
+    aggregate.set_defaults(func=aggregate_order, include_in_average=True)
 
     pos = sub.add_parser("set-position", help="Set current position")
     pos.add_argument("--portfolio-id", default=DEFAULT_PORTFOLIO_ID)
