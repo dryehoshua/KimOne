@@ -147,6 +147,14 @@
     "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor."
   ],
   "fundamental_report_standard": {
+    "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
+    "client_output_format": [
+      "Para WhatsApp o texto final al cliente, iniciar con saludo tipo: Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:",
+      "Redactar en 2 a 4 parrafos densos y bien conectados; no usar bullets, listas numeradas, tablas ni encabezados salvo instruccion explicita del doctor.",
+      "Usar causalidad economica: dato publicado -> lectura de mercado -> efecto probable en riesgo, liquidez, dolar, tasas, equities o cripto.",
+      "Incluir cifras puntuales entre parentesis cuando existan en fuentes frescas: dato observado, esperado y previo.",
+      "Cerrar con cripto solo si hay noticia realmente material; si no la hay, decirlo en una frase breve al final."
+    ],
     "required_sections": [
       "Resumen ejecutivo",
       "Estado cuantitativo del Portafolio A",
@@ -164,6 +172,8 @@
       "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
       "Iniciar con el catalizador internacional mas relevante y su tendencia de mercado; despues Fed/tasas/liquidez, oportunidades populares, cripto y finalmente noticias del portafolio.",
       "No repetir todos los dias temas de Fed, tasas o geopolitica si no hay avance real o fecha cercana.",
+      "No listar moneda por moneda. Mencionar activos del portafolio solo cuando exista catalizador fresco y material.",
+      "Evitar frases genericas como 'sin catalizadores robustos' por activo; si no hay noticia material, condensarlo en una sola frase editorial.",
       "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
       "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
       "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos."

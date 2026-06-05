@@ -16131,6 +16131,17 @@ def portfolio_report_override_config(summary=None):
 def portfolio_fundamental_report_standard():
     return {
         "purpose": "Reporte fundamental estilo noticia para Sr. Eli/Ignis con fuentes actuales, catalizadores reales, tendencia de mercado y separacion entre datos, interpretacion y riesgos.",
+        "client_style": (
+            "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. "
+            "Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo."
+        ),
+        "client_output_format": [
+            "Para WhatsApp o texto final al cliente, iniciar con saludo tipo: Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:",
+            "Redactar en 2 a 4 parrafos densos y bien conectados; no usar bullets, listas numeradas, tablas ni encabezados salvo instruccion explicita del doctor.",
+            "Usar causalidad economica: dato publicado -> lectura de mercado -> efecto probable en riesgo, liquidez, dolar, tasas, equities o cripto.",
+            "Incluir cifras puntuales entre parentesis cuando existan en fuentes frescas: dato observado, esperado y previo.",
+            "Cerrar con cripto solo si hay noticia realmente material; si no la hay, decirlo en una frase breve al final.",
+        ],
         "required_sections": [
             "Resumen ejecutivo",
             "Estado cuantitativo del Portafolio A",
@@ -16149,6 +16160,8 @@ def portfolio_fundamental_report_standard():
             "Orden editorial: comenzar por el catalizador internacional mas relevante para mercados; despues Fed/tasas/liquidez; despues oportunidades populares; despues cripto; al final noticias especificas del portafolio.",
             "Identificar tendencia y efecto probable sobre mercado: risk-on, risk-off, liquidez, dolar, tasas, commodities, flujos institucionales o rotacion sectorial.",
             "No repetir todos los dias un tema de Fed, tasas, fecha macro o geopolitica si no hay avance real o proximidad de fecha; solo mencionarlo cuando afecte la tendencia o se acerque una decision relevante.",
+            "No listar moneda por moneda. Mencionar activos del portafolio solo cuando exista catalizador fresco y material.",
+            "Evitar frases genericas como 'sin catalizadores robustos' por activo; si no hay noticia material, condensarlo en una sola frase editorial.",
             "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
             "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
             "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos.",
@@ -16206,6 +16219,10 @@ def portfolio_standard_markdown(payload):
     lines.extend(["", "## Reporte Fundamental"])
     standard = payload.get("fundamental_report_standard", {})
     lines.append(standard.get("purpose", ""))
+    if standard.get("client_style"):
+        lines.append(f"- Estilo cliente: {standard.get('client_style')}")
+    for rule in standard.get("client_output_format", []):
+        lines.append(f"- Formato cliente: {rule}")
     for section in standard.get("required_sections", []):
         lines.append(f"- {section}")
     lines.extend(["", "## Fuentes De Memoria"])
@@ -17207,37 +17224,20 @@ def portfolio_fundamental_report_queries(report, parameters=None):
 
 def portfolio_fundamental_fallback_text(report, research_results):
     source_count = sum(len(item.get("sources") or []) for item in research_results if isinstance(item, dict))
-    lines = [
-        "Reporte fundamental Sr. Eli/Ignis",
-        "",
-        "Resumen ejecutivo",
-        "Kim preparo la base cuantitativa del Portafolio A y dejo separadas las fuentes disponibles. No debe presentarse como recomendacion financiera personalizada.",
-        "",
-        "Estado cuantitativo del Portafolio A",
-        report.get("balance_line") or "Balance pendiente de generar.",
-        "",
-        "Catalizadores internacionales y seguimiento de noticias",
-        "Abrir con el catalizador internacional mas relevante para mercados y explicar tendencia. Si no hay avance verificable, no reciclar noticias viejas.",
-        "",
-        "Reserva Federal, tasas y liquidez",
-        "Mencionar Fed, tasas, inflacion, empleo, minutas u opiniones de miembros solo si afectan tendencia o hay fecha/evento proximo.",
-        "",
-        "Oportunidades populares en mercados",
-        "Identificar monedas, acciones o sectores populares solo si hay volumen, atencion institucional, momentum o catalizador real.",
-        "",
-        "Criptonoticias y origen de movimientos",
-        "Explicar BTC/ETH/SOL/XRP/memecoins/ETF/regulacion/liquidaciones y el origen probable del movimiento si hay fuentes frescas.",
-        "",
-        "Noticias relevantes del portafolio",
-        "Cubrir activos del Portafolio A solo cuando exista noticia fresca y material para precio, liquidez o riesgo.",
-        "",
-        "Riesgos e invalidaciones",
-        "Si hay menos de dos fuentes frescas o el catalizador no esta confirmado, marcarlo como pendiente de validacion.",
-        "",
-        "Fuentes validadas",
-        f"Fuentes registradas en este intento: {source_count}.",
-    ]
-    return "\n".join(lines)
+    balance = report.get("balance_line") or "El balance cuantitativo del portafolio queda pendiente de generar."
+    return (
+        "Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:\n\n"
+        "La base cuantitativa del Portafolio A ya quedo preparada, pero las fuentes de mercado disponibles "
+        "en este intento no son suficientes para construir una lectura fundamental completa sin riesgo de "
+        "reciclar informacion vieja. Por disciplina, no conviene presentar como catalizador aquello que no "
+        "esta confirmado por fuentes recientes.\n\n"
+        f"En el corte interno del portafolio, {balance} La lectura macro debe iniciar por el catalizador "
+        "internacional mas importante del dia, continuar con Fed, tasas y liquidez solo si hay un evento "
+        "realmente relevante, y cerrar con cripto unicamente cuando exista una noticia material para el "
+        "mercado o para algun activo del portafolio.\n\n"
+        f"Fuentes registradas en este intento: {source_count}. Si no se alcanza una validacion suficiente, "
+        "la noticia debe marcarse como pendiente antes de enviarse al cliente."
+    )
 
 
 def portfolio_fundamental_report(summary, parameters=None):
@@ -17279,13 +17279,16 @@ def portfolio_fundamental_report(summary, parameters=None):
             "marcalo como pendiente o no lo incluyas. Separa hechos verificados, inferencias y riesgos. "
             "Regla critica: las ordenes pendientes no son posiciones activas, no entran al P/L y su 'distancia vs entrada' "
             "no debe describirse como ganancia/rendimiento. NEAR A11 sigue pendiente hasta que el ledger diga lo contrario. "
-            "Formato noticia obligatorio: inicia con el catalizador internacional mas relevante y su tendencia de mercado; "
-            "despues Fed/tasas/liquidez solo si hay evento relevante o fecha cercana; despues oportunidades populares en monedas, "
-            "acciones o sectores; despues criptonoticias y origen de movimientos; finalmente noticias relevantes del portafolio si existen. "
+            "Salida cliente obligatoria: redacta como texto listo para WhatsApp al Sr. Eli, con estilo de economista profesional e intelectual. "
+            "Inicia exactamente con un saludo tipo 'Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:'. "
+            "No uses encabezados, bullets, listas numeradas, tablas ni desglose moneda por moneda salvo que el doctor lo pida explicitamente. "
+            "Escribe 2 a 4 parrafos corridos, densos y bien conectados. Usa estructura macro como guion interno: primero el catalizador internacional "
+            "mas relevante y su tendencia; despues Fed/tasas/liquidez solo si hay evento real o fecha cercana; despues oportunidades populares en monedas, acciones o sectores; "
+            "despues cripto y origen de movimientos; finalmente una frase de portafolio solo si hay noticia fresca y material para sus activos. "
+            "Si no hay noticia relevante en cripto o en el portafolio, dilo con una frase breve, sin listar activos. "
+            "Incluye cifras puntuales entre parentesis cuando esten disponibles en las fuentes, por ejemplo observado vs esperado vs previo. "
             "No repitas todos los dias Fed, tasas o geopolitica si no hay avance real. "
-            "Estructura exacta requerida: Resumen ejecutivo; Estado cuantitativo del Portafolio A; Catalizadores internacionales y seguimiento de noticias; "
-            "Reserva Federal, tasas y liquidez; Oportunidades populares en mercados; Criptonoticias y origen de movimientos; Noticias relevantes del portafolio; Riesgos e invalidaciones; "
-            "Fuentes validadas; Siguiente accion sugerida.\n\n"
+            "El objetivo es que suene como informe macrofinanciero serio, no como resumen de internet ni checklist operativo.\n\n"
             "REPORTE CUANTITATIVO:\n"
             f"{brief(report.get('summary', ''), 9000)}\n\n"
             "ESTADO ESTRUCTURADO DE POSICIONES:\n"
