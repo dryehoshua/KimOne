@@ -150,10 +150,11 @@
     "required_sections": [
       "Resumen ejecutivo",
       "Estado cuantitativo del Portafolio A",
-      "Catalizadores internacionales",
-      "Catalizadores cripto y narrativas populares",
-      "Catalizadores por activo relevante",
-      "Oportunidades",
+      "Catalizadores internacionales y seguimiento de noticias",
+      "Reserva Federal, tasas y liquidez",
+      "Oportunidades populares en mercados",
+      "Criptonoticias y origen de movimientos",
+      "Noticias relevantes del portafolio",
       "Riesgos e invalidaciones",
       "Fuentes validadas",
       "Siguiente accion sugerida"
@@ -161,6 +162,8 @@
     "source_policy": [
       "No usar precios recordados ni reportes viejos como precios actuales.",
       "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
+      "Iniciar con el catalizador internacional mas relevante y su tendencia de mercado; despues Fed/tasas/liquidez, oportunidades populares, cripto y finalmente noticias del portafolio.",
+      "No repetir todos los dias temas de Fed, tasas o geopolitica si no hay avance real o fecha cercana.",
       "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
       "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
       "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos."

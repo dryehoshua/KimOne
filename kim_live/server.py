@@ -16130,14 +16130,15 @@ def portfolio_report_override_config(summary=None):
 
 def portfolio_fundamental_report_standard():
     return {
-        "purpose": "Reporte fundamental Sr. Eli/Ignis con fuentes actuales, catalizadores reales y separacion entre datos, interpretacion y riesgos.",
+        "purpose": "Reporte fundamental estilo noticia para Sr. Eli/Ignis con fuentes actuales, catalizadores reales, tendencia de mercado y separacion entre datos, interpretacion y riesgos.",
         "required_sections": [
             "Resumen ejecutivo",
             "Estado cuantitativo del Portafolio A",
-            "Catalizadores internacionales",
-            "Catalizadores cripto y narrativas populares",
-            "Catalizadores por activo relevante",
-            "Oportunidades",
+            "Catalizadores internacionales y seguimiento de noticias",
+            "Reserva Federal, tasas y liquidez",
+            "Oportunidades populares en mercados",
+            "Criptonoticias y origen de movimientos",
+            "Noticias relevantes del portafolio",
             "Riesgos e invalidaciones",
             "Fuentes validadas",
             "Siguiente accion sugerida",
@@ -16145,15 +16146,20 @@ def portfolio_fundamental_report_standard():
         "source_policy": [
             "No usar precios recordados ni reportes viejos como precios actuales.",
             "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
+            "Orden editorial: comenzar por el catalizador internacional mas relevante para mercados; despues Fed/tasas/liquidez; despues oportunidades populares; despues cripto; al final noticias especificas del portafolio.",
+            "Identificar tendencia y efecto probable sobre mercado: risk-on, risk-off, liquidez, dolar, tasas, commodities, flujos institucionales o rotacion sectorial.",
+            "No repetir todos los dias un tema de Fed, tasas, fecha macro o geopolitica si no hay avance real o proximidad de fecha; solo mencionarlo cuando afecte la tendencia o se acerque una decision relevante.",
             "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
             "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
             "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos.",
             "Si las fuentes no son suficientes, declarar la brecha y pedir validacion manual.",
         ],
         "market_scope": [
-            "Macro internacional: tasas, Fed, liquidez, dolar, riesgo geopolitico, regulacion y apetito de riesgo.",
-            "Cripto popular: BTC, ETH, SOL, XRP, DOGE, ADA, memecoins, ETF/regulacion y narrativas de mercado con volumen/interes real.",
-            "Portafolio A: ADA, DOGE, FTT, XRP, LUNC, APT, DOT, TRUMP, PEPE, HBAR y NEAR.",
+            "Catalizadores internacionales: Medio Oriente, conflictos, energia, dolar, liquidez global, comercio, China/Europa/EE.UU. y eventos que cambien apetito de riesgo.",
+            "Fed y tasas: decisiones FOMC, minutas, inflacion, empleo, opiniones de miembros Fed, presidentes, bancos centrales y expectativas de recortes/subidas.",
+            "Oportunidades populares: monedas, acciones, sectores o narrativas con volumen, momentum, flujos o atencion institucional verificable.",
+            "Criptonoticias: BTC, ETH, SOL, XRP, DOGE, ADA, memecoins, ETF/regulacion, liquidaciones, stablecoins, DeFi, AI y origen de movimientos relevantes.",
+            "Portafolio A: solo incluir noticias de ADA, DOGE, FTT, XRP, LUNC, APT, DOT, TRUMP, PEPE, HBAR, NEAR, SOL, ZEC u otros activos del portafolio si hay noticia fresca y relevante.",
         ],
     }
 
@@ -17178,16 +17184,20 @@ def portfolio_fundamental_report_queries(report, parameters=None):
     custom_query = str(first_value(parameters, "query", "question", "pregunta", "tema", default="")).strip()
     queries = [
         (
-            f"{date_label} crypto market macro catalysts Fed liquidity dollar risk appetite regulation ETF "
-            "Bitcoin Ethereum Solana XRP meme coins latest"
+            f"{date_label} top international market catalysts Middle East geopolitics oil dollar risk appetite "
+            "global liquidity markets latest trend"
         ),
         (
-            f"{date_label} latest catalysts and risks for crypto tokens {portfolio_tokens} "
-            "Aptos Polkadot Hedera Near Pepe Official Trump Terra Luna Classic"
+            f"{date_label} Federal Reserve interest rates inflation jobs FOMC officials comments treasury yields "
+            "market expectations latest"
         ),
         (
             f"{date_label} most popular crypto market narratives opportunities BTC ETH SOL XRP DOGE ADA "
-            "memecoins DeFi AI ETF regulation"
+            "memecoins DeFi AI ETF regulation stocks popular market opportunities"
+        ),
+        (
+            f"{date_label} relevant news catalysts risks for portfolio tokens {portfolio_tokens} "
+            "Aptos Polkadot Hedera Near Pepe Official Trump Terra Luna Classic only fresh material news"
         ),
     ]
     if custom_query:
@@ -17206,14 +17216,20 @@ def portfolio_fundamental_fallback_text(report, research_results):
         "Estado cuantitativo del Portafolio A",
         report.get("balance_line") or "Balance pendiente de generar.",
         "",
-        "Catalizadores internacionales",
-        "Pendiente de ampliar con fuentes actuales si la investigacion web no devolvio suficientes referencias verificables.",
+        "Catalizadores internacionales y seguimiento de noticias",
+        "Abrir con el catalizador internacional mas relevante para mercados y explicar tendencia. Si no hay avance verificable, no reciclar noticias viejas.",
         "",
-        "Catalizadores cripto y narrativas populares",
-        "Revisar BTC, ETH, SOL, XRP, DOGE, ADA, ETF/regulacion, liquidez y narrativas de memecoins/altcoins antes de enviar al cliente.",
+        "Reserva Federal, tasas y liquidez",
+        "Mencionar Fed, tasas, inflacion, empleo, minutas u opiniones de miembros solo si afectan tendencia o hay fecha/evento proximo.",
         "",
-        "Oportunidades",
-        "Identificar solo oportunidades sustentadas por precio validado, volumen, catalizador real y riesgo medible.",
+        "Oportunidades populares en mercados",
+        "Identificar monedas, acciones o sectores populares solo si hay volumen, atencion institucional, momentum o catalizador real.",
+        "",
+        "Criptonoticias y origen de movimientos",
+        "Explicar BTC/ETH/SOL/XRP/memecoins/ETF/regulacion/liquidaciones y el origen probable del movimiento si hay fuentes frescas.",
+        "",
+        "Noticias relevantes del portafolio",
+        "Cubrir activos del Portafolio A solo cuando exista noticia fresca y material para precio, liquidez o riesgo.",
         "",
         "Riesgos e invalidaciones",
         "Si hay menos de dos fuentes frescas o el catalizador no esta confirmado, marcarlo como pendiente de validacion.",
@@ -17263,8 +17279,12 @@ def portfolio_fundamental_report(summary, parameters=None):
             "marcalo como pendiente o no lo incluyas. Separa hechos verificados, inferencias y riesgos. "
             "Regla critica: las ordenes pendientes no son posiciones activas, no entran al P/L y su 'distancia vs entrada' "
             "no debe describirse como ganancia/rendimiento. NEAR A11 sigue pendiente hasta que el ledger diga lo contrario. "
-            "Estructura exacta requerida: Resumen ejecutivo; Estado cuantitativo del Portafolio A; Catalizadores internacionales; "
-            "Catalizadores cripto y narrativas populares; Catalizadores por activo relevante; Oportunidades; Riesgos e invalidaciones; "
+            "Formato noticia obligatorio: inicia con el catalizador internacional mas relevante y su tendencia de mercado; "
+            "despues Fed/tasas/liquidez solo si hay evento relevante o fecha cercana; despues oportunidades populares en monedas, "
+            "acciones o sectores; despues criptonoticias y origen de movimientos; finalmente noticias relevantes del portafolio si existen. "
+            "No repitas todos los dias Fed, tasas o geopolitica si no hay avance real. "
+            "Estructura exacta requerida: Resumen ejecutivo; Estado cuantitativo del Portafolio A; Catalizadores internacionales y seguimiento de noticias; "
+            "Reserva Federal, tasas y liquidez; Oportunidades populares en mercados; Criptonoticias y origen de movimientos; Noticias relevantes del portafolio; Riesgos e invalidaciones; "
             "Fuentes validadas; Siguiente accion sugerida.\n\n"
             "REPORTE CUANTITATIVO:\n"
             f"{brief(report.get('summary', ''), 9000)}\n\n"
