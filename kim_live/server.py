@@ -16199,6 +16199,10 @@ def portfolio_standard_markdown(payload):
             f"- {item.get('identifier')}. {item.get('label')}: {item.get('invested_usd')} USD "
             f"a {item.get('entry_price_display')}{marker}; estado precio={item.get('price_validation_status')}."
         )
+        client_note = portfolio_aggregation_client_note(item, payload.get("identifier_prefix") or "A")
+        if client_note:
+            lines.append(f"  - {client_note}")
+            continue
         if item.get("aggregation_summary"):
             lines.append(f"  - Aglomeracion: {item.get('aggregation_summary')}.")
     lines.extend(["", "## Ordenes Pendientes"])
@@ -16256,6 +16260,7 @@ def portfolio_save_current_standard(summary, report):
             "entry_status": item.get("entry_status"),
             "aggregation": item.get("aggregation"),
             "aggregation_summary": item.get("aggregation_summary"),
+            "merged_with_pending": item.get("merged_with_pending"),
             "notes": item.get("notes"),
         }
 
@@ -16386,6 +16391,23 @@ def portfolio_aggregation_summary_text(aggregation):
     if not labels:
         return "historial de subordenes guardado"
     return " + ".join(labels)
+
+
+def portfolio_aggregation_client_note(item, identifier_prefix="A"):
+    aggregation = item.get("aggregation") if isinstance(item, dict) else {}
+    if not isinstance(aggregation, dict):
+        aggregation = {}
+    prefix = str(identifier_prefix or "").strip()
+    suborders = []
+    for member in aggregation.get("members") or []:
+        order = str((member or {}).get("member_order") or "").strip()
+        if order and "." in order:
+            suborders.append(f"{prefix}{order}" if prefix and not order.startswith(prefix) else order)
+    if suborders:
+        return f"Refuerzo {', '.join(suborders)} ya incluido."
+    if item.get("merged_with_pending") or aggregation:
+        return "Refuerzo ya incluido."
+    return ""
 
 
 def portfolio_recompute_credit_fields(item, override_config):
@@ -17014,8 +17036,8 @@ def portfolio_client_report(summary, parameters=None):
         else:
             line += " Precio actual no validado. Variación N/D."
         if item.get("merged_with_pending"):
-            line += " Refuerzo ya incluido."
-        if item.get("aggregation"):
+            line += f" {portfolio_aggregation_client_note(item, identifier_prefix)}"
+        elif item.get("aggregation"):
             line += f" Aglomeracion: {item.get('aggregation_summary')}."
         if include_units and item.get("reference_quantity") is not None:
             line += f" Unidades de referencia: {item['reference_quantity']}."
