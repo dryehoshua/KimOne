@@ -16256,10 +16256,12 @@ def portfolio_save_current_standard(summary, report):
         "whatsapp_messages": report.get("whatsapp_messages", []),
         "balance_rules": [
             "valor total del portafolio = posiciones activas ejecutadas + ordenes pendientes abiertas.",
-            "monto a credito = credito asociado a posiciones activas y pendientes.",
-            "monto en firme = valor total del portafolio - monto a credito.",
+            "monto en firme canonico actual = capital_firme_usd indicado por el doctor en la configuracion contable.",
+            "monto a credito actual = valor total del portafolio - monto en firme canonico cuando hay capital_firme_usd configurado.",
             "valor actual del portafolio = solo posiciones activas con precios validados.",
-            "P/L total = P/L no realizado solo de posiciones activas con precios validados.",
+            "P/L bruto = P/L no realizado solo de posiciones activas con precios validados.",
+            "P/L neto despues de fees = P/L bruto - fee acumulado estimado.",
+            "Fee operativo = 1.2% sobre operaciones confirmadas y conversiones de fondeo MXN/USDT o USDT/MXN confirmadas; modificaciones, reemplazos y correcciones no generan fee.",
             "Las ordenes pendientes no entran al P/L hasta ejecutarse.",
         ],
         "fundamental_report_standard": portfolio_fundamental_report_standard(),
@@ -16386,6 +16388,46 @@ def portfolio_recompute_credit_fields(item, override_config):
     partial_credit_mark = str(override_config.get("partial_credit_mark") or "(c parcial)").strip() or "(c parcial)"
     item.update(portfolio_resolve_credit_breakdown(invested_usd, credit_amount, credit_mark, partial_credit_mark))
     return item
+
+
+def portfolio_accounting_config(override_config):
+    return override_config.get("accounting") if isinstance(override_config.get("accounting"), dict) else {}
+
+
+def portfolio_fee_summary(active_items, summary, override_config):
+    accounting = portfolio_accounting_config(override_config)
+    fee_rate = float(accounting.get("operation_fee_rate") or 0)
+    confirmed_volume = sum(float(item.get("invested_usd") or 0) for item in active_items)
+    funding_conversions = accounting.get("funding_conversions") if isinstance(accounting.get("funding_conversions"), list) else []
+    funding_volume = sum(
+        float(item.get("amount_usd") or 0)
+        for item in funding_conversions
+        if str((item or {}).get("status") or "confirmed").lower() == "confirmed"
+    )
+    excluded_event_types = [
+        "modificacion",
+        "modification",
+        "replace",
+        "replacement",
+        "rebalance_note",
+        "correction",
+    ]
+    operation_fee = confirmed_volume * fee_rate
+    funding_fee = funding_volume * fee_rate
+    total_fee = operation_fee + funding_fee
+    return {
+        "operation_fee_rate": fee_rate,
+        "operation_fee_rate_pct": round_opt(fee_rate * 100, 4),
+        "confirmed_operation_volume_usd": round_opt(confirmed_volume, 2),
+        "confirmed_operation_fee_usd": round_opt(operation_fee, 2),
+        "funding_conversion_volume_usd": round_opt(funding_volume, 2),
+        "funding_conversion_fee_usd": round_opt(funding_fee, 2),
+        "total_fee_usd": round_opt(total_fee, 2),
+        "fee_policy": accounting.get("fee_policy")
+        or "Fee de 1.2% solo sobre operaciones confirmadas y conversiones MXN/USDT/USDT/MXN confirmadas; modificaciones, reemplazos y correcciones no generan fee.",
+        "excluded_event_types": excluded_event_types,
+        "funding_conversions": funding_conversions,
+    }
 
 
 def portfolio_aggregation_transaction_ref(member):
@@ -17006,15 +17048,43 @@ def portfolio_client_report(summary, parameters=None):
     )
     pending_total_usd = sum(float(item.get("invested_usd") or 0) for item in pending_items)
     total_portfolio_usd = active_invested_usd + pending_total_usd
-    total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
-    total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
-    margin_total_pct = (
+    accounting_config = portfolio_accounting_config(override_config)
+    configured_firm_capital = accounting_config.get("firm_capital_usd")
+    if configured_firm_capital not in (None, ""):
+        total_firm_usd = float(configured_firm_capital)
+        total_credit_usd = max(0.0, total_portfolio_usd - total_firm_usd)
+        credit_source = "derived_from_firm_capital"
+    else:
+        total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
+        total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
+        credit_source = "position_credit_marks"
+    fee_summary = portfolio_fee_summary(active_items, summary, override_config)
+    total_fee_usd = float(fee_summary.get("total_fee_usd") or 0)
+    deposits = accounting_config.get("deposits") if isinstance(accounting_config.get("deposits"), list) else []
+    deposits_total_usd = sum(
+        float(item.get("amount_usd") or 0)
+        for item in deposits
+        if str((item or {}).get("status") or "confirmed").lower() == "confirmed"
+    )
+    operating_remnants_usd = float(accounting_config.get("operating_remnants_usd") or 0)
+    net_pnl_after_fees = active_unrealized_pnl_usd - total_fee_usd
+    gross_margin_total_pct = (
         (active_unrealized_pnl_usd / total_portfolio_usd * 100)
         if total_portfolio_usd
         else None
     )
-    margin_firm_pct = (
+    gross_margin_firm_pct = (
         (active_unrealized_pnl_usd / total_firm_usd * 100)
+        if total_firm_usd
+        else None
+    )
+    net_margin_total_pct = (
+        (net_pnl_after_fees / total_portfolio_usd * 100)
+        if total_portfolio_usd
+        else None
+    )
+    net_margin_firm_pct = (
+        (net_pnl_after_fees / total_firm_usd * 100)
         if total_firm_usd
         else None
     )
@@ -17022,11 +17092,22 @@ def portfolio_client_report(summary, parameters=None):
         "portfolio_total_usd": round_opt(total_portfolio_usd, 2),
         "credit_total_usd": round_opt(total_credit_usd, 2),
         "firm_total_usd": round_opt(total_firm_usd, 2),
+        "credit_source": credit_source,
+        "deposits_total_usd": round_opt(deposits_total_usd, 2),
+        "deposits": deposits,
+        "operating_remnants_usd": round_opt(operating_remnants_usd, 2),
+        "operating_remnants_note": accounting_config.get("operating_remnants_note") or "",
         "active_invested_usd": round_opt(active_invested_usd, 2),
         "portfolio_current_value_usd_validated_only": round_opt(active_current_value_usd, 2),
         "portfolio_unrealized_pnl_usd_validated_only": round_opt(active_unrealized_pnl_usd, 2),
-        "margin_total_pct_validated_only": round_opt(margin_total_pct, 2),
-        "margin_firm_pct_validated_only": round_opt(margin_firm_pct, 2),
+        "gross_margin_total_pct_validated_only": round_opt(gross_margin_total_pct, 2),
+        "gross_margin_firm_pct_validated_only": round_opt(gross_margin_firm_pct, 2),
+        "margin_total_pct_validated_only": round_opt(net_margin_total_pct, 2),
+        "margin_firm_pct_validated_only": round_opt(net_margin_firm_pct, 2),
+        "net_pnl_after_fees_usd": round_opt(net_pnl_after_fees, 2),
+        "net_margin_total_pct_after_fees": round_opt(net_margin_total_pct, 2),
+        "net_margin_firm_pct_after_fees": round_opt(net_margin_firm_pct, 2),
+        "fees": fee_summary,
         "active_current_value_usd_validated_only": round_opt(active_current_value_usd, 2),
         "active_unrealized_pnl_usd_validated_only": round_opt(active_unrealized_pnl_usd, 2),
         "active_unrealized_pct_validated_only": round_opt(active_unrealized_pct, 2),
@@ -17040,10 +17121,15 @@ def portfolio_client_report(summary, parameters=None):
         f"valor total del portafolio {format_usd_amount(balance['portfolio_total_usd'])} USD; "
         f"monto a crédito {format_usd_amount(balance['credit_total_usd'])} USD; "
         f"monto en firme {format_usd_amount(balance['firm_total_usd'])} USD; "
+        f"depositos/fondeo confirmado {format_usd_amount(balance['deposits_total_usd'])} USD; "
+        f"remanentes operativos {format_usd_amount(balance['operating_remnants_usd'])} USD; "
         f"valor actual del portafolio {format_usd_amount(balance['portfolio_current_value_usd_validated_only'])} USD; "
-        f"P/L total {signed_usd_text(balance['portfolio_unrealized_pnl_usd_validated_only'])}; "
-        f"margen total {signed_percent_text(balance['margin_total_pct_validated_only'])}; "
-        f"margen sobre monto en firme {signed_percent_text(balance['margin_firm_pct_validated_only'])}."
+        f"P/L bruto {signed_usd_text(balance['portfolio_unrealized_pnl_usd_validated_only'])}; "
+        f"fee operativo estimado {format_usd_amount(fee_summary['total_fee_usd'])} USD "
+        f"({format_usd_amount(fee_summary['operation_fee_rate_pct'])}% sobre operaciones confirmadas; modificaciones no generan fee); "
+        f"P/L neto despues de fees {signed_usd_text(balance['net_pnl_after_fees_usd'])}; "
+        f"margen neto sobre portafolio {signed_percent_text(balance['net_margin_total_pct_after_fees'])}; "
+        f"margen neto sobre monto en firme {signed_percent_text(balance['net_margin_firm_pct_after_fees'])}."
     )
     if pending_items:
         balance_line += (

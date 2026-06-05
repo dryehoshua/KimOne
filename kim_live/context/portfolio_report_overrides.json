@@ -21,6 +21,25 @@
     "PEPEUSDT": 1800,
     "HBARUSDT": 1800
   },
+  "accounting": {
+    "firm_capital_usd": 12514,
+    "operation_fee_rate": 0.012,
+    "credit_formula": "credit_total_usd = portfolio_total_usd - firm_capital_usd",
+    "fee_policy": "Fee de 1.2% solo sobre operaciones confirmadas y conversiones MXN/USDT o USDT/MXN confirmadas; modificaciones, reemplazos, correcciones y cambios de orden no generan fee.",
+    "funding_policy": "Registrar depositos, retiros, conversiones, remanentes y credito en el ledger; un fondeo MXN->USDT o USDT->MXN confirmado paga 1.2%.",
+    "deposits": [
+      {
+        "id": "firm_capital_canonical_2026_06_05",
+        "amount_usd": 12514,
+        "status": "confirmed",
+        "notes": "Monto en firme confirmado por el doctor."
+      }
+    ],
+    "operating_remnants_usd": 707.05,
+    "operating_remnants_note": "Remanentes acumulados mencionados en consulta operativa previa; mantener visible hasta reconciliacion completa.",
+    "funding_conversions": [],
+    "notes": "Regla del doctor 2026-06-05: monto en firme del Sr. Eli = 12,514 USD; el resto del valor total del portafolio es credito."
+  },
   "manual_entries": [
     {
       "symbol": "ADAUSDT",
@@ -123,6 +142,8 @@
     "Cuando una operacion de la misma moneda se aglomera, el doctor decide el ID canonico que sobrevive; las subordenes quedan como ID.n y el precio de entrada se calcula como costo total dividido entre unidades totales.",
     "Una correccion de aglomeracion o de precio no es venta, retiro ni devolucion salvo instruccion literal de venta/retiro/devolucion.",
     "ADA original se mantiene como A1 a 0.261; el refuerzo ADA a 0.124 es A14 pendiente hasta confirmacion explicita.",
+    "Capital en firme Sr. Eli: 12,514 USD; el credito actual se calcula como total del portafolio menos ese monto firme.",
+    "Cobrar/calcular fee de 1.2% solo por operacion confirmada o conversion de fondeo MXN/USDT/USDT/MXN; modificaciones y reemplazos no son operaciones cobrables.",
     "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor."
   ],
   "fundamental_report_standard": {
