@@ -16388,10 +16388,83 @@ def portfolio_recompute_credit_fields(item, override_config):
     return item
 
 
+def portfolio_aggregation_transaction_ref(member):
+    for key in ("transaction_id", "source_order", "member_order"):
+        token = str((member or {}).get(key) or "").strip()
+        if token.startswith("tx_"):
+            return token
+    return ""
+
+
+def portfolio_active_aggregation_members(aggregation, transaction_statuses):
+    valid = []
+    blocked = []
+    for member in aggregation.get("members") or []:
+        if str((member or {}).get("status") or "active").lower() != "active":
+            continue
+        if not bool((member or {}).get("include_in_average", True)):
+            continue
+        tx_ref = portfolio_aggregation_transaction_ref(member)
+        if tx_ref and transaction_statuses.get(tx_ref) != "final":
+            blocked.append(
+                {
+                    "transaction_id": tx_ref,
+                    "status": transaction_statuses.get(tx_ref) or "missing_or_void",
+                    "member_order": (member or {}).get("member_order"),
+                }
+            )
+            continue
+        valid.append(member)
+    return valid, blocked
+
+
+def portfolio_recalculate_aggregation_totals(aggregation, members):
+    total_amount = 0.0
+    total_quantity = 0.0
+    has_amount = False
+    has_quantity = False
+    for member in members:
+        amount = member.get("amount_usd")
+        price = member.get("price")
+        quantity = member.get("quantity")
+        amount = float(amount) if amount not in (None, "") else None
+        price = float(price) if price not in (None, "") else None
+        quantity = float(quantity) if quantity not in (None, "") else None
+        if amount is None and quantity is not None and price is not None:
+            amount = quantity * price
+        if quantity is None and amount is not None and price not in (None, 0):
+            quantity = amount / price
+        if amount is not None:
+            total_amount += amount
+            has_amount = True
+        if quantity is not None and quantity > 0:
+            total_quantity += quantity
+            has_quantity = True
+    if not has_amount or not has_quantity or total_quantity <= 0:
+        return (
+            aggregation.get("total_amount_usd"),
+            aggregation.get("weighted_average_price"),
+            aggregation.get("total_quantity"),
+        )
+    return total_amount, total_amount / total_quantity, total_quantity
+
+
 def portfolio_apply_order_aggregations(summary, active_items, pending_items, include_units, canonical_order, load_validation, override_config):
     aggregations = summary.get("order_aggregations") or []
     if not aggregations:
         return active_items, pending_items
+    transaction_statuses = {
+        str(tx.get("id") or ""): "final"
+        for tx in summary.get("final_transactions") or []
+        if str(tx.get("id") or "").strip()
+    }
+    transaction_statuses.update(
+        {
+            str(tx.get("id") or ""): "draft"
+            for tx in summary.get("draft_transactions") or []
+            if str(tx.get("id") or "").strip()
+        }
+    )
     by_symbol_active = {str(item.get("symbol") or "").upper(): item for item in active_items}
     by_symbol_pending = {str(item.get("symbol") or "").upper(): item for item in pending_items}
     suppress_pending_symbols = set()
@@ -16401,9 +16474,12 @@ def portfolio_apply_order_aggregations(summary, active_items, pending_items, inc
         symbol = str(aggregation.get("symbol") or "").upper().strip()
         if not symbol:
             continue
-        total_amount = aggregation.get("total_amount_usd")
-        average_price = aggregation.get("weighted_average_price")
-        total_quantity = aggregation.get("total_quantity")
+        valid_members, blocked_members = portfolio_active_aggregation_members(aggregation, transaction_statuses)
+        if aggregation.get("members") and not valid_members:
+            continue
+        if blocked_members:
+            aggregation = {**aggregation, "members": valid_members, "blocked_members": blocked_members}
+        total_amount, average_price, total_quantity = portfolio_recalculate_aggregation_totals(aggregation, valid_members)
         if total_amount in (None, ""):
             continue
         if average_price in (None, "") and total_quantity not in (None, "", 0):
@@ -16720,7 +16796,11 @@ def portfolio_client_report(summary, parameters=None):
         note_blob = " ".join(str(row.get("notes") or "") for row in draft_rows).lower()
         if symbol == "LUNCUSDT":
             return True
-        return "refuerzo" in note_blob or "ya incluido" in note_blob
+        blocking_terms = ["pendiente", "sin afectar", "no afectar", "a14"]
+        if any(term in note_blob for term in blocking_terms):
+            return False
+        explicit_terms = ["ya incluido", "ejecutad", "confirmad", "posicion activa", "promedio ponderado"]
+        return any(term in note_blob for term in explicit_terms)
 
     draft_rows_by_symbol = {}
     for tx in draft_transactions:

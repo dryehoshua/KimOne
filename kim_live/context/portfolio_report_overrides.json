@@ -23,6 +23,31 @@
   },
   "manual_entries": [
     {
+      "symbol": "ADAUSDT",
+      "state": "active",
+      "order": 1,
+      "label": "ADA/USDT",
+      "invested_usd": 1800,
+      "entry_price": 0.261,
+      "quantity": 6896.551724137931,
+      "transaction_id": "tx_2e317ef8f8d0",
+      "source": "kim0037_call",
+      "notes": "Fuente canonica KIM-0037: ADA/Cardano original activa A1, 1800 USD a 0.261. No sustituir por refuerzos posteriores."
+    },
+    {
+      "symbol": "ADAUSDT",
+      "state": "pending",
+      "order": 14,
+      "label": "ADA/USDT refuerzo",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 0.124,
+      "quantity": 14516.129032258064,
+      "id": "tx_0569514f7980",
+      "source": "kim_live",
+      "notes": "KIM-0092: refuerzo ADA queda como A14 pendiente a 0.124; no afecta A1 hasta que el doctor confirme ejecucion/aglomeracion."
+    },
+    {
       "symbol": "APTUSDT",
       "state": "active",
       "order": 6,
@@ -59,6 +84,32 @@
       "invested_usd": 1800,
       "entry_price": 2.25,
       "notes": "NEAR sigue como orden pendiente A11 en Portafolio A."
+    },
+    {
+      "symbol": "SOLUSDT",
+      "state": "pending",
+      "order": 12,
+      "label": "SOL/USDT",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 63,
+      "quantity": 28.571428571428573,
+      "id": "tx_77c608daaa7f",
+      "source": "kim_live_replace_order",
+      "notes": "KIM-0092: SOL se mantiene como orden pendiente A12 a 63."
+    },
+    {
+      "symbol": "ZECUSDT",
+      "state": "pending",
+      "order": 13,
+      "label": "ZEC/USDT",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 360,
+      "quantity": 5,
+      "id": "tx_4220dec404f5",
+      "source": "kim_live",
+      "notes": "KIM-0092: ZEC se mantiene como orden pendiente A13 a 360; no convertir en posicion activa hasta confirmacion."
     }
   ],
   "suppress_symbols": [],
@@ -67,10 +118,11 @@
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
     "Marcar credito con (c) solo donde corresponda; si el credito es parcial, mostrarlo como credito parcial.",
-    "PEPE es A9, HBAR es A10 y NEAR pendiente es A11 hasta que el ledger quede reconciliado.",
+    "PEPE es A9, HBAR es A10, NEAR pendiente es A11, SOL pendiente es A12, ZEC pendiente es A13 y ADA refuerzo pendiente es A14 hasta que el ledger quede reconciliado.",
     "LUNC conserva 1000 USD en firme y 800 USD a credito; NEAR sigue en firme hasta que se ejecute.",
     "Cuando una operacion de la misma moneda se aglomera, el doctor decide el ID canonico que sobrevive; las subordenes quedan como ID.n y el precio de entrada se calcula como costo total dividido entre unidades totales.",
     "Una correccion de aglomeracion o de precio no es venta, retiro ni devolucion salvo instruccion literal de venta/retiro/devolucion.",
+    "ADA original se mantiene como A1 a 0.261; el refuerzo ADA a 0.124 es A14 pendiente hasta confirmacion explicita.",
     "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor."
   ],
   "fundamental_report_standard": {

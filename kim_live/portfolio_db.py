@@ -615,16 +615,36 @@ def load_transaction_for_member(conn, portfolio_id, transaction_id):
     ).fetchone()
 
 
+def infer_transaction_id(*values):
+    for value in values:
+        token = str(value or "").strip()
+        if token.startswith("tx_"):
+            return token
+    return None
+
+
 def coerce_member_payload(conn, portfolio_id, member):
-    transaction_id = str(member.get("transaction_id") or "").strip() or None
+    member_order = str(member.get("member_order") or "").strip() or None
+    source_order = str(member.get("source_order") or "").strip() or None
+    transaction_id = (
+        str(member.get("transaction_id") or "").strip()
+        or infer_transaction_id(member_order, source_order)
+        or None
+    )
     tx = load_transaction_for_member(conn, portfolio_id, transaction_id)
     amount = as_float(member.get("amount_usd") if member.get("amount_usd") not in (None, "") else member.get("gross_amount"))
     price = as_float(member.get("price"))
     quantity = as_float(member.get("quantity"))
+    status = str(member.get("status") or "active").strip().lower() or "active"
     if tx:
         quantity = quantity if quantity is not None else as_float(tx[3])
         price = price if price is not None else as_float(tx[4])
         amount = amount if amount is not None else as_float(tx[5])
+        tx_status = str(tx[6] or "").strip().lower()
+        if status == "active" and tx_status in {"draft", "void"}:
+            status = tx_status
+    elif transaction_id and status == "active":
+        status = "unresolved"
     if quantity is None and amount is not None and price not in (None, 0):
         quantity = amount / price
     if amount is None and quantity is not None and price is not None:
@@ -635,14 +655,14 @@ def coerce_member_payload(conn, portfolio_id, member):
     return {
         "id": str(member.get("id") or "").strip() or new_id("aggmem"),
         "transaction_id": transaction_id,
-        "member_order": str(member.get("member_order") or "").strip() or None,
-        "source_order": str(member.get("source_order") or "").strip() or None,
+        "member_order": member_order,
+        "source_order": source_order,
         "role": str(member.get("role") or "reinforcement").strip() or "reinforcement",
         "amount_usd": amount,
         "price": price,
         "quantity": quantity,
         "include_in_average": 1 if include else 0,
-        "status": str(member.get("status") or "active").strip().lower() or "active",
+        "status": status,
         "notes": str(member.get("notes") or "").strip(),
     }
 
