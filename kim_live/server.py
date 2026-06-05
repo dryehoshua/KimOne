@@ -12188,6 +12188,217 @@ def sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root):
     }
 
 
+PORTFOLIO_SALE_ACTIONS = {"sell_position", "close_position", "record_sale", "venta_final", "cerrar_posicion"}
+PORTFOLIO_EXECUTION_ACTIONS = {"execute_pending_order", "mark_order_executed", "confirm_pending_order"}
+PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS
+PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
+
+
+def portfolio_float(value, default=None):
+    if value in (None, ""):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def portfolio_normalize_symbol(symbol):
+    token = str(symbol or "").upper().strip().replace(" ", "")
+    if token and ":" in token:
+        token = token.split(":", 1)[1]
+    if token and token.isalpha() and not token.endswith("USDT"):
+        token = f"{token}USDT"
+    return token
+
+
+def portfolio_sale_calculation(parameters, override_config=None):
+    parameters = parameters or {}
+    override_config = override_config or {}
+    symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "ticker", "asset", "moneda"))
+    if not symbol:
+        raise ValueError("Falta symbol para registrar la venta.")
+    sell_price = portfolio_float(first_value(parameters, "sell_price", "sale_price", "exit_price", "price", "precio_venta"))
+    if sell_price in (None, 0):
+        raise ValueError("Falta sell_price/price para registrar la venta.")
+    entry_price = portfolio_float(first_value(parameters, "entry_price", "buy_price", "precio_compra", "average_cost"))
+    invested_usd = portfolio_float(first_value(parameters, "invested_usd", "original_amount_usd", "gross_cost_usd", "amount", "usd_amount", "gross_amount"))
+    quantity = portfolio_float(first_value(parameters, "quantity", "units", "cantidad"))
+    if quantity is None and invested_usd is not None and entry_price not in (None, 0):
+        quantity = invested_usd / entry_price
+    if invested_usd is None and quantity is not None and entry_price is not None:
+        invested_usd = quantity * entry_price
+    if entry_price is None and invested_usd is not None and quantity not in (None, 0):
+        entry_price = invested_usd / quantity
+    if quantity in (None, 0) or invested_usd in (None, 0):
+        raise ValueError("Faltan quantity o invested_usd/entry_price para calcular la venta.")
+    accounting = portfolio_accounting_config(override_config)
+    fee_rate = portfolio_float(first_value(parameters, "fee_rate", "operation_fee_rate"), accounting.get("operation_fee_rate") or 0.012)
+    fee_base_usd = portfolio_float(first_value(parameters, "fee_base_usd", "fee_base", "commission_base_usd"), invested_usd)
+    gross_sale_usd = quantity * sell_price
+    gross_pnl_usd = gross_sale_usd - invested_usd
+    fee_usd = fee_base_usd * fee_rate
+    net_pnl_usd = gross_pnl_usd - fee_usd
+    return {
+        "symbol": symbol,
+        "entry_price": round_price(entry_price),
+        "sell_price": round_price(sell_price),
+        "quantity": round_opt(quantity, 8),
+        "invested_usd": round_opt(invested_usd, 2),
+        "gross_sale_usd": round_opt(gross_sale_usd, 2),
+        "gross_pnl_usd": round_opt(gross_pnl_usd, 2),
+        "fee_rate": fee_rate,
+        "fee_rate_pct": round_opt(fee_rate * 100, 4),
+        "fee_base_usd": round_opt(fee_base_usd, 2),
+        "fee_usd": round_opt(fee_usd, 2),
+        "net_pnl_usd": round_opt(net_pnl_usd, 2),
+        "gross_pnl_pct": round_opt((gross_pnl_usd / invested_usd * 100) if invested_usd else None, 2),
+        "net_pnl_pct": round_opt((net_pnl_usd / invested_usd * 100) if invested_usd else None, 2),
+        "currency": str(first_value(parameters, "currency", default="USD") or "USD").upper(),
+    }
+
+
+def portfolio_sale_preview(parameters, override_config=None):
+    calc = portfolio_sale_calculation(parameters, override_config)
+    return {
+        **calc,
+        "summary": (
+            f"Venta {calc['symbol']}: entrada {format_price(calc['entry_price'])}, "
+            f"salida {format_price(calc['sell_price'])}, venta bruta {format_usd_amount(calc['gross_sale_usd'])} USD, "
+            f"P/L bruto {signed_usd_text(calc['gross_pnl_usd'])}, fee {format_usd_amount(calc['fee_usd'])} USD "
+            f"({format_usd_amount(calc['fee_rate_pct'])}% sobre {format_usd_amount(calc['fee_base_usd'])} USD), "
+            f"P/L neto {signed_usd_text(calc['net_pnl_usd'])}."
+        ),
+    }
+
+
+def portfolio_execute_sale(module, ns, parameters, override_config):
+    calc = portfolio_sale_calculation(parameters, override_config)
+    notes = str(first_value(parameters, "notes", "summary", "rationale", default="") or "").strip()
+    if notes:
+        notes += "\n"
+    notes += (
+        f"Venta final {calc['symbol']}: entrada {format_price(calc['entry_price'])}, salida {format_price(calc['sell_price'])}; "
+        f"P/L bruto {signed_usd_text(calc['gross_pnl_usd'])}; fee operativo {format_usd_amount(calc['fee_usd'])} USD; "
+        f"P/L neto {signed_usd_text(calc['net_pnl_usd'])}."
+    )
+    cancelled_pending = None
+    if boolish(first_value(parameters, "cancel_pending", "void_pending", default=True)):
+        try:
+            cancelled_pending = module.cancel_transaction(
+                ns(
+                    portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                    transaction_id=parameters.get("pending_transaction_id") or parameters.get("draft_transaction_id"),
+                    symbol=calc["symbol"],
+                    status="draft",
+                    reason=f"Venta final confirmada; {calc['symbol']} deja de estar pendiente.",
+                )
+            ).get("record")
+        except Exception as exc:
+            cancelled_pending = {"skipped": True, "reason": brief(str(exc), 260)}
+    tx = module.add_transaction(
+        ns(
+            portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+            occurred_at=parameters.get("occurred_at"),
+            symbol=calc["symbol"],
+            side="SELL",
+            quantity=calc["quantity"],
+            price=calc["sell_price"],
+            gross_amount=calc["gross_sale_usd"],
+            fees=calc["fee_usd"],
+            currency=calc["currency"],
+            status="final",
+            source=parameters.get("source") or "kim_live_sale",
+            notes=notes,
+        )
+    )
+    change = module.record_final_change(
+        ns(
+            portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+            decided_at=parameters.get("decided_at"),
+            change_type="sell_position",
+            summary=notes,
+            rationale=parameters.get("rationale") or "Venta final confirmada por el doctor.",
+            related_consultation_id=parameters.get("related_consultation_id"),
+            executed=True,
+            execution_ref=tx["record"]["id"],
+        )
+    )
+    return {
+        "ok": True,
+        "action": "sell_position",
+        "calculation": calc,
+        "transaction": tx["record"],
+        "cancelled_pending": cancelled_pending,
+        "final_change": change["record"],
+        "message": portfolio_sale_preview(parameters, override_config)["summary"],
+        "database": str(module.DB_PATH),
+    }
+
+
+def portfolio_execute_pending_order(module, ns, parameters):
+    symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "new_symbol", "ticker", "asset"))
+    if not symbol:
+        raise ValueError("Falta symbol para ejecutar orden pendiente.")
+    gross_amount = portfolio_float(first_value(parameters, "gross_amount", "amount", "usd_amount", "invested_usd"))
+    price = portfolio_float(first_value(parameters, "price", "entry_price", "precio_entrada"))
+    quantity = portfolio_float(first_value(parameters, "quantity", "units", "cantidad"))
+    if gross_amount is None:
+        raise ValueError("Falta gross_amount/amount para ejecutar orden pendiente.")
+    if price in (None, 0):
+        raise ValueError("Falta price/entry_price para ejecutar orden pendiente.")
+    cancelled_pending = None
+    if boolish(first_value(parameters, "cancel_pending", "void_pending", default=True)):
+        try:
+            cancelled_pending = module.cancel_transaction(
+                ns(
+                    portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+                    transaction_id=parameters.get("transaction_id") or parameters.get("pending_transaction_id") or parameters.get("draft_transaction_id"),
+                    symbol=symbol,
+                    status="draft",
+                    reason=parameters.get("reason") or f"Orden pendiente {symbol} marcada como ejecutada.",
+                )
+            ).get("record")
+        except Exception as exc:
+            cancelled_pending = {"skipped": True, "reason": brief(str(exc), 260)}
+    tx = module.add_transaction(
+        ns(
+            portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+            occurred_at=parameters.get("occurred_at"),
+            symbol=symbol,
+            side="BUY",
+            quantity=quantity,
+            price=price,
+            gross_amount=gross_amount,
+            fees=parameters.get("fees") or 0,
+            currency=parameters.get("currency") or "USD",
+            status="final",
+            source=parameters.get("source") or "kim_live_execute_pending",
+            notes=parameters.get("notes") or f"Orden pendiente {symbol} ejecutada por instruccion del doctor.",
+        )
+    )
+    change = module.record_final_change(
+        ns(
+            portfolio_id=parameters.get("portfolio_id") or module.DEFAULT_PORTFOLIO_ID,
+            decided_at=parameters.get("decided_at"),
+            change_type="execute_pending_order",
+            summary=parameters.get("summary") or f"{symbol} dejo de estar pendiente y quedo como posicion activa por {gross_amount} USD a {price}.",
+            rationale=parameters.get("rationale") or "Ejecucion confirmada por el doctor.",
+            related_consultation_id=parameters.get("related_consultation_id"),
+            executed=True,
+            execution_ref=tx["record"]["id"],
+        )
+    )
+    return {
+        "ok": True,
+        "action": "execute_pending_order",
+        "executed_order": tx["record"],
+        "cancelled_pending": cancelled_pending,
+        "final_change": change["record"],
+        "database": str(module.DB_PATH),
+    }
+
+
 def portfolio_cli(action, parameters=None):
     action = (action or "status").strip().lower()
     parameters = parameters or {}
@@ -12203,6 +12414,8 @@ def portfolio_cli(action, parameters=None):
         "agglomerate_order",
         "agglomerate_orders",
         "set_position",
+        *PORTFOLIO_SALE_ACTIONS,
+        *PORTFOLIO_EXECUTION_ACTIONS,
     }
     spec = importlib.util.spec_from_file_location("kim_portfolio_db", PORTFOLIO_TOOL)
     module = importlib.util.module_from_spec(spec)
@@ -12211,6 +12424,34 @@ def portfolio_cli(action, parameters=None):
 
     def ns(**values):
         return type("PortfolioArgs", (), values)()
+
+    confirm = boolish(parameters.get("confirm"))
+    if action in PORTFOLIO_SALE_ACTIONS and not confirm:
+        summary = module.portfolio_summary_json()
+        preview = portfolio_sale_preview(parameters, portfolio_report_override_config(summary))
+        return confirmation_preview(
+            "portfolio",
+            "sell_position",
+            "Confirmar venta final de portafolio con PIN/frase antes de cerrar la posicion.",
+            preview,
+            execution_parameters={**parameters, "confirm": True},
+        )
+    if action in PORTFOLIO_EXECUTION_ACTIONS and not confirm:
+        symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "new_symbol", "ticker", "asset"))
+        gross_amount = first_value(parameters, "gross_amount", "amount", "usd_amount", "invested_usd")
+        price = first_value(parameters, "price", "entry_price", "precio_entrada")
+        return confirmation_preview(
+            "portfolio",
+            "execute_pending_order",
+            f"Confirmar que {symbol or 'la orden'} dejo de estar pendiente y quedara como posicion activa.",
+            {
+                "symbol": symbol,
+                "gross_amount": gross_amount,
+                "price": price,
+                "notes": parameters.get("notes") or parameters.get("summary") or "",
+            },
+            execution_parameters={**parameters, "confirm": True},
+        )
 
     if action == "status":
         try:
@@ -12223,6 +12464,13 @@ def portfolio_cli(action, parameters=None):
         result = module.portfolio_summary_json()
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
         result = portfolio_client_report(module.portfolio_summary_json(), parameters)
+    elif action in {
+        "weighted_average_breakdown",
+        "weighted_average",
+        "promedio_ponderado",
+        "explicar_promedio_ponderado",
+    }:
+        result = portfolio_weighted_average_breakdown(module.portfolio_summary_json(), parameters)
     elif action in {
         "fundamental_report",
         "portfolio_fundamental_report",
@@ -12335,6 +12583,15 @@ def portfolio_cli(action, parameters=None):
                 related_consultation_id=parameters.get("related_consultation_id"),
             )
         )
+    elif action in PORTFOLIO_SALE_ACTIONS:
+        result = portfolio_execute_sale(
+            module,
+            ns,
+            parameters,
+            portfolio_report_override_config(module.portfolio_summary_json()),
+        )
+    elif action in PORTFOLIO_EXECUTION_ACTIONS:
+        result = portfolio_execute_pending_order(module, ns, parameters)
     elif action in {"aggregate_order", "agglomerate_order", "agglomerate_orders"}:
         members = parameters.get("members") or parameters.get("members_json")
         if isinstance(members, (dict, list)):
@@ -15236,9 +15493,17 @@ def realtime_session_config():
                 "no intentes simular una cancelacion creando varias notas sueltas. Si el doctor dice refuerzo, "
                 "aglomera, promedia, agrega a la misma moneda o conserva una orden principal con subordenes, usa "
                 "kim_portfolio_record action=aggregate_order con canonical_order, symbol y members. El doctor decide "
-                "que ID canonico sobrevive; el promedio se calcula por costo total / unidades totales. Una correccion "
+                "que ID canonico sobrevive; el promedio se calcula por costo total / unidades totales. "
+                "Si el doctor pide promedio ponderado, o dice 'solo numeros y operaciones', usa "
+                "kim_portfolio_record action=weighted_average_breakdown para leer los tramos reales del ledger "
+                "y no calcularlo mentalmente. Una correccion "
                 "de precio, monto o aglomeracion no es venta, retiro ni devolucion salvo que el doctor diga literalmente "
-                "vendimos, retirar, retiro, devolucion o venta final. "
+                "vendimos, retirar, retiro, devolucion o venta final. Si el doctor dice que una orden ya se ejecuto, "
+                "ya entro, ya no esta pendiente o quedo corriendo, usa kim_portfolio_record action=execute_pending_order "
+                "con symbol, gross_amount y price; esa accion prepara confirmacion antes de volverla posicion activa. "
+                "Si el doctor dice que una posicion se vendio, usa kim_portfolio_record action=sell_position con symbol, "
+                "entry_price, sell_price, invested_usd y/o quantity. La venta debe pedir PIN/frase antes de ejecutarse "
+                "y debe calcular venta bruta, P/L bruto, fee operativo de 1.2% sobre el monto original/fee_base y P/L neto. "
                 "Para preguntas de memoria o contexto, primero usa kim_memory_search para consultar transcripts "
                 "literales y cita snippets/rutas como fuente primaria; los resumenes son derivados. Usa "
                 "kim_memory_router solo para decidir dominio cuando no sepas si va a portafolio, tareas, CRM, "
@@ -15310,7 +15575,7 @@ def realtime_session_config():
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
-                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order. "
+                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
                                     "Scheduler: schedule_action, list_schedules, cancel_schedule. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
@@ -15365,7 +15630,7 @@ def realtime_session_config():
                         "properties": {
                             "action": {
                                 "type": "string",
-                                    "description": "status, summary, client_report, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order, aggregate_order o set_position.",
+                                    "description": "status, summary, client_report, weighted_average_breakdown, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order, aggregate_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -15375,6 +15640,7 @@ def realtime_session_config():
                                     "add_transaction requiere symbol y side. cancel_transaction acepta transaction_id o symbol. "
                                     "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount. "
                                     "aggregate_order requiere canonical_order, symbol y members; members puede incluir member_order, source_order, amount_usd, price y quantity. "
+                                    "weighted_average_breakdown acepta symbol y canonical_order para devolver tramos, unidades y operaciones exactas del promedio ponderado. "
                                     "client_report acepta include_units=true si el doctor las pide; por defecto devuelve "
                                     "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes. "
                                     "fundamental_report genera analisis con fuentes, catalizadores internacionales, narrativas cripto populares, oportunidades y riesgos, sin enviar mensajes por defecto. "
@@ -16180,6 +16446,7 @@ def portfolio_fundamental_report_standard():
 def portfolio_standard_markdown(payload):
     active = payload.get("standard_positions", {}).get("active", [])
     pending = payload.get("standard_positions", {}).get("pending", [])
+    closed = payload.get("closed_positions") or []
     lines = [
         "# Portafolio Sr. Eli - Estandar Operativo",
         "",
@@ -16215,6 +16482,19 @@ def portfolio_standard_markdown(payload):
             )
     else:
         lines.append("- Sin ordenes pendientes.")
+    lines.extend(["", "## Posiciones Cerradas"])
+    if closed:
+        for item in closed:
+            pieces = [
+                f"- {item.get('identifier') or item.get('order') or ''}. {item.get('label') or item.get('symbol')}:".strip(),
+                f"entrada {format_price(item.get('entry_price'))}" if item.get("entry_price") is not None else "",
+                f"salida {format_price(item.get('sell_price'))}" if item.get("sell_price") is not None else "",
+                f"P/L neto {signed_usd_text(item.get('net_pnl_usd'))}" if item.get("net_pnl_usd") is not None else "",
+                str(item.get("notes") or "").strip(),
+            ]
+            lines.append(" ".join(part for part in pieces if part).strip())
+    else:
+        lines.append("- Sin posiciones cerradas registradas en el estandar.")
     lines.extend(["", "## Balance"])
     lines.append(payload.get("balance_line") or "Balance pendiente de generar.")
     lines.extend(["", "## Formato WhatsApp Estandar"])
@@ -16266,7 +16546,7 @@ def portfolio_save_current_standard(summary, report):
 
     payload = {
         "app_version": APP_VERSION,
-        "standard_version": "KIM-0087",
+        "standard_version": override_config.get("standard_version") or "KIM-0096",
         "standard_saved_at": now_iso(),
         "portfolio_id": summary.get("portfolio_id"),
         "portfolio_label": override_config.get("portfolio_label") or "A",
@@ -16279,6 +16559,7 @@ def portfolio_save_current_standard(summary, report):
             "active": [position_payload(item) for item in report.get("active_positions", [])],
             "pending": [position_payload(item) for item in report.get("pending_orders", [])],
         },
+        "closed_positions": override_config.get("closed_positions", []),
         "balance": report.get("balance", {}),
         "balance_line": report.get("balance_line", ""),
         "whatsapp_messages": report.get("whatsapp_messages", []),
@@ -16408,6 +16689,153 @@ def portfolio_aggregation_client_note(item, identifier_prefix="A"):
     if item.get("merged_with_pending") or aggregation:
         return "Refuerzo ya incluido."
     return ""
+
+
+def portfolio_weighted_average_breakdown(summary, parameters=None):
+    parameters = parameters or {}
+    raw_symbol = first_value(parameters, "symbol", "ticker", "asset", default="PEPEUSDT")
+    symbol = str(raw_symbol or "").strip().upper()
+    if symbol and symbol.isalpha() and not symbol.endswith("USDT"):
+        symbol = f"{symbol}USDT"
+    canonical_order = str(first_value(parameters, "canonical_order", "order_id", "order", default="")).strip()
+    include_micro_prices = boolish(first_value(parameters, "include_micro_prices", "scaled_prices", default=True))
+
+    def format_quantity(value):
+        if value is None:
+            return None
+        text = f"{float(value):.6f}"
+        return text.rstrip("0").rstrip(".")
+
+    components = []
+    source = "transactions"
+    aggregation_used = None
+    for aggregation in summary.get("order_aggregations") or []:
+        agg_symbol = str(aggregation.get("symbol") or "").strip().upper()
+        agg_order = str(aggregation.get("canonical_order") or "").strip()
+        if canonical_order and agg_order != canonical_order:
+            continue
+        if symbol and agg_symbol != symbol:
+            continue
+        if str(aggregation.get("status") or "active").strip().lower() != "active":
+            continue
+        aggregation_used = aggregation
+        source = "order_aggregation"
+        break
+
+    if aggregation_used:
+        for index, member in enumerate(aggregation_used.get("members") or [], start=1):
+            if str((member or {}).get("status") or "active").strip().lower() != "active":
+                continue
+            if not bool((member or {}).get("include_in_average", True)):
+                continue
+            amount = member.get("amount_usd")
+            price = member.get("price")
+            quantity = member.get("quantity")
+            amount = float(amount) if amount not in (None, "") else None
+            price = float(price) if price not in (None, "") else None
+            quantity = float(quantity) if quantity not in (None, "") else None
+            if quantity is None and amount is not None and price not in (None, 0):
+                quantity = amount / price
+            if amount is None and quantity is not None and price not in (None, 0):
+                amount = quantity * price
+            if amount is None or price in (None, 0) or quantity is None:
+                continue
+            label = (
+                str((member or {}).get("member_order") or "").strip()
+                or str((member or {}).get("source_order") or "").strip()
+                or str((member or {}).get("role") or "").strip()
+                or f"tramo_{index}"
+            )
+            components.append(
+                {
+                    "label": label,
+                    "amount_usd": amount,
+                    "price": price,
+                    "price_display": format_price(price),
+                    "quantity": quantity,
+                    "quantity_display": format_quantity(quantity),
+                    "micro_price": round_opt(price * 1_000_000, 6) if include_micro_prices else None,
+                    "notes": str((member or {}).get("notes") or "").strip(),
+                }
+            )
+
+    if not components:
+        for row in [*(summary.get("final_transactions") or []), *(summary.get("draft_transactions") or [])]:
+            row_symbol = str((row or {}).get("symbol") or "").strip().upper()
+            if symbol and row_symbol != symbol:
+                continue
+            if str((row or {}).get("side") or "").strip().upper() != "BUY":
+                continue
+            amount = row.get("gross_amount")
+            price = row.get("price")
+            quantity = row.get("quantity")
+            amount = float(amount) if amount not in (None, "") else None
+            price = float(price) if price not in (None, "") else None
+            quantity = float(quantity) if quantity not in (None, "") else None
+            if quantity is None and amount is not None and price not in (None, 0):
+                quantity = amount / price
+            if amount is None and quantity is not None and price not in (None, 0):
+                amount = quantity * price
+            if amount is None or price in (None, 0) or quantity is None:
+                continue
+            components.append(
+                {
+                    "label": str(row.get("id") or row.get("occurred_at") or f"tramo_{len(components) + 1}"),
+                    "amount_usd": amount,
+                    "price": price,
+                    "price_display": format_price(price),
+                    "quantity": quantity,
+                    "quantity_display": format_quantity(quantity),
+                    "micro_price": round_opt(price * 1_000_000, 6) if include_micro_prices else None,
+                    "notes": str(row.get("notes") or "").strip(),
+                }
+            )
+
+    if len(components) < 2:
+        raise ValueError(f"No encontre suficientes tramos activos para calcular promedio ponderado de {symbol or 'la posicion'}.")
+
+    total_amount = sum(float(item.get("amount_usd") or 0) for item in components)
+    total_quantity = sum(float(item.get("quantity") or 0) for item in components)
+    if total_quantity <= 0:
+        raise ValueError("La cantidad total es cero; no puedo calcular el promedio ponderado.")
+    average_price = total_amount / total_quantity
+    amount_terms = [format_usd_amount(item["amount_usd"]) for item in components]
+    quantity_terms = [item["quantity_display"] for item in components if item.get("quantity_display")]
+    operations = []
+    for index, item in enumerate(components, start=1):
+        operations.append(
+            f"q{index} = {format_usd_amount(item['amount_usd'])} / {item['price_display']} = {item['quantity_display']}"
+        )
+    operations.append(f"q_total = {' + '.join(quantity_terms)} = {format_quantity(total_quantity)}")
+    operations.append(f"usd_total = {' + '.join(amount_terms)} = {format_usd_amount(total_amount)}")
+    operations.append(
+        f"promedio = {format_usd_amount(total_amount)} / {format_quantity(total_quantity)} = {format_price(average_price)}"
+    )
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "weighted_average_breakdown",
+        "symbol": symbol,
+        "canonical_order": canonical_order or (aggregation_used or {}).get("canonical_order"),
+        "source": source,
+        "components": components,
+        "micro_prices": [
+            {"label": item["label"], "micro_price": item.get("micro_price")}
+            for item in components
+            if item.get("micro_price") is not None
+        ]
+        if include_micro_prices
+        else [],
+        "total_amount_usd": round_opt(total_amount, 2),
+        "total_quantity": round_opt(total_quantity, 6),
+        "weighted_average_price": average_price,
+        "weighted_average_price_display": format_price(average_price),
+        "operations": operations,
+        "summary": "; ".join(
+            f"{item['label']}: {format_usd_amount(item['amount_usd'])} USD @ {item['price_display']}"
+            for item in components
+        ),
+    }
 
 
 def portfolio_recompute_credit_fields(item, override_config):
@@ -16717,6 +17145,8 @@ def portfolio_apply_manual_overrides(summary, active_items, pending_items, inclu
         if not symbol:
             continue
         state = str(entry.get("state") or "active").strip().lower()
+        if state in PORTFOLIO_CLOSED_STATES:
+            continue
         notes = str(entry.get("notes") or "").strip()
         label = str(entry.get("label") or portfolio_symbol_label(symbol, notes)).strip() or symbol
         invested_raw = float(entry.get("invested_usd") or 0)
@@ -17995,7 +18425,20 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/portfolio":
                 try:
-                    result = portfolio_cli(body.get("action", "status"), body.get("parameters") or {})
+                    portfolio_action = str(body.get("action", "status") or "status").strip().lower()
+                    portfolio_parameters = body.get("parameters") or {}
+                    portfolio_confirm = bool(body.get("confirm", False)) or boolish(portfolio_parameters.get("confirm"))
+                    if portfolio_action in PORTFOLIO_CONFIRMABLE_ACTIONS:
+                        result = run_api_bridge(
+                            "portfolio",
+                            portfolio_action,
+                            portfolio_parameters,
+                            confirm=portfolio_confirm,
+                            session_id=body.get("session_id", ""),
+                            transcript=body.get("transcript", ""),
+                        )
+                    else:
+                        result = portfolio_cli(portfolio_action, portfolio_parameters)
                 except Exception as exc:
                     result = {
                         "ok": False,
