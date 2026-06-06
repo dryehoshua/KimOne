@@ -166,6 +166,8 @@ MARKET_PRICE_VALIDATION_LOG = MEMORY_CONTEXT_DIR / "market_price_validations.jso
 RUNTIME_MARKET_PRICE_VALIDATION_LOG = RUNTIME_CONTEXT / "market_price_validations.jsonl"
 HOSTINGER_MAIL_LOG = MEMORY_CONTEXT_DIR / "hostinger_mail_actions.jsonl"
 RUNTIME_HOSTINGER_MAIL_LOG = RUNTIME_CONTEXT / "hostinger_mail_actions.jsonl"
+GOOGLE_MAPS_LOG = MEMORY_CONTEXT_DIR / "google_maps_actions.jsonl"
+RUNTIME_GOOGLE_MAPS_LOG = RUNTIME_CONTEXT / "google_maps_actions.jsonl"
 KIM_PRODUCT_BACKLOG_JSON = MEMORY_CONTEXT_DIR / "kim_product_backlog.json"
 RUNTIME_KIM_PRODUCT_BACKLOG_JSON = RUNTIME_CONTEXT / "kim_product_backlog.json"
 KIM_PRODUCT_BACKLOG_MD = MEMORY_CONTEXT_DIR / "kim_product_backlog.md"
@@ -200,6 +202,7 @@ PIPEDRIVE_COMPANY_DOMAIN_KEYCHAIN_SERVICE = "codex.pipedrive.company_domain"
 GMAIL_CLIENT_ID_KEYCHAIN_SERVICE = "codex.google.gmail.client_id"
 GMAIL_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.google.gmail.client_secret"
 GMAIL_REFRESH_TOKEN_KEYCHAIN_SERVICE = "codex.google.gmail.refresh_token"
+GOOGLE_MAPS_API_KEYCHAIN_SERVICE = "codex.google.maps.api_key"
 ZOOM_ACCOUNT_ID_KEYCHAIN_SERVICE = "codex.zoom.account_id"
 ZOOM_CLIENT_ID_KEYCHAIN_SERVICE = "codex.zoom.client_id"
 ZOOM_CLIENT_SECRET_KEYCHAIN_SERVICE = "codex.zoom.client_secret"
@@ -224,6 +227,9 @@ PIPEDRIVE_API_BASE = "https://api.pipedrive.com/v1"
 GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
+GOOGLE_MAPS_GEOCODING_BASE = "https://maps.googleapis.com"
+GOOGLE_PLACES_API_BASE = "https://places.googleapis.com"
+GOOGLE_ROUTES_API_BASE = "https://routes.googleapis.com"
 TWILIO_API_BASE = "https://api.twilio.com/2010-04-01"
 ZOOM_OAUTH_TOKEN_URL = "https://zoom.us/oauth/token"
 ZOOM_API_BASE = "https://api.zoom.us/v2"
@@ -3148,6 +3154,7 @@ def api_bridge_config_status(live=False):
     notion_configured = bool(load_keychain_secret(NOTION_KEYCHAIN_SERVICE, required=False))
     pipedrive_configured = bool(load_keychain_secret(PIPEDRIVE_KEYCHAIN_SERVICE, required=False))
     zoom_status_data = zoom_status(live=False)
+    google_maps_status_data = google_maps_status(live=False)
     gmail_configured = gmail_oauth_configured()
     gmail_has_refresh = gmail_authorized()
     hostinger_status = hostinger_mail_status(live=False)
@@ -3208,6 +3215,7 @@ def api_bridge_config_status(live=False):
             "auth_url": "https://kim.aipeople.app/oauth/google/start",
             "mode": "readonly",
         },
+        "google_maps": google_maps_status_data,
         "zoom": zoom_status_data,
         "hostinger_mail": hostinger_status,
         "twilio": twilio_status(live=False),
@@ -3291,6 +3299,360 @@ def api_json_request(base_url, path, headers, method="GET", payload=None, params
     if not raw:
         return {}
     return json.loads(raw)
+
+
+def google_maps_api_key(required=True):
+    key = load_keychain_secret(GOOGLE_MAPS_API_KEYCHAIN_SERVICE, required=False)
+    if key:
+        return key.strip()
+    credential_paths = [
+        BIFROST / "APIs Cred" / "maps api.rtf",
+        BIFROST / "APIs Cred" / "google maps api.rtf",
+        BIFROST / "APIs Cred" / "google_maps_api_key.txt",
+    ]
+    for path in credential_paths:
+        if not path.exists():
+            continue
+        try:
+            raw = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        match = re.search(r"(AIza[0-9A-Za-z_\-]{20,})", raw)
+        if match:
+            return match.group(1).strip()
+    if required:
+        raise ValueError(f"No encontre API key de Google Maps en Keychain ({GOOGLE_MAPS_API_KEYCHAIN_SERVICE}) ni en BIFROST/APIs Cred.")
+    return ""
+
+
+def google_maps_status(live=False):
+    configured = bool(google_maps_api_key(required=False))
+    status = {
+        "ok": True,
+        "configured": configured,
+        "provider": "google_maps",
+        "write_requires_confirmation": False,
+        "billing_note": "Las consultas de Google Maps pueden generar cargos pequenos segun la cuenta/proyecto.",
+        "keychain_service": GOOGLE_MAPS_API_KEYCHAIN_SERVICE,
+        "capabilities": [
+            "status",
+            "validate_key",
+            "find_place",
+            "text_search",
+            "geocode",
+            "reverse_geocode",
+            "route_distance",
+            "timezone",
+        ],
+        "required_google_apis": [
+            "Places API (New)",
+            "Geocoding API",
+            "Routes API",
+            "Time Zone API",
+        ],
+    }
+    if live and configured:
+        try:
+            probe = google_maps_geocode({"address": "Mexico City, Mexico"})
+            status["live_ok"] = bool(probe.get("ok"))
+            status["live_probe"] = {
+                "formatted_address": ((probe.get("results") or [{}])[0]).get("formatted_address", ""),
+                "place_id": ((probe.get("results") or [{}])[0]).get("place_id", ""),
+            }
+        except Exception as exc:
+            status["live_ok"] = False
+            status["live_error"] = brief(str(exc), 360)
+    return status
+
+
+def google_maps_log(action, parameters, result):
+    record = {
+        "at": now_iso(),
+        "provider": "google_maps",
+        "action": action,
+        "parameters": sanitize_for_log(parameters),
+        "ok": bool(result.get("ok")),
+        "summary": brief(str(result.get("summary") or result.get("message") or ""), 800),
+    }
+    append_jsonl_any([GOOGLE_MAPS_LOG, RUNTIME_GOOGLE_MAPS_LOG], record)
+    append_memory("google_maps_action", record)
+    return record
+
+
+def google_maps_location_dict(raw):
+    if not isinstance(raw, dict):
+        return None
+    lat = raw.get("lat")
+    lng = raw.get("lng")
+    if lat is None or lng is None:
+        lat = (raw.get("latitude") if raw.get("latitude") is not None else raw.get("lat"))
+        lng = (raw.get("longitude") if raw.get("longitude") is not None else raw.get("lng"))
+    if lat is None or lng is None:
+        return None
+    return {"latitude": float(lat), "longitude": float(lng)}
+
+
+def google_maps_parse_latlng(value):
+    if isinstance(value, dict):
+        return google_maps_location_dict(value)
+    text = str(value or "").strip()
+    if not text:
+        return None
+    match = re.search(r"(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)", text)
+    if not match:
+        return None
+    return {"latitude": float(match.group(1)), "longitude": float(match.group(2))}
+
+
+def google_maps_place_item(place):
+    display_name = place.get("displayName") or {}
+    location = place.get("location") or {}
+    return {
+        "id": place.get("id", ""),
+        "place_id": place.get("id", ""),
+        "name": display_name.get("text") or place.get("name", ""),
+        "formatted_address": place.get("formattedAddress", ""),
+        "location": google_maps_location_dict(location),
+        "google_maps_uri": place.get("googleMapsUri", ""),
+        "website_uri": place.get("websiteUri", ""),
+        "phone": place.get("nationalPhoneNumber") or place.get("internationalPhoneNumber") or "",
+        "rating": place.get("rating"),
+        "user_rating_count": place.get("userRatingCount"),
+        "business_status": place.get("businessStatus", ""),
+        "types": place.get("types") or [],
+    }
+
+
+def google_maps_find_place(parameters=None):
+    parameters = dict(parameters or {})
+    query = str(first_value(parameters, "query", "text", "q", "place", "business", "name", "lugar", default="") or "").strip()
+    if not query:
+        raise ValueError("Falta query/text para buscar lugares en Google Maps.")
+    max_results = int(float(first_value(parameters, "max_results", "limit", default=5) or 5))
+    payload = {
+        "textQuery": query,
+        "languageCode": str(first_value(parameters, "language", "language_code", default="es") or "es"),
+        "maxResultCount": max(1, min(max_results, 20)),
+    }
+    location = google_maps_parse_latlng(first_value(parameters, "location", "near", "latlng", default=""))
+    if location:
+        radius = float(first_value(parameters, "radius_meters", "radius", default=5000) or 5000)
+        payload["locationBias"] = {"circle": {"center": location, "radius": max(1.0, min(radius, 50000.0))}}
+    region = str(first_value(parameters, "region_code", "region", "country", default="") or "").strip().upper()
+    if region:
+        payload["regionCode"] = region
+    field_mask = ",".join(
+        [
+            "places.id",
+            "places.displayName",
+            "places.formattedAddress",
+            "places.location",
+            "places.googleMapsUri",
+            "places.websiteUri",
+            "places.nationalPhoneNumber",
+            "places.internationalPhoneNumber",
+            "places.rating",
+            "places.userRatingCount",
+            "places.businessStatus",
+            "places.types",
+        ]
+    )
+    response = api_json_request(
+        GOOGLE_PLACES_API_BASE,
+        "/v1/places:searchText",
+        {
+            "X-Goog-Api-Key": google_maps_api_key(),
+            "X-Goog-FieldMask": field_mask,
+        },
+        method="POST",
+        payload=payload,
+        timeout=30,
+    )
+    places = [google_maps_place_item(place) for place in response.get("places") or []]
+    return {
+        "ok": True,
+        "provider": "google_maps",
+        "action": "find_place",
+        "query": query,
+        "count": len(places),
+        "places": places,
+        "summary": f"Google Maps encontro {len(places)} resultado(s) para: {query}.",
+    }
+
+
+def google_maps_geocode(parameters=None):
+    parameters = dict(parameters or {})
+    address = str(first_value(parameters, "address", "query", "q", "direccion", "dirección", default="") or "").strip()
+    latlng = google_maps_parse_latlng(first_value(parameters, "latlng", "location", default=""))
+    if not address and not latlng:
+        raise ValueError("Falta address o latlng para geocoding.")
+    params = {
+        "key": google_maps_api_key(),
+        "language": str(first_value(parameters, "language", default="es") or "es"),
+    }
+    action = "reverse_geocode" if latlng and not address else "geocode"
+    if action == "reverse_geocode":
+        params["latlng"] = f"{latlng['latitude']},{latlng['longitude']}"
+    else:
+        params["address"] = address
+        region = str(first_value(parameters, "region", "country", default="") or "").strip()
+        if region:
+            params["region"] = region
+    response = api_json_request(GOOGLE_MAPS_GEOCODING_BASE, "/maps/api/geocode/json", {}, params=params, timeout=30)
+    status = response.get("status")
+    results = []
+    for item in response.get("results") or []:
+        geometry = item.get("geometry") or {}
+        location = geometry.get("location") or {}
+        results.append(
+            {
+                "formatted_address": item.get("formatted_address", ""),
+                "place_id": item.get("place_id", ""),
+                "location": {"latitude": location.get("lat"), "longitude": location.get("lng")},
+                "location_type": geometry.get("location_type", ""),
+                "types": item.get("types") or [],
+            }
+        )
+    return {
+        "ok": status == "OK",
+        "provider": "google_maps",
+        "action": action,
+        "status": status,
+        "error_message": response.get("error_message", ""),
+        "results": results,
+        "summary": f"Geocoding {status}; {len(results)} resultado(s).",
+    }
+
+
+def google_maps_route_distance(parameters=None):
+    parameters = dict(parameters or {})
+    origin = str(first_value(parameters, "origin", "from", "origen", default="") or "").strip()
+    destination = str(first_value(parameters, "destination", "to", "destino", default="") or "").strip()
+    if not origin or not destination:
+        raise ValueError("Faltan origin y destination para calcular ruta.")
+    mode = str(first_value(parameters, "travel_mode", "mode", "modo", default="DRIVE") or "DRIVE").strip().upper()
+    mode_map = {"DRIVING": "DRIVE", "CAR": "DRIVE", "WALKING": "WALK", "BICYCLING": "BICYCLE", "TRANSIT": "TRANSIT"}
+    mode = mode_map.get(mode, mode)
+    payload = {
+        "origin": {"address": origin},
+        "destination": {"address": destination},
+        "travelMode": mode if mode in {"DRIVE", "WALK", "BICYCLE", "TRANSIT", "TWO_WHEELER"} else "DRIVE",
+        "languageCode": str(first_value(parameters, "language", default="es") or "es"),
+        "units": str(first_value(parameters, "units", default="METRIC") or "METRIC").upper(),
+    }
+    if payload["travelMode"] == "DRIVE":
+        payload["routingPreference"] = str(first_value(parameters, "routing_preference", default="TRAFFIC_AWARE") or "TRAFFIC_AWARE").upper()
+    response = api_json_request(
+        GOOGLE_ROUTES_API_BASE,
+        "/directions/v2:computeRoutes",
+        {
+            "X-Goog-Api-Key": google_maps_api_key(),
+            "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.staticDuration,routes.description,routes.localizedValues,routes.routeLabels,routes.warnings",
+        },
+        method="POST",
+        payload=payload,
+        timeout=35,
+    )
+    routes = []
+    for route in response.get("routes") or []:
+        distance_m = route.get("distanceMeters")
+        duration_seconds = None
+        duration = str(route.get("duration") or "")
+        if duration.endswith("s"):
+            try:
+                duration_seconds = float(duration[:-1])
+            except ValueError:
+                duration_seconds = None
+        routes.append(
+            {
+                "distance_meters": distance_m,
+                "distance_km": round_opt((float(distance_m) / 1000) if distance_m is not None else None, 2),
+                "duration": duration,
+                "duration_minutes": round_opt((duration_seconds / 60) if duration_seconds is not None else None, 1),
+                "static_duration": route.get("staticDuration", ""),
+                "description": route.get("description", ""),
+                "localized_values": route.get("localizedValues") or {},
+                "route_labels": route.get("routeLabels") or [],
+                "warnings": route.get("warnings") or [],
+            }
+        )
+    best = routes[0] if routes else {}
+    return {
+        "ok": bool(routes),
+        "provider": "google_maps",
+        "action": "route_distance",
+        "origin": origin,
+        "destination": destination,
+        "travel_mode": payload["travelMode"],
+        "routes": routes,
+        "summary": (
+            f"Ruta {origin} -> {destination}: {best.get('distance_km')} km, "
+            f"{best.get('duration_minutes')} min aprox."
+        )
+        if best
+        else "Google Routes no devolvio rutas.",
+    }
+
+
+def google_maps_timezone(parameters=None):
+    parameters = dict(parameters or {})
+    location = google_maps_parse_latlng(first_value(parameters, "location", "latlng", default=""))
+    if not location:
+        address = str(first_value(parameters, "address", "query", "q", default="") or "").strip()
+        if not address:
+            raise ValueError("Falta location/latlng o address para consultar timezone.")
+        geocoded = google_maps_geocode({"address": address})
+        first = (geocoded.get("results") or [{}])[0]
+        location = google_maps_location_dict(first.get("location") or {})
+    timestamp = int(float(first_value(parameters, "timestamp", "time", default=time.time()) or time.time()))
+    response = api_json_request(
+        GOOGLE_MAPS_GEOCODING_BASE,
+        "/maps/api/timezone/json",
+        {},
+        params={
+            "key": google_maps_api_key(),
+            "location": f"{location['latitude']},{location['longitude']}",
+            "timestamp": timestamp,
+            "language": str(first_value(parameters, "language", default="es") or "es"),
+        },
+        timeout=30,
+    )
+    return {
+        "ok": response.get("status") == "OK",
+        "provider": "google_maps",
+        "action": "timezone",
+        "status": response.get("status"),
+        "error_message": response.get("errorMessage") or response.get("error_message", ""),
+        "location": location,
+        "time_zone_id": response.get("timeZoneId", ""),
+        "time_zone_name": response.get("timeZoneName", ""),
+        "raw_offset": response.get("rawOffset"),
+        "dst_offset": response.get("dstOffset"),
+        "summary": f"Timezone: {response.get('timeZoneId', '')} {response.get('timeZoneName', '')}".strip(),
+    }
+
+
+def run_google_maps_bridge(action, parameters=None, confirm=False):
+    action = (action or "status").strip().lower()
+    parameters = dict(parameters or {})
+    if action in {"status", "config", "health"}:
+        result = google_maps_status(live=boolish(first_value(parameters, "live", "test", default=False)))
+    elif action in {"validate_key", "test", "self_test"}:
+        result = google_maps_status(live=True)
+    elif action in {"find_place", "text_search", "search_place", "places_search", "buscar_lugar", "buscar_empresa"}:
+        result = google_maps_find_place(parameters)
+    elif action in {"geocode", "geocode_address", "address_lookup", "validar_direccion", "validar_dirección"}:
+        result = google_maps_geocode(parameters)
+    elif action in {"reverse_geocode", "reverse_address"}:
+        result = google_maps_geocode({**parameters, "address": ""})
+    elif action in {"route_distance", "route", "directions", "distance", "distancia", "ruta"}:
+        result = google_maps_route_distance(parameters)
+    elif action in {"timezone", "time_zone", "zona_horaria"}:
+        result = google_maps_timezone(parameters)
+    else:
+        raise ValueError("Accion Google Maps no soportada. Usa status, validate_key, find_place, geocode, route_distance o timezone.")
+    result["log"] = google_maps_log(action, parameters, result)
+    return result
 
 
 def form_json_request(base_url, path, headers, method="POST", payload=None, params=None, timeout=90):
@@ -7963,6 +8325,8 @@ def execute_confirmed_bridge_action(provider, action, parameters):
         return run_crm_bridge(action, parameters, confirm=True)
     if provider in {"gmail", "google_mail"}:
         return run_gmail_bridge(action, parameters, confirm=False)
+    if provider in {"google_maps", "maps", "places", "geocoding", "routes"}:
+        return run_google_maps_bridge(action, parameters, confirm=False)
     raise ValueError(f"Proveedor programado no soportado: {provider}/{action}")
 
 
@@ -10819,6 +11183,14 @@ def agent_action_defaults(action, parameters):
         return "zoom", "get_transcript", data
     if action in {"send_zoom_transcript", "send_zoom_summary", "reenviar_zoom_transcript", "reenviar_resumen_zoom", "mandar_resumen_zoom", "mandar_transcript_zoom"}:
         return "zoom", "send_transcript", data
+    if action in {"find_place", "text_search", "search_place", "buscar_lugar", "buscar_empresa", "maps_search"}:
+        return "google_maps", "find_place", data
+    if action in {"geocode", "geocode_address", "validar_direccion", "validar_dirección", "address_lookup"}:
+        return "google_maps", "geocode", data
+    if action in {"route_distance", "route", "directions", "distance", "distancia", "ruta"}:
+        return "google_maps", "route_distance", data
+    if action in {"timezone", "time_zone", "zona_horaria"}:
+        return "google_maps", "timezone", data
     if action in {"save_contact", "create_contact", "upsert_contact", "guardar_contacto", "crear_contacto"}:
         return "crm", "upsert_contact", data
     if action in {"create_task", "add_task", "task", "tarea", "registrar_tarea", "crear_tarea"}:
@@ -10867,6 +11239,10 @@ def api_bridge_templates():
                 "create_zoom_invite",
                 "zoom_transcript",
                 "send_zoom_summary",
+                "find_place",
+                "geocode_address",
+                "route_distance",
+                "timezone",
                 "save_contact",
                 "mark_spam",
                 "move_to_trash",
@@ -11000,6 +11376,55 @@ def api_bridge_templates():
                     "phone": ["telefono", "to", "client_phone"],
                 },
                 "rule": "Registra una nota interna asociada al contacto si se conoce telefono o correo.",
+            },
+        },
+        "google_maps": {
+            "status": {
+                "rule": "Valida si existe API key de Google Maps sin imprimirla. Usa validate_key para una prueba viva con Geocoding.",
+            },
+            "find_place": {
+                "required": ["query"],
+                "optional": ["location", "radius_meters", "region_code", "max_results", "language"],
+                "aliases": {
+                    "query": ["text", "q", "place", "business", "name", "lugar", "empresa"],
+                    "location": ["near", "latlng", "ubicacion", "ubicación"],
+                    "radius_meters": ["radius", "radio"],
+                    "region_code": ["country", "region", "pais", "país"],
+                },
+                "rule": (
+                    "Busca negocios/lugares en Google Places. Devuelve nombre, direccion, coordenadas, Google Maps URL, telefono, web, rating y tipos cuando Google lo entregue. "
+                    "No guarda en CRM por si sola; para guardar un prospecto usa despues provider=crm o pipedrive con confirmacion."
+                ),
+            },
+            "geocode": {
+                "required": ["address or latlng"],
+                "aliases": {
+                    "address": ["query", "q", "direccion", "dirección"],
+                    "latlng": ["location", "ubicacion", "ubicación"],
+                },
+                "rule": "Convierte direccion a coordenadas o coordenadas a direccion. Usar para validar direcciones antes de guardar clientes o planear rutas.",
+            },
+            "route_distance": {
+                "required": ["origin", "destination"],
+                "optional": ["travel_mode", "language", "routing_preference"],
+                "aliases": {
+                    "origin": ["from", "origen"],
+                    "destination": ["to", "destino"],
+                    "travel_mode": ["mode", "modo"],
+                },
+                "defaults": {
+                    "travel_mode": "DRIVE",
+                    "routing_preference": "TRAFFIC_AWARE",
+                },
+                "rule": "Calcula distancia y tiempo aproximado con Routes API. Usar para coordinar visitas, logística o sugerir ubicación de reunión.",
+            },
+            "timezone": {
+                "required": ["location or address"],
+                "aliases": {
+                    "location": ["latlng", "ubicacion", "ubicación"],
+                    "address": ["query", "direccion", "dirección"],
+                },
+                "rule": "Devuelve zona horaria de coordenadas o direccion. Util para agenda/llamadas internacionales.",
             },
         },
         "portfolio": {
@@ -11408,6 +11833,10 @@ def api_bridge_self_test():
     run_case(
         "templates_available",
         lambda: {"ok": True, "providers": sorted(api_bridge_templates().keys())},
+    )
+    run_case(
+        "google_maps_status",
+        lambda: run_google_maps_bridge("status", {}),
     )
     run_case(
         "hostinger_send_alias_dry_run",
@@ -12005,6 +12434,8 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_hostinger_mail_bridge(action, parameters, confirm=confirm)
     elif provider in {"gmail", "google_mail"}:
         result = run_gmail_bridge(action, parameters, confirm=confirm)
+    elif provider in {"google_maps", "maps", "places", "geocoding", "routes"}:
+        result = run_google_maps_bridge(action, parameters, confirm=confirm)
     elif provider in {"zoom", "zoom_meetings", "zoom_calendar"}:
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -12111,7 +12542,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
     elif provider in {"all", "auto", "kim", "agent"}:
         target_provider, target_action, target_parameters = agent_action_defaults(action, parameters)
         if not target_provider:
-            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task, create_page, call_phone, schedule_call, schedule_sms, save_contact o pipedrive.")
+            raise ValueError("No pude inferir proveedor para esta accion. Usa send_email, create_task, update_task, comment_task, create_page, call_phone, schedule_call, schedule_sms, save_contact, google_maps/find_place o pipedrive.")
         result = run_api_bridge(
             target_provider,
             target_action,
@@ -15467,6 +15898,8 @@ def realtime_session_config():
                 "o action=call_report con phone/call_sid/context_id antes de responder; estos reportes incluyen llamadas no contestadas, busy, failed o sin audio. "
                 "Si sospechas que faltan intentos viejos, usa provider=twilio action=sync_call_attempts con since/limit; esa accion no llama a nadie. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
+                "Para lugares, rutas, direcciones o negocios fisicos usa provider=google_maps: find_place, geocode, route_distance o timezone; "
+                "Google Maps es de consulta y puede generar cargos pequenos, asi que resume resultados utiles y no hagas busquedas repetidas innecesarias. "
                 "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
                 "No esperes a que el doctor diga 'guarda esto' cuando el contexto sea claro: si detectas datos estables de cliente, "
                 "prepara actualizar CRM; si detectas un pendiente concreto, prepara tarea ClickUp; si detectas conocimiento reutilizable, "
@@ -15560,7 +15993,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, twilio, scheduler, crm o all.",
+                                "description": "Proveedor: clickup, notion, pipedrive, gmail, google_maps, hostinger_mail, zoom, portfolio, twilio, scheduler, crm o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -15574,6 +16007,7 @@ def realtime_session_config():
                                     "list_folders, list_messages, search_messages, get_message, draft_email, draft_reply, "
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
+                                    "Google Maps: status, validate_key, find_place, geocode, route_distance, timezone. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
