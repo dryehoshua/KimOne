@@ -1,10 +1,74 @@
 # KimOne
 
-KimOne is the GitHub home for Kim Live and the BIFROST agent workbench.
+Last updated: 2026-06-07
+
+KimOne is the GitHub/source home for Kim Live and the BIFROST agent workbench.
+
+## Current Source
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne
+```
+
+Current branch:
+
+```text
+bifrost/kim-live-initial
+```
+
+Current backend version in `kim_live/server.py`:
+
+```text
+1.5.70
+```
 
 ## Contents
 
-- `kim_live/`: local Kim Live frontend/backend source.
-- `.gitignore`: excludes local secrets, runtime logs, caches and temporary files.
+- `kim_live/`: current local Kim Live frontend/backend source.
+- `kim_live/API_BRIDGE.md`: current bridge capability spec and change history.
+- `kim_live/context/portfolio_report_overrides.json`: portfolio/reporting
+  override state used by Kim Live.
+- `.gitignore`: excludes local secrets, runtime logs, caches and temporary
+  files.
 
-Secrets are stored in macOS Keychain, not in this repository.
+## Operating Rule
+
+Edit source here first, compile, then deploy to runtime:
+
+```bash
+cd /Users/dryehoshuapython/Documents/BIFROST/repos/KimOne
+python3 -m py_compile kim_live/server.py kim_live/twilio_realtime_bridge.py
+cp kim_live/server.py /Users/dryehoshuapython/.kim_live/server.py
+cp kim_live/twilio_realtime_bridge.py /Users/dryehoshuapython/.kim_live/twilio_realtime_bridge.py
+launchctl kickstart -k gui/$(id -u)/com.codex.kim.live
+```
+
+Use targeted copies for docs/assets/config as needed. Do not rely on
+runtime-only edits.
+
+## Current Local Git State
+
+As of 2026-06-07, this local branch is ahead of GitHub by 9 commits. Latest
+local commits include:
+
+- `Update BIFROST documentation handoff` (current local HEAD)
+- `a97cbb4 Add Google Maps bridge`
+- `e118cda Fix portfolio order states and sale confirmation`
+- `b17e76b Simplify portfolio aggregation notes`
+
+Push is blocked because HTTPS GitHub credentials are missing on this Mac:
+
+```text
+fatal: could not read Username for 'https://github.com': Device not configured
+```
+
+See:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/docs/GITHUB_ACCESS_AND_SYNC.md
+```
+
+## Secrets
+
+Secrets are stored in macOS Keychain, not in this repository. Do not commit API
+keys, tokens, passwords, PINs, voice phrases or OAuth client secrets.

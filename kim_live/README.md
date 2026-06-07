@@ -1,68 +1,99 @@
 # Kim Live
 
-Kim Live is the local conversation surface for BIFROST.
+Last updated: 2026-06-07
 
-Current version: `1.4.1`
+Kim Live is the local/web conversation surface for BIFROST.
 
-## URL
+Current backend version:
+
+```text
+1.5.70
+```
+
+## URLs
 
 ```text
 http://127.0.0.1:8765
+https://kim.aipeople.app
+```
+
+Private `/api/*` endpoints require web login. A direct unauthenticated terminal
+request may return `AUTH_REQUIRED`.
+
+Public health for phone bridge:
+
+```text
+http://127.0.0.1:8765/twilio/health
 ```
 
 ## Current Capabilities
 
-- Branded local browser page: Tesca Elements Kim Live.
-- GPT-like conversation layout with current session and saved conversations on the left.
-- Simplified conversation controls: Conversar, Terminar conversacion, Guardar en memoria, Redactar documento, Convertir en tarea y ejecutar.
-- Large microphone visual, Kim avatar, and listening/speaking wave states.
-- Speaker-labeled conversation compilation for Dr. Yehoshua and Kim.
-- Browser dictation when Web Speech is available.
-- OpenAI Realtime voice through browser WebRTC.
-- Realtime input transcription through `gpt-4o-mini-transcribe`.
-- Realtime tool calling for `kim_research_web` and `kim_draft_document`.
-- Manual text composer for pasted text, links, and written instructions during a live conversation.
-- OpenAI API key stored in macOS Keychain, not in page code.
-- Save notes to `BIFROST/MEMORY/inbox`.
-- Save full calls to `BIFROST/MEMORY/calls/YYYY-MM-DD`.
-- Show saved conversation history from `/api/conversations`.
-- Read saved conversations by unique session ID from `/api/conversation`.
-- Drag-and-drop or browse file upload while a conversation is active.
-- File uploads are copied to `BIFROST/MEMORY/uploads/YYYY-MM-DD`, text is extracted when possible, summarized, classified, and added to the conversation context.
-- PDF/image uploads use OpenAI file/vision analysis when local text extraction is insufficient, then the temporary OpenAI file is deleted best-effort.
-- OpenAI Responses API with `web_search` is used for internal research; there is no manual search panel in the frontend.
-- Research sources are cached in `BIFROST/MEMORY/context/research_sources_latest.json` and appended to saved call reports under `Sources Consulted`.
-- If OpenAI returns an answer without URL annotations, Kim adds DuckDuckGo source links as backup citations.
-- Drafted documents are saved to `BIFROST/MEMORY/documents/YYYY-MM-DD`.
-- Convert a conversation into a Telegram/Codex task.
+- Public AI People landing and private authenticated Kim Live app.
+- GPT-like saved conversations and active live session UI.
+- Web/local voice through OpenAI Realtime where browser microphone permissions
+  and API quota allow it.
+- Conversation transcripts and autosave into BIFROST.
+- Memory search across transcripts and real BIFROST files.
+- File upload and file knowledge cards.
+- Secure BIFROST export with ZIP plus manifest.
+- Local CRM, person contexts and context blocks.
+- Twilio inbound/outbound calls, SMS and WhatsApp.
+- WhatsApp thread memory and default doctor WhatsApp routing.
+- Pipedrive people/deals/activities/notes with confirmation.
+- ClickUp task/comment/update actions with confirmation.
+- Notion routing by access inventory and local outbox fallback.
+- Hostinger mailboxes for read/send/reply with confirmation.
+- Gmail OAuth path for Google mail, scope dependent.
+- Zoom meeting/invite/transcript workflow.
+- Google Maps place/geocode/route/timezone bridge.
+- Market price validation and Sr. Eli portfolio reporting safeguards.
 
-## Current Limits
-
-- Realtime voice still needs the user to approve microphone access in the browser.
-- Safari may not support dictation the same way Chrome does.
-- Conversation-to-execution remains explicit: save or convert to task before Codex runs work.
-- Memory analytics were intentionally deferred after the v1.4 frontend cleanup.
-- PDF/image OCR depends on OpenAI API availability when local extraction cannot read the document.
-
-## Local Endpoints
+## Current Runtime
 
 ```text
-/api/status
-/api/context
-/api/conversations
-/api/conversation
-/api/memory-analytics
-/api/openai-status
-/api/realtime-token
-/api/research-agent
-/api/draft-document
-/api/upload-memory-file
-/api/save
-/api/execute
+/Users/dryehoshuapython/.kim_live
 ```
 
-## Runtime
+LaunchAgents:
 
 ```text
 /Users/dryehoshuapython/Library/LaunchAgents/com.codex.kim.live.plist
+/Users/dryehoshuapython/Library/LaunchAgents/com.codex.kim.twilio-realtime.plist
 ```
+
+## Source Of Truth
+
+This folder in the KimOne repo is source of truth:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kim_live
+```
+
+Do not use the old helper copy under `BIFROST/kimtools/voice/kim_live` as
+current source unless it has been rebuilt from this repo.
+
+## Important Files
+
+- `server.py`: main HTTP server, API bridge, frontend endpoints and integrations.
+- `twilio_realtime_bridge.py`: Twilio media stream to OpenAI realtime bridge.
+- `index.html`: public/private UI.
+- `API_BRIDGE.md`: bridge capability spec and version history.
+- `context/portfolio_report_overrides.json`: portfolio/report overrides.
+
+## Compile And Restart
+
+```bash
+cd /Users/dryehoshuapython/Documents/BIFROST/repos/KimOne
+python3 -m py_compile kim_live/server.py kim_live/twilio_realtime_bridge.py
+cp kim_live/server.py /Users/dryehoshuapython/.kim_live/server.py
+cp kim_live/twilio_realtime_bridge.py /Users/dryehoshuapython/.kim_live/twilio_realtime_bridge.py
+launchctl kickstart -k gui/$(id -u)/com.codex.kim.live
+```
+
+## Current Limits
+
+- OpenAI Realtime quota/saldo can break phone/voice before Twilio is at fault.
+- Zoom OAuth requires exact redirect URL on the same app credentials.
+- Notion direct writes require shared pages/databases.
+- Third-party sends/calls/writes require confirmation.
+- GitHub push is blocked until credentials are restored.
