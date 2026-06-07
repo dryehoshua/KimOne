@@ -48,13 +48,19 @@ If moving to another machine or reconstructing from backup, copy the whole
 - `BIFROST/MEMORY/context/kim_0097_google_maps_bridge_2026-06-05.md`
 - `BIFROST/MEMORY/context/kim_0098_bifrost_documentation_refresh_2026-06-07.md`
 
-## Current GitHub Blocker
+## Current GitHub Sync
 
-As of 2026-06-07, local KimOne is ahead of GitHub and push fails because HTTPS
-credentials are missing on this Mac:
+As of 2026-06-07, GitHub SSH access is configured and
+`bifrost/kim-live-initial` is synced through:
 
 ```text
-fatal: could not read Username for 'https://github.com': Device not configured
+3e6f184 Update BIFROST documentation handoff
+```
+
+Remote:
+
+```text
+git@github.com:dryehoshua/KimOne.git
 ```
 
 See the full local doc:

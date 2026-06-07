@@ -48,25 +48,13 @@ runtime-only edits.
 
 ## Current Local Git State
 
-As of 2026-06-07, this local branch is ahead of GitHub by 9 commits. Latest
-local commits include:
+As of 2026-06-07, this local branch is synced with GitHub through:
 
-- `Update BIFROST documentation handoff` (current local HEAD)
-- `a97cbb4 Add Google Maps bridge`
-- `e118cda Fix portfolio order states and sale confirmation`
-- `b17e76b Simplify portfolio aggregation notes`
-
-Push is blocked because HTTPS GitHub credentials are missing on this Mac:
-
-```text
-fatal: could not read Username for 'https://github.com': Device not configured
+```
+3e6f184 Update BIFROST documentation handoff
 ```
 
-See:
-
-```text
-/Users/dryehoshuapython/Documents/BIFROST/docs/GITHUB_ACCESS_AND_SYNC.md
-```
+Remote uses SSH: `git@github.com:dryehoshua/KimOne.git`.
 
 ## Secrets
 
