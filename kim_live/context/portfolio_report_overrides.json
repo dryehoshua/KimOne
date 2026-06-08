@@ -1,8 +1,8 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0096",
-  "updated_at": "2026-06-02",
+  "standard_version": "KIM-0099",
+  "updated_at": "2026-06-08T15:12:43.758094+00:00",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: respeta KIM-0085/KIM-0086 y usa este archivo antes que conversaciones viejas o reportes anteriores.",
   "identifier_prefix": "A",
   "credit_mark": "(c)",
@@ -88,19 +88,6 @@
       "notes": "FTT original activa A3: conservar como posicion ejecutada independiente del refuerzo pendiente A13."
     },
     {
-      "symbol": "FTTUSDT",
-      "state": "pending",
-      "order": 13,
-      "label": "FTT/USDT refuerzo",
-      "side": "BUY",
-      "invested_usd": 1800,
-      "entry_price": 0.216,
-      "quantity": 8333.333333333334,
-      "credit": true,
-      "source": "kim_0096_zec_sale_replacement",
-      "notes": "KIM-0096: nueva orden pendiente A13 de refuerzo FTT a 0.216. Se coloca con la liquidez liberada por la venta de ZEC; sigue como credito y no debe promediarse hasta ejecucion/aglomeracion confirmada."
-    },
-    {
       "symbol": "HBARUSDT",
       "state": "active",
       "order": 10,
@@ -115,7 +102,7 @@
       "order": 9,
       "label": "PEPE/USDT",
       "invested_usd": 2700,
-      "entry_price": 0.000003156434135364,
+      "entry_price": 3.156434135364e-06,
       "notes": "KIM-0090: PEPE es A9 aglomerada. Base 1800 USD a 0.00000324 + refuerzo 9.1 / orden fuente 13 de 900 USD a 0.0000030016. Credito visible actual: 1800 USD; los 900 vienen de ajuste/refuerzo y no deben registrarse como venta ni retiro."
     },
     {
@@ -160,6 +147,27 @@
       "net_pnl_usd": -0.55,
       "source": "kim_0096_zec_sale",
       "notes": "ZEC ya se vendio. No reportarla como pendiente ni activa. La liquidez liberada se uso para crear la nueva pendiente FTT A13."
+    },
+    {
+      "symbol": "FTTUSDT",
+      "identifier": "A13",
+      "order": 13,
+      "label": "FTT/USDT refuerzo",
+      "state": "sold",
+      "invested_usd": 1800,
+      "entry_price": 0.216,
+      "quantity": 8333.33333333,
+      "sell_price": 0.3425,
+      "gross_sale_usd": 2854.17,
+      "gross_pnl_usd": 1054.17,
+      "fee_rate": 0.012,
+      "fee_base_usd": 1800,
+      "fee_usd": 21.6,
+      "net_pnl_usd": 1032.57,
+      "source": "kim_0099_ftt_a13_sale",
+      "sold_at": "2026-06-08",
+      "credit": true,
+      "notes": "FTT A13 refuerzo confirmado ejecutado y vendido por instruccion del Dr. Yehoshua. Entrada 0.216, salida 0.3425, venta bruta 2854.17 USD, P/L bruto +1054.17 USD, fee 21.60 USD, P/L neto +1032.57 USD. No debe reaparecer como pendiente ni activa."
     }
   ],
   "suppress_symbols": [
@@ -171,7 +179,7 @@
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
     "Marcar credito con (c) solo donde corresponda; si el credito es parcial, mostrarlo como credito parcial.",
-    "PEPE es A9, HBAR es A10, NEAR ejecutada es A11, SOL ejecutada es A12, FTT refuerzo pendiente es A13 y ADA refuerzo pendiente es A14; ZEC ya fue vendida y no debe reaparecer como pendiente.",
+    "PEPE es A9, HBAR es A10, NEAR ejecutada es A11, SOL ejecutada es A12, FTT refuerzo A13 ya fue vendido/cerrado con P/L neto +1032.57 USD y ADA refuerzo A14 sigue pendiente; ZEC ya fue vendida y no debe reaparecer como pendiente.",
     "LUNC conserva 1000 USD en firme y 800 USD a credito; NEAR ya esta ejecutada.",
     "Cuando una operacion de la misma moneda se aglomera, el doctor decide el ID canonico que sobrevive; las subordenes quedan como ID.n y el precio de entrada se calcula como costo total dividido entre unidades totales.",
     "Una correccion de aglomeracion o de precio no es venta, retiro ni devolucion salvo instruccion literal de venta/retiro/devolucion.",
@@ -180,7 +188,9 @@
     "Cobrar/calcular fee de 1.2% solo por operacion confirmada o conversion de fondeo MXN/USDT/USDT/MXN; modificaciones y reemplazos no son operaciones cobrables.",
     "Una venta final debe pedir PIN/frase antes de ejecutarse y debe mostrar ganancia bruta, fee de 1.2% sobre el monto original o fee_base y ganancia/perdida neta.",
     "Caso canonico ZEC: entrada 360, venta 364.21, cantidad 5, venta bruta 1821.05, ganancia bruta 21.05, fee 21.60, P/L neto -0.55 USD.",
-    "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor."
+    "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor.",
+    "KIM-0099: FTT A13 refuerzo esta cerrado/vendido; no mostrarlo en pendientes ni en activas. Sumarlo a ganancias realizadas netas.",
+    "KIM-0099: el balance debe separar P/L abierto de posiciones activas, P/L realizado de closed_positions y P/L total neto."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",

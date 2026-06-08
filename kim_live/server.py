@@ -12703,6 +12703,175 @@ def portfolio_sale_preview(parameters, override_config=None):
     }
 
 
+def portfolio_order_identifier(parameters, entry=None):
+    raw = first_value(parameters or {}, "order", "report_order", "order_id", "identifier", "id_orden", "orden", default="")
+    token = str(raw or "").strip().upper()
+    if not token and entry:
+        token = str(entry.get("identifier") or entry.get("order") or "").strip().upper()
+    if token.startswith("A"):
+        token = token[1:]
+    try:
+        return int(float(token))
+    except (TypeError, ValueError):
+        return None
+
+
+def portfolio_entry_matches(entry, parameters, calc=None, preferred_states=None):
+    entry = entry or {}
+    parameters = parameters or {}
+    calc = calc or {}
+    symbol = calc.get("symbol") or portfolio_normalize_symbol(first_value(parameters, "symbol", "ticker", "asset", "moneda"))
+    if symbol and portfolio_normalize_symbol(entry.get("symbol")) != symbol:
+        return False
+    if preferred_states:
+        state = str(entry.get("state") or "").strip().lower()
+        if state and state not in preferred_states:
+            return False
+    wanted_order = portfolio_order_identifier(parameters)
+    entry_order = portfolio_order_identifier({}, entry)
+    if wanted_order is not None:
+        return entry_order == wanted_order
+    wanted_entry = portfolio_float(calc.get("entry_price") or first_value(parameters, "entry_price", "buy_price", "precio_compra", "average_cost"))
+    entry_price = portfolio_float(entry.get("entry_price"))
+    if wanted_entry is not None and entry_price is not None and abs(entry_price - wanted_entry) > max(1e-12, abs(wanted_entry) * 1e-8):
+        return False
+    wanted_amount = portfolio_float(calc.get("invested_usd") or first_value(parameters, "invested_usd", "original_amount_usd", "gross_cost_usd", "amount", "usd_amount", "gross_amount"))
+    entry_amount = portfolio_float(entry.get("invested_usd"))
+    if wanted_amount is not None and entry_amount is not None and abs(entry_amount - wanted_amount) > 0.01:
+        return False
+    return bool(symbol)
+
+
+def portfolio_closed_identifier(entry, parameters):
+    prefix = "A"
+    order = portfolio_order_identifier(parameters, entry)
+    if order is not None:
+        return f"{prefix}{order}"
+    return str((entry or {}).get("identifier") or (parameters or {}).get("identifier") or "").strip()
+
+
+def portfolio_closed_position_record(entry, parameters, calc):
+    entry = entry or {}
+    identifier = portfolio_closed_identifier(entry, parameters)
+    label = str(first_value(parameters or {}, "label", "name", default="") or entry.get("label") or calc.get("symbol") or "").strip()
+    source = str(first_value(parameters or {}, "source", default="kim_live_sale") or "kim_live_sale").strip()
+    notes = str(first_value(parameters or {}, "notes", "summary", "rationale", default="") or "").strip()
+    if notes:
+        notes += " "
+    notes += (
+        f"Venta final confirmada: entrada {format_price(calc.get('entry_price'))}, "
+        f"salida {format_price(calc.get('sell_price'))}; venta bruta {format_usd_amount(calc.get('gross_sale_usd'))} USD; "
+        f"P/L bruto {signed_usd_text(calc.get('gross_pnl_usd'))}; fee {format_usd_amount(calc.get('fee_usd'))} USD; "
+        f"P/L neto {signed_usd_text(calc.get('net_pnl_usd'))}."
+    )
+    record = {
+        "symbol": calc.get("symbol"),
+        "identifier": identifier,
+        "label": label,
+        "state": "sold",
+        "invested_usd": calc.get("invested_usd"),
+        "entry_price": calc.get("entry_price"),
+        "quantity": calc.get("quantity"),
+        "sell_price": calc.get("sell_price"),
+        "gross_sale_usd": calc.get("gross_sale_usd"),
+        "gross_pnl_usd": calc.get("gross_pnl_usd"),
+        "fee_rate": calc.get("fee_rate"),
+        "fee_base_usd": calc.get("fee_base_usd"),
+        "fee_usd": calc.get("fee_usd"),
+        "net_pnl_usd": calc.get("net_pnl_usd"),
+        "source": source,
+        "sold_at": first_value(parameters or {}, "sold_at", "occurred_at", "decided_at", default=now_iso()),
+        "notes": notes,
+    }
+    order = portfolio_order_identifier(parameters, entry)
+    if order is not None:
+        record["order"] = order
+    if entry.get("credit") is not None:
+        record["credit"] = boolish(entry.get("credit"))
+    return record
+
+
+def portfolio_closed_duplicate(existing, record):
+    if portfolio_normalize_symbol(existing.get("symbol")) != portfolio_normalize_symbol(record.get("symbol")):
+        return False
+    if str(existing.get("identifier") or "").strip() and str(existing.get("identifier") or "").strip() == str(record.get("identifier") or "").strip():
+        return True
+    return (
+        portfolio_float(existing.get("entry_price")) == portfolio_float(record.get("entry_price"))
+        and portfolio_float(existing.get("sell_price")) == portfolio_float(record.get("sell_price"))
+        and portfolio_float(existing.get("invested_usd")) == portfolio_float(record.get("invested_usd"))
+    )
+
+
+def portfolio_write_override_config(payload):
+    write_json_file_both(PORTFOLIO_REPORT_OVERRIDES, RUNTIME_PORTFOLIO_REPORT_OVERRIDES, payload)
+
+
+def portfolio_sync_manual_sale_to_overrides(parameters, calc):
+    config = portfolio_report_override_config({"portfolio_id": (parameters or {}).get("portfolio_id") or "sr_eli_2026"})
+    if not config:
+        return {"updated": False, "reason": "override_config_missing"}
+    manual_entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    kept = []
+    matched = []
+    for entry in manual_entries:
+        if portfolio_entry_matches(entry, parameters, calc, preferred_states={"pending", "active"}):
+            matched.append(entry)
+            continue
+        kept.append(entry)
+    if not matched:
+        return {"updated": False, "reason": "manual_entry_not_found"}
+    closed_positions = config.get("closed_positions") if isinstance(config.get("closed_positions"), list) else []
+    added = []
+    for entry in matched:
+        record = portfolio_closed_position_record(entry, parameters, calc)
+        if not any(portfolio_closed_duplicate(existing, record) for existing in closed_positions):
+            closed_positions.append(record)
+            added.append(record)
+    config["manual_entries"] = kept
+    config["closed_positions"] = closed_positions
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0099"
+    rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
+    rule = "KIM-0099: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado."
+    if rule not in rules:
+        rules.append(rule)
+        config["doctor_rules"] = rules
+    portfolio_write_override_config(config)
+    return {
+        "updated": True,
+        "matched_count": len(matched),
+        "closed_added_count": len(added),
+        "closed_positions": added,
+    }
+
+
+def portfolio_sync_manual_execution_to_overrides(parameters):
+    config = portfolio_report_override_config({"portfolio_id": (parameters or {}).get("portfolio_id") or "sr_eli_2026"})
+    if not config:
+        return {"updated": False, "reason": "override_config_missing"}
+    manual_entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    changed = []
+    for entry in manual_entries:
+        if not portfolio_entry_matches(entry, parameters, preferred_states={"pending"}):
+            continue
+        entry["state"] = "active"
+        entry["source"] = str(first_value(parameters, "source", default="kim_live_execute_pending") or "kim_live_execute_pending")
+        entry["executed_at"] = first_value(parameters, "executed_at", "occurred_at", "decided_at", default=now_iso())
+        note = str(entry.get("notes") or "").strip()
+        execution_note = "Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes."
+        if execution_note not in note:
+            entry["notes"] = (note + " " + execution_note).strip()
+        changed.append(entry)
+    if not changed:
+        return {"updated": False, "reason": "manual_entry_not_found"}
+    config["manual_entries"] = manual_entries
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0099"
+    portfolio_write_override_config(config)
+    return {"updated": True, "matched_count": len(changed), "executed_entries": changed}
+
+
 def portfolio_execute_sale(module, ns, parameters, override_config):
     calc = portfolio_sale_calculation(parameters, override_config)
     notes = str(first_value(parameters, "notes", "summary", "rationale", default="") or "").strip()
@@ -12755,6 +12924,7 @@ def portfolio_execute_sale(module, ns, parameters, override_config):
             execution_ref=tx["record"]["id"],
         )
     )
+    override_sync = portfolio_sync_manual_sale_to_overrides(parameters, calc)
     return {
         "ok": True,
         "action": "sell_position",
@@ -12762,6 +12932,7 @@ def portfolio_execute_sale(module, ns, parameters, override_config):
         "transaction": tx["record"],
         "cancelled_pending": cancelled_pending,
         "final_change": change["record"],
+        "override_sync": override_sync,
         "message": portfolio_sale_preview(parameters, override_config)["summary"],
         "database": str(module.DB_PATH),
     }
@@ -12820,12 +12991,14 @@ def portfolio_execute_pending_order(module, ns, parameters):
             execution_ref=tx["record"]["id"],
         )
     )
+    override_sync = portfolio_sync_manual_execution_to_overrides(parameters)
     return {
         "ok": True,
         "action": "execute_pending_order",
         "executed_order": tx["record"],
         "cancelled_pending": cancelled_pending,
         "final_change": change["record"],
+        "override_sync": override_sync,
         "database": str(module.DB_PATH),
     }
 
@@ -15819,6 +15992,9 @@ def realtime_session_config():
                 "Habla siempre en femenino, en espanol mexicano, con tono calido, directo y util. "
                 "Responde breve en conversacion viva. Si el doctor te dicta una "
                 "tarea, confirma la accion y sugiere guardarla o ejecutarla desde Kim Live. "
+                "Cierra siempre cada turno con una oracion completa; no dejes frases a medias. "
+                "Si el doctor interrumpe o la respuesta anterior quedo cortada, retoma primero la idea pendiente "
+                "en una frase breve y completa antes de cambiar de tema. "
                 "Si necesitas datos actuales, investigacion externa o verificacion en internet, "
                 "di brevemente que vas a buscar y llama la herramienta kim_research_web. "
                 "Cuando uses investigacion web, conserva fuentes para anexarlas al reporte de llamada. "
@@ -15934,6 +16110,9 @@ def realtime_session_config():
                 "vendimos, retirar, retiro, devolucion o venta final. Si el doctor dice que una orden ya se ejecuto, "
                 "ya entro, ya no esta pendiente o quedo corriendo, usa kim_portfolio_record action=execute_pending_order "
                 "con symbol, gross_amount y price; esa accion prepara confirmacion antes de volverla posicion activa. "
+                "No tomes final_changes, rebalance ni texto libre como fuente contable si contradicen transactions, positions "
+                "u order_aggregations. Si ves final+draft+void mezclados para la misma moneda, di explicitamente que hay "
+                "discrepancia de ledger y no calcules promedio, ganancia neta ni venta asumida hasta confirmar el tramo canonico. "
                 "Si el doctor dice que una posicion se vendio, usa kim_portfolio_record action=sell_position con symbol, "
                 "entry_price, sell_price, invested_usd y/o quantity. La venta debe pedir PIN/frase antes de ejecutarse "
                 "y debe calcular venta bruta, P/L bruto, fee operativo de 1.2% sobre el monto original/fee_base y P/L neto. "
@@ -17125,6 +17304,101 @@ def portfolio_aggregation_client_note(item, identifier_prefix="A"):
     return ""
 
 
+def portfolio_symbol_ledger_warnings(summary, symbol):
+    token = str(symbol or "").strip().upper()
+    if not token:
+        return []
+    buy_rows = []
+    for row in [*(summary.get("final_transactions") or []), *(summary.get("draft_transactions") or [])]:
+        row_symbol = str((row or {}).get("symbol") or "").strip().upper()
+        if row_symbol != token:
+            continue
+        if str((row or {}).get("side") or "").strip().upper() != "BUY":
+            continue
+        buy_rows.append(
+            {
+                "id": row.get("id"),
+                "status": "final" if row in (summary.get("final_transactions") or []) else "draft",
+                "gross_amount": portfolio_float(row.get("gross_amount"), 0) or 0,
+                "price": portfolio_float(row.get("price")),
+            }
+        )
+    status_counts = {}
+    signatures = {}
+    for row in buy_rows:
+        status = row["status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+        signature = (
+            round(float(row["gross_amount"] or 0), 8),
+            round(float(row["price"] or 0), 12) if row["price"] not in (None, "") else None,
+        )
+        signatures.setdefault(status, [])
+        if signature not in signatures[status]:
+            signatures[status].append(signature)
+    void_rows = []
+    for row in summary.get("void_transactions") or []:
+        row_symbol = str((row or {}).get("symbol") or "").strip().upper()
+        if row_symbol != token:
+            continue
+        if str((row or {}).get("side") or "").strip().upper() != "BUY":
+            continue
+        void_rows.append(
+            {
+                "id": row.get("id"),
+                "status": "void",
+                "gross_amount": portfolio_float(row.get("gross_amount"), 0) or 0,
+                "price": portfolio_float(row.get("price")),
+            }
+        )
+    if void_rows:
+        status_counts["void"] = len(void_rows)
+        signatures["void"] = []
+        for row in void_rows:
+            signature = (
+                round(float(row["gross_amount"] or 0), 8),
+                round(float(row["price"] or 0), 12) if row["price"] not in (None, "") else None,
+            )
+            if signature not in signatures["void"]:
+                signatures["void"].append(signature)
+    warnings = []
+    active_statuses = [status for status in ("final", "draft", "void") if status_counts.get(status)]
+    if len(active_statuses) >= 2:
+        fragments = []
+        for status in active_statuses:
+            entries = []
+            for gross_amount, price in signatures.get(status, []):
+                price_text = format_price(price) if price not in (None, "") else "sin precio"
+                entries.append(f"{format_usd_amount(gross_amount)} USD @ {price_text}")
+            fragments.append(f"{status}: {', '.join(entries) or str(status_counts.get(status, 0))}")
+        warnings.append(
+            f"{token} tiene tramos BUY con estados mezclados en ledger ({'; '.join(fragments)}). "
+            "No consolidar promedio, P/L ni venta desde notas libres; confirmar el tramo canonico primero."
+        )
+    if status_counts.get("final") and status_counts.get("draft") and not any(
+        str((agg or {}).get("symbol") or "").strip().upper() == token and str((agg or {}).get("status") or "active").strip().lower() == "active"
+        for agg in (summary.get("order_aggregations") or [])
+    ):
+        warnings.append(
+            f"{token} tiene compra final y draft simultaneos sin aglomeracion activa. "
+            "Usar transactions/positions como fuente canonica y pedir confirmacion explicita antes de tratar el draft como ejecutado."
+        )
+    return warnings
+
+
+def portfolio_collect_ledger_warnings(summary, symbols=None):
+    chosen = []
+    seen = set()
+    for symbol in symbols or []:
+        token = str(symbol or "").strip().upper()
+        if token and token not in seen:
+            chosen.append(token)
+            seen.add(token)
+    warnings = []
+    for token in chosen:
+        warnings.extend(portfolio_symbol_ledger_warnings(summary, token))
+    return warnings
+
+
 def portfolio_weighted_average_breakdown(summary, parameters=None):
     parameters = parameters or {}
     raw_symbol = first_value(parameters, "symbol", "ticker", "asset", default="PEPEUSDT")
@@ -17245,6 +17519,7 @@ def portfolio_weighted_average_breakdown(summary, parameters=None):
     operations.append(
         f"promedio = {format_usd_amount(total_amount)} / {format_quantity(total_quantity)} = {format_price(average_price)}"
     )
+    ledger_warnings = portfolio_collect_ledger_warnings(summary, [symbol])
     return {
         "ok": True,
         "provider": "portfolio",
@@ -17265,6 +17540,7 @@ def portfolio_weighted_average_breakdown(summary, parameters=None):
         "weighted_average_price": average_price,
         "weighted_average_price_display": format_price(average_price),
         "operations": operations,
+        "ledger_warnings": ledger_warnings,
         "summary": "; ".join(
             f"{item['label']}: {format_usd_amount(item['amount_usd'])} USD @ {item['price_display']}"
             for item in components
@@ -17872,6 +18148,13 @@ def portfolio_client_report(summary, parameters=None):
     )
     if override_config.get("provider_note"):
         provider_warnings.append(str(override_config.get("provider_note")))
+    ledger_warnings = portfolio_collect_ledger_warnings(
+        summary,
+        [
+            *(item.get("symbol") for item in active_items),
+            *(item.get("symbol") for item in pending_items),
+        ],
+    )
 
     message_lines = []
     portfolio_title = "Portafolio Sr. Eli"
@@ -17944,6 +18227,11 @@ def portfolio_client_report(summary, parameters=None):
             lines.append(line)
     else:
         lines.append("Sin órdenes pendientes.")
+    if ledger_warnings:
+        lines.append("")
+        lines.append("Alertas de ledger:")
+        for warning in ledger_warnings:
+            lines.append(f"- {warning}")
     lines.append("")
     approved_active = [item for item in active_items if item.get("approved_for_client_report") and item.get("current_value_usd") is not None]
     unapproved_active = [item for item in active_items if not item.get("approved_for_client_report")]
@@ -17976,7 +18264,16 @@ def portfolio_client_report(summary, parameters=None):
         if str((item or {}).get("status") or "confirmed").lower() == "confirmed"
     )
     operating_remnants_usd = float(accounting_config.get("operating_remnants_usd") or 0)
+    closed_positions = (
+        override_config.get("closed_positions")
+        if isinstance(override_config.get("closed_positions"), list)
+        else []
+    )
+    realized_gross_pnl_usd = sum(float(item.get("gross_pnl_usd") or 0) for item in closed_positions)
+    realized_fee_usd = sum(float(item.get("fee_usd") or 0) for item in closed_positions)
+    realized_net_pnl_usd = sum(float(item.get("net_pnl_usd") or 0) for item in closed_positions)
     net_pnl_after_fees = active_unrealized_pnl_usd - total_fee_usd
+    total_pnl_after_fees = net_pnl_after_fees + realized_net_pnl_usd
     gross_margin_total_pct = (
         (active_unrealized_pnl_usd / total_portfolio_usd * 100)
         if total_portfolio_usd
@@ -17994,6 +18291,16 @@ def portfolio_client_report(summary, parameters=None):
     )
     net_margin_firm_pct = (
         (net_pnl_after_fees / total_firm_usd * 100)
+        if total_firm_usd
+        else None
+    )
+    total_margin_total_pct = (
+        (total_pnl_after_fees / total_portfolio_usd * 100)
+        if total_portfolio_usd
+        else None
+    )
+    total_margin_firm_pct = (
+        (total_pnl_after_fees / total_firm_usd * 100)
         if total_firm_usd
         else None
     )
@@ -18016,6 +18323,13 @@ def portfolio_client_report(summary, parameters=None):
         "net_pnl_after_fees_usd": round_opt(net_pnl_after_fees, 2),
         "net_margin_total_pct_after_fees": round_opt(net_margin_total_pct, 2),
         "net_margin_firm_pct_after_fees": round_opt(net_margin_firm_pct, 2),
+        "realized_closed_count": len(closed_positions),
+        "realized_gross_pnl_usd": round_opt(realized_gross_pnl_usd, 2),
+        "realized_fee_usd": round_opt(realized_fee_usd, 2),
+        "realized_net_pnl_usd": round_opt(realized_net_pnl_usd, 2),
+        "total_pnl_after_fees_usd": round_opt(total_pnl_after_fees, 2),
+        "total_margin_total_pct_after_fees": round_opt(total_margin_total_pct, 2),
+        "total_margin_firm_pct_after_fees": round_opt(total_margin_firm_pct, 2),
         "fees": fee_summary,
         "active_current_value_usd_validated_only": round_opt(active_current_value_usd, 2),
         "active_unrealized_pnl_usd_validated_only": round_opt(active_unrealized_pnl_usd, 2),
@@ -18036,9 +18350,13 @@ def portfolio_client_report(summary, parameters=None):
         f"P/L bruto {signed_usd_text(balance['portfolio_unrealized_pnl_usd_validated_only'])}; "
         f"fee operativo estimado {format_usd_amount(fee_summary['total_fee_usd'])} USD "
         f"({format_usd_amount(fee_summary['operation_fee_rate_pct'])}% sobre operaciones confirmadas; modificaciones no generan fee); "
-        f"P/L neto despues de fees {signed_usd_text(balance['net_pnl_after_fees_usd'])}; "
+        f"P/L abierto neto despues de fees {signed_usd_text(balance['net_pnl_after_fees_usd'])}; "
+        f"P/L realizado neto {signed_usd_text(balance['realized_net_pnl_usd'])}; "
+        f"P/L total neto {signed_usd_text(balance['total_pnl_after_fees_usd'])}; "
         f"margen neto sobre portafolio {signed_percent_text(balance['net_margin_total_pct_after_fees'])}; "
-        f"margen neto sobre monto en firme {signed_percent_text(balance['net_margin_firm_pct_after_fees'])}."
+        f"margen neto sobre monto en firme {signed_percent_text(balance['net_margin_firm_pct_after_fees'])}; "
+        f"margen total neto sobre portafolio {signed_percent_text(balance['total_margin_total_pct_after_fees'])}; "
+        f"margen total neto sobre monto en firme {signed_percent_text(balance['total_margin_firm_pct_after_fees'])}."
     )
     if pending_items:
         balance_line += (
@@ -18047,6 +18365,11 @@ def portfolio_client_report(summary, parameters=None):
         )
     if unapproved_active:
         balance_line += " Balance parcial: faltan precios validados para " + ", ".join(balance["unapproved_active_symbols"]) + "."
+    if ledger_warnings:
+        balance_line += (
+            f" Hay {len(ledger_warnings)} alerta(s) de ledger; revisa la seccion 'Alertas de ledger' "
+            "antes de consolidar promedios, P/L o ventas."
+        )
     lines.append(balance_line)
     lines.append("Regla de salida: no reportar unidades salvo que el doctor las pida.")
 
@@ -18058,6 +18381,7 @@ def portfolio_client_report(summary, parameters=None):
         "hide_units_by_default": not include_units,
         "providers_used": providers,
         "provider_warnings": provider_warnings,
+        "ledger_warnings": ledger_warnings,
         "source_warmup": source_warmup,
         "report_overrides": override_config,
         "active_positions": active_items,
