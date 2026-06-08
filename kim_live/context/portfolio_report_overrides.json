@@ -1,30 +1,38 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0099",
-  "updated_at": "2026-06-08T15:12:43.758094+00:00",
+  "standard_version": "KIM-0100",
+  "updated_at": "2026-06-08T19:49:55.060081+00:00",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: respeta KIM-0085/KIM-0086 y usa este archivo antes que conversaciones viejas o reportes anteriores.",
   "identifier_prefix": "A",
+  "client_presentation_mode": "active_then_pending",
+  "client_sort_mode": "loss_to_gain",
   "credit_mark": "(c)",
   "credit_symbols": [
     "APTUSDT",
     "DOTUSDT",
+    "GOATUSDT",
     "TRUMPUSDT",
     "PEPEUSDT",
-    "HBARUSDT"
+    "HBARUSDT",
+    "SOLUSDT",
+    "ADAUSDT"
   ],
   "credit_amounts": {
     "LUNCUSDT": 800,
     "APTUSDT": 1800,
     "DOTUSDT": 1800,
+    "GOATUSDT": 1800,
     "TRUMPUSDT": 1800,
     "PEPEUSDT": 1800,
-    "HBARUSDT": 1800
+    "HBARUSDT": 1800,
+    "SOLUSDT": 1800,
+    "ADAUSDT": 1800
   },
   "accounting": {
     "firm_capital_usd": 12514,
     "operation_fee_rate": 0.012,
-    "credit_formula": "credit_total_usd = portfolio_total_usd - firm_capital_usd",
+    "credit_formula": "credit_total_usd = portfolio_total_usd - min(portfolio_total_usd, firm_capital_usd + available_balance_usd)",
     "fee_policy": "Fee de 1.2% solo sobre operaciones confirmadas y conversiones MXN/USDT o USDT/MXN confirmadas; modificaciones, reemplazos, correcciones y cambios de orden no generan fee.",
     "funding_policy": "Registrar depositos, retiros, conversiones, remanentes y credito en el ledger; un fondeo MXN->USDT o USDT->MXN confirmado paga 1.2%.",
     "deposits": [
@@ -38,7 +46,8 @@
     "operating_remnants_usd": 707.05,
     "operating_remnants_note": "Remanentes acumulados mencionados en consulta operativa previa; mantener visible hasta reconciliacion completa.",
     "funding_conversions": [],
-    "notes": "Regla del doctor 2026-06-05: monto en firme del Sr. Eli = 12,514 USD; el resto del valor total del portafolio es credito."
+    "notes": "KIM-0100: monto en firme base 12,514 USD; ganancias realizadas positivas y remanentes operativos quedan como saldo disponible y tambien aumentan monto en firme. El resto del portafolio comprometido se clasifica como credito.",
+    "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); available balance increases firm capital before credit is calculated."
   },
   "manual_entries": [
     {
@@ -51,20 +60,22 @@
       "quantity": 6896.551724137931,
       "transaction_id": "tx_2e317ef8f8d0",
       "source": "kim0037_call",
-      "notes": "Fuente canonica KIM-0037: ADA/Cardano original activa A1, 1800 USD a 0.261. No sustituir por refuerzos posteriores."
+      "notes": "Fuente canonica KIM-0037: ADA/Cardano original activa A1, 1800 USD a 0.261. No sustituir por refuerzos posteriores.",
+      "credit": true
     },
     {
       "symbol": "ADAUSDT",
       "state": "pending",
-      "order": 14,
+      "order": 13,
       "label": "ADA/USDT refuerzo",
       "side": "BUY",
       "invested_usd": 1800,
       "entry_price": 0.124,
       "quantity": 14516.129032258064,
       "id": "tx_0569514f7980",
-      "source": "kim_live",
-      "notes": "KIM-0092: refuerzo ADA queda como A14 pendiente a 0.124; no afecta A1 hasta que el doctor confirme ejecucion/aglomeracion."
+      "source": "kim_0100_manual_pending_ada",
+      "notes": "KIM-0100: refuerzo ADA/Cardano pendiente a credito en 0.124, 1800 USD. No afecta ADA activa hasta ejecucion/aglomeracion confirmada.",
+      "credit": true
     },
     {
       "symbol": "APTUSDT",
@@ -126,7 +137,37 @@
       "quantity": 28.571428571428573,
       "id": "tx_77c608daaa7f",
       "source": "kim_live_replace_order",
-      "notes": "KIM-0096: SOL ya esta ejecutada y sigue dentro; no fue vendida y no debe aparecer como pendiente."
+      "notes": "KIM-0096: SOL ya esta ejecutada y sigue dentro; no fue vendida y no debe aparecer como pendiente.",
+      "credit": true
+    },
+    {
+      "symbol": "GOATUSDT",
+      "state": "pending",
+      "order": 14,
+      "label": "GOAT/USDT",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 0.0126,
+      "quantity": 142857.14285714287,
+      "credit": true,
+      "current_price": 0.01367,
+      "current_price_source": "doctor_kucoin_reference_2026_06_08",
+      "current_price_status": "manual_doctor_validated",
+      "source": "kim_0100_manual_pending_goat",
+      "notes": "KIM-0100: orden pendiente GOAT a credito. Precio actual manual confirmado por el doctor desde KuCoin: 0.01367; usar esta referencia cuando GOAT/USDT sea ambiguo en fuentes externas."
+    },
+    {
+      "symbol": "APTUSDT",
+      "state": "pending",
+      "order": 15,
+      "label": "APT/USDT",
+      "side": "BUY",
+      "invested_usd": 1800,
+      "entry_price": 0.504,
+      "quantity": 3571.4285714285716,
+      "credit": true,
+      "source": "kim_0100_manual_pending_apt",
+      "notes": "KIM-0100: orden pendiente APT a credito en 0.5040, 1800 USD. No confundir con APT activa a 0.99."
     }
   ],
   "closed_positions": [
@@ -190,7 +231,15 @@
     "Caso canonico ZEC: entrada 360, venta 364.21, cantidad 5, venta bruta 1821.05, ganancia bruta 21.05, fee 21.60, P/L neto -0.55 USD.",
     "No reenviar WhatsApp automaticamente sin instruccion explicita del doctor.",
     "KIM-0099: FTT A13 refuerzo esta cerrado/vendido; no mostrarlo en pendientes ni en activas. Sumarlo a ganancias realizadas netas.",
-    "KIM-0099: el balance debe separar P/L abierto de posiciones activas, P/L realizado de closed_positions y P/L total neto."
+    "KIM-0099: el balance debe separar P/L abierto de posiciones activas, P/L realizado de closed_positions y P/L total neto.",
+    "KIM-0100: el reporte para cliente se presenta de mayor perdida a mejor resultado; el identificador visible A1, A2... puede cambiar dinamicamente sin alterar el orden canonico interno.",
+    "KIM-0100: cada linea de cliente debe cerrar con 'Estamos por debajo por -X%' o 'Estamos en ganancia por +X%'; para pendientes usar distancia contra precio actual y marcar pendiente.",
+    "KIM-0100: saldo disponible = remanentes operativos + ganancias realizadas netas positivas; ese saldo aumenta el monto en firme y el resto del portafolio se clasifica como credito.",
+    "KIM-0100: Cardano/ADA, SOL y GOAT se tratan como credito mientras el doctor no indique que quedaron cubiertas en firme.",
+    "KIM-0100: el reporte para cliente se presenta de mayor perdida a mejor resultado; las posiciones activas van primero y las ordenes pendientes van al final.",
+    "KIM-0100: el identificador visible A1, A2... puede cambiar dinamicamente por desempeno; conservar canonical_report_order para no perder el historial interno.",
+    "KIM-0100: cada linea activa debe cerrar con 'Estamos por debajo por -X%' o 'Estamos en ganancia por +X%'.",
+    "KIM-0100: cada orden pendiente debe decir 'pendiente' y cerrar con 'Estamos por debajo del precio actual por -X%' o 'Estamos por arriba del precio actual por +X%'."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -224,5 +273,14 @@
       "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
       "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos."
     ]
+  },
+  "presentation": {
+    "sort_mode": "loss_to_gain",
+    "line_format": "block",
+    "dynamic_visible_ids": true,
+    "active_phrase_negative": "Estamos por debajo por -X%",
+    "active_phrase_positive": "Estamos en ganancia por +X%",
+    "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
+    "pending_after_active": true
   }
 }

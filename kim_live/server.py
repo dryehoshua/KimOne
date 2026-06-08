@@ -16090,7 +16090,10 @@ def realtime_session_config():
                 "kim_portfolio_record con action=send_whatsapp_report; por defecto lo envia al WhatsApp Dubai del doctor "
                 "sin PIN ni confirmacion. Si solo pregunta por el portafolio o cuales ordenes ya entraron, llama "
                 "kim_portfolio_record con action=client_report. El formato por defecto es monto invertido, "
-                "precio de entrada, precio actual validado y variacion porcentual. No menciones unidades "
+                "precio de entrada, precio actual validado y frase clara: 'Estamos por debajo por -X%' o "
+                "'Estamos en ganancia por +X%'. Ordena el reporte para cliente de mayor perdida a mejor resultado; "
+                "las ordenes pendientes van al final, marcadas como pendientes, con "
+                "frase de distancia contra precio actual. No menciones unidades "
                 "salvo que el doctor las pida. Para ordenes pendientes de compra, indica si el precio actual "
                 "ya toco la entrada o sigue por encima; su distancia vs entrada no es P/L ni ganancia. Si el doctor pide reporte fundamental, catalizadores, "
                 "oportunidades o vision macro del Sr. Eli, llama kim_portfolio_record con action=fundamental_report; "
@@ -16899,6 +16902,28 @@ def signed_percent_text(value):
     return f"{rounded:+.2f}%"
 
 
+def portfolio_active_client_phrase(display_pct):
+    if display_pct is None:
+        return "Estamos sin porcentaje validado."
+    rounded = round_opt(display_pct, 2)
+    if rounded < 0:
+        return f"Estamos por debajo por {rounded:+.2f}%."
+    if rounded > 0:
+        return f"Estamos en ganancia por {rounded:+.2f}%."
+    return "Estamos al mismo nivel por +0.00%."
+
+
+def portfolio_pending_client_phrase(display_pct):
+    if display_pct is None:
+        return "Orden pendiente sin porcentaje validado."
+    rounded = round_opt(display_pct, 2)
+    if rounded < 0:
+        return f"Estamos por debajo del precio actual por {rounded:+.2f}%."
+    if rounded > 0:
+        return f"Estamos por arriba del precio actual por {rounded:+.2f}%."
+    return "Orden al mismo nivel del precio actual."
+
+
 def portfolio_symbol_label(symbol, notes=""):
     token = str(symbol or "").upper()
     if token.endswith("USDT"):
@@ -17137,6 +17162,7 @@ def portfolio_save_current_standard(summary, report):
         identifier = f"{identifier_prefix}{order}" if identifier_prefix and order not in (None, "") else str(order or "")
         return {
             "identifier": identifier,
+            "canonical_report_order": item.get("canonical_report_order"),
             "symbol": item.get("symbol"),
             "label": item.get("label"),
             "state": "pending" if item.get("entry_status") is not None and item.get("current_value_usd") is None else "active",
@@ -17178,8 +17204,9 @@ def portfolio_save_current_standard(summary, report):
         "whatsapp_messages": report.get("whatsapp_messages", []),
         "balance_rules": [
             "valor total del portafolio = posiciones activas ejecutadas + ordenes pendientes abiertas.",
-            "monto en firme canonico actual = capital_firme_usd indicado por el doctor en la configuracion contable.",
-            "monto a credito actual = valor total del portafolio - monto en firme canonico cuando hay capital_firme_usd configurado.",
+            "saldo disponible = remanentes operativos + ganancias realizadas netas positivas.",
+            "monto en firme canonico actual = capital_firme_usd indicado por el doctor + saldo disponible por ganancias/remanentes.",
+            "monto a credito actual = valor total del portafolio - monto en firme canonico ajustado cuando hay capital_firme_usd configurado.",
             "valor actual del portafolio = solo posiciones activas con precios validados.",
             "P/L bruto = P/L no realizado solo de posiciones activas con precios validados.",
             "P/L neto despues de fees = P/L bruto - fee acumulado estimado.",
@@ -17231,6 +17258,25 @@ def portfolio_report_explicit_order(item):
         return None
 
 
+def portfolio_freeze_report_orders(active_items, pending_items, preferred):
+    combined = [*active_items, *pending_items]
+    used_orders = set()
+    next_index = 1
+    for item in sorted(combined, key=lambda row: portfolio_override_sort_key(row, preferred)):
+        explicit = portfolio_report_explicit_order(item)
+        if explicit is None:
+            continue
+        used_orders.add(explicit)
+    for item in sorted(combined, key=lambda row: portfolio_override_sort_key(row, preferred)):
+        if portfolio_report_explicit_order(item) is not None:
+            continue
+        while next_index in used_orders:
+            next_index += 1
+        item["report_order"] = next_index
+        used_orders.add(next_index)
+        next_index += 1
+
+
 def portfolio_resolve_line_identifier(item, next_index, used_orders, identifier_prefix):
     resolved = portfolio_report_explicit_order(item)
     if resolved is None or resolved in used_orders:
@@ -17263,6 +17309,70 @@ def portfolio_resolve_credit_breakdown(invested_usd, credit_usd, full_mark="(c)"
         "firm_usd": round_opt(firm, 2),
         "credit_mark": mark,
     }
+
+
+def portfolio_client_sort_key(item, preferred):
+    display_pct = item.get("client_display_pct")
+    base_key = portfolio_override_sort_key(item, preferred)
+    if display_pct in (None, ""):
+        return (1, float("inf"), *base_key)
+    return (0, float(display_pct), *base_key)
+
+
+def portfolio_presentation_config(override_config):
+    return override_config.get("presentation") if isinstance(override_config.get("presentation"), dict) else {}
+
+
+def portfolio_client_performance_pct(item):
+    value = item.get("variation_pct")
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def portfolio_pending_distance_to_current_pct(item):
+    entry = portfolio_float(item.get("entry_price"))
+    current = portfolio_float(item.get("current_price"))
+    if entry in (None, 0) or current in (None, 0):
+        return None
+    return ((entry / current) - 1.0) * 100.0
+
+
+def portfolio_client_direction_phrase(item, pending=False):
+    pct = portfolio_pending_distance_to_current_pct(item) if pending else portfolio_client_performance_pct(item)
+    if pct is None:
+        return "Precio actual no validado; no calcular porcentaje."
+    display = signed_percent_text(round_opt(pct, 2))
+    if pending:
+        if pct < 0:
+            return f"Estamos por debajo del precio actual por {display}."
+        if pct > 0:
+            return f"Estamos por arriba del precio actual por {display}."
+        return "Estamos exactamente al precio actual."
+    if pct < 0:
+        return f"Estamos por debajo por {display}."
+    if pct > 0:
+        return f"Estamos en ganancia por {display}."
+    return "Estamos sin variacion contra la entrada."
+
+
+def portfolio_client_position_line(line_id, item, amount_text, pending=False):
+    credit_mark = f" {item['credit_mark']}" if item.get("credit_mark") else ""
+    pending_label = " pendiente" if pending and "pendiente" not in str(item.get("label") or "").lower() else ""
+    lines = [
+        f"{line_id}. {item['label']}{pending_label}:",
+        f"{amount_text} a {item['entry_price_display']}{credit_mark}.",
+    ]
+    if item.get("approved_for_client_report"):
+        lines.append(f"Precio actual {item['current_price_display']}.")
+        lines.append(portfolio_client_direction_phrase(item, pending=pending))
+    else:
+        lines.append("Precio actual no validado.")
+        lines.append("No calcular porcentaje hasta validar precio.")
+    return "\n".join(lines)
 
 
 def portfolio_aggregation_member_label(member):
@@ -17867,6 +17977,21 @@ def portfolio_apply_manual_overrides(summary, active_items, pending_items, inclu
         validation = load_validation(symbol)
         current_price = validation.get("reference_price")
         approved = bool(validation.get("approved_for_client_report"))
+        manual_current_price = portfolio_float(
+            first_value(entry, "current_price", "current_price_usd", "doctor_current_price", "manual_current_price")
+        )
+        if manual_current_price not in (None, ""):
+            current_price = manual_current_price
+            approved = True
+            validation = {
+                **validation,
+                "status": str(entry.get("current_price_status") or "manual_doctor_validated"),
+                "reference_price": manual_current_price,
+                "reference_price_display": format_price(manual_current_price),
+                "approved_for_client_report": True,
+                "manual_override": True,
+                "source": str(entry.get("current_price_source") or "doctor_manual_reference"),
+            }
         variation_pct = price_variation_pct(entry_price, current_price if approved else None)
         current_value_usd = (quantity * float(current_price)) if approved and quantity else None
         unrealized_pnl_usd = (current_value_usd - invested_raw) if current_value_usd is not None else None
@@ -18146,8 +18271,17 @@ def portfolio_client_report(summary, parameters=None):
         load_validation,
         override_config,
     )
+    portfolio_freeze_report_orders(active_items, pending_items, canonical_order)
     if override_config.get("provider_note"):
         provider_warnings.append(str(override_config.get("provider_note")))
+    for item in active_items:
+        item["client_state"] = "active"
+        item["client_display_pct"] = round_opt(item.get("variation_pct"), 2) if item.get("variation_pct") not in (None, "") else None
+        item["client_phrase"] = portfolio_active_client_phrase(item.get("client_display_pct"))
+    for item in pending_items:
+        item["client_state"] = "pending"
+        item["client_display_pct"] = round_opt(portfolio_pending_distance_to_current_pct(item), 2)
+        item["client_phrase"] = portfolio_pending_client_phrase(item.get("client_display_pct"))
     ledger_warnings = portfolio_collect_ledger_warnings(
         summary,
         [
@@ -18161,33 +18295,69 @@ def portfolio_client_report(summary, parameters=None):
     if override_config.get("portfolio_label"):
         portfolio_title += f" - {override_config.get('portfolio_label')}"
     identifier_prefix = str(override_config.get("identifier_prefix") or "").strip()
-    lines = [portfolio_title, "", "Posiciones activas:"]
+    client_presentation_mode = str(override_config.get("client_presentation_mode") or "combined").strip().lower()
+    client_sort_mode = str(override_config.get("client_sort_mode") or "loss_to_gain").strip().lower()
+    lines = [portfolio_title, "", "Portafolio ordenado para cliente:"]
     used_report_orders = set()
     next_report_order = 1
-    for item in active_items:
-        line_id, next_report_order = portfolio_resolve_line_identifier(
-            item,
-            next_report_order,
-            used_report_orders,
-            identifier_prefix,
-        )
+    if client_sort_mode == "loss_to_gain":
+        sorted_active_items = sorted(active_items, key=lambda item: portfolio_client_sort_key(item, canonical_order))
+        sorted_pending_items = sorted(pending_items, key=lambda item: portfolio_client_sort_key(item, canonical_order))
+    else:
+        sorted_active_items = list(active_items)
+        sorted_pending_items = list(pending_items)
+    active_items = sorted_active_items
+    pending_items = sorted_pending_items
+    if client_presentation_mode == "combined" and client_sort_mode == "loss_to_gain":
+        display_items = sorted([*active_items, *pending_items], key=lambda item: portfolio_client_sort_key(item, canonical_order))
+        lines.append("Ordenado de mayor perdida a menor perdida; las pendientes se marcan en la misma linea.")
+    else:
+        display_items = [*active_items, *pending_items]
+        if client_sort_mode == "loss_to_gain":
+            lines.append("Posiciones activas de mayor perdida a mejor resultado; ordenes pendientes al final.")
+    for item in display_items:
+        if client_sort_mode == "loss_to_gain":
+            item["canonical_report_order"] = item.get("report_order")
+            item["resolved_report_order"] = next_report_order
+            used_report_orders.add(next_report_order)
+            line_id = f"{identifier_prefix}{next_report_order}" if identifier_prefix else str(next_report_order)
+            next_report_order += 1
+        else:
+            line_id, next_report_order = portfolio_resolve_line_identifier(
+                item,
+                next_report_order,
+                used_report_orders,
+                identifier_prefix,
+            )
         amount_text = (
             f"total {format_usd_amount(item['invested_usd'])} USD"
             if item.get("merged_with_pending")
             else f"{format_usd_amount(item['invested_usd'])} USD"
         )
+        label = str(item.get("label") or item.get("symbol") or "").strip()
+        if item.get("client_state") == "pending" and "pendiente" not in label.lower():
+            label += " pendiente"
         credit_mark = f" {item['credit_mark']}" if item.get("credit_mark") else ""
-        line = f"{line_id}. {item['label']}: {amount_text} a {item['entry_price_display']}{credit_mark}."
+        line_parts = [
+            f"{line_id}. {label}:",
+            f"{amount_text} a {item['entry_price_display']}{credit_mark}.",
+        ]
         if item["approved_for_client_report"]:
-            line += f" Precio actual {item['current_price_display']}. Variación {item['variation_display']}."
+            line_parts.append(f"Precio actual {item['current_price_display']}.")
+            line_parts.append(item["client_phrase"])
         else:
-            line += " Precio actual no validado. Variación N/D."
-        if item.get("merged_with_pending"):
-            line += f" {portfolio_aggregation_client_note(item, identifier_prefix)}"
-        elif item.get("aggregation"):
-            line += f" Aglomeracion: {item.get('aggregation_summary')}."
+            line_parts.append("Precio actual no validado.")
+            line_parts.append(item["client_phrase"])
+        line = "\n".join(line_parts)
+        if item.get("client_state") == "active":
+            if item.get("merged_with_pending"):
+                line += f"\n{portfolio_aggregation_client_note(item, identifier_prefix)}"
+            elif item.get("aggregation"):
+                line += f"\nAglomeracion: {item.get('aggregation_summary')}."
+        if int(item.get("draft_suborder_count") or 1) > 1 and item.get("client_state") == "pending":
+            line += f"\nAglomerada de {int(item.get('draft_suborder_count') or 1)} subordenes."
         if include_units and item.get("reference_quantity") is not None:
-            line += f" Unidades de referencia: {item['reference_quantity']}."
+            line += f"\nUnidades de referencia: {item['reference_quantity']}."
         message_lines.append(line)
         lines.append(line)
     if executed_preliminary:
@@ -18197,36 +18367,6 @@ def portfolio_client_report(summary, parameters=None):
             + ", ".join(item["label"] for item in executed_preliminary)
             + "."
         )
-    lines.append("")
-    lines.append("Órdenes pendientes:")
-    if pending_items:
-        for item in pending_items:
-            line_id, next_report_order = portfolio_resolve_line_identifier(
-                item,
-                next_report_order,
-                used_report_orders,
-                identifier_prefix,
-            )
-            credit_mark = f" {item['credit_mark']}" if item.get("credit_mark") else ""
-            line = (
-                f"{line_id}. {item['label']}: {format_usd_amount(item['invested_usd'])} USD a "
-                f"{item['entry_price_display']}{credit_mark}."
-            )
-            if item["approved_for_client_report"]:
-                line += (
-                    f" Precio actual {item['current_price_display']}. Estado: {item['entry_status']}. "
-                    f"Distancia vs entrada {item['variation_display']}."
-                )
-            else:
-                line += " Precio actual no validado. Estado: precio actual no validado. Variación N/D."
-            if int(item.get("draft_suborder_count") or 1) > 1:
-                line += f" Aglomerada de {int(item.get('draft_suborder_count') or 1)} subórdenes."
-            if include_units and item.get("reference_quantity") is not None:
-                line += f" Unidades de referencia: {item['reference_quantity']}."
-            message_lines.append(line)
-            lines.append(line)
-    else:
-        lines.append("Sin órdenes pendientes.")
     if ledger_warnings:
         lines.append("")
         lines.append("Alertas de ledger:")
@@ -18246,15 +18386,6 @@ def portfolio_client_report(summary, parameters=None):
     pending_total_usd = sum(float(item.get("invested_usd") or 0) for item in pending_items)
     total_portfolio_usd = active_invested_usd + pending_total_usd
     accounting_config = portfolio_accounting_config(override_config)
-    configured_firm_capital = accounting_config.get("firm_capital_usd")
-    if configured_firm_capital not in (None, ""):
-        total_firm_usd = float(configured_firm_capital)
-        total_credit_usd = max(0.0, total_portfolio_usd - total_firm_usd)
-        credit_source = "derived_from_firm_capital"
-    else:
-        total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
-        total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
-        credit_source = "position_credit_marks"
     fee_summary = portfolio_fee_summary(active_items, summary, override_config)
     total_fee_usd = float(fee_summary.get("total_fee_usd") or 0)
     deposits = accounting_config.get("deposits") if isinstance(accounting_config.get("deposits"), list) else []
@@ -18272,6 +18403,18 @@ def portfolio_client_report(summary, parameters=None):
     realized_gross_pnl_usd = sum(float(item.get("gross_pnl_usd") or 0) for item in closed_positions)
     realized_fee_usd = sum(float(item.get("fee_usd") or 0) for item in closed_positions)
     realized_net_pnl_usd = sum(float(item.get("net_pnl_usd") or 0) for item in closed_positions)
+    available_balance_usd = operating_remnants_usd + max(0.0, realized_net_pnl_usd)
+    configured_firm_capital = accounting_config.get("firm_capital_usd")
+    if configured_firm_capital not in (None, ""):
+        base_firm_capital_usd = float(configured_firm_capital)
+        total_firm_usd = min(total_portfolio_usd, base_firm_capital_usd + available_balance_usd)
+        total_credit_usd = max(0.0, total_portfolio_usd - total_firm_usd)
+        credit_source = "firm_capital_plus_available_realized_profit"
+    else:
+        base_firm_capital_usd = None
+        total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
+        total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
+        credit_source = "position_credit_marks"
     net_pnl_after_fees = active_unrealized_pnl_usd - total_fee_usd
     total_pnl_after_fees = net_pnl_after_fees + realized_net_pnl_usd
     gross_margin_total_pct = (
@@ -18308,6 +18451,8 @@ def portfolio_client_report(summary, parameters=None):
         "portfolio_total_usd": round_opt(total_portfolio_usd, 2),
         "credit_total_usd": round_opt(total_credit_usd, 2),
         "firm_total_usd": round_opt(total_firm_usd, 2),
+        "base_firm_capital_usd": round_opt(base_firm_capital_usd, 2) if base_firm_capital_usd is not None else None,
+        "available_balance_usd": round_opt(available_balance_usd, 2),
         "credit_source": credit_source,
         "deposits_total_usd": round_opt(deposits_total_usd, 2),
         "deposits": deposits,
@@ -18344,6 +18489,7 @@ def portfolio_client_report(summary, parameters=None):
         f"valor total del portafolio {format_usd_amount(balance['portfolio_total_usd'])} USD; "
         f"monto a crédito {format_usd_amount(balance['credit_total_usd'])} USD; "
         f"monto en firme {format_usd_amount(balance['firm_total_usd'])} USD; "
+        f"saldo disponible {format_usd_amount(balance['available_balance_usd'])} USD; "
         f"depositos/fondeo confirmado {format_usd_amount(balance['deposits_total_usd'])} USD; "
         f"remanentes operativos {format_usd_amount(balance['operating_remnants_usd'])} USD; "
         f"valor actual del portafolio {format_usd_amount(balance['portfolio_current_value_usd_validated_only'])} USD; "
