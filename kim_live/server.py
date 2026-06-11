@@ -17203,10 +17203,10 @@ def portfolio_save_current_standard(summary, report):
         "balance_line": report.get("balance_line", ""),
         "whatsapp_messages": report.get("whatsapp_messages", []),
         "balance_rules": [
-            "valor total del portafolio = posiciones activas ejecutadas + ordenes pendientes abiertas.",
+            "total comprometido/invertido = posiciones activas ejecutadas + ordenes pendientes abiertas.",
             "saldo disponible = remanentes operativos + ganancias realizadas netas positivas.",
             "monto en firme canonico actual = capital_firme_usd indicado por el doctor + saldo disponible por ganancias/remanentes.",
-            "monto a credito actual = valor total del portafolio - monto en firme canonico ajustado cuando hay capital_firme_usd configurado.",
+            "monto a credito actual = total comprometido/invertido - monto en firme canonico ajustado cuando hay capital_firme_usd configurado.",
             "valor actual del portafolio = solo posiciones activas con precios validados.",
             "P/L bruto = P/L no realizado solo de posiciones activas con precios validados.",
             "P/L neto despues de fees = P/L bruto - fee acumulado estimado.",
@@ -17788,6 +17788,11 @@ def portfolio_apply_order_aggregations(summary, active_items, pending_items, inc
     aggregations = summary.get("order_aggregations") or []
     if not aggregations:
         return active_items, pending_items
+    manual_override_symbols = {
+        str((entry or {}).get("symbol") or "").upper().strip()
+        for entry in (override_config.get("manual_entries") or [])
+        if isinstance(entry, dict) and str((entry or {}).get("symbol") or "").strip()
+    }
     transaction_statuses = {
         str(tx.get("id") or ""): "final"
         for tx in summary.get("final_transactions") or []
@@ -17808,6 +17813,8 @@ def portfolio_apply_order_aggregations(summary, active_items, pending_items, inc
             continue
         symbol = str(aggregation.get("symbol") or "").upper().strip()
         if not symbol:
+            continue
+        if symbol in manual_override_symbols:
             continue
         valid_members, blocked_members = portfolio_active_aggregation_members(aggregation, transaction_statuses)
         if aggregation.get("members") and not valid_members:
@@ -18302,7 +18309,10 @@ def portfolio_client_report(summary, parameters=None):
     next_report_order = 1
     if client_sort_mode == "loss_to_gain":
         sorted_active_items = sorted(active_items, key=lambda item: portfolio_client_sort_key(item, canonical_order))
-        sorted_pending_items = sorted(pending_items, key=lambda item: portfolio_client_sort_key(item, canonical_order))
+        if client_presentation_mode == "combined":
+            sorted_pending_items = sorted(pending_items, key=lambda item: portfolio_client_sort_key(item, canonical_order))
+        else:
+            sorted_pending_items = sorted(pending_items, key=lambda item: portfolio_override_sort_key(item, canonical_order))
     else:
         sorted_active_items = list(active_items)
         sorted_pending_items = list(pending_items)
@@ -18316,7 +18326,12 @@ def portfolio_client_report(summary, parameters=None):
         if client_sort_mode == "loss_to_gain":
             lines.append("Posiciones activas de mayor perdida a mejor resultado; ordenes pendientes al final.")
     for item in display_items:
-        if client_sort_mode == "loss_to_gain":
+        keep_explicit_pending_id = (
+            client_sort_mode == "loss_to_gain"
+            and client_presentation_mode != "combined"
+            and item.get("client_state") == "pending"
+        )
+        if client_sort_mode == "loss_to_gain" and not keep_explicit_pending_id:
             item["canonical_report_order"] = item.get("report_order")
             item["resolved_report_order"] = next_report_order
             used_report_orders.add(next_report_order)
@@ -18409,11 +18424,13 @@ def portfolio_client_report(summary, parameters=None):
         base_firm_capital_usd = float(configured_firm_capital)
         total_firm_usd = min(total_portfolio_usd, base_firm_capital_usd + available_balance_usd)
         total_credit_usd = max(0.0, total_portfolio_usd - total_firm_usd)
+        base_only_credit_usd = max(0.0, total_portfolio_usd - base_firm_capital_usd)
         credit_source = "firm_capital_plus_available_realized_profit"
     else:
         base_firm_capital_usd = None
         total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
         total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
+        base_only_credit_usd = total_credit_usd
         credit_source = "position_credit_marks"
     net_pnl_after_fees = active_unrealized_pnl_usd - total_fee_usd
     total_pnl_after_fees = net_pnl_after_fees + realized_net_pnl_usd
@@ -18449,7 +18466,9 @@ def portfolio_client_report(summary, parameters=None):
     )
     balance = {
         "portfolio_total_usd": round_opt(total_portfolio_usd, 2),
+        "invested_total_usd": round_opt(total_portfolio_usd, 2),
         "credit_total_usd": round_opt(total_credit_usd, 2),
+        "credit_base_only_usd": round_opt(base_only_credit_usd, 2),
         "firm_total_usd": round_opt(total_firm_usd, 2),
         "base_firm_capital_usd": round_opt(base_firm_capital_usd, 2) if base_firm_capital_usd is not None else None,
         "available_balance_usd": round_opt(available_balance_usd, 2),
@@ -18486,7 +18505,7 @@ def portfolio_client_report(summary, parameters=None):
     }
     balance_line = (
         "Balance validado Sr. Eli: "
-        f"valor total del portafolio {format_usd_amount(balance['portfolio_total_usd'])} USD; "
+        f"total invertido/comprometido {format_usd_amount(balance['invested_total_usd'])} USD; "
         f"monto a crédito {format_usd_amount(balance['credit_total_usd'])} USD; "
         f"monto en firme {format_usd_amount(balance['firm_total_usd'])} USD; "
         f"saldo disponible {format_usd_amount(balance['available_balance_usd'])} USD; "
