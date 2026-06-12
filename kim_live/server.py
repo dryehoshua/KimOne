@@ -174,6 +174,7 @@ KIM_PRODUCT_BACKLOG_MD = MEMORY_CONTEXT_DIR / "kim_product_backlog.md"
 RUNTIME_KIM_PRODUCT_BACKLOG_MD = RUNTIME_CONTEXT / "kim_product_backlog.md"
 KIM_PRODUCT_BACKLOG_SPEC = BIFROST / "docs" / "kim_live_whatsapp_sales_backlog.md"
 PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
+PAPER_BROKER_TOOL = APP_DIR / "kim_paper_broker.py"
 PORTFOLIO_REPORT_OVERRIDES = APP_DIR / "context" / "portfolio_report_overrides.json"
 RUNTIME_PORTFOLIO_REPORT_OVERRIDES = RUNTIME_CONTEXT / "portfolio_report_overrides.json"
 PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
@@ -184,6 +185,8 @@ PORTFOLIO_SR_ELI_STANDARD_MD = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standa
 RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
 PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
+TRADINGVIEW_WEBHOOK_CONFIG = MEMORY_CONTEXT_DIR / "tradingview_webhook.json"
+RUNTIME_TRADINGVIEW_WEBHOOK_CONFIG = RUNTIME_CONTEXT / "tradingview_webhook.json"
 MEMORY_ROUTER_LOG = MEMORY_CONTEXT_DIR / "memory_routes.jsonl"
 RUNTIME_MEMORY_ROUTER_LOG = RUNTIME_CONTEXT / "memory_routes.jsonl"
 TWILIO_MEDIA_WS_URL_FILE = RUNTIME_CONTEXT / "twilio_media_ws_url.txt"
@@ -240,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.70"
+APP_VERSION = "1.5.71"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -677,7 +680,7 @@ def is_public_get_path(path):
 
 
 def is_public_post_path(path):
-    return path in {"/api/auth/login", "/api/auth/logout", "/api/public-lead"} or path.startswith("/twilio/")
+    return path in {"/api/auth/login", "/api/auth/logout", "/api/public-lead", "/api/tradingview/webhook"} or path.startswith("/twilio/")
 
 
 def append_memory(kind, payload):
@@ -12521,6 +12524,23 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
                 result["action_log"] = record
                 return result
         result = portfolio_cli(action, {**parameters, "confirm": confirm or boolish(parameters.get("confirm"))})
+    elif provider in {"paper_broker", "paper_trading", "kim_paper_broker", "tradingview"}:
+        sensitive_action = action in PAPER_BROKER_CONFIRMABLE_ACTIONS
+        if sensitive_action:
+            security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+            if not security.get("authorized"):
+                result = {
+                    "ok": False,
+                    "provider": provider,
+                    "action": action,
+                    "requires_security_phrase": True,
+                    "security": security,
+                    "message": "Accion paper broker bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+                }
+                record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+                result["action_log"] = record
+                return result
+        result = paper_broker_cli(action, parameters, confirm=confirm)
     elif provider in {"twilio", "sms", "phone", "telefono", "whatsapp"}:
         if action in {"call_phone", "call", "make_call", "llamar", "llamada", "schedule_call", "programar_llamada", "agendar_llamada"} and transcript:
             parameters = dict(parameters or {})
@@ -12554,7 +12574,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, twilio, crm o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, paper_broker, twilio, crm o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -12617,6 +12637,404 @@ def sync_portfolio_runtime_to_bifrost(runtime_root, bifrost_root):
         "copied_files": len(sync["copied"]),
         "failed_files": sync["failed"][:5],
     }
+
+
+def configure_paper_broker_module(module):
+    runtime_root = RUNTIME_MEMORY_ROOT / "portfolios"
+    bifrost_root = MEMORY_ROOT / "portfolios"
+    bifrost_dir = bifrost_root / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "paper_trading"
+    runtime_dir = runtime_root / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "paper_trading"
+    if bifrost_dir.exists() and (
+        not runtime_dir.exists()
+        or max((p.stat().st_mtime for p in bifrost_dir.rglob("*") if p.is_file()), default=0)
+        > max((p.stat().st_mtime for p in runtime_dir.rglob("*") if p.is_file()), default=0)
+    ):
+        copy_tree_files(bifrost_dir, runtime_dir)
+    module.ROOT = runtime_root
+    return runtime_root, bifrost_root
+
+
+def sync_paper_broker_runtime_to_bifrost(runtime_root, bifrost_root):
+    runtime_dir = runtime_root / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "paper_trading"
+    bifrost_dir = bifrost_root / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "paper_trading"
+    sync = copy_tree_files(runtime_dir, bifrost_dir)
+    return {
+        "runtime_root": str(runtime_root),
+        "bifrost_root": str(bifrost_root),
+        "paper_runtime_dir": str(runtime_dir),
+        "paper_bifrost_dir": str(bifrost_dir),
+        "copied_files": len(sync["copied"]),
+        "failed_files": sync["failed"][:5],
+    }
+
+
+def import_paper_broker_module():
+    spec = importlib.util.spec_from_file_location("kim_paper_broker", PAPER_BROKER_TOOL)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    runtime_root, bifrost_root = configure_paper_broker_module(module)
+    return module, runtime_root, bifrost_root
+
+
+def tradingview_webhook_config():
+    config = read_json_file_any([TRADINGVIEW_WEBHOOK_CONFIG, RUNTIME_TRADINGVIEW_WEBHOOK_CONFIG], {})
+    if not isinstance(config, dict):
+        config = {}
+    token = str(config.get("token") or "").strip()
+    if not token:
+        token = secrets.token_urlsafe(28)
+        config = {
+            "token": token,
+            "created_at": now_iso(),
+            "usage": "TradingView webhook token for Kim Paper Broker alerts. Keep private.",
+            "example_payload": {
+                "token": "<secret>",
+                "symbol": "{{ticker}}",
+                "price": "{{close}}",
+                "message": "TradingView alert",
+            },
+        }
+        write_json_file_both(TRADINGVIEW_WEBHOOK_CONFIG, RUNTIME_TRADINGVIEW_WEBHOOK_CONFIG, config)
+    return config
+
+
+def masked_secret(value):
+    text = str(value or "")
+    if len(text) <= 8:
+        return "***"
+    return text[:4] + "..." + text[-4:]
+
+
+def validate_tradingview_webhook(payload, handler=None, query_params=None):
+    config = tradingview_webhook_config()
+    expected = str(config.get("token") or "")
+    candidates = []
+    if isinstance(payload, dict):
+        for key in ("token", "secret", "webhook_token", "kim_token"):
+            if payload.get(key):
+                candidates.append(str(payload.get(key)))
+    if query_params:
+        for key in ("token", "secret"):
+            values = query_params.get(key) or []
+            if values:
+                candidates.append(str(values[-1]))
+    if handler:
+        header_value = handler.headers.get("X-Kim-Webhook-Token") or handler.headers.get("X-TradingView-Webhook-Token")
+        if header_value:
+            candidates.append(str(header_value))
+    return any(hmac.compare_digest(candidate, expected) for candidate in candidates)
+
+
+def paper_broker_status_with_webhook():
+    config = tradingview_webhook_config()
+    module, runtime_root, bifrost_root = import_paper_broker_module()
+    result = module.cli("status", {})
+    result["tradingview_webhook"] = {
+        "url": "https://kim.aipeople.app/api/tradingview/webhook",
+        "token_masked": masked_secret(config.get("token")),
+        "payload_format": {
+            "token": "<secret>",
+            "symbol": "BINANCE:AVAXUSDT or AVAXUSDT",
+            "price": 3.5,
+            "message": "optional TradingView alert text",
+        },
+    }
+    result["sync"] = {
+        "runtime_root": str(runtime_root),
+        "bifrost_root": str(bifrost_root),
+        "copied_files": 0,
+        "failed_files": [],
+        "skipped": "status",
+    }
+    return result
+
+
+def paper_broker_price_validations(symbols, providers=None):
+    providers = providers or ["binance", "coinmarketcap", "coingecko"]
+    providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
+    warnings = []
+    if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
+        providers = [provider for provider in providers if provider != "coinmarketcap"]
+        warnings.append("CoinMarketCap omitido porque falta API key.")
+    prices = {}
+    errors = []
+    for symbol in sorted({portfolio_normalize_symbol(symbol) for symbol in symbols if portfolio_normalize_symbol(symbol)}):
+        try:
+            validation = validate_market_prices(f"BINANCE:{symbol}", providers=providers)
+            if validation.get("approved_for_client_report") and validation.get("reference_price") not in (None, ""):
+                prices[symbol] = {
+                    "price": validation.get("reference_price"),
+                    "approved": True,
+                    "validation": validation,
+                }
+            else:
+                errors.append({"symbol": symbol, "reason": "price_not_approved", "validation": validation})
+        except Exception as exc:
+            errors.append({"symbol": symbol, "error": brief(str(exc), 500)})
+    return prices, warnings, errors, providers
+
+
+def paper_broker_order_key_from_pending(item):
+    symbol = portfolio_normalize_symbol((item or {}).get("symbol"))
+    raw_id = str((item or {}).get("id") or (item or {}).get("report_order") or (item or {}).get("label") or symbol).strip()
+    safe = re.sub(r"[^A-Za-z0-9]+", "-", raw_id).strip("-").upper()[:40] or symbol
+    return f"KPB-PORT-{symbol}-{safe}"
+
+
+def paper_broker_bootstrap_portfolio_pending(module, status_payload):
+    existing_keys = {
+        str(order.get("source_portfolio_pending_id") or order.get("order_id") or "")
+        for bucket in ("pending", "filled", "cancelled", "errors")
+        for order in (status_payload.get(bucket) or [])
+        if isinstance(order, dict)
+    }
+    if status_payload.get("pending"):
+        return {"ok": True, "created_count": 0, "skipped": "paper_pending_exists"}
+    try:
+        report = portfolio_cli("client_report", {"save_standard": False, "providers": ["binance", "coingecko"]})
+    except Exception as exc:
+        return {"ok": False, "created_count": 0, "error": brief(str(exc), 700)}
+    created = []
+    for item in report.get("pending_orders") or []:
+        if not isinstance(item, dict):
+            continue
+        symbol = portfolio_normalize_symbol(item.get("symbol"))
+        amount_usd = portfolio_float(item.get("invested_usd"))
+        limit_price = portfolio_float(item.get("entry_price"))
+        if not symbol or amount_usd in (None, 0) or limit_price in (None, 0):
+            continue
+        order_id = paper_broker_order_key_from_pending(item)
+        if order_id in existing_keys:
+            continue
+        placed = module.cli(
+            "place_order",
+            {
+                "order_id": order_id,
+                "symbol": symbol,
+                "side": item.get("side") or "BUY",
+                "amount_usd": amount_usd,
+                "limit_price": limit_price,
+                "confirm": True,
+                "source": "portfolio_pending_bootstrap",
+                "source_portfolio_pending_id": item.get("id") or item.get("report_order") or order_id,
+                "client_id": "sr_eli",
+                "client_name": "Sr. Eli",
+                "notes": f"Mirror de orden pendiente del portafolio Sr. Eli: {item.get('label') or symbol}.",
+            },
+        )
+        order = placed.get("order") or {}
+        order["source_portfolio_pending_id"] = item.get("id") or item.get("report_order") or order_id
+        order["portfolio_pending_snapshot"] = item
+        created.append(order.get("order_id"))
+        existing_keys.add(order_id)
+    if created:
+        module_state = module.read_state()
+        module.write_state(module_state)
+        append_memory("paper_broker_bootstrap_pending", {"created_count": len(created), "order_ids": created})
+    return {
+        "ok": True,
+        "created_count": len(created),
+        "order_ids": created,
+        "portfolio_pending_count": len(report.get("pending_orders") or []),
+    }
+
+
+def paper_broker_sync(parameters=None, trigger="polling_watcher"):
+    parameters = parameters or {}
+    module, runtime_root, bifrost_root = import_paper_broker_module()
+    current = module.cli("status", {})
+    bootstrap = paper_broker_bootstrap_portfolio_pending(module, current) if boolish(parameters.get("bootstrap_portfolio_pending", True)) else {"skipped": True}
+    if bootstrap.get("created_count"):
+        current = module.cli("status", {})
+    pending = current.get("pending") or []
+    symbols = [item.get("symbol") for item in pending if isinstance(item, dict)]
+    if parameters.get("symbol"):
+        symbols = [parameters.get("symbol")]
+    if not symbols:
+        return {
+            "ok": True,
+            "provider": "paper_broker",
+            "action": "sync",
+            "trigger": trigger,
+            "message": "No hay ordenes paper pendientes.",
+            "filled_count": 0,
+            "status": current,
+            "sync": sync_paper_broker_runtime_to_bifrost(runtime_root, bifrost_root),
+        }
+    prices, warnings, errors, providers_used = paper_broker_price_validations(symbols, providers=parameters.get("providers"))
+    evaluation = module.cli(
+        "evaluate_orders",
+        {
+            "prices": prices,
+            "symbol": parameters.get("symbol"),
+            "trigger": trigger,
+            "alert_id": parameters.get("alert_id"),
+        },
+    )
+    portfolio_syncs = []
+    for order in evaluation.get("filled_orders") or []:
+        try:
+            transaction_params = dict(order.get("portfolio_transaction") or {})
+            transaction_params.setdefault("portfolio_id", "sr_eli_2026")
+            transaction_params.setdefault("source", "kim_paper_broker_fill")
+            portfolio_result = portfolio_cli(
+                "execute_pending_order",
+                {
+                    "portfolio_id": transaction_params.get("portfolio_id"),
+                    "symbol": transaction_params.get("symbol"),
+                    "gross_amount": transaction_params.get("gross_amount"),
+                    "price": transaction_params.get("price"),
+                    "quantity": transaction_params.get("quantity"),
+                    "source": "kim_paper_broker_fill",
+                    "notes": transaction_params.get("notes"),
+                    "reason": "Orden paper simulada ejecutada por cruce de precio validado.",
+                    "summary": f"{transaction_params.get('symbol')} paso de pendiente a activa por Kim Paper Broker.",
+                    "confirm": True,
+                },
+            )
+            attach = module.cli(
+                "attach_sync_result",
+                {
+                    "order_id": order.get("order_id"),
+                    "portfolio_sync": {
+                        "ok": True,
+                        "portfolio_action": "execute_pending_order",
+                        "transaction_id": (portfolio_result.get("executed_order") or {}).get("id"),
+                        "result": portfolio_result,
+                    },
+                },
+            )
+            portfolio_syncs.append({"order_id": order.get("order_id"), "ok": True, "attach": attach})
+        except Exception as exc:
+            try:
+                module.cli(
+                    "attach_sync_result",
+                    {
+                        "order_id": order.get("order_id"),
+                        "portfolio_sync": {"ok": False, "error": brief(str(exc), 700)},
+                    },
+                )
+            except Exception:
+                pass
+            portfolio_syncs.append({"order_id": order.get("order_id"), "ok": False, "error": brief(str(exc), 700)})
+    sync = sync_paper_broker_runtime_to_bifrost(runtime_root, bifrost_root)
+    result = {
+        "ok": True,
+        "provider": "paper_broker",
+        "action": "sync",
+        "trigger": trigger,
+        "providers_used": providers_used,
+        "provider_warnings": warnings,
+        "price_errors": errors,
+        "bootstrap": bootstrap,
+        "evaluation": evaluation,
+        "filled_count": len(evaluation.get("filled_orders") or []),
+        "portfolio_syncs": portfolio_syncs,
+        "sync": sync,
+    }
+    if result["filled_count"]:
+        append_memory(
+            "paper_broker_fills",
+            {
+                "trigger": trigger,
+                "filled_count": result["filled_count"],
+                "orders": [
+                    {"order_id": order.get("order_id"), "symbol": order.get("symbol"), "fill_price": order.get("fill_price")}
+                    for order in evaluation.get("filled_orders") or []
+                ],
+            },
+        )
+        append_daily_note(f"Kim Paper Broker: {result['filled_count']} orden(es) simuladas ejecutadas por {trigger}.")
+    return result
+
+
+PAPER_BROKER_CONFIRMABLE_ACTIONS = {"place_order", "place", "buy", "sell", "cancel_order", "cancel"}
+PAPER_BROKER_WATCHER_STARTED = False
+
+
+def paper_broker_cli(action, parameters=None, confirm=False, internal=False):
+    action = (action or "status").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "list", "summary"}:
+        return paper_broker_status_with_webhook()
+    if action in {"sync", "evaluate", "evaluate_orders", "mark_filled"}:
+        return paper_broker_sync(parameters, trigger=parameters.get("trigger") or "manual_sync")
+    module, runtime_root, bifrost_root = import_paper_broker_module()
+    if action in {"preview", "preview_order"}:
+        result = module.cli("preview_order", parameters)
+    elif action in PAPER_BROKER_CONFIRMABLE_ACTIONS and not (confirm or internal or boolish(parameters.get("confirm"))):
+        preview_action = "cancel_order" if action in {"cancel_order", "cancel"} else "place_order"
+        preview = (
+            {"order_id": parameters.get("order_id") or parameters.get("id"), "symbol": parameters.get("symbol"), "reason": parameters.get("reason") or parameters.get("notes") or ""}
+            if preview_action == "cancel_order"
+            else module.cli("preview_order", parameters).get("preview")
+        )
+        return confirmation_preview(
+            "paper_broker",
+            preview_action,
+            "Confirmar orden paper del Sr. Eli con PIN/frase antes de registrar o cancelar.",
+            preview,
+            execution_parameters={**parameters, "confirm": True},
+        )
+    elif action in {"place_order", "place", "buy", "sell"}:
+        result = module.cli("place_order", {**parameters, "confirm": confirm or boolish(parameters.get("confirm")) or internal})
+    elif action in {"cancel_order", "cancel"}:
+        result = module.cli("cancel_order", {**parameters, "confirm": confirm or boolish(parameters.get("confirm")) or internal})
+    elif action in {"record_alert", "webhook_alert", "tradingview_alert"}:
+        result = module.cli("record_alert", parameters)
+    else:
+        raise ValueError("Accion paper broker no soportada.")
+    mutating = action not in {"preview", "preview_order"}
+    result["sync"] = sync_paper_broker_runtime_to_bifrost(runtime_root, bifrost_root) if mutating else {
+        "runtime_root": str(runtime_root),
+        "bifrost_root": str(bifrost_root),
+        "copied_files": 0,
+        "failed_files": [],
+        "skipped": "preview",
+    }
+    append_memory("paper_broker_action", {"action": action, "result": brief(json.dumps(result, ensure_ascii=False), 1200)})
+    return result
+
+
+def tradingview_webhook_payload(body, handler, parsed):
+    query_params = urllib.parse.parse_qs(parsed.query)
+    if not validate_tradingview_webhook(body, handler=handler, query_params=query_params):
+        event = {
+            "at": now_iso(),
+            "provider": "tradingview",
+            "path": parsed.path,
+            "ip": handler.client_address[0] if handler.client_address else "",
+            "body_preview": brief(json.dumps(body, ensure_ascii=False), 500),
+        }
+        append_memory("tradingview_webhook_rejected", event)
+        return {"ok": False, "error": "INVALID_WEBHOOK_TOKEN", "message": "TradingView webhook rechazado por token invalido."}, 403
+    alert_body = {k: v for k, v in dict(body or {}).items() if k not in {"token", "secret", "webhook_token", "kim_token"}}
+    alert = paper_broker_cli("record_alert", {**alert_body, "raw": alert_body})
+    sync = paper_broker_sync(
+        {
+            "symbol": alert.get("alert", {}).get("symbol") or alert_body.get("symbol"),
+            "alert_id": alert.get("alert", {}).get("alert_id"),
+        },
+        trigger="tradingview_webhook",
+    )
+    return {"ok": True, "provider": "tradingview", "alert": alert, "sync": sync}, 200
+
+
+def paper_broker_watcher_loop(interval_seconds=180):
+    while True:
+        time.sleep(interval_seconds)
+        try:
+            paper_broker_sync({"trigger": "polling_watcher"}, trigger="polling_watcher")
+        except Exception as exc:
+            append_memory("paper_broker_watcher_error", {"error": brief(str(exc), 700)})
+
+
+def start_paper_broker_watcher_once():
+    global PAPER_BROKER_WATCHER_STARTED
+    if PAPER_BROKER_WATCHER_STARTED:
+        return
+    PAPER_BROKER_WATCHER_STARTED = True
+    run_background_task("kim-paper-broker-watcher", paper_broker_watcher_loop)
 
 
 PORTFOLIO_SALE_ACTIONS = {"sell_position", "close_position", "record_sale", "venta_final", "cerrar_posicion"}
@@ -16087,9 +16505,11 @@ def realtime_session_config():
                 "entrega el link de autorizacion y no inventes correos. "
                 "Para portafolios de Ignis Stock Financials, usa kim_portfolio_record. Si el doctor pide "
                 "'enviame el portafolio actualizado', 'manda el portafolio' o algo equivalente, llama "
+                "primero kim_paper_trade action=sync para evaluar si alguna orden paper pendiente ya cruzo "
+                "precio validado; despues llama "
                 "kim_portfolio_record con action=send_whatsapp_report; por defecto lo envia al WhatsApp Dubai del doctor "
                 "sin PIN ni confirmacion. Si solo pregunta por el portafolio o cuales ordenes ya entraron, llama "
-                "kim_portfolio_record con action=client_report. El formato por defecto es monto invertido, "
+                "kim_paper_trade action=sync y luego kim_portfolio_record con action=client_report. El formato por defecto es monto invertido, "
                 "precio de entrada, precio actual validado y frase clara: 'Estamos por debajo por -X%' o "
                 "'Estamos en ganancia por +X%'. Ordena el reporte para cliente de mayor perdida a mejor resultado; "
                 "las ordenes pendientes van al final, marcadas como pendientes, con "
@@ -16106,6 +16526,10 @@ def realtime_session_config():
                 "aglomera, promedia, agrega a la misma moneda o conserva una orden principal con subordenes, usa "
                 "kim_portfolio_record action=aggregate_order con canonical_order, symbol y members. El doctor decide "
                 "que ID canonico sobrevive; el promedio se calcula por costo total / unidades totales. "
+                "Para nuevas ordenes paper del Sr. Eli o pendientes que deben ejecutarse cuando el precio toque, usa "
+                "kim_paper_trade: place_order, cancel_order, status o sync. Estas son operaciones simuladas locales; TradingView "
+                "solo manda alertas por webhook y no es fuente contable. Nunca digas que se coloco una orden en TradingView Paper Trading; "
+                "di que quedo registrada en Kim Paper Broker. place_order y cancel_order requieren confirmacion humana. "
                 "Si el doctor pide promedio ponderado, o dice 'solo numeros y operaciones', usa "
                 "kim_portfolio_record action=weighted_average_breakdown para leer los tramos reales del ledger "
                 "y no calcularlo mentalmente. Una correccion "
@@ -16192,6 +16616,7 @@ def realtime_session_config():
                                     "Google Maps: status, validate_key, find_place, geocode, route_distance, timezone. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
+                                    "Paper Broker: status, preview, place_order, cancel_order, sync. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
                                     "Scheduler: schedule_action, list_schedules, cancel_schedule. "
                                     "CRM: status, list_contacts, upsert_contact, record_note."
@@ -16263,6 +16688,29 @@ def realtime_session_config():
                                     "send_whatsapp_report calcula y manda lineas separadas al WhatsApp Dubai del doctor por defecto; "
                                     "para probar sin enviar usa dry_run=true."
                                 ),
+                            },
+                        },
+                        "required": ["action"],
+                    },
+                },
+                {
+                    "type": "function",
+                    "name": "kim_paper_trade",
+                    "description": "Administra el broker paper simulado local del Sr. Eli: ordenes pendientes, fills por precio validado, cancelaciones y alertas TradingView.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "description": "status, preview, place_order, cancel_order o sync. place_order/cancel_order preparan confirmacion; sync evalua pendientes con precios frescos.",
+                            },
+                            "parameters": {
+                                "type": "object",
+                                "description": "place_order: symbol, side BUY/SELL, amount_usd, limit_price, notes. cancel_order: order_id o symbol. sync: symbol opcional.",
+                            },
+                            "confirm": {
+                                "type": "boolean",
+                                "description": "true solo despues de confirmacion explicita del doctor.",
                             },
                         },
                         "required": ["action"],
@@ -19064,6 +19512,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/api-bridge/status":
             write_json(self, {"ok": True, "status": api_bridge_config_status(live=True)})
             return
+        if parsed.path == "/api/paper-trading":
+            write_json(self, {"ok": True, "result": paper_broker_cli("status", {})})
+            return
         if parsed.path == "/api/schedules":
             params = urllib.parse.parse_qs(parsed.query)
             write_json(
@@ -19198,6 +19649,11 @@ class Handler(BaseHTTPRequestHandler):
                 body = read_body(self)
                 lead = record_public_lead(self, body)
                 write_json(self, {"ok": True, "lead": lead})
+                return
+            if parsed.path == "/api/tradingview/webhook":
+                body = read_body(self)
+                payload, status = tradingview_webhook_payload(body, self, parsed)
+                write_json(self, payload, status=status)
                 return
             if parsed.path.startswith("/api/") and not is_public_post_path(parsed.path) and not site_auth_is_valid(self):
                 write_json(self, {"ok": False, "error": "AUTH_REQUIRED"}, status=401)
@@ -19372,6 +19828,33 @@ class Handler(BaseHTTPRequestHandler):
                     append_memory("portfolio_error", result)
                 write_json(self, {"ok": True, "result": result})
                 return
+            if parsed.path == "/api/paper-trading":
+                try:
+                    paper_action = str(body.get("action", "status") or "status").strip().lower()
+                    paper_parameters = body.get("parameters") or {}
+                    paper_confirm = bool(body.get("confirm", False)) or boolish(paper_parameters.get("confirm"))
+                    if paper_action in PAPER_BROKER_CONFIRMABLE_ACTIONS:
+                        result = run_api_bridge(
+                            "paper_broker",
+                            paper_action,
+                            paper_parameters,
+                            confirm=paper_confirm,
+                            session_id=body.get("session_id", ""),
+                            transcript=body.get("transcript", ""),
+                        )
+                    else:
+                        result = paper_broker_cli(paper_action, paper_parameters, confirm=paper_confirm)
+                except Exception as exc:
+                    result = {
+                        "ok": False,
+                        "provider": "paper_broker",
+                        "action": body.get("action", "status"),
+                        "error": str(exc),
+                        "message": "No pude completar la accion del paper broker.",
+                    }
+                    append_memory("paper_broker_error", result)
+                write_json(self, {"ok": True, "result": result})
+                return
             if parsed.path == "/api/memory-router":
                 result = memory_router(
                     body.get("action", "classify"),
@@ -19440,6 +19923,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     MEMORY_INBOX.mkdir(parents=True, exist_ok=True)
     start_scheduler_once()
+    start_paper_broker_watcher_once()
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Kim Live running at http://{HOST}:{PORT}", flush=True)
     server.serve_forever()

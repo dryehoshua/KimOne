@@ -692,7 +692,8 @@
       color: var(--teal-dark);
     }
 
-    .workspace[data-view="chat"] .market-desk {
+    .workspace[data-view="chat"] .market-desk,
+    .workspace[data-view="chat"] .paper-desk {
       display: none;
     }
 
@@ -700,6 +701,15 @@
     .workspace[data-view="markets"] .composer,
     .workspace[data-view="markets"] .assistant-tools,
     .workspace[data-view="markets"] .compiler {
+      display: none;
+    }
+
+    .workspace[data-view="markets"] .paper-desk,
+    .workspace[data-view="paper"] .market-desk,
+    .workspace[data-view="paper"] .chat-log,
+    .workspace[data-view="paper"] .composer,
+    .workspace[data-view="paper"] .assistant-tools,
+    .workspace[data-view="paper"] .compiler {
       display: none;
     }
 
@@ -1033,9 +1043,26 @@
       grid-template-rows: auto minmax(0, 1fr) auto auto;
     }
 
+    .paper-desk {
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      overflow: auto;
+    }
+
     .market-toolbar {
       display: grid;
       grid-template-columns: minmax(180px, 1fr) 118px 112px 150px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .paper-toolbar {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 110px minmax(115px, 0.7fr) minmax(115px, 0.7fr) 110px 100px;
       gap: 8px;
       align-items: end;
     }
@@ -1098,6 +1125,95 @@
       max-height: 150px;
       overflow: auto;
       white-space: pre-wrap;
+    }
+
+    .paper-status {
+      display: grid;
+      gap: 8px;
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .paper-status code,
+    .paper-card code {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .paper-subtabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .paper-subtab {
+      width: auto;
+      min-height: 34px;
+      padding: 7px 10px;
+      border-color: #cbd5dc;
+      background: #ffffff;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .paper-subtab.active {
+      border-color: var(--teal);
+      color: var(--teal-dark);
+      background: var(--soft-teal);
+    }
+
+    .paper-list {
+      min-height: 0;
+      display: grid;
+      gap: 10px;
+      overflow: auto;
+    }
+
+    .paper-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .paper-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .paper-card-title {
+      font-weight: 800;
+      color: var(--teal-dark);
+      overflow-wrap: anywhere;
+    }
+
+    .paper-card small {
+      color: var(--muted);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .paper-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      color: #344054;
+      font-size: 13px;
+    }
+
+    .paper-grid span {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .paper-grid strong {
+      overflow-wrap: anywhere;
     }
 
     .conversation-list {
@@ -1571,7 +1687,7 @@
       .view-tabs {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .view-tab {
@@ -1623,6 +1739,23 @@
       .market-desk {
         padding: 10px;
         min-height: calc(100dvh - 150px);
+      }
+
+      .paper-desk {
+        padding: 10px;
+        min-height: calc(100dvh - 150px);
+      }
+
+      .paper-toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .paper-toolbar .field:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .paper-grid {
+        grid-template-columns: 1fr 1fr;
       }
 
       .market-chart {
@@ -1764,12 +1897,24 @@
         grid-template-columns: 1fr;
       }
 
+      .paper-toolbar {
+        grid-template-columns: 1fr;
+      }
+
       .market-toolbar .field:first-child {
+        grid-column: auto;
+      }
+
+      .paper-toolbar .field:first-child {
         grid-column: auto;
       }
 
       .market-chart {
         min-height: 340px;
+      }
+
+      .paper-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -1782,7 +1927,7 @@
         <div class="landing-brand">
           <span class="brand-mark">K</span>
           <span>Ai People / Kim</span>
-          <span class="public-version" id="publicVersion">v1.5.58</span>
+          <span class="public-version" id="publicVersion">v1.5.71</span>
         </div>
         <small>Intelligent reception, operational memory, and AI agents for teams that execute.</small>
       </nav>
@@ -1838,7 +1983,7 @@
   <header>
     <div>
       <p class="eyebrow">Tesca Elements</p>
-      <h1>Kim Live <span id="appVersion">v1.5.58</span></h1>
+      <h1>Kim Live <span id="appVersion">v1.5.71</span></h1>
     </div>
     <span class="pill" id="mode">Conectando</span>
   </header>
@@ -1994,6 +2139,7 @@
         <div class="view-tabs" aria-label="Vista">
           <button class="view-tab active" id="chatTab" type="button">Chat</button>
           <button class="view-tab" id="marketsTab" type="button">Mercados</button>
+          <button class="view-tab" id="paperTab" type="button">Paper Broker</button>
         </div>
         <span class="pill" id="sessionState">Sesion lista</span>
       </div>
@@ -2036,6 +2182,45 @@
         </div>
         <div class="market-snapshot" id="marketSnapshot">Sin snapshot cuantitativo todavia.</div>
         <div class="market-note" id="marketNote">TradingView queda en esta pestana. Kim puede analizar datos OHLCV con Analizar con Kim; para lectura visual exacta de velas, adjunta captura.</div>
+      </section>
+
+      <section class="paper-desk" aria-label="Paper Broker Sr. Eli">
+        <div class="paper-toolbar">
+          <div class="field">
+            <label for="paperSymbol">Simbolo</label>
+            <input id="paperSymbol" value="AVAXUSDT" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="paperSide">Lado</label>
+            <select id="paperSide">
+              <option value="BUY" selected>BUY</option>
+              <option value="SELL">SELL</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="paperAmount">Monto USD</label>
+            <input id="paperAmount" inputmode="decimal" placeholder="1800">
+          </div>
+          <div class="field">
+            <label for="paperLimit">Precio limite</label>
+            <input id="paperLimit" inputmode="decimal" placeholder="3.5">
+          </div>
+          <button class="secondary compact-button" id="paperPreview" type="button">Preview</button>
+          <button class="primary compact-button" id="paperPrepare" type="button">Preparar</button>
+        </div>
+        <div class="paper-status" id="paperStatus">
+          <span>Paper Broker local para Sr. Eli. TradingView puede mandar alertas; BIFROST conserva el ledger.</span>
+        </div>
+        <div class="paper-subtabs" aria-label="Estados de paper broker">
+          <button class="paper-subtab active" data-paper-filter="pending" type="button">Pendientes</button>
+          <button class="paper-subtab" data-paper-filter="filled" type="button">Ejecutadas</button>
+          <button class="paper-subtab" data-paper-filter="cancelled" type="button">Canceladas</button>
+          <button class="paper-subtab" data-paper-filter="alerts" type="button">Alertas</button>
+          <button class="secondary inline-button" id="paperSync" type="button">Sincronizar precios</button>
+        </div>
+        <div class="paper-list" id="paperList">
+          <small>Cargando paper broker...</small>
+        </div>
       </section>
 
       <section class="assistant-tools" aria-label="Herramientas de Kim">
@@ -2115,6 +2300,8 @@
     let apiToneContext = null;
     let apiToneTimer = null;
     let tradingViewScriptPromise = null;
+    let paperBrokerState = null;
+    let paperBrokerFilter = "pending";
     let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
     let voiceOptions = [];
     let activeVoiceProfile = null;
@@ -2950,6 +3137,142 @@
       }
     }
 
+    function paperOrderPayload() {
+      return {
+        symbol: $("paperSymbol").value.trim(),
+        side: $("paperSide").value,
+        amount_usd: $("paperAmount").value.trim(),
+        limit_price: $("paperLimit").value.trim(),
+        source: "kim_live_panel",
+        client_id: "sr_eli",
+        client_name: "Sr. Eli"
+      };
+    }
+
+    function paperMoney(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "n/a";
+      return "$" + number.toLocaleString("en-US", {maximumFractionDigits: 2});
+    }
+
+    function paperPrice(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "n/a";
+      if (number < 0.01) return number.toPrecision(6);
+      return number.toLocaleString("en-US", {maximumFractionDigits: 8});
+    }
+
+    function paperRowsForFilter(state) {
+      if (!state) return [];
+      if (paperBrokerFilter === "alerts") return state.alerts || [];
+      return state[paperBrokerFilter] || [];
+    }
+
+    function renderPaperCard(item) {
+      if (paperBrokerFilter === "alerts") {
+        const title = (item.symbol || "Alerta") + " · " + (item.provider || "tradingview");
+        return `
+          <article class="paper-card">
+            <div class="paper-card-head">
+              <span class="paper-card-title">${escapeHtml(title)}</span>
+              <small>${escapeHtml(item.received_at || "")}</small>
+            </div>
+            <div class="paper-grid">
+              <span><small>Precio</small><strong>${escapeHtml(paperPrice(item.price))}</strong></span>
+              <span><small>Alert ID</small><strong>${escapeHtml(item.alert_id || "")}</strong></span>
+              <span><small>Mensaje</small><strong>${escapeHtml(item.message || "sin mensaje")}</strong></span>
+              <span><small>Fuente</small><strong>Webhook</strong></span>
+            </div>
+          </article>
+        `;
+      }
+      const statusText = item.status || "pending";
+      return `
+        <article class="paper-card">
+          <div class="paper-card-head">
+            <span class="paper-card-title">${escapeHtml(item.symbol || "Orden")} · ${escapeHtml(item.side || "")}</span>
+            <small>${escapeHtml(statusText)} · ${escapeHtml(item.order_id || "")}</small>
+          </div>
+          <div class="paper-grid">
+            <span><small>Monto</small><strong>${escapeHtml(paperMoney(item.amount_usd))}</strong></span>
+            <span><small>Limite</small><strong>${escapeHtml(paperPrice(item.limit_price))}</strong></span>
+            <span><small>Cantidad</small><strong>${escapeHtml(item.quantity ?? "n/a")}</strong></span>
+            <span><small>Fill</small><strong>${escapeHtml(item.fill_price ? paperPrice(item.fill_price) : "pendiente")}</strong></span>
+          </div>
+          <small>${escapeHtml(item.notes || item.fill_rule || "Sin notas.")}</small>
+        </article>
+      `;
+    }
+
+    function renderPaperBroker(result) {
+      paperBrokerState = result || paperBrokerState || {};
+      const counts = paperBrokerState.counts || {};
+      const webhook = paperBrokerState.tradingview_webhook || {};
+      $("paperStatus").innerHTML = `
+        <span>Pendientes: <strong>${counts.pending || 0}</strong> · Ejecutadas: <strong>${counts.filled || 0}</strong> · Canceladas: <strong>${counts.cancelled || 0}</strong></span>
+        <span>Webhook TradingView: <code>${escapeHtml(webhook.url || "no disponible")}</code> · Token: <code>${escapeHtml(webhook.token_masked || "***")}</code></span>
+      `;
+      const rows = paperRowsForFilter(paperBrokerState);
+      $("paperList").innerHTML = rows.length
+        ? rows.map(renderPaperCard).join("")
+        : "<small>No hay registros en esta vista.</small>";
+    }
+
+    async function runPaperTradeTool(args, callId = null) {
+      const action = (args.action || "status").trim().toLowerCase();
+      $("apiBridgeState").textContent = "paper / " + action;
+      setStatus("Revisando Paper Broker Sr. Eli...", "working");
+      startApiTone();
+      try {
+        const data = await post("/api/paper-trading", {
+          action,
+          parameters: args.parameters || {},
+          confirm: Boolean(args.confirm),
+          transcript: transcript.value,
+          session_id: sessionId
+        });
+        const result = data.result || {};
+        if (result.requires_confirmation) {
+          appendMessage("Codex", "Orden paper preparada; falta confirmacion.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+          capturePreparedApiAction(result);
+        } else {
+          appendMessage("Codex", "Paper Broker actualizado.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        }
+        if (result.pending || result.filled || result.cancelled || result.alerts || result.counts) {
+          renderPaperBroker(result);
+        } else {
+          await loadPaperBrokerStatus();
+        }
+        $("apiBridgeState").textContent = result.requires_confirmation ? "Paper esperando confirmacion" : "Paper actualizado";
+        sendRealtimeToolOutput(callId, result);
+        refreshMemoryState();
+        return result;
+      } catch (error) {
+        $("apiBridgeState").textContent = "Error paper";
+        const payload = {error: error.message, action};
+        appendMessage("Codex", "No pude completar paper broker: " + error.message, "codex", false);
+        sendRealtimeToolOutput(callId, payload);
+        return payload;
+      } finally {
+        stopApiTone();
+        setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
+      }
+    }
+
+    async function loadPaperBrokerStatus() {
+      try {
+        const response = await fetch("/api/paper-trading", {cache: "no-store"});
+        const data = await response.json();
+        if (!data.ok) throw new Error(data.error || "No pude leer paper broker.");
+        renderPaperBroker(data.result || {});
+        return data.result;
+      } catch (error) {
+        $("paperStatus").textContent = "No pude cargar Paper Broker: " + error.message;
+        $("paperList").innerHTML = "<small>Error cargando paper broker.</small>";
+        return {error: error.message};
+      }
+    }
+
     async function runMemoryRouterTool(args, callId = null) {
       const text = args.text || transcript.value || "";
       const action = (args.action || "classify").trim().toLowerCase();
@@ -3137,6 +3460,9 @@
       }
       if (name === "kim_portfolio_record") {
         await runPortfolioTool(args, callId);
+      }
+      if (name === "kim_paper_trade") {
+        await runPaperTradeTool(args, callId);
       }
       if (name === "kim_memory_router") {
         await runMemoryRouterTool(args, callId);
@@ -3632,19 +3958,40 @@
     $("marketSymbol").addEventListener("keydown", (event) => {
       if (event.key === "Enter") loadTradingViewChart();
     });
-    $("chatTab").onclick = () => {
-      $("workspace").dataset.view = "chat";
-      $("chatTab").classList.add("active");
-      $("marketsTab").classList.remove("active");
+    function setWorkspaceView(view) {
+      $("workspace").dataset.view = view;
+      $("chatTab").classList.toggle("active", view === "chat");
+      $("marketsTab").classList.toggle("active", view === "markets");
+      $("paperTab").classList.toggle("active", view === "paper");
       focusWorkspaceOnMobile();
-    };
+    }
+    $("chatTab").onclick = () => setWorkspaceView("chat");
     $("marketsTab").onclick = () => {
-      $("workspace").dataset.view = "markets";
-      $("marketsTab").classList.add("active");
-      $("chatTab").classList.remove("active");
+      setWorkspaceView("markets");
       loadTradingViewChart();
-      focusWorkspaceOnMobile();
     };
+    $("paperTab").onclick = () => {
+      setWorkspaceView("paper");
+      loadPaperBrokerStatus();
+    };
+    $("paperPreview").onclick = async () => {
+      await runPaperTradeTool({action: "preview", parameters: paperOrderPayload()});
+    };
+    $("paperPrepare").onclick = async () => {
+      await runPaperTradeTool({action: "place_order", parameters: paperOrderPayload(), confirm: false});
+    };
+    $("paperSync").onclick = async () => {
+      await runPaperTradeTool({action: "sync", parameters: {trigger: "manual_panel_sync"}});
+    };
+    document.querySelectorAll("[data-paper-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        paperBrokerFilter = button.dataset.paperFilter || "pending";
+        document.querySelectorAll("[data-paper-filter]").forEach((item) => {
+          item.classList.toggle("active", item === button);
+        });
+        renderPaperBroker(paperBrokerState || {});
+      });
+    });
     $("refreshMics").onclick = refreshMicrophones;
     $("testMic").onclick = testMicrophoneLevel;
     $("saveVoice").onclick = saveVoiceProfile;
