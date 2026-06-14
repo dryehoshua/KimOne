@@ -243,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.71"
+APP_VERSION = "1.5.72"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -5240,10 +5240,19 @@ def twilio_message_preview(parameters, channel="sms"):
         )
     )
     crm_lookup_phone = twilio_lookup_phone_number(to)
+    doctor_control_recipient = crm_lookup_phone == DOCTOR_DUBAI_WHATSAPP_NUMBER
     recipient_contact = crm_find_contact_by_phone(crm_lookup_phone) if crm_lookup_phone else {}
     recipient_contact = recipient_contact or {}
-    pipedrive_guard = pipedrive_registered_person_for_phone(crm_lookup_phone)
-    doctor_control_recipient = crm_lookup_phone == DOCTOR_DUBAI_WHATSAPP_NUMBER
+    if doctor_control_recipient:
+        pipedrive_guard = {
+            "registered": True,
+            "reason": "doctor_control_recipient",
+            "message": "Destino de control del Dr. Yehoshua; no requiere validacion Pipedrive.",
+            "person": {},
+            "candidates": [],
+        }
+    else:
+        pipedrive_guard = pipedrive_registered_person_for_phone(crm_lookup_phone)
     whatsapp_unknown_inbound_reply = channel == "whatsapp" and allow_unknown_contact
     if not pipedrive_guard.get("registered") and not doctor_control_recipient and not whatsapp_unknown_inbound_reply:
         append_memory(
@@ -5295,7 +5304,7 @@ def twilio_message_preview(parameters, channel="sms"):
             "phone_e164": recipient_contact.get("phone_e164"),
             "contact_type": recipient_contact.get("contact_type"),
         } if recipient_contact else {},
-        "pipedrive_required": not whatsapp_unknown_inbound_reply,
+        "pipedrive_required": not doctor_control_recipient and not whatsapp_unknown_inbound_reply,
         "pipedrive_recipient": pipedrive_person,
         "pipedrive_match": {
             "registered": pipedrive_guard.get("registered"),
@@ -19190,10 +19199,22 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
     doctor_control = portfolio_target_is_doctor_control(target)
     dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", default=False))
     confirmed = doctor_control or boolish(first_value(parameters, "confirm", "confirmed", "confirmed_by_doctor", "allow_send", default=False))
-    report = portfolio_client_report(summary, parameters)
+    report = portfolio_client_report(summary, {**parameters, "save_standard": False})
     messages = list(report.get("whatsapp_messages") or report.get("message_lines") or [])
     if not messages:
         raise ValueError("No se generaron lineas de portafolio para enviar.")
+    unapproved_active = [
+        item.get("label") or item.get("symbol")
+        for item in (report.get("active_positions") or [])
+        if not item.get("approved_for_client_report")
+    ]
+    unvalidated_messages = [
+        message
+        for message in messages
+        if "precio actual no validado" in str(message).lower()
+        or "sin porcentaje validado" in str(message).lower()
+    ]
+    allow_unvalidated = boolish(first_value(parameters, "allow_unvalidated", "permit_unvalidated", default=False))
     preview = {
         "to": target,
         "doctor_control_recipient": doctor_control,
@@ -19202,6 +19223,8 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
         "balance_line": report.get("balance_line", ""),
         "providers_used": report.get("providers_used", []),
         "provider_warnings": report.get("provider_warnings", []),
+        "unapproved_active": unapproved_active,
+        "unvalidated_message_count": len(unvalidated_messages),
     }
     if dry_run:
         return {
@@ -19213,6 +19236,12 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
             "messages": messages,
             "report": report,
         }
+    if (unapproved_active or unvalidated_messages) and not allow_unvalidated:
+        raise ValueError(
+            "Reporte bloqueado: faltan precios validados para "
+            + (", ".join(str(item) for item in unapproved_active) or f"{len(unvalidated_messages)} mensaje(s)")
+            + ". Regenera precios antes de enviar WhatsApp al Dr. Yehoshua."
+        )
     if not confirmed:
         return confirmation_preview(
             "portfolio",
