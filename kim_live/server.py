@@ -243,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.75"
+APP_VERSION = "1.5.76"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -13597,6 +13597,212 @@ def portfolio_write_override_config(payload):
     write_json_file_both(PORTFOLIO_REPORT_OVERRIDES, RUNTIME_PORTFOLIO_REPORT_OVERRIDES, payload)
 
 
+def portfolio_manual_entry_key(entry):
+    entry = entry or {}
+    raw_id = str(entry.get("id") or "").strip()
+    if raw_id:
+        return raw_id
+    order = entry.get("order")
+    symbol = portfolio_normalize_symbol(entry.get("symbol"))
+    if order not in (None, "") and symbol:
+        return f"order-{order}-{symbol.lower()}"
+    return symbol.lower() or "manual-entry"
+
+
+def portfolio_manual_entry_matches(entry, parameters):
+    entry = entry or {}
+    parameters = parameters or {}
+    requested_id = str(first_value(parameters, "id", "entry_id", "manual_id", default="") or "").strip()
+    if requested_id and requested_id == portfolio_manual_entry_key(entry):
+        return True
+    requested_order = first_value(parameters, "order", "order_id", "canonical_order", default=None)
+    requested_symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "ticker", "asset", default=""))
+    requested_state = str(first_value(parameters, "state", "status", default="") or "").strip().lower()
+    order_matches = requested_order not in (None, "") and str(entry.get("order")) == str(requested_order)
+    symbol_matches = requested_symbol and portfolio_normalize_symbol(entry.get("symbol")) == requested_symbol
+    state_matches = not requested_state or str(entry.get("state") or "").strip().lower() == requested_state
+    if order_matches and (not requested_symbol or symbol_matches) and state_matches:
+        return True
+    if symbol_matches and state_matches and requested_id:
+        return True
+    return False
+
+
+def portfolio_cast_manual_value(field, value):
+    numeric_fields = {"order", "invested_usd", "entry_price", "quantity", "credit_usd", "current_price"}
+    if field == "order":
+        return int(float(value)) if value not in (None, "") else None
+    if field in numeric_fields:
+        return portfolio_float(value)
+    if field == "state":
+        state = str(value or "").strip().lower()
+        if state in {"executed", "filled", "market", "mercado", "en_mercado"}:
+            return "active"
+        if state in {"open", "draft", "pending", "pendiente"}:
+            return "pending"
+        if state in PORTFOLIO_CLOSED_STATES:
+            return state
+        return state or "active"
+    if field == "symbol":
+        return portfolio_normalize_symbol(value)
+    if field in {"credit"}:
+        return boolish(value)
+    return str(value or "").strip()
+
+
+def portfolio_normalize_manual_entry(entry):
+    entry = dict(entry or {})
+    if entry.get("symbol"):
+        entry["symbol"] = portfolio_normalize_symbol(entry.get("symbol"))
+    entry["state"] = portfolio_cast_manual_value("state", entry.get("state") or "active")
+    for field in ["order", "invested_usd", "entry_price", "quantity", "credit_usd", "current_price"]:
+        if field in entry and entry.get(field) not in (None, ""):
+            entry[field] = portfolio_cast_manual_value(field, entry.get(field))
+    invested = portfolio_float(entry.get("invested_usd"))
+    price = portfolio_float(entry.get("entry_price"))
+    quantity = portfolio_float(entry.get("quantity"))
+    if (quantity in (None, 0)) and invested not in (None, 0) and price not in (None, 0):
+        entry["quantity"] = invested / price
+    if not str(entry.get("id") or "").strip():
+        entry["id"] = portfolio_manual_entry_key(entry)
+    return entry
+
+
+def portfolio_enforce_manual_order_states(config):
+    config = dict(config or {})
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    changed = []
+    normalized = []
+    for raw in entries:
+        if not isinstance(raw, dict):
+            continue
+        entry = portfolio_normalize_manual_entry(raw)
+        order = entry.get("order")
+        desired = None
+        if order not in (None, ""):
+            desired = "active" if int(order) <= 12 else "pending"
+        if desired and entry.get("state") != desired:
+            changed.append({"id": portfolio_manual_entry_key(entry), "order": order, "from": entry.get("state"), "to": desired})
+            entry["state"] = desired
+        normalized.append(entry)
+    config["manual_entries"] = normalized
+    return config, changed
+
+
+def portfolio_manual_orders(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing", "manual_entries": []}
+    if boolish(first_value(parameters, "normalize_states", "enforce_states", default=False)):
+        config, changed = portfolio_enforce_manual_order_states(config)
+        if changed:
+            config["updated_at"] = now_iso()
+            config["standard_version"] = "KIM-0105"
+            portfolio_write_override_config(config)
+    else:
+        changed = []
+    entries = [portfolio_normalize_manual_entry(entry) for entry in (config.get("manual_entries") or []) if isinstance(entry, dict)]
+    result = {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "manual_orders",
+        "portfolio_id": config.get("portfolio_id"),
+        "standard_version": config.get("standard_version"),
+        "manual_entries": entries,
+        "active_count": sum(1 for item in entries if str(item.get("state")) == "active"),
+        "pending_count": sum(1 for item in entries if str(item.get("state")) == "pending"),
+        "state_changes": changed,
+    }
+    if boolish(first_value(parameters, "include_report", "with_report", default=False)):
+        result["report"] = portfolio_client_report(summary, parameters)
+    return result
+
+
+def portfolio_update_manual_order(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing"}
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    allowed = {
+        "id", "symbol", "state", "order", "label", "invested_usd", "entry_price",
+        "quantity", "credit_usd", "side", "notes", "source", "current_price",
+        "current_price_status", "current_price_source",
+    }
+    update_payload = parameters.get("updates") if isinstance(parameters.get("updates"), dict) else parameters
+    matched_index = None
+    for index, entry in enumerate(entries):
+        if portfolio_manual_entry_matches(entry, parameters):
+            matched_index = index
+            break
+    create_if_missing = boolish(first_value(parameters, "create_if_missing", "create", default=False))
+    if matched_index is None and not create_if_missing:
+        return {"ok": False, "error": "manual_entry_not_found", "parameters": parameters}
+    old_entry = dict(entries[matched_index]) if matched_index is not None else {}
+    entry = dict(old_entry)
+    for field, value in update_payload.items():
+        if field not in allowed:
+            continue
+        if value is None:
+            continue
+        entry[field] = portfolio_cast_manual_value(field, value)
+    entry = portfolio_normalize_manual_entry(entry)
+    entry["updated_at"] = now_iso()
+    if matched_index is None:
+        entries.append(entry)
+    else:
+        entries[matched_index] = entry
+    config["manual_entries"] = entries
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0105"
+    rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
+    rule = "KIM-0105: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita."
+    if rule not in rules:
+        rules.append(rule)
+        config["doctor_rules"] = rules
+    portfolio_write_override_config(config)
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "update_manual_order",
+        "created": matched_index is None,
+        "old_entry": old_entry,
+        "entry": entry,
+        "manual_orders": portfolio_manual_orders(summary, {"include_report": False}),
+    }
+
+
+def portfolio_delete_manual_order(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing"}
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    kept = []
+    removed = []
+    for entry in entries:
+        if isinstance(entry, dict) and portfolio_manual_entry_matches(entry, parameters):
+            removed.append(entry)
+            continue
+        kept.append(entry)
+    if not removed:
+        return {"ok": False, "error": "manual_entry_not_found", "parameters": parameters}
+    config["manual_entries"] = kept
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0105"
+    portfolio_write_override_config(config)
+    append_memory("portfolio_manual_order_deleted", {"removed": removed, "parameters": parameters})
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "delete_manual_order",
+        "removed_count": len(removed),
+        "removed": removed,
+        "manual_orders": portfolio_manual_orders(summary, {"include_report": False}),
+    }
+
+
 def portfolio_sync_manual_sale_to_overrides(parameters, calc):
     config = portfolio_report_override_config({"portfolio_id": (parameters or {}).get("portfolio_id") or "sr_eli_2026"})
     if not config:
@@ -13808,6 +14014,13 @@ def portfolio_cli(action, parameters=None):
         "agglomerate_order",
         "agglomerate_orders",
         "set_position",
+        "manual_update_order",
+        "update_manual_order",
+        "edit_manual_order",
+        "manual_delete_order",
+        "delete_manual_order",
+        "remove_manual_order",
+        "normalize_manual_orders",
         *PORTFOLIO_SALE_ACTIONS,
         *PORTFOLIO_EXECUTION_ACTIONS,
     }
@@ -13868,6 +14081,17 @@ def portfolio_cli(action, parameters=None):
         result = module.portfolio_summary_json()
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
         result = portfolio_client_report(module.portfolio_summary_json(), parameters)
+    elif action in {"manual_orders", "list_manual_orders", "editable_orders", "portfolio_manual_orders"}:
+        result = portfolio_manual_orders(module.portfolio_summary_json(), parameters)
+    elif action in {"normalize_manual_orders", "fix_manual_order_states"}:
+        result = portfolio_manual_orders(
+            module.portfolio_summary_json(),
+            {**parameters, "normalize_states": True},
+        )
+    elif action in {"manual_update_order", "update_manual_order", "edit_manual_order"}:
+        result = portfolio_update_manual_order(module.portfolio_summary_json(), parameters)
+    elif action in {"manual_delete_order", "delete_manual_order", "remove_manual_order"}:
+        result = portfolio_delete_manual_order(module.portfolio_summary_json(), parameters)
     elif action in {
         "weighted_average_breakdown",
         "weighted_average",
@@ -19717,16 +19941,58 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
         except Exception as exc:
             errors.append({"index": index, "error": brief(str(exc), 500), "message": brief(message, 220)})
             break
+    delivery_results = []
+    if send_results:
+        time.sleep(float(first_value(parameters, "delivery_poll_delay_seconds", "poll_delay_seconds", default=1.2) or 1.2))
+    for item in send_results:
+        sid = item.get("sid")
+        if not sid:
+            continue
+        try:
+            status = twilio_request(f"/Messages/{sid}.json")
+            delivery = {
+                "index": item.get("index"),
+                "sid": sid,
+                "to": status.get("to") or item.get("to"),
+                "status": status.get("status") or item.get("status"),
+                "error_code": status.get("error_code"),
+                "error_message": status.get("error_message"),
+                "date_sent": status.get("date_sent"),
+                "date_updated": status.get("date_updated"),
+            }
+            delivery_results.append(delivery)
+            if delivery.get("status") in {"failed", "undelivered"}:
+                errors.append(
+                    {
+                        "index": item.get("index"),
+                        "sid": sid,
+                        "status": delivery.get("status"),
+                        "error_code": delivery.get("error_code"),
+                        "error_message": delivery.get("error_message") or "Twilio accepted the request but WhatsApp did not deliver it.",
+                    }
+                )
+        except Exception as exc:
+            delivery_results.append({"index": item.get("index"), "sid": sid, "status": item.get("status"), "poll_error": brief(str(exc), 500)})
+    accepted_statuses = {"accepted", "queued", "sending", "sent", "delivered", "read"}
+    delivered_statuses = {"delivered", "read"}
+    rejected_statuses = {"failed", "undelivered"}
+    accepted_count = sum(1 for item in delivery_results if item.get("status") in accepted_statuses) or len(send_results)
+    delivered_count = sum(1 for item in delivery_results if item.get("status") in delivered_statuses)
+    rejected_count = sum(1 for item in delivery_results if item.get("status") in rejected_statuses)
     result = {
-        "ok": not errors,
+        "ok": not errors and rejected_count == 0,
         "provider": "portfolio",
         "action": "send_whatsapp_report",
         "to": target,
         "doctor_control_recipient": doctor_control,
         "context_id": context_id,
         "message_count": len(messages),
+        "accepted_count": accepted_count,
         "sent_count": len(send_results),
+        "delivered_count": delivered_count,
+        "rejected_count": rejected_count,
         "send_results": send_results,
+        "delivery_results": delivery_results,
         "errors": errors,
         "report": report,
         "sent_at": now_iso(),
