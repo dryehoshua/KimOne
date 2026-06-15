@@ -5093,6 +5093,7 @@ def crm_status():
         return {
             "ok": True,
             "provider": "crm",
+            "action": "status",
             "database": str(active_crm_db()),
             "root": str(active_crm_root()),
             "preferred_root": str(CRM_ROOT),
@@ -5101,7 +5102,248 @@ def crm_status():
             "companies": conn.execute("SELECT count(*) AS c FROM companies").fetchone()["c"],
             "interactions": conn.execute("SELECT count(*) AS c FROM interactions").fetchone()["c"],
             "scheduled_actions": conn.execute("SELECT count(*) AS c FROM scheduled_actions").fetchone()["c"],
+            "capabilities": [
+                "status",
+                "list_contacts",
+                "person_context",
+                "doctor_pending_report",
+                "upsert_contact",
+                "record_note",
+            ],
         }
+
+
+DOCTOR_PENDING_TOPIC_RULES = [
+    {
+        "id": "pending_rhythm",
+        "title": "Ritmo diario y micromanagement",
+        "patterns": ["8 30 de la manana", "8 30", "10 de la noche", "10 30", "saturarme", "micromanagement", "pendientes"],
+        "summary": "Entregar reporte diario de pendientes, prueba nocturna y bloques de trabajo saturados para el doctor.",
+    },
+    {
+        "id": "mail_triage",
+        "title": "Filtro diario de correo",
+        "patterns": ["correos", "correo", "spam", "oportunidades", "bandejas de entrada"],
+        "summary": "Revisar inbox, limpiar spam y resaltar oportunidades comerciales o alertas relevantes.",
+    },
+    {
+        "id": "linkedin_presence",
+        "title": "LinkedIn y reputacion",
+        "patterns": ["linkedin", "imagen", "contactos", "mandarle un mensaje", "presencia"],
+        "summary": "Usar LinkedIn para prospectar, enriquecer contactos y mejorar imagen profesional.",
+    },
+    {
+        "id": "landing_and_seo",
+        "title": "Landing personal y SEO",
+        "patterns": ["landing page", "pagina informativa", "seo", "mejor pagina"],
+        "summary": "Dar seguimiento a la pagina personal, SEO tecnico y la coordinacion con la agencia.",
+    },
+    {
+        "id": "product_bolillo",
+        "title": "Producto bolillo: tarjeta IA",
+        "patterns": ["producto bolillo", "tarjeta de presentacion", "tarjeta de ia", "qr", "microproblema", "business model", "competencia"],
+        "summary": "Validar la tarjeta de presentacion con IA como producto inicial, competencia y modelo de negocio.",
+    },
+    {
+        "id": "figma_and_frontend",
+        "title": "Figma e interfaz Kim",
+        "patterns": ["figma", "frontend", "manita de gato"],
+        "summary": "Conectar diseño/Figma con la mejora del frontend y la experiencia operativa de Kim.",
+    },
+]
+
+
+def read_jsonl_entries(path, limit=0):
+    entries = []
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                raw = line.strip()
+                if not raw:
+                    continue
+                try:
+                    entries.append(json.loads(raw))
+                except json.JSONDecodeError:
+                    continue
+    except (FileNotFoundError, PermissionError, OSError):
+        return []
+    if limit and limit > 0:
+        return entries[-limit:]
+    return entries
+
+
+def recent_memory_inbox_paths(days=3):
+    roots = [MEMORY_INBOX, RUNTIME_MEMORY_INBOX]
+    paths = []
+    seen = set()
+    for offset in range(max(1, int(days or 1))):
+        day_value = (dt.date.today() - dt.timedelta(days=offset)).isoformat()
+        file_name = f"kim_live_{day_value}.jsonl"
+        chosen = None
+        for root in roots:
+            candidate = root / file_name
+            if candidate.exists():
+                chosen = candidate
+                break
+        if chosen:
+            key = str(chosen.resolve())
+            if key not in seen:
+                paths.append(chosen)
+                seen.add(key)
+    return paths
+
+
+def load_recent_memory_events(days=3, kinds=None, limit=400):
+    allowed = {str(item).strip() for item in (kinds or []) if str(item).strip()}
+    rows = []
+    for path in recent_memory_inbox_paths(days=days):
+        for entry in read_jsonl_entries(path):
+            if allowed and entry.get("kind") not in allowed:
+                continue
+            rows.append(entry)
+    rows.sort(key=lambda item: str(item.get("at") or ""))
+    if limit and len(rows) > limit:
+        rows = rows[-limit:]
+    return rows
+
+
+def doctor_pending_topics(events):
+    recent_texts = []
+    for item in events:
+        text = ""
+        if item.get("kind") == "conversation_note":
+            text = str(item.get("text") or "")
+        elif item.get("kind") == "execution_request":
+            text = str(item.get("text") or "")
+        elif item.get("kind") == "api_bridge_action":
+            text = str(item.get("transcript_excerpt") or "")
+        text = text.strip()
+        if text:
+            recent_texts.append({"at": item.get("at") or "", "text": text, "normalized": normalize_security_text(text)})
+    combined = "\n".join(item["normalized"] for item in recent_texts[-6:])
+    topics = []
+    for rule in DOCTOR_PENDING_TOPIC_RULES:
+        if not any(pattern in combined for pattern in rule["patterns"]):
+            continue
+        evidence = ""
+        for item in reversed(recent_texts):
+            if any(pattern in item["normalized"] for pattern in rule["patterns"]):
+                evidence = brief(item["text"], 220)
+                break
+        topics.append(
+            {
+                "id": rule["id"],
+                "title": rule["title"],
+                "summary": rule["summary"],
+                "evidence": evidence,
+            }
+        )
+    return topics
+
+
+def doctor_pending_schedules(limit=6):
+    with crm_connect() as conn:
+        rows = [
+            dict(row)
+            for row in conn.execute(
+                "SELECT id, status, provider, action, due_at, timezone, payload_json FROM scheduled_actions WHERE status='pending' ORDER BY due_at ASC LIMIT ?",
+                (max(1, min(int(limit or 6), 20)),),
+            ).fetchall()
+        ]
+    schedules = []
+    for row in rows:
+        payload = {}
+        try:
+            payload = json.loads(row.get("payload_json") or "{}")
+        except json.JSONDecodeError:
+            payload = {}
+        target_parameters = payload.get("_target_parameters") if isinstance(payload.get("_target_parameters"), dict) else {}
+        follow_up_action = target_parameters.get("follow_up_action") if isinstance(target_parameters, dict) else {}
+        schedules.append(
+            {
+                "id": row.get("id"),
+                "provider": payload.get("_target_provider") or row.get("provider") or "",
+                "action": payload.get("_target_action") or row.get("action") or "",
+                "due_at": row.get("due_at") or "",
+                "timezone": row.get("timezone") or "",
+                "recurrence": payload.get("_recurrence") or "",
+                "label": payload.get("_schedule_label") or "",
+                "follow_up_action": follow_up_action.get("target_action", "") if isinstance(follow_up_action, dict) else "",
+            }
+        )
+    return schedules
+
+
+def doctor_pending_whatsapp_threads(limit=5):
+    payload = read_json_file_any([WHATSAPP_THREAD_INDEX, RUNTIME_WHATSAPP_THREAD_INDEX], {"threads": []})
+    rows = []
+    for item in payload.get("threads") or []:
+        if not isinstance(item, dict):
+            continue
+        open_items = int(item.get("open_items") or 0)
+        if open_items <= 0:
+            continue
+        rows.append(
+            {
+                "thread_id": item.get("thread_id") or "",
+                "display_name": item.get("display_name") or item.get("phone") or "",
+                "phone": item.get("phone") or "",
+                "open_items": open_items,
+                "latest_at": item.get("latest_at") or "",
+            }
+        )
+    rows.sort(key=lambda item: (item.get("latest_at") or "", item.get("open_items") or 0), reverse=True)
+    return rows[: max(1, min(int(limit or 5), 10))]
+
+
+def doctor_pending_report(parameters=None):
+    parameters = parameters or {}
+    lookback_days = max(1, min(int(first_value(parameters, "days", "lookback_days", default=3) or 3), 14))
+    event_limit = max(10, min(int(first_value(parameters, "event_limit", default=120) or 120), 500))
+    events = load_recent_memory_events(
+        days=lookback_days,
+        kinds={"conversation_note", "execution_request", "api_bridge_action", "kim_action_scheduled", "kim_recurring_action_rescheduled"},
+        limit=event_limit,
+    )
+    topics = doctor_pending_topics(events)
+    whatsapp_rows = doctor_pending_whatsapp_threads(limit=5)
+    schedules = doctor_pending_schedules(limit=8)
+    schedule_titles = [item for item in schedules if item.get("provider") == "crm" and item.get("action") == "doctor_pending_report"]
+    lines = [
+        f"Pendientes Kim ({now_iso()}): {len(topics)} frente(s), {len(whatsapp_rows)} hilo(s) WhatsApp accionables, {len(schedules)} accion(es) programadas pendientes.",
+    ]
+    if topics:
+        lines.append("Frentes prioritarios:")
+        for index, item in enumerate(topics[:6], start=1):
+            lines.append(f"{index}. {item['title']}: {item['summary']}")
+    else:
+        lines.append("No detecte frentes priorizados recientes en memoria conversacional.")
+    if whatsapp_rows:
+        lines.append("WhatsApp accionable:")
+        for item in whatsapp_rows[:3]:
+            lines.append(f"- {item['display_name']} | open_items={item['open_items']} | ultimo={item['latest_at']}")
+    if schedules:
+        lines.append("Proximas acciones programadas:")
+        for item in schedules[:4]:
+            recurrence = f" | repite={item['recurrence']}" if item.get("recurrence") else ""
+            lines.append(f"- {item['provider']}/{item['action']} @ {item['due_at']}{recurrence}")
+    if not schedule_titles:
+        lines.append("Alerta: no existe aun una rutina diaria activa de crm/doctor_pending_report.")
+    summary = "\n".join(lines)
+    return {
+        "ok": True,
+        "provider": "crm",
+        "action": "doctor_pending_report",
+        "generated_at": now_iso(),
+        "lookback_days": lookback_days,
+        "priority_count": len(topics),
+        "topics": topics,
+        "actionable_whatsapp_threads": whatsapp_rows,
+        "pending_schedules": schedules,
+        "has_daily_doctor_pending_schedule": bool(schedule_titles),
+        "summary": summary,
+        "message": summary,
+    }
 
 
 def crm_list_contacts(parameters=None):
@@ -8647,6 +8889,8 @@ def run_crm_bridge(action, parameters, confirm=False):
     parameters = parameters or {}
     if action in {"status", "estado"}:
         return crm_status()
+    if action in {"doctor_pending_report", "pending_report", "doctor_priorities", "prioridades_doctor", "doctor_digest"}:
+        return doctor_pending_report(parameters)
     if action in {"list_contacts", "contacts", "clientes", "contactos", "search_contacts"}:
         return crm_list_contacts(parameters)
     if action in {"person_context", "get_person_context", "supervise_person", "modo", "mode"}:
