@@ -243,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.73"
+APP_VERSION = "1.5.75"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -11788,17 +11788,24 @@ def api_bridge_templates():
             },
         },
         "portfolio": {
+            "refresh_prices": {
+                "optional": ["providers"],
+                "rule": (
+                    "Borra caches locales de precio y fuerza una nueva validacion con fuentes frescas. "
+                    "Usar antes de enviar portafolio cuando el doctor pida precios actuales o diga que Kim trae precios viejos."
+                ),
+            },
             "client_report": {
-                "optional": ["include_units", "providers"],
+                "optional": ["include_units", "providers", "force_refresh_prices"],
                 "rule": (
                     "Genera reporte deterministico Sr. Eli: monto invertido, entrada, precio actual validado, variacion y balance. "
-                    "No envia mensajes. Por defecto usa Binance y CoinGecko; CoinMarketCap se suma si su API key existe."
+                    "No envia mensajes. Por defecto usa Binance, MEXC y Bybit; CoinGecko/CoinMarketCap pueden sumarse si estan disponibles."
                 ),
             },
             "fundamental_report": {
                 "optional": ["query", "providers", "max_queries", "dry_run"],
                 "defaults": {
-                    "providers": ["binance", "coinmarketcap", "coingecko"],
+                    "providers": ["binance", "mexc", "bybit"],
                     "max_queries": 3,
                     "dry_run": False,
                 },
@@ -11810,10 +11817,11 @@ def api_bridge_templates():
                 ),
             },
             "send_whatsapp_report": {
-                "optional": ["to", "providers", "dry_run"],
+                "optional": ["to", "providers", "dry_run", "force_refresh_prices"],
                 "defaults": {
                     "to": DOCTOR_DUBAI_WHATSAPP_TO,
-                    "providers": ["binance", "coinmarketcap", "coingecko"],
+                    "providers": ["binance", "mexc", "bybit"],
+                    "force_refresh_prices": True,
                 },
                 "rule": (
                     "Usar cuando el doctor diga 'enviame el portafolio actualizado' o pida mandar el portafolio Sr. Eli. "
@@ -12859,6 +12867,9 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         read_only_actions = {
             "status",
             "summary",
+            "refresh_prices",
+            "clear_price_cache",
+            "clear_market_cache",
             "client_report",
             "eli_client_report",
             "sr_eli_report",
@@ -13111,7 +13122,7 @@ def paper_broker_status_with_webhook():
 
 
 def paper_broker_price_validations(symbols, providers=None):
-    providers = providers or ["binance", "coinmarketcap", "coingecko"]
+    providers = providers or ["binance", "mexc", "bybit"]
     providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
     warnings = []
     if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
@@ -13152,7 +13163,7 @@ def paper_broker_bootstrap_portfolio_pending(module, status_payload):
     if status_payload.get("pending"):
         return {"ok": True, "created_count": 0, "skipped": "paper_pending_exists"}
     try:
-        report = portfolio_cli("client_report", {"save_standard": False, "providers": ["binance", "coingecko"]})
+        report = portfolio_cli("client_report", {"save_standard": False, "providers": ["binance", "mexc", "bybit"]})
     except Exception as exc:
         return {"ok": False, "created_count": 0, "error": brief(str(exc), 700)}
     created = []
@@ -13843,6 +13854,16 @@ def portfolio_cli(action, parameters=None):
             if "no such table" not in str(exc).lower():
                 raise
             result = module.init_db()
+    elif action in {"refresh_prices", "clear_price_cache", "clear_market_cache", "actualizar_precios", "borrar_cache_precios"}:
+        clear_result = clear_market_price_caches(reason=action)
+        providers = parameters.get("providers") or ["binance", "mexc", "bybit"]
+        symbols = [
+            str(entry.get("symbol") or "").upper()
+            for entry in portfolio_report_override_config(module.portfolio_summary_json()).get("manual_entries", [])
+            if str(entry.get("symbol") or "").strip()
+        ]
+        warmup = warm_market_price_sources(symbols, providers=providers)
+        result = {**clear_result, "providers": providers, "symbols": symbols, "source_warmup": warmup}
     elif action == "summary":
         result = module.portfolio_summary_json()
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
@@ -17018,7 +17039,7 @@ def realtime_session_config():
                             "providers": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "Fuentes de precio a comparar: binance, coinmarketcap, coingecko.",
+                                "description": "Fuentes de precio a comparar: binance, mexc, bybit, kucoin, coinmarketcap, coingecko.",
                             },
                         },
                     },
@@ -17366,6 +17387,16 @@ def market_batch_cache_is_fresh(cache, key):
     return loaded_at > 0 and (time.time() - loaded_at) <= MARKET_PRICE_BATCH_CACHE_TTL_SECONDS
 
 
+def clear_market_price_caches(reason="manual_refresh"):
+    COINGECKO_BATCH_PRICE_CACHE.clear()
+    COINGECKO_BATCH_PRICE_CACHE.update({"key": "", "loaded_at": 0.0, "items": {}})
+    COINMARKETCAP_BATCH_PRICE_CACHE.clear()
+    COINMARKETCAP_BATCH_PRICE_CACHE.update({"key": "", "loaded_at": 0.0, "items": {}})
+    event = {"ok": True, "provider": "portfolio", "action": "refresh_prices", "reason": reason, "cleared_at": now_iso()}
+    append_memory("market_price_cache_cleared", event)
+    return event
+
+
 def fetch_coingecko_prices_batch(bases):
     clean_bases = [str(base or "").strip().upper() for base in bases or [] if str(base or "").strip()]
     id_pairs = [(base, COINGECKO_IDS_BY_SYMBOL.get(base)) for base in clean_bases]
@@ -17484,6 +17515,52 @@ def fetch_binance_spot_price(ticker):
     return provider_price("binance_spot", price, extra={"symbol": ticker})
 
 
+def fetch_mexc_spot_price(ticker):
+    payload = api_json_request(
+        "https://api.mexc.com",
+        "/api/v3/ticker/price",
+        {},
+        params={"symbol": ticker},
+        timeout=20,
+    )
+    price = payload.get("price")
+    if price is None:
+        raise RuntimeError("MEXC no devolvio precio spot.")
+    return provider_price("mexc_spot", price, extra={"symbol": ticker})
+
+
+def fetch_bybit_spot_price(ticker):
+    payload = api_json_request(
+        "https://api.bybit.com",
+        "/v5/market/tickers",
+        {},
+        params={"category": "spot", "symbol": ticker},
+        timeout=20,
+    )
+    rows = (payload.get("result") or {}).get("list") or []
+    row = rows[0] if rows else {}
+    price = row.get("lastPrice")
+    if price is None:
+        raise RuntimeError("Bybit no devolvio precio spot.")
+    return provider_price("bybit_spot", price, extra={"symbol": ticker})
+
+
+def fetch_kucoin_spot_price(ticker):
+    _, normalized_ticker, base, quote = normalize_crypto_ticker(ticker)
+    pair = f"{base}-{quote if quote != 'USD' else 'USDT'}"
+    payload = api_json_request(
+        "https://api.kucoin.com",
+        "/api/v1/market/orderbook/level1",
+        {},
+        params={"symbol": pair},
+        timeout=20,
+    )
+    price = (payload.get("data") or {}).get("price")
+    if price is None:
+        raise RuntimeError(f"KuCoin no devolvio precio spot para {pair}.")
+    return provider_price("kucoin_spot", price, extra={"symbol": normalized_ticker, "pair": pair})
+
+
 def fetch_coingecko_price(base):
     coin_id = COINGECKO_IDS_BY_SYMBOL.get(base)
     if not coin_id:
@@ -17509,9 +17586,12 @@ def fetch_coinmarketcap_price(base):
 
 def validate_market_prices(symbol, providers=None):
     exchange, ticker, base, quote = normalize_crypto_ticker(symbol)
-    requested = providers or ["binance", "coinmarketcap", "coingecko"]
+    requested = providers or ["binance", "mexc", "bybit"]
     provider_calls = {
         "binance": lambda: fetch_binance_spot_price(ticker),
+        "mexc": lambda: fetch_mexc_spot_price(ticker),
+        "bybit": lambda: fetch_bybit_spot_price(ticker),
+        "kucoin": lambda: fetch_kucoin_spot_price(ticker),
         "coinmarketcap": lambda: fetch_coinmarketcap_price(base),
         "coingecko": lambda: fetch_coingecko_price(base),
     }
@@ -17853,6 +17933,7 @@ def portfolio_fundamental_report_standard():
             "Redactar en 2 a 4 parrafos densos y bien conectados; no usar bullets, listas numeradas, tablas ni encabezados salvo instruccion explicita del doctor.",
             "Usar causalidad economica: dato publicado -> lectura de mercado -> efecto probable en riesgo, liquidez, dolar, tasas, equities o cripto.",
             "Incluir cifras puntuales entre parentesis cuando existan en fuentes frescas: dato observado, esperado y previo.",
+            "Usar solo noticias de las ultimas 24 horas; seguimiento de noticia anterior solo si sigue siendo hilo vivo que afecta al mercado hoy.",
             "Cerrar con cripto solo si hay noticia realmente material; si no la hay, decirlo en una frase breve al final.",
         ],
         "required_sections": [
@@ -17870,6 +17951,9 @@ def portfolio_fundamental_report_standard():
         "source_policy": [
             "No usar precios recordados ni reportes viejos como precios actuales.",
             "No presentar catalizadores como reales si no aparecen en fuentes recientes.",
+            "Usar solo noticias de las ultimas 24 horas para el informe del dia.",
+            "Permitir seguimiento de noticias del dia anterior o del hilo de la semana/mes solo si hoy siguen moviendo precio, flujos, riesgo o expectativas.",
+            "No escribir panoramas generalistas del mes ni calendarios amplios salvo que haya evento inminente o actualizacion real del dia.",
             "Orden editorial: comenzar por el catalizador internacional mas relevante para mercados; despues Fed/tasas/liquidez; despues oportunidades populares; despues cripto; al final noticias especificas del portafolio.",
             "Identificar tendencia y efecto probable sobre mercado: risk-on, risk-off, liquidez, dolar, tasas, commodities, flujos institucionales o rotacion sectorial.",
             "No repetir todos los dias un tema de Fed, tasas, fecha macro o geopolitica si no hay avance real o proximidad de fecha; solo mencionarlo cuando afecte la tendencia o se acerque una decision relevante.",
@@ -18876,11 +18960,13 @@ def portfolio_client_report(summary, parameters=None):
     parameters = parameters or {}
     include_units = bool(parameters.get("include_units"))
     provider_warnings = []
-    providers = parameters.get("providers") or ["binance", "coinmarketcap", "coingecko"]
+    providers = parameters.get("providers") or ["binance", "mexc", "bybit"]
     providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
     if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
         providers = [provider for provider in providers if provider != "coinmarketcap"]
         provider_warnings.append("CoinMarketCap no se uso porque falta API key en Keychain.")
+    if boolish(first_value(parameters, "force_refresh_prices", "refresh_prices", "clear_price_cache", "force_refresh", default=False)):
+        clear_market_price_caches(reason="portfolio_client_report")
     canonical_order = [
         "ADAUSDT",
         "DOGEUSDT",
@@ -19385,19 +19471,19 @@ def portfolio_fundamental_report_queries(report, parameters=None):
     custom_query = str(first_value(parameters, "query", "question", "pregunta", "tema", default="")).strip()
     queries = [
         (
-            f"{date_label} top international market catalysts Middle East geopolitics oil dollar risk appetite "
-            "global liquidity markets latest trend"
+            f"{date_label} last 24 hours top international market catalysts Middle East geopolitics oil dollar risk appetite "
+            "global liquidity markets latest trend follow-up from yesterday only if still moving markets"
         ),
         (
-            f"{date_label} Federal Reserve interest rates inflation jobs FOMC officials comments treasury yields "
-            "market expectations latest"
+            f"{date_label} last 24 hours Federal Reserve interest rates inflation jobs FOMC officials comments treasury yields "
+            "market expectations latest only material updates"
         ),
         (
-            f"{date_label} most popular crypto market narratives opportunities BTC ETH SOL XRP DOGE ADA "
-            "memecoins DeFi AI ETF regulation stocks popular market opportunities"
+            f"{date_label} last 24 hours most popular crypto market narratives opportunities BTC ETH SOL XRP DOGE ADA "
+            "memecoins DeFi AI ETF regulation stocks popular market opportunities only fresh news"
         ),
         (
-            f"{date_label} relevant news catalysts risks for portfolio tokens {portfolio_tokens} "
+            f"{date_label} last 24 hours relevant news catalysts risks for portfolio tokens {portfolio_tokens} "
             "Aptos Polkadot Hedera Near Pepe Official Trump Terra Luna Classic only fresh material news"
         ),
     ]
@@ -19466,6 +19552,8 @@ def portfolio_fundamental_report(summary, parameters=None):
             "Salida cliente obligatoria: redacta como texto listo para WhatsApp al Sr. Eli, con estilo de economista profesional e intelectual. "
             "Inicia exactamente con un saludo tipo 'Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:'. "
             "No uses encabezados, bullets, listas numeradas, tablas ni desglose moneda por moneda salvo que el doctor lo pida explicitamente. "
+            "Regla temporal critica: usa solo noticias de las ultimas 24 horas, o seguimiento de una noticia del dia anterior/hilo semanal/mensual "
+            "solo si sigue moviendo el mercado hoy. No hagas panoramas generalistas del mes ni repitas contexto viejo como noticia de hoy. "
             "Escribe 2 a 4 parrafos corridos, densos y bien conectados. Usa estructura macro como guion interno: primero el catalizador internacional "
             "mas relevante y su tendencia; despues Fed/tasas/liquidez solo si hay evento real o fecha cercana; despues oportunidades populares en monedas, acciones o sectores; "
             "despues cripto y origen de movimientos; finalmente una frase de portafolio solo si hay noticia fresca y material para sus activos. "
@@ -19547,6 +19635,7 @@ def portfolio_target_is_doctor_control(target):
 
 def portfolio_send_whatsapp_report(summary, parameters=None):
     parameters = dict(parameters or {})
+    parameters.setdefault("force_refresh_prices", True)
     target = portfolio_default_whatsapp_target(parameters)
     doctor_control = portfolio_target_is_doctor_control(target)
     dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", default=False))
