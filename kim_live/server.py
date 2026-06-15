@@ -243,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.72"
+APP_VERSION = "1.5.73"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -8197,6 +8197,17 @@ def schedule_api_bridge_action(parameters=None, confirm=False):
     timezone_name = scheduler_timezone_name(parameters)
     target_provider, target_action, target_parameters = scheduled_target_from_parameters(parameters)
     recurrence = normalize_recurrence(first_value(parameters, "recurrence", "repeat", "repetir", "rrule", default=""))
+    due_dt = parse_scheduled_datetime(due_at, timezone_name)
+    now_dt = dt.datetime.now(due_dt.tzinfo)
+    if due_dt <= now_dt:
+        if recurrence:
+            while due_dt <= now_dt:
+                due_at = next_recurrence_due_at(due_at, recurrence, timezone_name)
+                due_dt = parse_scheduled_datetime(due_at, timezone_name)
+        else:
+            raise ValueError(
+                "La hora programada quedo en el pasado. Vuelve a indicar una hora futura, por ejemplo 'hoy 8:30 pm', 'mañana 9 am' o 'en 10 minutos'."
+            )
     preview = scheduled_target_preview(target_provider, target_action, target_parameters)
     label = str(first_value(parameters, "schedule_label", "label", "title", "titulo", default="") or "").strip()
     summary = label or f"Programar {target_provider}/{target_action} para {due_at}."
@@ -8288,7 +8299,12 @@ def schedule_api_bridge_action(parameters=None, confirm=False):
 
 def schedule_twilio_action(action, parameters=None, confirm=False):
     parameters = dict(parameters or {})
-    target_action = "call_phone" if action in {"schedule_call", "programar_llamada", "agendar_llamada"} else "send_sms"
+    if action in {"schedule_call", "programar_llamada", "agendar_llamada"}:
+        target_action = "call_phone"
+    elif action in {"schedule_whatsapp", "programar_whatsapp", "agendar_whatsapp"}:
+        target_action = "send_whatsapp"
+    else:
+        target_action = "send_sms"
     return schedule_api_bridge_action(
         {
             **parameters,
@@ -8342,6 +8358,66 @@ def execute_confirmed_bridge_action(provider, action, parameters):
     raise ValueError(f"Proveedor programado no soportado: {provider}/{action}")
 
 
+def scheduled_result_text(result):
+    result = dict(result or {})
+    provider = result.get("provider") or ""
+    action = result.get("action") or ""
+    if provider in {"hostinger_mail", "gmail"} and action in {"list_messages", "search_messages", "list"}:
+        messages = result.get("messages") or []
+        lines = [
+            f"Reporte Kim: encontre {result.get('total_matches', result.get('count', len(messages)))} correos relacionados.",
+        ]
+        for index, item in enumerate(messages[:8], start=1):
+            sender = item.get("from") or "Remitente no disponible"
+            subject = item.get("subject") or "Sin asunto"
+            date_value = item.get("date") or ""
+            lines.append(f"{index}. {subject} | {sender} | {date_value}".strip())
+        if len(messages) > 8:
+            lines.append(f"... y {len(messages) - 8} mas en la consulta.")
+        return "\n".join(lines)
+    if result.get("summary"):
+        return str(result.get("summary"))
+    if result.get("message"):
+        return str(result.get("message"))
+    return brief(json.dumps(sanitize_for_log(result), ensure_ascii=False), 1400)
+
+
+def render_scheduled_follow_up(value, result_text, result):
+    if isinstance(value, dict):
+        return {key: render_scheduled_follow_up(item, result_text, result) for key, item in value.items()}
+    if isinstance(value, list):
+        return [render_scheduled_follow_up(item, result_text, result) for item in value]
+    if isinstance(value, str):
+        rendered = value.replace("{{action_result}}", result_text)
+        rendered = rendered.replace("{{summary}}", result_text)
+        rendered = rendered.replace("{{result_json}}", brief(json.dumps(sanitize_for_log(result), ensure_ascii=False), 1800))
+        if normalize_security_text(rendered) in {"dr yehoshua", "doctor yehoshua", "dr yehoshua dubai", "doctor"}:
+            return DOCTOR_DUBAI_WHATSAPP_TO
+        return rendered
+    return value
+
+
+def execute_scheduled_follow_up(target_parameters, result, parent_schedule_id=""):
+    follow_up = target_parameters.get("follow_up_action")
+    if not isinstance(follow_up, dict):
+        return {}
+    provider = str(first_value(follow_up, "target_provider", "provider", "app", "tool", default="") or "").strip().lower()
+    action = str(first_value(follow_up, "target_action", "action", "api_action", "accion", default="") or "").strip().lower()
+    raw_parameters = follow_up.get("target_parameters")
+    if not isinstance(raw_parameters, dict):
+        raw_parameters = follow_up.get("parameters")
+    parameters = dict(raw_parameters or {})
+    if not provider or not action:
+        raise ValueError("follow_up_action requiere target_provider/provider y target_action/action.")
+    result_text = scheduled_result_text(result)
+    parameters = render_scheduled_follow_up(parameters, result_text, result)
+    parameters.setdefault("scheduled_parent_id", parent_schedule_id)
+    follow_result = execute_confirmed_bridge_action(provider, action, parameters)
+    follow_result["scheduled_parent_id"] = parent_schedule_id
+    record_api_bridge_action(provider, action, parameters, follow_result, session_id="kim-scheduler", transcript="")
+    return follow_result
+
+
 def clone_recurring_scheduled_action(row, result=None):
     payload = json.loads(row.get("payload_json") or "{}")
     recurrence = normalize_recurrence(payload.get("_recurrence") or "")
@@ -8390,6 +8466,9 @@ def execute_scheduled_action(row):
         target_parameters["from_number"] = target_parameters.get("from_number") or row.get("from_value") or twilio_default_from_number()
     result = execute_confirmed_bridge_action(target_provider, target_action, target_parameters)
     result["scheduled_action_id"] = row.get("id")
+    follow_up_result = execute_scheduled_follow_up(target_parameters, result, parent_schedule_id=row.get("id"))
+    if follow_up_result:
+        result["follow_up_action_result"] = follow_up_result
     record_api_bridge_action(target_provider, target_action, target_parameters, result, session_id="kim-scheduler", transcript="")
     update_scheduled_action(row["id"], "done" if result.get("ok") else "failed", result)
     if result.get("ok"):
@@ -8540,7 +8619,17 @@ def run_twilio_bridge(action, parameters, confirm=False):
         return twilio_send_message(parameters, confirm=confirm, channel="whatsapp")
     if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
         return twilio_start_call(parameters, confirm=confirm)
-    if action in {"schedule_call", "programar_llamada", "agendar_llamada", "schedule_sms", "programar_sms", "agendar_sms"}:
+    if action in {
+        "schedule_call",
+        "programar_llamada",
+        "agendar_llamada",
+        "schedule_sms",
+        "programar_sms",
+        "agendar_sms",
+        "schedule_whatsapp",
+        "programar_whatsapp",
+        "agendar_whatsapp",
+    }:
         return schedule_twilio_action(action, parameters, confirm=confirm)
     if action in {"call_report", "latest_call", "list_calls", "get_call", "call_summary", "call_history", "reporte_llamada", "ultima_llamada"}:
         if action in {"latest_call", "ultima_llamada"}:
@@ -11174,6 +11263,14 @@ def agent_action_defaults(action, parameters):
         return "twilio", "schedule_call", data
     if action in {"schedule_sms", "programar_sms", "agendar_sms"}:
         return "twilio", "schedule_sms", data
+    if action in {"schedule_whatsapp", "programar_whatsapp", "agendar_whatsapp"}:
+        if not first_value(data, "to", "recipient", "phone", "telefono", "destinatario"):
+            data["to"] = DOCTOR_DUBAI_WHATSAPP_TO
+            data.setdefault("contact_name", "Dr. Yehoshua Dubai")
+            data.setdefault("relationship", "doctor_control")
+            data.setdefault("company", "AI People")
+            data.setdefault("context_id", "DOCTOR-WHATSAPP-" + today())
+        return "twilio", "schedule_whatsapp", data
     if action in {
         "create_zoom_invite",
         "send_zoom_invite",
@@ -11247,6 +11344,7 @@ def api_bridge_templates():
                 "schedule_action",
                 "schedule_call",
                 "schedule_sms",
+                "schedule_whatsapp",
                 "create_zoom_meeting",
                 "create_zoom_invite",
                 "zoom_transcript",
@@ -11317,6 +11415,12 @@ def api_bridge_templates():
                     "provider": "all",
                     "action": "schedule_call",
                     "parameters": {"to": "+525500000000", "contact_name": "Cliente", "delay_minutes": 30},
+                    "confirm": False,
+                },
+                {
+                    "provider": "all",
+                    "action": "schedule_whatsapp",
+                    "parameters": {"to": "whatsapp:+971585943726", "body": "Recordatorio programado de Kim Live.", "delay_minutes": 10},
                     "confirm": False,
                 },
             ],
@@ -11699,6 +11803,10 @@ def api_bridge_templates():
             "schedule_sms": {
                 "required": ["to", "body", "due_at or delay_minutes"],
                 "rule": "Preparar con confirm=false. Al confirmar, queda programado en la base local CRM.",
+            },
+            "schedule_whatsapp": {
+                "required": ["to", "body", "due_at or delay_minutes"],
+                "rule": "Preparar con confirm=false. Si el destino es el doctor, usa whatsapp:+971585943726 por defecto. Al confirmar, queda programado en la base local CRM.",
             },
         },
         "hostinger_mail": {
