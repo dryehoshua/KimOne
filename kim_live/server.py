@@ -177,8 +177,11 @@ PORTFOLIO_TOOL = APP_DIR / "portfolio_db.py"
 PAPER_BROKER_TOOL = APP_DIR / "kim_paper_broker.py"
 PORTFOLIO_REPORT_OVERRIDES = APP_DIR / "context" / "portfolio_report_overrides.json"
 RUNTIME_PORTFOLIO_REPORT_OVERRIDES = RUNTIME_CONTEXT / "portfolio_report_overrides.json"
-PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
-RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR = RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026"
+IGNIS_FINANCIALS_ROOT = MEMORY_ROOT / "IGNIS_FINANCIALS"
+RUNTIME_IGNIS_FINANCIALS_ROOT = RUNTIME_MEMORY_ROOT / "IGNIS_FINANCIALS"
+LEGACY_PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
+PORTFOLIO_SR_ELI_MEMORY_DIR = IGNIS_FINANCIALS_ROOT / "portfolios" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
+RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR = RUNTIME_IGNIS_FINANCIALS_ROOT / "portfolios" / "sr_eli_2026"
 PORTFOLIO_SR_ELI_STANDARD_JSON = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
 RUNTIME_PORTFOLIO_SR_ELI_STANDARD_JSON = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
 PORTFOLIO_SR_ELI_STANDARD_MD = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
@@ -243,7 +246,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.77"
+APP_VERSION = "1.5.78"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -394,6 +397,7 @@ HOSTINGER_MAILBOX_DISPLAY_NAMES = {
 }
 KIM_EMAIL_SIGNATURE = "Kim Yan\nAugmented Intelligence Assistant, created by Dr. Yehoshua"
 SCHEDULER_THREAD_STARTED = False
+SCHEDULER_THREAD_REF = None
 SCHEDULER_LOCK = threading.Lock()
 SCHEDULER_STALE_RUNNING_SECONDS = 15 * 60
 SECURITY_AUTHORIZATIONS = MEMORY_CONTEXT_DIR / "kim_security_authorizations.json"
@@ -8591,7 +8595,7 @@ def execute_confirmed_bridge_action(provider, action, parameters):
         return run_hostinger_mail_bridge(action, parameters, confirm=True)
     if provider in {"pipedrive", "pipe_drive", "pd"}:
         return run_pipedrive_bridge(action, parameters, confirm=True)
-    if provider in {"portfolio", "ignis_portfolio", "portafolio"}:
+    if provider in {"portfolio", "ignis_portfolio", "ignis_financials", "ignis financials", "portafolio"}:
         return portfolio_cli(action, {**parameters, "confirm": True})
     if provider in {"crm", "bifrost_crm", "clients", "clientes", "contacts", "contactos"}:
         return run_crm_bridge(action, parameters, confirm=True)
@@ -8830,7 +8834,7 @@ def scheduler_loop():
 
 
 def start_scheduler_once():
-    global SCHEDULER_THREAD_STARTED
+    global SCHEDULER_THREAD_STARTED, SCHEDULER_THREAD_REF
     with SCHEDULER_LOCK:
         if SCHEDULER_THREAD_STARTED:
             return
@@ -8838,7 +8842,46 @@ def start_scheduler_once():
         crm_connect().close()
         thread = threading.Thread(target=scheduler_loop, daemon=True, name="kim-scheduler")
         thread.start()
+        SCHEDULER_THREAD_REF = thread
         SCHEDULER_THREAD_STARTED = True
+
+
+def codex_automation_runtime_status():
+    path = pathlib.Path.home() / ".codex" / "automations" / "revisar-tareas-de-telegram-kim" / "automation.toml"
+    if not path.exists():
+        return {"id": "revisar-tareas-de-telegram-kim", "exists": False, "status": "missing"}
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError as exc:
+        return {"id": "revisar-tareas-de-telegram-kim", "exists": True, "status": "unknown", "error": brief(str(exc), 300)}
+    match = re.search(r'(?m)^status\s*=\s*"([^"]+)"', text)
+    return {
+        "id": "revisar-tareas-de-telegram-kim",
+        "exists": True,
+        "status": match.group(1) if match else "unknown",
+        "path": str(path),
+    }
+
+
+def local_clock_status():
+    now = scheduler_now({"timezone": DEFAULT_SCHEDULER_TIMEZONE})
+    pending = list_scheduled_actions(status="pending", limit=20)
+    due = due_scheduled_actions(limit=10)
+    return {
+        "ok": True,
+        "provider": "kim_local_clock",
+        "app_version": APP_VERSION,
+        "timezone": DEFAULT_SCHEDULER_TIMEZONE,
+        "now": now.isoformat(timespec="seconds"),
+        "scheduler_thread_started": SCHEDULER_THREAD_STARTED,
+        "scheduler_thread_alive": bool(SCHEDULER_THREAD_REF and SCHEDULER_THREAD_REF.is_alive()),
+        "poll_interval_seconds": 20,
+        "pending_count": len(pending),
+        "due_count": len(due),
+        "next_actions": pending[:8],
+        "codex_automation": codex_automation_runtime_status(),
+        "note": "Kim ejecuta scheduled_actions con el reloj local del servidor; no requiere automations de Codex.",
+    }
 
 
 def run_twilio_bridge(action, parameters, confirm=False):
@@ -12855,7 +12898,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             result["action_log"] = record
             return result
         result = run_crm_bridge(action, parameters, confirm=confirm)
-    elif provider in {"portfolio", "portafolio", "ignis_portfolio", "sr_eli"}:
+    elif provider in {"portfolio", "portafolio", "ignis_portfolio", "ignis_financials", "ignis financials", "sr_eli"}:
         send_action = action in {
             "send_whatsapp_report",
             "send_updated_portfolio",
@@ -19855,7 +19898,11 @@ def portfolio_fundamental_history(parameters=None):
         limit = 12
     limit = max(1, min(limit, 50))
     rows = []
-    for path in [PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG, RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG]:
+    for path in [
+        PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG,
+        LEGACY_PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl",
+        RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG,
+    ]:
         try:
             if not path.exists():
                 continue
@@ -20306,6 +20353,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/paper-trading":
             write_json(self, {"ok": True, "result": paper_broker_cli("status", {})})
             return
+        if parsed.path == "/api/local-clock":
+            write_json(self, local_clock_status())
+            return
         if parsed.path == "/api/schedules":
             params = urllib.parse.parse_qs(parsed.query)
             write_json(
@@ -20711,11 +20761,15 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{stamp} {self.address_string()} {fmt % args}", flush=True)
 
 
+class KimThreadingHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+
 def main():
     MEMORY_INBOX.mkdir(parents=True, exist_ok=True)
     start_scheduler_once()
     start_paper_broker_watcher_once()
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    server = KimThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Kim Live running at http://{HOST}:{PORT}", flush=True)
     server.serve_forever()
 

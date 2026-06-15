@@ -693,19 +693,28 @@
     }
 
     .workspace[data-view="chat"] .market-desk,
-    .workspace[data-view="chat"] .paper-desk {
+    .workspace[data-view="chat"] .paper-desk,
+    .workspace[data-view="chat"] .fundamental-desk {
       display: none;
     }
 
     .workspace[data-view="markets"] .chat-log,
     .workspace[data-view="markets"] .composer,
     .workspace[data-view="markets"] .assistant-tools,
-    .workspace[data-view="markets"] .compiler {
+    .workspace[data-view="markets"] .compiler,
+    .workspace[data-view="markets"] .fundamental-desk {
       display: none;
     }
 
     .workspace[data-view="markets"] .paper-desk,
+    .workspace[data-view="fundamentals"] .market-desk,
+    .workspace[data-view="fundamentals"] .paper-desk,
+    .workspace[data-view="fundamentals"] .chat-log,
+    .workspace[data-view="fundamentals"] .composer,
+    .workspace[data-view="fundamentals"] .assistant-tools,
+    .workspace[data-view="fundamentals"] .compiler,
     .workspace[data-view="paper"] .market-desk,
+    .workspace[data-view="paper"] .fundamental-desk,
     .workspace[data-view="paper"] .chat-log,
     .workspace[data-view="paper"] .composer,
     .workspace[data-view="paper"] .assistant-tools,
@@ -1043,6 +1052,55 @@
       grid-template-rows: auto minmax(0, 1fr) auto auto;
     }
 
+    .fundamental-desk {
+      background: #ffffff;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      min-height: 0;
+      grid-template-rows: auto auto minmax(260px, 1fr);
+      overflow: auto;
+    }
+
+    .fundamental-news-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .fundamental-primary,
+    .fundamental-sidebar {
+      min-height: 0;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .fundamental-brief-card {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+      display: grid;
+      gap: 8px;
+    }
+
+    .fundamental-brief-card strong {
+      color: var(--teal-dark);
+      font-size: 13px;
+    }
+
+    .local-clock-panel {
+      border: 1px solid #d7dde3;
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      color: #344054;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     .paper-desk {
       background: #ffffff;
       padding: 12px 14px;
@@ -1371,6 +1429,11 @@
       display: grid;
       gap: 10px;
       min-width: 0;
+    }
+
+    .fundamental-desk .fundamental-panel {
+      border-top: 0;
+      padding-top: 0;
     }
 
     .fundamental-head {
@@ -1966,6 +2029,15 @@
         min-height: calc(100dvh - 150px);
       }
 
+      .fundamental-desk {
+        padding: 10px;
+        min-height: calc(100dvh - 150px);
+      }
+
+      .fundamental-news-layout {
+        grid-template-columns: 1fr;
+      }
+
       .paper-desk {
         padding: 10px;
         min-height: calc(100dvh - 150px);
@@ -2389,6 +2461,7 @@
           <button class="view-tab active" id="chatTab" type="button">Chat</button>
           <button class="view-tab" id="marketsTab" type="button">Mercados</button>
           <button class="view-tab" id="paperTab" type="button">Paper Broker</button>
+          <button class="view-tab" id="fundamentalsTab" type="button">Fundamentales</button>
         </div>
         <span class="pill" id="sessionState">Sesion lista</span>
       </div>
@@ -2487,11 +2560,14 @@
           <div class="portfolio-editor-list" id="portfolioEditorList"></div>
           <div class="portfolio-report-preview" id="portfolioReportPreview">Sin reporte recalculado todavia.</div>
         </div>
+      </section>
+
+      <section class="fundamental-desk" aria-label="IGNIS FINANCIALS Fundamentals">
         <div class="fundamental-panel" aria-label="Fundamentales Ignis 24 horas">
           <div class="fundamental-head">
             <div>
-              <h3>Fundamentales Ignis 24h</h3>
-              <p>Catalizadores internacionales, Fed/liquidez, oportunidades populares, cripto y noticias relevantes del portafolio, solo con hilo fresco.</p>
+              <h3>IGNIS FINANCIALS · Fundamentales 24h</h3>
+              <p>Newsroom diario para Cosmos: catalizadores internacionales, Fed/liquidez, oportunidades populares, cripto y noticias relevantes del portafolio, solo con hilo fresco.</p>
             </div>
             <div class="fundamental-actions">
               <button class="secondary inline-button" id="fundamentalHistory" type="button">Historial</button>
@@ -2500,8 +2576,21 @@
             </div>
           </div>
           <div class="fundamental-status" id="fundamentalStatus">Reporte diario programado para 9:00 America/Mexico_City.</div>
-          <div class="fundamental-report" id="fundamentalReport">Sin reporte fundamental cargado.</div>
-          <div class="fundamental-history" id="fundamentalHistoryList"></div>
+        </div>
+        <div class="fundamental-news-layout">
+          <div class="fundamental-primary">
+            <div class="fundamental-brief-card">
+              <strong>Reporte Principal</strong>
+              <div class="fundamental-report" id="fundamentalReport">Sin reporte fundamental cargado.</div>
+            </div>
+          </div>
+          <aside class="fundamental-sidebar" aria-label="Historial y reloj local">
+            <div class="local-clock-panel" id="localClockStatus">Reloj local de Kim: verificando scheduler...</div>
+            <div class="fundamental-brief-card">
+              <strong>Historial de reportes</strong>
+              <div class="fundamental-history" id="fundamentalHistoryList"></div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -3729,6 +3818,23 @@
       return result;
     }
 
+    async function loadLocalClockStatus() {
+      const response = await fetch("/api/local-clock", {cache: "no-store"});
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || "No pude leer reloj local.");
+      const next = (result.next_actions || [])[0] || {};
+      const codex = result.codex_automation || {};
+      $("localClockStatus").innerHTML = `
+        <strong>Kim Local Clock</strong><br>
+        Hora local: ${escapeHtml(result.now || "")}<br>
+        Scheduler: ${result.scheduler_thread_alive ? "activo" : "sin confirmar"} · intervalo ${escapeHtml(result.poll_interval_seconds || 20)}s<br>
+        Pendientes: ${escapeHtml(result.pending_count ?? 0)} · vencidas ahora: ${escapeHtml(result.due_count ?? 0)}<br>
+        Siguiente: ${escapeHtml(next.due_at || "sin tareas pendientes")} ${next.action ? "· " + escapeHtml(next.provider + "/" + next.action) : ""}<br>
+        Codex automation: ${escapeHtml(codex.status || "unknown")}
+      `;
+      return result;
+    }
+
     async function refreshFundamentals(mode = "daily") {
       const more = mode === "more";
       $("fundamentalStatus").textContent = more ? "Buscando mas noticias relevantes de las ultimas 24h..." : "Actualizando reporte fundamental 24h...";
@@ -3748,6 +3854,7 @@
       $("fundamentalReport").textContent = result.fundamental_report || "Reporte generado sin texto.";
       $("fundamentalStatus").textContent = `Fundamental actualizado: ${result.source_count || 0} fuente(s), ${result.report_id || "sin id"}.`;
       await loadFundamentalHistory();
+      await loadLocalClockStatus();
       return result;
     }
 
@@ -4496,6 +4603,7 @@
       $("chatTab").classList.toggle("active", view === "chat");
       $("marketsTab").classList.toggle("active", view === "markets");
       $("paperTab").classList.toggle("active", view === "paper");
+      $("fundamentalsTab").classList.toggle("active", view === "fundamentals");
       focusWorkspaceOnMobile();
     }
     $("chatTab").onclick = () => setWorkspaceView("chat");
@@ -4508,6 +4616,12 @@
       loadPaperBrokerStatus();
       loadPortfolioEditor().catch((error) => {
         $("portfolioEditorStatus").textContent = "No pude cargar portfolio manual: " + error.message;
+      });
+    };
+    $("fundamentalsTab").onclick = () => {
+      setWorkspaceView("fundamentals");
+      loadLocalClockStatus().catch((error) => {
+        $("localClockStatus").textContent = "No pude leer reloj local: " + error.message;
       });
       loadFundamentalHistory().catch((error) => {
         $("fundamentalStatus").textContent = "No pude cargar historial fundamental: " + error.message;
