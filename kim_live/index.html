@@ -1349,6 +1349,98 @@
       white-space: pre-wrap;
     }
 
+    .portfolio-order-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      color: #344054;
+      font-size: 12px;
+    }
+
+    .portfolio-order-metrics span {
+      border: 1px solid #d7dde3;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #fbfcfd;
+      overflow-wrap: anywhere;
+    }
+
+    .fundamental-panel {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .fundamental-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .fundamental-head h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      color: var(--teal-dark);
+      line-height: 1.25;
+    }
+
+    .fundamental-head p {
+      margin: 0;
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .fundamental-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .fundamental-status {
+      border: 1px solid #d7dde3;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #344054;
+      background: #fbfcfd;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .fundamental-report,
+    .fundamental-history {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 10px;
+      color: #344054;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .fundamental-history {
+      display: grid;
+      gap: 8px;
+      white-space: normal;
+    }
+
+    .fundamental-history-item {
+      border-bottom: 1px solid #eef2f5;
+      padding-bottom: 8px;
+    }
+
+    .fundamental-history-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
     .conversation-list {
       display: grid;
       gap: 10px;
@@ -1907,6 +1999,14 @@
         justify-content: flex-start;
       }
 
+      .fundamental-head {
+        grid-template-columns: 1fr;
+      }
+
+      .fundamental-actions {
+        justify-content: flex-start;
+      }
+
       .market-chart {
         min-height: 420px;
         height: 56dvh;
@@ -2387,6 +2487,22 @@
           <div class="portfolio-editor-list" id="portfolioEditorList"></div>
           <div class="portfolio-report-preview" id="portfolioReportPreview">Sin reporte recalculado todavia.</div>
         </div>
+        <div class="fundamental-panel" aria-label="Fundamentales Ignis 24 horas">
+          <div class="fundamental-head">
+            <div>
+              <h3>Fundamentales Ignis 24h</h3>
+              <p>Catalizadores internacionales, Fed/liquidez, oportunidades populares, cripto y noticias relevantes del portafolio, solo con hilo fresco.</p>
+            </div>
+            <div class="fundamental-actions">
+              <button class="secondary inline-button" id="fundamentalHistory" type="button">Historial</button>
+              <button class="secondary inline-button" id="fundamentalRefresh" type="button">Actualizar 24h</button>
+              <button class="primary inline-button" id="fundamentalMore" type="button">Buscar mas</button>
+            </div>
+          </div>
+          <div class="fundamental-status" id="fundamentalStatus">Reporte diario programado para 9:00 America/Mexico_City.</div>
+          <div class="fundamental-report" id="fundamentalReport">Sin reporte fundamental cargado.</div>
+          <div class="fundamental-history" id="fundamentalHistoryList"></div>
+        </div>
       </section>
 
       <section class="assistant-tools" aria-label="Herramientas de Kim">
@@ -2470,6 +2586,7 @@
     let paperBrokerFilter = "pending";
     let portfolioEditorState = null;
     let portfolioLatestReport = null;
+    let fundamentalLatestReport = null;
     let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
     let voiceOptions = [];
     let activeVoiceProfile = null;
@@ -3391,14 +3508,23 @@
       return item.id || ("order-" + item.order + "-" + String(item.symbol || "").toLowerCase());
     }
 
-    function portfolioLineForOrder(item) {
+    function portfolioReportItemForManual(item) {
       const report = portfolioLatestReport || {};
       const orderNumber = Number(item?.order);
+      const symbol = String(item?.symbol || "");
       const candidates = [
         ...(report.active_positions || []),
         ...(report.pending_orders || [])
       ];
-      const matched = candidates.find((entry) => Number(entry.report_order || entry.canonical_report_order) === orderNumber && String(entry.symbol || "") === String(item.symbol || ""));
+      return candidates.find((entry) => {
+        const entryOrder = Number(entry.report_order || entry.canonical_report_order);
+        return entryOrder === orderNumber && String(entry.symbol || "") === symbol;
+      }) || null;
+    }
+
+    function portfolioLineForOrder(item) {
+      const report = portfolioLatestReport || {};
+      const matched = portfolioReportItemForManual(item);
       if (matched?.resolved_report_order) {
         const visible = "A" + matched.resolved_report_order + ".";
         return (report.whatsapp_messages || []).find((line) => String(line || "").startsWith(visible)) || "";
@@ -3443,11 +3569,19 @@
       $("portfolioEditorList").innerHTML = entries.length ? entries.map((item) => {
         const key = escapeHtml(portfolioOrderKey(item));
         const stateLabel = item.state === "pending" ? "Pendiente" : "En mercado";
+        const reportItem = portfolioReportItemForManual(item);
+        const pct = reportItem?.client_phrase || reportItem?.variation_display || "Sin porcentaje recargado";
+        const price = reportItem?.current_price_display || "Sin precio recargado";
+        const visibleId = reportItem?.resolved_report_order ? "A" + reportItem.resolved_report_order : "A" + (item.order || "");
         return `
           <article class="portfolio-order-row" data-portfolio-id="${key}">
             <div class="portfolio-order-head">
-              <span class="portfolio-order-title">A${escapeHtml(item.order || "")} · ${escapeHtml(item.label || item.symbol || "Orden")}</span>
+              <span class="portfolio-order-title">${escapeHtml(visibleId)} · ${escapeHtml(item.label || item.symbol || "Orden")}</span>
               <span class="portfolio-order-state">${escapeHtml(stateLabel)}</span>
+            </div>
+            <div class="portfolio-order-metrics">
+              <span>Precio actual: ${escapeHtml(price)}</span>
+              <span>${escapeHtml(pct)}</span>
             </div>
             <div class="portfolio-order-fields">
               <div class="field"><label>Estado</label><select data-portfolio-field="state"><option value="active" ${item.state === "active" ? "selected" : ""}>Mercado</option><option value="pending" ${item.state === "pending" ? "selected" : ""}>Pendiente</option></select></div>
@@ -3566,6 +3700,54 @@
       } else {
         $("portfolioEditorStatus").textContent = `Porcentajes recalculados. Activas: ${(portfolioLatestReport.active_positions || []).length}; pendientes: ${(portfolioLatestReport.pending_orders || []).length}.`;
       }
+      return result;
+    }
+
+    function renderFundamentalHistory(result) {
+      const reports = result?.reports || [];
+      $("fundamentalHistoryList").innerHTML = reports.length ? reports.map((item) => {
+        const text = String(item.fundamental_report || "").replace(/\s+/g, " ").slice(0, 360);
+        return `
+          <article class="fundamental-history-item">
+            <strong>${escapeHtml(item.generated_at || item.report_id || "Reporte")}</strong>
+            <div>${escapeHtml(text)}${text.length >= 360 ? "..." : ""}</div>
+            <small>${escapeHtml((item.source_count ?? 0) + " fuente(s) · " + (item.report_id || ""))}</small>
+          </article>
+        `;
+      }).join("") : "<small>Sin historial fundamental todavia.</small>";
+    }
+
+    async function loadFundamentalHistory() {
+      const data = await post("/api/portfolio", {
+        action: "fundamental_history",
+        parameters: {limit: 8}
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || "No pude leer historial fundamental.");
+      renderFundamentalHistory(result);
+      $("fundamentalStatus").textContent = "Historial cargado: " + (result.count || 0) + " reporte(s).";
+      return result;
+    }
+
+    async function refreshFundamentals(mode = "daily") {
+      const more = mode === "more";
+      $("fundamentalStatus").textContent = more ? "Buscando mas noticias relevantes de las ultimas 24h..." : "Actualizando reporte fundamental 24h...";
+      const data = await post("/api/portfolio", {
+        action: "fundamental_report",
+        parameters: {
+          providers: ["binance", "mexc", "bybit"],
+          force_refresh_prices: true,
+          max_queries: more ? 5 : 4,
+          session_id: "ignis-cosmos-fundamentals-panel",
+          query: more ? "last 24 hours additional market-moving economic catalysts and crypto portfolio news not covered in prior report" : ""
+        }
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || "No pude actualizar fundamentales.");
+      fundamentalLatestReport = result;
+      $("fundamentalReport").textContent = result.fundamental_report || "Reporte generado sin texto.";
+      $("fundamentalStatus").textContent = `Fundamental actualizado: ${result.source_count || 0} fuente(s), ${result.report_id || "sin id"}.`;
+      await loadFundamentalHistory();
       return result;
     }
 
@@ -4327,6 +4509,9 @@
       loadPortfolioEditor().catch((error) => {
         $("portfolioEditorStatus").textContent = "No pude cargar portfolio manual: " + error.message;
       });
+      loadFundamentalHistory().catch((error) => {
+        $("fundamentalStatus").textContent = "No pude cargar historial fundamental: " + error.message;
+      });
     };
     $("paperPreview").onclick = async () => {
       await runPaperTradeTool({action: "preview", parameters: paperOrderPayload()});
@@ -4368,6 +4553,27 @@
         await refreshPortfolioPercentages(true);
       } catch (error) {
         $("portfolioEditorStatus").textContent = "WhatsApp falló: " + error.message;
+      }
+    };
+    $("fundamentalHistory").onclick = async () => {
+      try {
+        await loadFundamentalHistory();
+      } catch (error) {
+        $("fundamentalStatus").textContent = "No pude cargar historial: " + error.message;
+      }
+    };
+    $("fundamentalRefresh").onclick = async () => {
+      try {
+        await refreshFundamentals("daily");
+      } catch (error) {
+        $("fundamentalStatus").textContent = "No pude actualizar fundamentales: " + error.message;
+      }
+    };
+    $("fundamentalMore").onclick = async () => {
+      try {
+        await refreshFundamentals("more");
+      } catch (error) {
+        $("fundamentalStatus").textContent = "No pude buscar mas fundamentales: " + error.message;
       }
     };
     document.querySelectorAll("[data-paper-filter]").forEach((button) => {

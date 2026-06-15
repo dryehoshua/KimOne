@@ -243,7 +243,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.76"
+APP_VERSION = "1.5.77"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -8591,6 +8591,8 @@ def execute_confirmed_bridge_action(provider, action, parameters):
         return run_hostinger_mail_bridge(action, parameters, confirm=True)
     if provider in {"pipedrive", "pipe_drive", "pd"}:
         return run_pipedrive_bridge(action, parameters, confirm=True)
+    if provider in {"portfolio", "ignis_portfolio", "portafolio"}:
+        return portfolio_cli(action, {**parameters, "confirm": True})
     if provider in {"crm", "bifrost_crm", "clients", "clientes", "contacts", "contactos"}:
         return run_crm_bridge(action, parameters, confirm=True)
     if provider in {"gmail", "google_mail"}:
@@ -14108,6 +14110,8 @@ def portfolio_cli(action, parameters=None):
         "sr_eli_fundamental",
     }:
         result = portfolio_fundamental_report(module.portfolio_summary_json(), parameters)
+    elif action in {"fundamental_history", "portfolio_fundamental_history", "news_history", "historial_fundamental"}:
+        result = portfolio_fundamental_history(parameters)
     elif action in {
         "send_whatsapp_report",
         "send_updated_portfolio",
@@ -19841,6 +19845,57 @@ def portfolio_fundamental_report(summary, parameters=None):
     append_jsonl_any([PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG, RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG], {k: v for k, v in result.items() if k != "portfolio_report"})
     append_memory("portfolio_fundamental_report", {"report_id": report_id, "source_count": len(sources), "dry_run": dry_run, "markdown_paths": md_paths})
     return result
+
+
+def portfolio_fundamental_history(parameters=None):
+    parameters = parameters or {}
+    try:
+        limit = int(first_value(parameters, "limit", "count", default=12) or 12)
+    except (TypeError, ValueError):
+        limit = 12
+    limit = max(1, min(limit, 50))
+    rows = []
+    for path in [PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG, RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG]:
+        try:
+            if not path.exists():
+                continue
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError as exc:
+            append_memory("portfolio_fundamental_history_read_error", {"path": str(path), "error": brief(str(exc), 500)})
+            continue
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            report_id = item.get("report_id")
+            if report_id and any(existing.get("report_id") == report_id for existing in rows):
+                continue
+            rows.append(item)
+    rows.sort(key=lambda item: item.get("generated_at") or "", reverse=True)
+    history = []
+    for item in rows[:limit]:
+        history.append(
+            {
+                "report_id": item.get("report_id"),
+                "generated_at": item.get("generated_at"),
+                "source_count": item.get("source_count"),
+                "dry_run": item.get("dry_run"),
+                "fundamental_report": item.get("fundamental_report"),
+                "sources": item.get("sources") or [],
+                "markdown_paths": item.get("markdown_paths") or {},
+                "queries": item.get("queries") or [],
+            }
+        )
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "fundamental_history",
+        "count": len(history),
+        "reports": history,
+    }
 
 
 def portfolio_default_whatsapp_target(parameters=None):
