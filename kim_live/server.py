@@ -246,7 +246,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.80"
+APP_VERSION = "1.5.81"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -19650,11 +19650,13 @@ def portfolio_client_report(summary, parameters=None):
         display_items = [*active_items, *pending_items]
         if client_sort_mode == "loss_to_gain":
             lines.append("Posiciones activas de mayor perdida a mejor resultado; ordenes pendientes al final.")
+    compact_client_ordering = boolish(override_config.get("compact_client_ordering", True))
     for item in display_items:
         keep_explicit_pending_id = (
             client_sort_mode == "loss_to_gain"
             and client_presentation_mode != "combined"
             and item.get("client_state") == "pending"
+            and not compact_client_ordering
         )
         if client_sort_mode == "loss_to_gain" and not keep_explicit_pending_id:
             item["canonical_report_order"] = item.get("report_order")

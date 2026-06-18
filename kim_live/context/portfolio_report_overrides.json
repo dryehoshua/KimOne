@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0110",
-  "updated_at": "2026-06-18T04:08:34+00:00",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0110 conserva 12 posiciones activas, 9 ordenes pendientes, ADA/DOGE ya consolidadas como A1/A3, A13/A15 consumidas y ONDO/A20 eliminada del portafolio.",
+  "standard_version": "KIM-0111",
+  "updated_at": "2026-06-18T04:11:26+00:00",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0111 conserva 12 posiciones activas y 9 pendientes; ADA/DOGE consolidadas, ONDO eliminado y reporte cliente renumerado sin huecos.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -360,7 +360,7 @@
     "GOATUSDT",
     "ZECUSDT"
   ],
-  "provider_note": "KIM-0110: ADA/DOGE consolidadas; ONDO/A20 eliminada; precios frescos obligatorios antes de WhatsApp.",
+  "provider_note": "KIM-0111: reporte cliente con numeracion corrida sin huecos; ADA/DOGE consolidadas; ONDO/A20 eliminado; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -398,7 +398,9 @@
     "KIM-0110: ordenes vivas actuales: 12 posiciones activas y 9 pendientes; no revivir A13/A15/A20.",
     "KIM-0110: A13 ADA y A15 DOGE estan consumidas dentro de A1/A3; no aparecen en panel cliente, WhatsApp ni pendientes.",
     "KIM-0110: A20 ONDO fue borrada; no aparece en panel cliente, WhatsApp, pendientes ni totales.",
-    "KIM-0110: pendientes vigentes: A14 APT, A16 LUNC, A17 AVAX, A18 ICP, A19 WLD, A21 NEAR, A22 HYPE, A23 SOL expansion, A24 SUI."
+    "KIM-0110: pendientes vigentes: A14 APT, A16 LUNC, A17 AVAX, A18 ICP, A19 WLD, A21 NEAR, A22 HYPE, A23 SOL expansion, A24 SUI.",
+    "KIM-0111: en el reporte cliente no dejar huecos de identificador; despues de consumir/borrar ordenes, recorrer pendientes para que salgan A13-A21.",
+    "KIM-0111: los identificadores historicos originales se conservan solo en auditoria interna, no como numeros visibles si dejan posiciones vacias."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -462,6 +464,11 @@
       "version": "KIM-0110",
       "updated_at": "2026-06-18T04:05:06+00:00",
       "summary": "Elimina ONDO/A20 del portafolio y lo conserva solo como removed_order auditado."
+    },
+    {
+      "version": "KIM-0111",
+      "updated_at": "2026-06-18T04:11:26+00:00",
+      "summary": "Activa numeracion compacta en reporte cliente para recorrer pendientes sin huecos tras consumir A13/A15 y eliminar A20."
     }
   ],
   "consumed_orders": [
@@ -523,5 +530,6 @@
       "status": "removed_from_portfolio",
       "reason": "Dr. Yehoshua confirms ONDO ya no esta; borrada del portafolio."
     }
-  ]
+  ],
+  "compact_client_ordering": true
 }
