@@ -246,7 +246,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.78"
+APP_VERSION = "1.5.80"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -427,6 +427,7 @@ COINGECKO_IDS_BY_SYMBOL = {
     "ETH": "ethereum",
     "FTT": "ftx-token",
     "HBAR": "hedera-hashgraph",
+    "HYPE": "hyperliquid",
     "ICP": "internet-computer",
     "LUNC": "terra-luna",
     "NEAR": "near",
@@ -434,6 +435,7 @@ COINGECKO_IDS_BY_SYMBOL = {
     "PEPE": "pepe",
     "SHIB": "shiba-inu",
     "SOL": "solana",
+    "SUI": "sui",
     "TRUMP": "official-trump",
     "TRX": "tron",
     "WLD": "worldcoin-wld",
@@ -13716,6 +13718,7 @@ def portfolio_normalize_manual_entry(entry):
 def portfolio_enforce_manual_order_states(config):
     config = dict(config or {})
     entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    allow_active_above_base = boolish(config.get("allow_active_manual_entries_above_base_count", True))
     changed = []
     normalized = []
     for raw in entries:
@@ -13726,6 +13729,8 @@ def portfolio_enforce_manual_order_states(config):
         desired = None
         if order not in (None, ""):
             desired = "active" if int(order) <= 12 else "pending"
+            if allow_active_above_base and int(order) > 12 and entry.get("state") == "active":
+                desired = None
         if desired and entry.get("state") != desired:
             changed.append({"id": portfolio_manual_entry_key(entry), "order": order, "from": entry.get("state"), "to": desired})
             entry["state"] = desired
@@ -19067,6 +19072,157 @@ def portfolio_apply_order_aggregations(summary, active_items, pending_items, inc
     return active_items, pending_items
 
 
+def portfolio_manual_active_aggregation_enabled(config):
+    return boolish(config.get("auto_aggregate_active_manual_entries", True))
+
+
+def portfolio_manual_aggregation_fee_rate(config):
+    explicit = portfolio_float(config.get("manual_active_aggregation_fee_rate"))
+    if explicit is not None:
+        return max(0.0, explicit)
+    accounting = portfolio_accounting_config(config)
+    return max(0.0, portfolio_float(accounting.get("operation_fee_rate"), 0.0) or 0.0)
+
+
+def portfolio_manual_item_order_label(item):
+    order = item.get("report_order")
+    if order not in (None, ""):
+        return f"A{order}"
+    return str(item.get("id") or item.get("symbol") or "").strip()
+
+
+def portfolio_aggregate_manual_active_items(active_items, config, canonical_order):
+    if not portfolio_manual_active_aggregation_enabled(config):
+        return active_items
+    grouped = {}
+    passthrough = []
+    for item in active_items:
+        if item.get("override_source") != "portfolio_report_overrides":
+            passthrough.append(item)
+            continue
+        symbol = portfolio_normalize_symbol(item.get("symbol"))
+        if not symbol:
+            passthrough.append(item)
+            continue
+        grouped.setdefault(symbol, []).append(item)
+    fee_rate = portfolio_manual_aggregation_fee_rate(config)
+    aggregated = []
+    for symbol, items in grouped.items():
+        if len(items) < 2:
+            aggregated.extend(items)
+            continue
+        total_amount = 0.0
+        total_quantity = 0.0
+        total_credit = 0.0
+        member_rows = []
+        notes = []
+        sources = []
+        transaction_ids = []
+        current_price = None
+        current_display = None
+        price_status = None
+        approved = False
+        report_orders = []
+        ordered_items = sorted(items, key=lambda row: portfolio_override_sort_key(row, canonical_order))
+        for item in ordered_items:
+            amount = portfolio_float(item.get("invested_usd"), 0.0) or 0.0
+            entry_price = portfolio_float(item.get("entry_price"))
+            quantity = portfolio_float(item.get("reference_quantity"))
+            if quantity in (None, 0) and amount and entry_price not in (None, 0):
+                quantity = amount / entry_price
+            quantity = portfolio_float(quantity, 0.0) or 0.0
+            total_amount += amount
+            total_quantity += quantity
+            total_credit += portfolio_float(item.get("credit_usd"), 0.0) or 0.0
+            report_order = portfolio_report_explicit_order(item)
+            if report_order is not None:
+                report_orders.append(report_order)
+            if item.get("current_price") not in (None, ""):
+                current_price = item.get("current_price")
+                current_display = item.get("current_price_display")
+                price_status = item.get("price_validation_status")
+                approved = bool(item.get("approved_for_client_report"))
+            if item.get("notes"):
+                notes.append(str(item.get("notes") or "").strip())
+            sources.extend(item.get("sources") or [])
+            transaction_ids.extend(item.get("transaction_ids") or [])
+            member_rows.append(
+                {
+                    "member_order": portfolio_manual_item_order_label(item),
+                    "role": "manual_active_execution",
+                    "amount_usd": round_opt(amount, 2),
+                    "price": entry_price,
+                    "quantity": round_opt(quantity, 8),
+                    "include_in_average": True,
+                    "status": "active",
+                    "notes": str(item.get("notes") or "").strip(),
+                }
+            )
+        if total_quantity <= 0 or total_amount <= 0:
+            aggregated.extend(items)
+            continue
+        raw_average = total_amount / total_quantity
+        adjusted_average = raw_average * (1 + fee_rate) if fee_rate else raw_average
+        current_value = (total_quantity * float(current_price)) if approved and current_price not in (None, "") else None
+        unrealized_pnl = (current_value - total_amount) if current_value is not None else None
+        variation_pct = price_variation_pct(adjusted_average, current_price if approved else None)
+        report_order = min(report_orders) if report_orders else None
+        credit_fields = portfolio_resolve_credit_breakdown(
+            total_amount,
+            total_credit,
+            full_mark=str(config.get("credit_mark") or "(c)").strip() or "(c)",
+            partial_mark=str(config.get("partial_credit_mark") or "(c parcial)").strip() or "(c parcial)",
+        )
+        aggregation = {
+            "id": f"manual_agg_{symbol.lower()}",
+            "portfolio_id": config.get("portfolio_id") or "sr_eli_2026",
+            "canonical_order": report_order,
+            "symbol": symbol,
+            "label": portfolio_symbol_label(symbol),
+            "status": "active",
+            "notes": (
+                f"Aglomeracion automatica de {len(items)} ordenes activas del mismo activo. "
+                f"Promedio base {format_price(raw_average)}; fee operativo {round_opt(fee_rate * 100, 4)}% integrado al costo."
+            ),
+            "weighted_average_price": round_price(adjusted_average),
+            "raw_weighted_average_price": round_price(raw_average),
+            "total_quantity": round_opt(total_quantity, 8),
+            "total_amount_usd": round_opt(total_amount, 2),
+            "fee_rate": fee_rate,
+            "members": member_rows,
+        }
+        aggregated.append(
+            {
+                "symbol": symbol,
+                "label": portfolio_symbol_label(symbol),
+                "invested_usd": round_opt(total_amount, 2),
+                "entry_price": round_price(adjusted_average),
+                "entry_price_display": format_price(adjusted_average),
+                "current_price": round_price(current_price) if approved else None,
+                "current_price_display": current_display if approved else None,
+                "price_validation_status": price_status,
+                "approved_for_client_report": approved,
+                "variation_pct": round_opt(variation_pct, 2),
+                "variation_display": signed_percent_text(variation_pct),
+                "reference_quantity": round_opt(total_quantity, 8) if total_quantity else None,
+                "notes": "\n".join(note for note in notes if note),
+                "report_order": report_order,
+                "override_source": "portfolio_report_overrides",
+                "current_value_usd": round_opt(current_value, 2),
+                "unrealized_pnl_usd": round_opt(unrealized_pnl, 2),
+                "unrealized_pnl_display": signed_usd_text(unrealized_pnl),
+                "merged_with_pending": True,
+                "sources": list(dict.fromkeys([source for source in sources if source])),
+                "transaction_ids": list(dict.fromkeys([tx for tx in transaction_ids if tx])),
+                "aggregation": aggregation,
+                "aggregation_summary": portfolio_aggregation_summary_text(aggregation),
+                **credit_fields,
+            }
+        )
+    aggregated.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
+    return [*passthrough, *aggregated]
+
+
 def portfolio_apply_manual_overrides(summary, active_items, pending_items, include_units, canonical_order, load_validation):
     config = portfolio_report_override_config(summary)
     if not config:
@@ -19222,6 +19378,7 @@ def portfolio_apply_manual_overrides(summary, active_items, pending_items, inclu
             }
         )
 
+    filtered_active = portfolio_aggregate_manual_active_items(filtered_active, config, canonical_order)
     filtered_active.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
     filtered_pending.sort(key=lambda item: portfolio_override_sort_key(item, canonical_order))
     return filtered_active, filtered_pending, config
@@ -19254,6 +19411,8 @@ def portfolio_client_report(summary, parameters=None):
         "TRXUSDT",
         "ICPUSDT",
         "AVAXUSDT",
+        "HYPEUSDT",
+        "SUIUSDT",
     ]
     final_transactions = summary.get("final_transactions") or []
     draft_transactions = summary.get("draft_transactions") or []

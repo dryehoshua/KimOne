@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0101",
-  "updated_at": "2026-06-11T03:09:12.837172+00:00",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0101 corrige A13-A21 como pendientes a credito, conserva 12 activas canonicas y evita aglomerar LUNC A16 con la posicion activa.",
+  "standard_version": "KIM-0110",
+  "updated_at": "2026-06-18T04:08:34+00:00",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0110 conserva 12 posiciones activas, 9 ordenes pendientes, ADA/DOGE ya consolidadas como A1/A3, A13/A15 consumidas y ONDO/A20 eliminada del portafolio.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -36,12 +36,17 @@
       "state": "active",
       "order": 1,
       "label": "ADA/USDT",
-      "invested_usd": 1800,
-      "entry_price": 0.261,
-      "quantity": 6896.551724137931,
-      "credit_usd": 0,
-      "source": "kim_0101_manual_standard",
-      "notes": "A1 Cardano/ADA original activa. No es credito; no sustituir por el refuerzo A13."
+      "invested_usd": 3600,
+      "entry_price": 0.2091045,
+      "quantity": 17422.867513611614,
+      "credit_usd": 1800,
+      "source": "kim_0109_consolidated_standard",
+      "notes": "A1 ADA consolidada: 1800 USD @ 0.261 + 1800 USD @ 0.171. Promedio base 0.206625000; precio visible con fee 1.2% 0.209104500. A13 consumida; no reportar refuerzo separado.",
+      "raw_weighted_average_price": 0.206625,
+      "fee_adjusted_average_price": 0.2091045,
+      "consumed_orders": [
+        "A13"
+      ]
     },
     {
       "symbol": "APTUSDT",
@@ -60,12 +65,17 @@
       "state": "active",
       "order": 3,
       "label": "DOGE/USDT",
-      "invested_usd": 2554,
-      "entry_price": 0.1143,
-      "quantity": 22344.706911636047,
-      "credit_usd": 0,
-      "source": "kim_0101_manual_standard",
-      "notes": "A3 DOGE activa canonica. No mezclar con A15 pendiente."
+      "invested_usd": 4354,
+      "entry_price": 0.10204835548351147,
+      "quantity": 43178.04024496938,
+      "credit_usd": 1800,
+      "source": "kim_0109_consolidated_standard",
+      "notes": "A3 DOGE consolidada: 2554 USD @ 0.1143 + 1800 USD @ 0.0864. Promedio base 0.100838296; precio visible con fee 1.2% 0.102048355. A15 consumida; no reportar refuerzo separado.",
+      "raw_weighted_average_price": 0.10083829593232359,
+      "fee_adjusted_average_price": 0.10204835548351147,
+      "consumed_orders": [
+        "A15"
+      ]
     },
     {
       "symbol": "LUNCUSDT",
@@ -176,46 +186,19 @@
       "notes": "A12 SOL activa canonica a credito."
     },
     {
-      "symbol": "ADAUSDT",
-      "state": "pending",
-      "order": 13,
-      "label": "ADA/USDT refuerzo",
-      "invested_usd": 1800,
-      "entry_price": 0.124,
-      "quantity": 14516.129032258064,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A13 refuerzo ADA pendiente, a credito completo. No afecta ADA activa hasta ejecucion confirmada.",
-      "side": "BUY",
-      "id": "kim0101-a13-adausdt"
-    },
-    {
       "symbol": "APTUSDT",
       "state": "pending",
       "order": 14,
       "label": "APT/USDT refuerzo",
       "invested_usd": 1800,
-      "entry_price": 0.504,
-      "quantity": 3571.4285714285716,
+      "entry_price": 0.54,
+      "quantity": 3333.333333333333,
       "credit_usd": 1800,
       "source": "kim_0101_manual_standard",
       "notes": "A14 refuerzo APT pendiente, a credito completo. No afecta APT activa hasta ejecucion confirmada.",
       "side": "BUY",
-      "id": "kim0101-a14-aptusdt"
-    },
-    {
-      "symbol": "DOGEUSDT",
-      "state": "pending",
-      "order": 15,
-      "label": "DOGE/USDT refuerzo",
-      "invested_usd": 1800,
-      "entry_price": 0.081,
-      "quantity": 22222.222222222223,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A15 refuerzo DOGE pendiente, a credito completo. No afecta DOGE activa hasta ejecucion confirmada.",
-      "side": "BUY",
-      "id": "kim0101-a15-dogeusdt"
+      "id": "kim0101-a14-aptusdt",
+      "updated_at": "2026-06-15T12:52:57"
     },
     {
       "symbol": "LUNCUSDT",
@@ -251,13 +234,14 @@
       "order": 18,
       "label": "ICP/USDT",
       "invested_usd": 1800,
-      "entry_price": 1.8,
-      "quantity": 1000.0,
+      "entry_price": 2.205,
+      "quantity": 816.3265306122448,
       "credit_usd": 1800,
       "source": "kim_0101_manual_standard",
-      "notes": "A18 ICP nueva orden pendiente indicada el 2026-06-11, a credito completo.",
+      "notes": "A18 ICP orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada.",
       "side": "BUY",
-      "id": "kim0101-a18-icpusdt"
+      "id": "kim0101-a18-icpusdt",
+      "updated_at": "2026-06-17T21:03:01"
     },
     {
       "symbol": "WLDUSDT",
@@ -265,27 +249,14 @@
       "order": 19,
       "label": "WLD/USDT",
       "invested_usd": 1800,
-      "entry_price": 0.333,
-      "quantity": 5405.405405405405,
+      "entry_price": 0.54,
+      "quantity": 3333.333333333333,
       "credit_usd": 1800,
       "source": "kim_0101_manual_standard",
-      "notes": "A19 WLD nueva orden pendiente indicada el 2026-06-11, a credito completo.",
+      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada.",
       "side": "BUY",
-      "id": "kim0101-a19-wldusdt"
-    },
-    {
-      "symbol": "ONDOUSDT",
-      "state": "pending",
-      "order": 20,
-      "label": "ONDO/USDT",
-      "invested_usd": 1800,
-      "entry_price": 0.261,
-      "quantity": 6896.551724137931,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A20 ONDO nueva orden pendiente indicada el 2026-06-11, a credito completo.",
-      "side": "BUY",
-      "id": "kim0101-a20-ondousdt"
+      "id": "kim0101-a19-wldusdt",
+      "updated_at": "2026-06-17T21:02:25"
     },
     {
       "symbol": "NEARUSDT",
@@ -293,13 +264,53 @@
       "order": 21,
       "label": "NEAR/USDT expansion",
       "invested_usd": 1800,
-      "entry_price": 1.62,
-      "quantity": 1111.111111111111,
+      "entry_price": 2.07,
+      "quantity": 869.5652173913044,
       "credit_usd": 1800,
       "source": "kim_0101_manual_standard",
-      "notes": "A21 NEAR nueva orden pendiente indicada el 2026-06-11, a credito completo; no afecta A10 activa hasta ejecucion confirmada.",
+      "notes": "A21 NEAR expansion pendiente, a credito completo; no afecta A10 activa hasta ejecucion confirmada.",
       "side": "BUY",
-      "id": "kim0101-a21-nearusdt"
+      "id": "kim0101-a21-nearusdt",
+      "updated_at": "2026-06-17T20:52:41"
+    },
+    {
+      "order": 22,
+      "id": "kim0108-a22-hypeusdt",
+      "symbol": "HYPEUSDT",
+      "state": "pending",
+      "side": "BUY",
+      "label": "HYPE/USDT",
+      "invested_usd": 1800,
+      "entry_price": 63,
+      "credit_usd": 1800,
+      "notes": "A22 HYPE nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo.",
+      "quantity": 28.571428571428573
+    },
+    {
+      "order": 23,
+      "id": "kim0108-a23-solusdt",
+      "symbol": "SOLUSDT",
+      "state": "pending",
+      "side": "BUY",
+      "label": "SOL/USDT expansion",
+      "invested_usd": 1800,
+      "entry_price": 67.5,
+      "credit_usd": 1800,
+      "notes": "A23 expansion/refuerzo SOL pendiente indicada en llamada del 2026-06-18; A12 SOL @ 63 permanece activa separada.",
+      "quantity": 26.666666666666668
+    },
+    {
+      "order": 24,
+      "id": "kim0108-a24-suiusdt",
+      "symbol": "SUIUSDT",
+      "state": "pending",
+      "side": "BUY",
+      "label": "SUI/USDT",
+      "invested_usd": 1800,
+      "entry_price": 0.72,
+      "credit_usd": 1800,
+      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo.",
+      "quantity": 2500.0
     }
   ],
   "closed_positions": [
@@ -349,7 +360,7 @@
     "GOATUSDT",
     "ZECUSDT"
   ],
-  "provider_note": "KIM-0101 aplica estandar manual canonico: 12 activas A1-A12, pendientes A13-A21 a credito, GOAT/ZEC suprimidos y LUNC A16 separada de A4.",
+  "provider_note": "KIM-0110: ADA/DOGE consolidadas; ONDO/A20 eliminada; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -376,10 +387,18 @@
     "KIM-0100: cada linea activa debe cerrar con 'Estamos por debajo por -X%' o 'Estamos en ganancia por +X%'.",
     "KIM-0100: cada orden pendiente debe decir 'pendiente' y cerrar con 'Estamos por debajo del precio actual por -X%' o 'Estamos por arriba del precio actual por +X%'.",
     "KIM-0101: Las 12 posiciones activas canonicas son A1 ADA, A2 APT, A3 DOGE, A4 LUNC, A5 DOT, A6 TRUMP, A7 XRP, A8 PEPE, A9 HBAR, A10 NEAR, A11 FTT y A12 SOL.",
-    "KIM-0101: Las ordenes pendientes A13-A21 son todas a credito: ADA 0.124, APT 0.504, DOGE 0.081, LUNC 0.000063, AVAX 3.5, ICP 1.8, WLD 0.333, ONDO 0.261 y NEAR 1.62, todas por 1800 USD.",
     "KIM-0101: A16 LUNC pendiente no se aglomera con A4 LUNC activa hasta que el doctor confirme ejecucion; no recalcular promedio ponderado con pendientes.",
     "KIM-0101: El monto en firme base sigue siendo 12,514 USD; el cliente pide mas credito y las nuevas pendientes se clasifican como credito.",
-    "KIM-0101: Si se reporta credito, mostrar credito operativo neto contra firme ajustado por saldo disponible y, si se requiere, credito bruto contra capital firme base."
+    "KIM-0101: Si se reporta credito, mostrar credito operativo neto contra firme ajustado por saldo disponible y, si se requiere, credito bruto contra capital firme base.",
+    "KIM-0108: nuevas ordenes A22 HYPE 1800 USD @ 63, A23 SOL expansion 1800 USD @ 67.50 y A24 SUI 1800 USD @ 0.72 quedan pendientes/a credito hasta ejecucion confirmada.",
+    "KIM-0109: ADA ya esta consolidada como A1; A13 fue consumida y no debe aparecer como refuerzo vivo.",
+    "KIM-0109: DOGE ya esta consolidada como A3; A15 fue consumida y no debe aparecer como refuerzo vivo.",
+    "KIM-0109: los precios visibles de ADA y DOGE usan promedio ponderado con fee operativo 1.2% integrado; no recalcular desde tramos separados en el reporte cliente.",
+    "KIM-0110: ONDO/A20 fue borrada del portafolio; no debe aparecer como pendiente, activa ni en WhatsApp.",
+    "KIM-0110: ordenes vivas actuales: 12 posiciones activas y 9 pendientes; no revivir A13/A15/A20.",
+    "KIM-0110: A13 ADA y A15 DOGE estan consumidas dentro de A1/A3; no aparecen en panel cliente, WhatsApp ni pendientes.",
+    "KIM-0110: A20 ONDO fue borrada; no aparece en panel cliente, WhatsApp, pendientes ni totales.",
+    "KIM-0110: pendientes vigentes: A14 APT, A16 LUNC, A17 AVAX, A18 ICP, A19 WLD, A21 NEAR, A22 HYPE, A23 SOL expansion, A24 SUI."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -423,5 +442,86 @@
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true
   },
-  "partial_credit_mark": "(c parcial)"
+  "partial_credit_mark": "(c parcial)",
+  "auto_aggregate_active_manual_entries": true,
+  "manual_active_aggregation_fee_rate": 0.012,
+  "allow_active_manual_entries_above_base_count": true,
+  "price_validation_required": true,
+  "change_log": [
+    {
+      "version": "KIM-0108",
+      "updated_at": "2026-06-18T04:00:02+00:00",
+      "summary": "Activa aglomeracion automatica ADA/DOGE, corrige ONDO A20, agrega ordenes A22-A24 y obliga precios validados para WhatsApp."
+    },
+    {
+      "version": "KIM-0109",
+      "updated_at": "2026-06-18T04:04:52+00:00",
+      "summary": "Consume A13/A15 dentro de A1/A3. ADA/DOGE quedan como posiciones unicas consolidadas; no hay refuerzos vivos."
+    },
+    {
+      "version": "KIM-0110",
+      "updated_at": "2026-06-18T04:05:06+00:00",
+      "summary": "Elimina ONDO/A20 del portafolio y lo conserva solo como removed_order auditado."
+    }
+  ],
+  "consumed_orders": [
+    {
+      "symbol": "ADAUSDT",
+      "state": "active",
+      "order": 13,
+      "label": "ADA/USDT refuerzo",
+      "invested_usd": 1800,
+      "entry_price": 0.171,
+      "quantity": 10526.315789473683,
+      "credit_usd": 1800,
+      "source": "kim_0101_manual_standard",
+      "notes": "A13 refuerzo ADA ejecutado a credito completo. Debe aglomerarse automaticamente con A1 para reporte cliente. | KIM-0109: consumida en posicion consolidada; no reportar como refuerzo vivo.",
+      "side": "BUY",
+      "id": "kim0108-a13-adausdt",
+      "updated_at": "2026-06-17T20:54:18",
+      "executed_context": "confirmed_by_doctor_2026_06_18",
+      "consumed_at": "2026-06-18T04:04:52+00:00",
+      "consumed_into": "A1",
+      "status": "consumed_into_consolidated_position"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "state": "active",
+      "order": 15,
+      "label": "DOGE/USDT refuerzo",
+      "invested_usd": 1800,
+      "entry_price": 0.0864,
+      "quantity": 20833.333333333332,
+      "credit_usd": 1800,
+      "source": "kim_0101_manual_standard",
+      "notes": "A15 refuerzo DOGE ejecutado a credito completo. Debe aglomerarse automaticamente con A3 para reporte cliente. | KIM-0109: consumida en posicion consolidada; no reportar como refuerzo vivo.",
+      "side": "BUY",
+      "id": "kim0108-a15-dogeusdt",
+      "updated_at": "2026-06-17T20:54:08",
+      "executed_context": "confirmed_by_doctor_2026_06_18",
+      "consumed_at": "2026-06-18T04:04:52+00:00",
+      "consumed_into": "A3",
+      "status": "consumed_into_consolidated_position"
+    }
+  ],
+  "removed_orders": [
+    {
+      "symbol": "ONDOUSDT",
+      "state": "pending",
+      "order": 20,
+      "label": "ONDO/USDT",
+      "invested_usd": 1800,
+      "entry_price": 0.261,
+      "quantity": 6896.551724137931,
+      "credit_usd": 1800,
+      "source": "kim_0101_manual_standard",
+      "notes": "A20 ONDO orden pendiente. Correccion KIM-0108: no debe registrarse como DOT.",
+      "side": "BUY",
+      "id": "kim0108-a20-ondousdt",
+      "updated_at": "2026-06-15T12:54:59",
+      "removed_at": "2026-06-18T04:05:06+00:00",
+      "status": "removed_from_portfolio",
+      "reason": "Dr. Yehoshua confirms ONDO ya no esta; borrada del portafolio."
+    }
+  ]
 }
