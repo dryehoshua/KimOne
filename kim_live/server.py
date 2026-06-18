@@ -246,7 +246,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.81"
+APP_VERSION = "1.5.82"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -13458,7 +13458,26 @@ def start_paper_broker_watcher_once():
 
 PORTFOLIO_SALE_ACTIONS = {"sell_position", "close_position", "record_sale", "venta_final", "cerrar_posicion"}
 PORTFOLIO_EXECUTION_ACTIONS = {"execute_pending_order", "mark_order_executed", "confirm_pending_order"}
-PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS
+PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
+    "manual_delete_order",
+    "delete_manual_order",
+    "remove_manual_order",
+    "remove_order",
+    "remove_portfolio_order",
+    "agglomerate_manual_orders",
+    "aggregate_order",
+    "agglomerate_order",
+    "agglomerate_orders",
+    "aggregate_manual_orders",
+    "consolidate_manual_orders",
+    "consolidate_orders",
+    "split_consolidated_order",
+    "split_manual_order",
+    "split_order",
+    "separate_order",
+    "separate_orders",
+}
+PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
 
 
@@ -13675,6 +13694,61 @@ def portfolio_manual_entry_matches(entry, parameters):
     return False
 
 
+def portfolio_values_list(value):
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        rows = []
+        for item in value:
+            rows.extend(portfolio_values_list(item))
+        return rows
+    text = str(value or "").strip()
+    if not text:
+        return []
+    return [part for part in re.split(r"[,;\s]+", text) if part]
+
+
+def portfolio_client_id_from_number(value):
+    if value in (None, ""):
+        return ""
+    try:
+        return f"A{int(float(value))}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def portfolio_normalize_client_id(value):
+    text = str(value or "").strip().upper()
+    if not text:
+        return ""
+    match = re.search(r"A?\s*([0-9]+)", text)
+    if not match:
+        return ""
+    return f"A{int(match.group(1))}"
+
+
+def portfolio_parse_client_ids(value):
+    ids = set()
+    values = portfolio_values_list(value)
+    for raw in values:
+        text = str(raw or "").strip().upper()
+        if not text:
+            continue
+        range_match = re.match(r"A?\s*([0-9]+)\s*[-:]\s*A?\s*([0-9]+)$", text)
+        if range_match:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2))
+            if start > end:
+                start, end = end, start
+            for number in range(start, end + 1):
+                ids.add(f"A{number}")
+            continue
+        normalized = portfolio_normalize_client_id(text)
+        if normalized:
+            ids.add(normalized)
+    return ids
+
+
 def portfolio_cast_manual_value(field, value):
     numeric_fields = {"order", "invested_usd", "entry_price", "quantity", "credit_usd", "current_price"}
     if field == "order":
@@ -13839,8 +13913,19 @@ def portfolio_delete_manual_order(summary, parameters=None):
     if not removed:
         return {"ok": False, "error": "manual_entry_not_found", "parameters": parameters}
     config["manual_entries"] = kept
+    removed_orders = config.get("removed_orders") if isinstance(config.get("removed_orders"), list) else []
+    for entry in removed:
+        removed_orders.append(
+            {
+                **dict(entry),
+                "removed_at": now_iso(),
+                "removed_by": str(first_value(parameters, "removed_by", "actor", default="kim_live_panel") or "kim_live_panel"),
+                "remove_reason": str(first_value(parameters, "reason", "notes", default="manual_remove") or "manual_remove"),
+            }
+        )
+    config["removed_orders"] = removed_orders
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0105"
+    config["standard_version"] = "KIM-0112"
     portfolio_write_override_config(config)
     append_memory("portfolio_manual_order_deleted", {"removed": removed, "parameters": parameters})
     return {
@@ -13849,6 +13934,246 @@ def portfolio_delete_manual_order(summary, parameters=None):
         "action": "delete_manual_order",
         "removed_count": len(removed),
         "removed": removed,
+        "manual_orders": portfolio_manual_orders(summary, {"include_report": False}),
+    }
+
+
+def portfolio_selected_manual_entries(config, parameters=None):
+    parameters = parameters or {}
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    requested_ids = portfolio_parse_client_ids(first_value(parameters, "ids", "client_ids", "selected_ids", "orders", "members", default=[]))
+    requested_symbols = {
+        portfolio_normalize_symbol(symbol)
+        for symbol in portfolio_values_list(first_value(parameters, "symbols", "symbol", "ticker", "asset", default=[]))
+    }
+    requested_symbols.discard("")
+    requested_states = {
+        str(state or "").strip().lower()
+        for state in portfolio_values_list(first_value(parameters, "states", "state", "status", default=[]))
+    }
+    requested_states.discard("")
+    matched = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        normalized = portfolio_normalize_manual_entry(entry)
+        entry_ids = {
+            portfolio_client_id_from_number(normalized.get("order")),
+            portfolio_normalize_client_id(normalized.get("identifier")),
+            portfolio_normalize_client_id(normalized.get("id")),
+        }
+        entry_ids.discard("")
+        symbol = portfolio_normalize_symbol(normalized.get("symbol"))
+        state = str(normalized.get("state") or "").strip().lower()
+        id_match = bool(requested_ids and requested_ids.intersection(entry_ids))
+        symbol_match = bool(requested_symbols and symbol in requested_symbols)
+        state_match = not requested_states or state in requested_states
+        if (id_match or symbol_match or (not requested_ids and not requested_symbols)) and state_match:
+            matched.append(normalized)
+    return matched
+
+
+def portfolio_consolidation_preview_for_entries(entries, config):
+    fee_rate = portfolio_manual_aggregation_fee_rate(config)
+    total_amount = 0.0
+    total_quantity = 0.0
+    total_credit = 0.0
+    member_rows = []
+    symbols = []
+    for raw in entries:
+        entry = portfolio_normalize_manual_entry(raw)
+        symbol = portfolio_normalize_symbol(entry.get("symbol"))
+        if symbol and symbol not in symbols:
+            symbols.append(symbol)
+        amount = portfolio_float(entry.get("invested_usd"), 0.0) or 0.0
+        price = portfolio_float(entry.get("entry_price"))
+        quantity = portfolio_float(entry.get("quantity"))
+        if quantity in (None, 0) and amount and price not in (None, 0):
+            quantity = amount / price
+        quantity = portfolio_float(quantity, 0.0) or 0.0
+        total_amount += amount
+        total_quantity += quantity
+        total_credit += portfolio_float(entry.get("credit_usd"), 0.0) or 0.0
+        member_rows.append(
+            {
+                "id": portfolio_manual_entry_key(entry),
+                "client_id": portfolio_client_id_from_number(entry.get("order")),
+                "symbol": symbol,
+                "state": entry.get("state"),
+                "amount_usd": round_opt(amount, 2),
+                "entry_price": round_price(price),
+                "quantity": round_opt(quantity, 8),
+            }
+        )
+    raw_average = (total_amount / total_quantity) if total_quantity else None
+    adjusted_average = raw_average * (1 + fee_rate) if raw_average is not None else None
+    return {
+        "symbols": symbols,
+        "member_count": len(member_rows),
+        "members": member_rows,
+        "total_amount_usd": round_opt(total_amount, 2),
+        "total_quantity": round_opt(total_quantity, 8),
+        "total_credit_usd": round_opt(total_credit, 2),
+        "raw_weighted_average_price": round_price(raw_average),
+        "fee_rate": fee_rate,
+        "fee_rate_pct": round_opt(fee_rate * 100, 4),
+        "fee_adjusted_average_price": round_price(adjusted_average),
+        "summary": (
+            f"Aglomerar {len(member_rows)} tramo(s): total {format_usd_amount(total_amount)} USD, "
+            f"promedio base {format_price(raw_average)}, fee {format_usd_amount(fee_rate * 100)}%, "
+            f"precio visible {format_price(adjusted_average)}."
+        ),
+    }
+
+
+def portfolio_manual_aggregation_suggestions(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing", "suggestions": []}
+    entries = [
+        portfolio_normalize_manual_entry(entry)
+        for entry in (config.get("manual_entries") or [])
+        if isinstance(entry, dict) and str((entry or {}).get("state") or "").strip().lower() not in PORTFOLIO_CLOSED_STATES
+    ]
+    grouped = {}
+    for entry in entries:
+        symbol = portfolio_normalize_symbol(entry.get("symbol"))
+        if not symbol:
+            continue
+        grouped.setdefault(symbol, []).append(entry)
+    suggestions = []
+    for symbol, rows in sorted(grouped.items()):
+        if len(rows) < 2:
+            continue
+        rows = sorted(rows, key=lambda item: portfolio_float(item.get("order"), 9999) or 9999)
+        states = sorted({str(item.get("state") or "").strip().lower() for item in rows if str(item.get("state") or "").strip()})
+        suggestions.append(
+            {
+                "symbol": symbol,
+                "label": portfolio_symbol_label(symbol),
+                "states": states,
+                "needs_confirmation": True,
+                "recommended_action": "agglomerate_manual_orders",
+                "preview": portfolio_consolidation_preview_for_entries(rows, config),
+            }
+        )
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "aggregation_suggestions",
+        "suggestions": suggestions,
+        "count": len(suggestions),
+    }
+
+
+def portfolio_agglomerate_manual_orders(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing"}
+    selected = portfolio_selected_manual_entries(config, parameters)
+    if len(selected) < 2:
+        return {"ok": False, "error": "not_enough_members", "message": "Se requieren al menos dos tramos para aglomerar.", "selected": selected}
+    symbols = {portfolio_normalize_symbol(item.get("symbol")) for item in selected}
+    symbols.discard("")
+    if len(symbols) != 1 and not boolish(first_value(parameters, "allow_mixed_symbols", default=False)):
+        return {"ok": False, "error": "mixed_symbols", "symbols": sorted(symbols), "message": "No se pueden aglomerar monedas distintas sin permiso explicito."}
+    preview = portfolio_consolidation_preview_for_entries(selected, config)
+    canonical_order = portfolio_float(first_value(parameters, "canonical_order", "order", "base_order", default=None))
+    selected_sorted = sorted(selected, key=lambda item: portfolio_float(item.get("order"), 9999) or 9999)
+    canonical = dict(selected_sorted[0])
+    if canonical_order is not None:
+        for item in selected_sorted:
+            if portfolio_float(item.get("order")) == canonical_order:
+                canonical = dict(item)
+                break
+    selected_keys = {portfolio_manual_entry_key(item) for item in selected_sorted}
+    symbol = next(iter(symbols)) if symbols else portfolio_normalize_symbol(canonical.get("symbol"))
+    canonical["symbol"] = symbol
+    canonical["label"] = str(first_value(parameters, "label", default=canonical.get("label") or portfolio_symbol_label(symbol)) or portfolio_symbol_label(symbol))
+    canonical["state"] = str(first_value(parameters, "state", "status", default="active") or "active").strip().lower()
+    canonical["invested_usd"] = preview.get("total_amount_usd")
+    canonical["entry_price"] = preview.get("fee_adjusted_average_price")
+    canonical["quantity"] = preview.get("total_quantity")
+    canonical["credit_usd"] = preview.get("total_credit_usd")
+    canonical["raw_weighted_average_price"] = preview.get("raw_weighted_average_price")
+    canonical["fee_adjusted_average_price"] = preview.get("fee_adjusted_average_price")
+    canonical["consumed_orders"] = [item.get("client_id") for item in preview.get("members") or [] if item.get("client_id")]
+    canonical["split_members"] = [dict(item) for item in selected_sorted]
+    canonical["source"] = str(first_value(parameters, "source", default="kim_live_agglomeration") or "kim_live_agglomeration")
+    note = str(canonical.get("notes") or "").strip()
+    agg_note = (
+        f"Aglomeracion confirmada {now_iso()}: {preview.get('summary')} "
+        f"Tramos consumidos: {', '.join(canonical.get('consumed_orders') or [])}."
+    )
+    canonical["notes"] = (note + " " + agg_note).strip()
+    canonical["updated_at"] = now_iso()
+    manual_entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    kept = [
+        entry
+        for entry in manual_entries
+        if not (isinstance(entry, dict) and portfolio_manual_entry_key(portfolio_normalize_manual_entry(entry)) in selected_keys)
+    ]
+    kept.append(portfolio_normalize_manual_entry(canonical))
+    consumed_orders = config.get("consumed_orders") if isinstance(config.get("consumed_orders"), list) else []
+    consumed_orders.append({"at": now_iso(), "action": "agglomerate_manual_orders", "canonical": canonical, "members": selected_sorted, "preview": preview})
+    config["manual_entries"] = kept
+    config["consumed_orders"] = consumed_orders
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0112"
+    portfolio_write_override_config(config)
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "agglomerate_manual_orders",
+        "canonical_entry": canonical,
+        "preview": preview,
+        "manual_orders": portfolio_manual_orders(summary, {"include_report": False}),
+    }
+
+
+def portfolio_split_manual_order(summary, parameters=None):
+    parameters = parameters or {}
+    config = portfolio_report_override_config(summary)
+    if not config:
+        return {"ok": False, "error": "override_config_missing"}
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    matched_index = None
+    matched = None
+    for index, entry in enumerate(entries):
+        if isinstance(entry, dict) and portfolio_manual_entry_matches(entry, parameters):
+            matched_index = index
+            matched = portfolio_normalize_manual_entry(entry)
+            break
+    if matched is None:
+        return {"ok": False, "error": "manual_entry_not_found", "parameters": parameters}
+    split_members = matched.get("split_members") if isinstance(matched.get("split_members"), list) else []
+    if not split_members:
+        return {"ok": False, "error": "split_members_missing", "message": "Esta posicion no tiene tramos tecnicos guardados para separar."}
+    restored = [portfolio_normalize_manual_entry(member) for member in split_members if isinstance(member, dict)]
+    new_entries = [entry for index, entry in enumerate(entries) if index != matched_index]
+    new_entries.extend(restored)
+    config["manual_entries"] = new_entries
+    config["updated_at"] = now_iso()
+    config["standard_version"] = "KIM-0112"
+    change_log = config.get("change_log") if isinstance(config.get("change_log"), list) else []
+    change_log.append(
+        {
+            "at": now_iso(),
+            "action": "split_manual_order",
+            "removed_consolidated": matched,
+            "restored_count": len(restored),
+        }
+    )
+    config["change_log"] = change_log
+    portfolio_write_override_config(config)
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "split_manual_order",
+        "restored_count": len(restored),
+        "restored": restored,
         "manual_orders": portfolio_manual_orders(summary, {"include_report": False}),
     }
 
@@ -14071,6 +14396,7 @@ def portfolio_cli(action, parameters=None):
         "delete_manual_order",
         "remove_manual_order",
         "normalize_manual_orders",
+        *PORTFOLIO_MANUAL_SENSITIVE_ACTIONS,
         *PORTFOLIO_SALE_ACTIONS,
         *PORTFOLIO_EXECUTION_ACTIONS,
     }
@@ -14109,6 +14435,31 @@ def portfolio_cli(action, parameters=None):
             },
             execution_parameters={**parameters, "confirm": True},
         )
+    if action in PORTFOLIO_MANUAL_SENSITIVE_ACTIONS and not confirm:
+        summary = module.portfolio_summary_json()
+        override_config = portfolio_report_override_config(summary)
+        if action in {"agglomerate_manual_orders", "aggregate_manual_orders", "consolidate_manual_orders", "consolidate_orders"}:
+            selected = portfolio_selected_manual_entries(override_config, parameters) if override_config else []
+            preview = portfolio_consolidation_preview_for_entries(selected, override_config or {}) if selected else {"parameters": parameters}
+            summary_text = "Confirmar aglomeracion manual del portafolio Sr. Eli."
+        elif action in {"split_consolidated_order", "split_manual_order", "split_order", "separate_order", "separate_orders"}:
+            selected = portfolio_selected_manual_entries(override_config, parameters) if override_config else []
+            preview = {"selected": selected, "parameters": parameters}
+            summary_text = "Confirmar separacion de una posicion consolidada."
+        elif action in {"manual_delete_order", "delete_manual_order", "remove_manual_order", "remove_order", "remove_portfolio_order"}:
+            selected = portfolio_selected_manual_entries(override_config, parameters) if override_config else []
+            preview = {"selected": selected, "parameters": parameters}
+            summary_text = "Confirmar eliminacion/remocion de orden manual del portafolio Sr. Eli."
+        else:
+            preview = {"parameters": parameters}
+            summary_text = "Confirmar cambio sensible del portafolio Sr. Eli."
+        return confirmation_preview(
+            "portfolio",
+            action,
+            summary_text,
+            preview,
+            execution_parameters={**parameters, "confirm": True},
+        )
 
     if action == "status":
         try:
@@ -14131,8 +14482,22 @@ def portfolio_cli(action, parameters=None):
         result = module.portfolio_summary_json()
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
         result = portfolio_client_report(module.portfolio_summary_json(), parameters)
+    elif action in {"whatsapp_preview", "preview_whatsapp_report", "compose_whatsapp_report", "portfolio_whatsapp_preview"}:
+        report = portfolio_client_report(module.portfolio_summary_json(), {**parameters, "save_standard": False})
+        composed = portfolio_compose_whatsapp_messages(report, {**parameters, "dry_run": True, "allow_unvalidated": True})
+        result = {
+            "ok": True,
+            "provider": "portfolio",
+            "action": "whatsapp_preview",
+            "preview": composed.get("preview", {}),
+            "messages": composed.get("messages", []),
+            "selected_lines": composed.get("selected_lines", []),
+            "report": report,
+        }
     elif action in {"manual_orders", "list_manual_orders", "editable_orders", "portfolio_manual_orders"}:
         result = portfolio_manual_orders(module.portfolio_summary_json(), parameters)
+    elif action in {"aggregation_suggestions", "agglomeration_suggestions", "suggest_agglomerations", "suggest_consolidations"}:
+        result = portfolio_manual_aggregation_suggestions(module.portfolio_summary_json(), parameters)
     elif action in {"normalize_manual_orders", "fix_manual_order_states"}:
         result = portfolio_manual_orders(
             module.portfolio_summary_json(),
@@ -14142,6 +14507,12 @@ def portfolio_cli(action, parameters=None):
         result = portfolio_update_manual_order(module.portfolio_summary_json(), parameters)
     elif action in {"manual_delete_order", "delete_manual_order", "remove_manual_order"}:
         result = portfolio_delete_manual_order(module.portfolio_summary_json(), parameters)
+    elif action in {"remove_order", "remove_portfolio_order"}:
+        result = portfolio_delete_manual_order(module.portfolio_summary_json(), parameters)
+    elif action in {"agglomerate_manual_orders", "aggregate_manual_orders", "consolidate_manual_orders", "consolidate_orders"}:
+        result = portfolio_agglomerate_manual_orders(module.portfolio_summary_json(), parameters)
+    elif action in {"split_consolidated_order", "split_manual_order", "split_order", "separate_order", "separate_orders"}:
+        result = portfolio_split_manual_order(module.portfolio_summary_json(), parameters)
     elif action in {
         "weighted_average_breakdown",
         "weighted_average",
@@ -19623,6 +19994,7 @@ def portfolio_client_report(summary, parameters=None):
     )
 
     message_lines = []
+    client_lines = []
     portfolio_title = "Portafolio Sr. Eli"
     if override_config.get("portfolio_label"):
         portfolio_title += f" - {override_config.get('portfolio_label')}"
@@ -19701,6 +20073,36 @@ def portfolio_client_report(summary, parameters=None):
         if include_units and item.get("reference_quantity") is not None:
             line += f"\nUnidades de referencia: {item['reference_quantity']}."
         message_lines.append(line)
+        client_lines.append(
+            {
+                "id": portfolio_normalize_client_id(line_id) or str(line_id).upper(),
+                "display_id": line_id,
+                "order": item.get("resolved_report_order"),
+                "internal_order": item.get("canonical_report_order") or item.get("report_order"),
+                "source_id": item.get("id") or (item.get("transaction_ids") or [""])[0],
+                "symbol": item.get("symbol"),
+                "label": label,
+                "state": item.get("client_state"),
+                "message": line,
+                "approved_for_client_report": bool(item.get("approved_for_client_report")),
+                "price_validation_status": item.get("price_validation_status"),
+                "current_price": item.get("current_price"),
+                "current_price_display": item.get("current_price_display"),
+                "entry_price": item.get("entry_price"),
+                "entry_price_display": item.get("entry_price_display"),
+                "variation_pct": item.get("client_display_pct"),
+                "variation_display": item.get("variation_display"),
+                "client_phrase": item.get("client_phrase"),
+                "credit_mark": item.get("credit_mark") or "",
+                "is_consolidated": bool(
+                    item.get("merged_with_pending")
+                    or item.get("aggregation")
+                    or item.get("consumed_orders")
+                    or int(item.get("draft_suborder_count") or 1) > 1
+                ),
+                "blocked": not bool(item.get("approved_for_client_report")),
+            }
+        )
         lines.append(line)
     if executed_preliminary:
         lines.append("")
@@ -19881,6 +20283,7 @@ def portfolio_client_report(summary, parameters=None):
         "pending_orders": pending_items,
         "balance": balance,
         "balance_line": balance_line,
+        "client_lines": client_lines,
         "message_lines": message_lines,
         "whatsapp_messages": [*message_lines, balance_line],
         "summary": "\n".join(lines),
@@ -20120,6 +20523,173 @@ def portfolio_target_is_doctor_control(target):
     return twilio_lookup_phone_number(target) == DOCTOR_DUBAI_WHATSAPP_NUMBER
 
 
+def portfolio_client_lines_from_report(report):
+    rows = []
+    structured = report.get("client_lines") if isinstance(report.get("client_lines"), list) else []
+    if structured:
+        for item in structured:
+            if not isinstance(item, dict):
+                continue
+            row = dict(item)
+            row["id"] = portfolio_normalize_client_id(row.get("id") or row.get("display_id")) or str(row.get("id") or "").upper()
+            rows.append(row)
+        return rows
+    for index, message in enumerate(report.get("message_lines") or [], start=1):
+        rows.append(
+            {
+                "id": f"A{index}",
+                "display_id": f"A{index}",
+                "order": index,
+                "message": str(message or ""),
+                "approved_for_client_report": "precio actual no validado" not in str(message or "").lower(),
+                "state": "",
+                "symbol": "",
+                "blocked": "precio actual no validado" in str(message or "").lower(),
+            }
+        )
+    return rows
+
+
+def portfolio_whatsapp_scope_from_parameters(parameters):
+    parameters = parameters or {}
+    scope = str(first_value(parameters, "send_scope", "scope", "selection_mode", "mode", default="all") or "all").strip().lower()
+    has_ids = bool(portfolio_parse_client_ids(first_value(parameters, "ids", "client_ids", "selected_ids", "orders", default=[])))
+    has_range = bool(first_value(parameters, "range", "id_range", "client_range", "from_to", default=""))
+    has_symbols = bool(portfolio_values_list(first_value(parameters, "symbols", "symbol", "ticker", "asset", default=[])))
+    has_state = bool(str(first_value(parameters, "state", "status", default="") or "").strip())
+    if scope in {"all", "todo", "full", "complete"}:
+        if has_range:
+            return "range"
+        if has_ids:
+            return "ids"
+        if has_symbols:
+            return "symbols"
+        if has_state:
+            return "state"
+    aliases = {
+        "selected": "ids",
+        "selection": "ids",
+        "manual_selection": "ids",
+        "seleccion": "ids",
+        "rango": "range",
+        "correccion": "correction",
+        "correction_only": "correction",
+        "pendientes": "state",
+        "pending": "state",
+        "activas": "state",
+        "active": "state",
+        "simbolos": "symbols",
+        "symbols": "symbols",
+    }
+    return aliases.get(scope, scope or "all")
+
+
+def portfolio_selected_client_lines(report, parameters=None):
+    parameters = parameters or {}
+    lines = portfolio_client_lines_from_report(report)
+    scope = portfolio_whatsapp_scope_from_parameters(parameters)
+    selected_ids = portfolio_parse_client_ids(first_value(parameters, "ids", "client_ids", "selected_ids", "orders", default=[]))
+    range_ids = portfolio_parse_client_ids(first_value(parameters, "range", "id_range", "client_range", "from_to", default=[]))
+    from_id = portfolio_normalize_client_id(first_value(parameters, "from_id", "start_id", "desde", default=""))
+    to_id = portfolio_normalize_client_id(first_value(parameters, "to_id", "end_id", "hasta", default=""))
+    if from_id and to_id:
+        range_ids.update(portfolio_parse_client_ids(f"{from_id}-{to_id}"))
+    symbols = {
+        portfolio_normalize_symbol(symbol)
+        for symbol in portfolio_values_list(first_value(parameters, "symbols", "symbol", "ticker", "asset", default=[]))
+    }
+    symbols.discard("")
+    state = str(first_value(parameters, "state", "status", default="") or "").strip().lower()
+    if scope == "pending" and not state:
+        state = "pending"
+        scope = "state"
+    if scope == "active" and not state:
+        state = "active"
+        scope = "state"
+    if scope == "range":
+        selected_ids = range_ids
+    elif scope == "correction":
+        if range_ids:
+            selected_ids = range_ids
+            scope = "range"
+        elif selected_ids:
+            scope = "ids"
+        elif symbols:
+            scope = "symbols"
+        else:
+            raise ValueError("Para mandar una correccion necesito ids, rango o simbolos afectados; no voy a reenviar todo.")
+    if scope == "all":
+        selected = lines
+    elif scope in {"ids", "range"}:
+        if not selected_ids:
+            raise ValueError("No hay IDs seleccionados para enviar por WhatsApp.")
+        selected = [line for line in lines if portfolio_normalize_client_id(line.get("id")) in selected_ids]
+    elif scope == "symbols":
+        if not symbols:
+            raise ValueError("No hay simbolos seleccionados para enviar por WhatsApp.")
+        selected = [line for line in lines if portfolio_normalize_symbol(line.get("symbol")) in symbols]
+    elif scope == "state":
+        if state in {"pendiente", "pendientes"}:
+            state = "pending"
+        if state in {"activa", "activas", "mercado", "market"}:
+            state = "active"
+        if state not in {"active", "pending"}:
+            raise ValueError("Estado no soportado para WhatsApp dinamico; usa active o pending.")
+        selected = [line for line in lines if str(line.get("state") or "").strip().lower() == state]
+    else:
+        raise ValueError(f"Scope de WhatsApp no soportado: {scope}.")
+    selected_ids_out = [str(line.get("id") or "").upper() for line in selected]
+    missing_ids = sorted(selected_ids - set(selected_ids_out)) if selected_ids and scope in {"ids", "range"} else []
+    return scope, selected, selected_ids_out, missing_ids
+
+
+def portfolio_compose_whatsapp_messages(report, parameters=None):
+    parameters = parameters or {}
+    scope, selected, selected_ids, missing_ids = portfolio_selected_client_lines(report, parameters)
+    if not selected:
+        raise ValueError("La seleccion no genero lineas de portafolio para enviar.")
+    allow_unvalidated = boolish(first_value(parameters, "allow_unvalidated", "permit_unvalidated", default=False))
+    blocked_lines = [
+        {
+            "id": line.get("id"),
+            "symbol": line.get("symbol"),
+            "reason": line.get("price_validation_status") or "precio_actual_no_validado",
+        }
+        for line in selected
+        if line.get("blocked")
+        or not line.get("approved_for_client_report")
+        or "precio actual no validado" in str(line.get("message") or "").lower()
+    ]
+    if blocked_lines and not allow_unvalidated:
+        blocked_text = ", ".join(str(line.get("id") or line.get("symbol") or "?") for line in blocked_lines)
+        raise ValueError(f"Reporte bloqueado: faltan precios validados para {blocked_text}.")
+    include_balance_param = first_value(parameters, "include_balance", "balance", "include_totals", default=None)
+    include_balance = boolish(include_balance_param) if include_balance_param is not None else scope == "all"
+    messages = [str(line.get("message") or "").strip() for line in selected if str(line.get("message") or "").strip()]
+    if include_balance and report.get("balance_line"):
+        messages.append(str(report.get("balance_line")))
+    preview = {
+        "scope": scope,
+        "selected_ids": selected_ids,
+        "missing_ids": missing_ids,
+        "include_balance": include_balance,
+        "message_count": len(messages),
+        "blocked_lines": blocked_lines,
+        "first_message": messages[0] if messages else "",
+        "balance_line": report.get("balance_line", "") if include_balance else "",
+    }
+    return {
+        "messages": messages,
+        "selected_lines": selected,
+        "selected_ids": selected_ids,
+        "missing_ids": missing_ids,
+        "scope": scope,
+        "include_balance": include_balance,
+        "blocked_lines": blocked_lines,
+        "preview": preview,
+    }
+
+
 def portfolio_send_whatsapp_report(summary, parameters=None):
     parameters = dict(parameters or {})
     parameters.setdefault("force_refresh_prices", True)
@@ -20128,31 +20698,20 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
     dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", default=False))
     confirmed = doctor_control or boolish(first_value(parameters, "confirm", "confirmed", "confirmed_by_doctor", "allow_send", default=False))
     report = portfolio_client_report(summary, {**parameters, "save_standard": False})
-    messages = list(report.get("whatsapp_messages") or report.get("message_lines") or [])
+    compose_parameters = dict(parameters)
+    if dry_run:
+        compose_parameters.setdefault("allow_unvalidated", True)
+    composed = portfolio_compose_whatsapp_messages(report, compose_parameters)
+    messages = list(composed.get("messages") or [])
     if not messages:
         raise ValueError("No se generaron lineas de portafolio para enviar.")
-    unapproved_active = [
-        item.get("label") or item.get("symbol")
-        for item in (report.get("active_positions") or [])
-        if not item.get("approved_for_client_report")
-    ]
-    unvalidated_messages = [
-        message
-        for message in messages
-        if "precio actual no validado" in str(message).lower()
-        or "sin porcentaje validado" in str(message).lower()
-    ]
-    allow_unvalidated = boolish(first_value(parameters, "allow_unvalidated", "permit_unvalidated", default=False))
     preview = {
         "to": target,
         "doctor_control_recipient": doctor_control,
         "message_count": len(messages),
-        "first_message": messages[0],
-        "balance_line": report.get("balance_line", ""),
+        **composed.get("preview", {}),
         "providers_used": report.get("providers_used", []),
         "provider_warnings": report.get("provider_warnings", []),
-        "unapproved_active": unapproved_active,
-        "unvalidated_message_count": len(unvalidated_messages),
     }
     if dry_run:
         return {
@@ -20162,14 +20721,9 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
             "dry_run": True,
             "preview": preview,
             "messages": messages,
+            "selected_lines": composed.get("selected_lines", []),
             "report": report,
         }
-    if (unapproved_active or unvalidated_messages) and not allow_unvalidated:
-        raise ValueError(
-            "Reporte bloqueado: faltan precios validados para "
-            + (", ".join(str(item) for item in unapproved_active) or f"{len(unvalidated_messages)} mensaje(s)")
-            + ". Regenera precios antes de enviar WhatsApp al Dr. Yehoshua."
-        )
     if not confirmed:
         return confirmation_preview(
             "portfolio",
@@ -20249,7 +20803,11 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
         "to": target,
         "doctor_control_recipient": doctor_control,
         "context_id": context_id,
+        "scope": composed.get("scope"),
+        "selected_ids": composed.get("selected_ids", []),
         "message_count": len(messages),
+        "messages": messages,
+        "selected_lines": composed.get("selected_lines", []),
         "accepted_count": accepted_count,
         "sent_count": len(send_results),
         "delivered_count": delivered_count,

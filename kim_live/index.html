@@ -1310,6 +1310,24 @@
       gap: 8px;
     }
 
+    .portfolio-selection-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .portfolio-selection-bar input {
+      width: 150px;
+      min-height: 34px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 7px 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 12px;
+    }
+
     .portfolio-editor-status {
       border: 1px solid #d7dde3;
       border-radius: 8px;
@@ -1325,6 +1343,8 @@
       display: grid;
       gap: 8px;
       min-width: 0;
+      max-height: 52dvh;
+      overflow: auto;
     }
 
     .portfolio-order-row {
@@ -1343,6 +1363,19 @@
       justify-content: space-between;
       gap: 10px;
       min-width: 0;
+    }
+
+    .portfolio-order-head label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .portfolio-order-head input[type="checkbox"] {
+      width: 16px;
+      min-height: 16px;
+      flex: 0 0 auto;
     }
 
     .portfolio-order-title {
@@ -1421,6 +1454,24 @@
       padding: 4px 8px;
       background: #fbfcfd;
       overflow-wrap: anywhere;
+    }
+
+    .confirm-security-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .confirm-security-fields input {
+      width: 160px;
+      min-height: 34px;
+      border: 1px solid #cbd5dc;
+      border-radius: 8px;
+      padding: 7px 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 12px;
     }
 
     .fundamental-panel {
@@ -2547,7 +2598,7 @@
           <div class="portfolio-editor-head">
             <div>
               <h3>Portfolio Manual Sr. Eli</h3>
-              <p>A1-A12 en mercado; A13+ pendientes. Edita precios de entrada, elimina errores y recalcula porcentajes solo cuando lo pidas.</p>
+              <p>Vista cliente compacta sin huecos y vista tecnica con tramos, auditoria, consumidas y removidas.</p>
             </div>
             <div class="portfolio-editor-actions">
               <button class="secondary inline-button" id="portfolioNormalize" type="button">Normalizar estados</button>
@@ -2555,6 +2606,17 @@
               <button class="secondary inline-button" id="portfolioCopyAll" type="button">Copiar reporte</button>
               <button class="primary inline-button" id="portfolioSendWhatsapp" type="button">Mandar WhatsApp</button>
             </div>
+          </div>
+          <div class="paper-subtabs" aria-label="Vistas de portfolio">
+            <button class="paper-subtab active" data-portfolio-view="client" type="button">Vista Cliente</button>
+            <button class="paper-subtab" data-portfolio-view="technical" type="button">Vista Tecnica</button>
+            <button class="paper-subtab" data-portfolio-view="suggestions" type="button">Aglomeraciones</button>
+          </div>
+          <div class="portfolio-selection-bar" aria-label="Envio dinamico de portfolio">
+            <input id="portfolioRange" placeholder="A13-A21" spellcheck="false">
+            <button class="secondary inline-button" id="portfolioSendSelected" type="button">Enviar seleccionadas</button>
+            <button class="secondary inline-button" id="portfolioSendRange" type="button">Enviar rango</button>
+            <button class="secondary inline-button" id="portfolioSendCorrection" type="button">Enviar correccion</button>
           </div>
           <div class="portfolio-editor-status" id="portfolioEditorStatus">Cargando portfolio manual...</div>
           <div class="portfolio-editor-list" id="portfolioEditorList"></div>
@@ -2619,6 +2681,10 @@
             <strong id="confirmTitle">Sin accion pendiente</strong>
             <small id="confirmDetails">Kim preparara cambios de correo, ClickUp o Notion aqui.</small>
           </div>
+          <div class="confirm-security-fields" aria-label="Autorizacion de seguridad">
+            <input id="confirmSecurityPin" type="password" inputmode="numeric" placeholder="PIN">
+            <input id="confirmSecurityPhrase" type="password" placeholder="Frase de seguridad">
+          </div>
           <button class="primary inline-button" id="confirmApiAction" type="button">Confirmar accion</button>
           <button class="secondary inline-button" id="clearApiAction" type="button">Descartar</button>
         </div>
@@ -2675,6 +2741,9 @@
     let paperBrokerFilter = "pending";
     let portfolioEditorState = null;
     let portfolioLatestReport = null;
+    let portfolioViewMode = "client";
+    let selectedPortfolioClientIds = new Set();
+    let portfolioSuggestionsState = null;
     let fundamentalLatestReport = null;
     let selectedMicDeviceId = localStorage.getItem("kimLiveMicDeviceId") || "";
     let voiceOptions = [];
@@ -2812,6 +2881,8 @@
         $("confirmTitle").textContent = "Sin accion pendiente";
         $("confirmDetails").textContent = "Kim preparara cambios de correo, ClickUp o Notion aqui.";
         $("confirmApiAction").disabled = true;
+        $("confirmSecurityPin").value = "";
+        $("confirmSecurityPhrase").value = "";
         return;
       }
       const provider = pendingApiAction.provider || "api";
@@ -3649,12 +3720,106 @@
       return row.querySelector(`[data-portfolio-field="${field}"]`)?.value?.trim() || "";
     }
 
-    function renderPortfolioEditor(data) {
-      portfolioEditorState = data || portfolioEditorState || {};
-      const entries = (portfolioEditorState.manual_entries || []).slice().sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
-      const activeCount = portfolioEditorState.active_count ?? entries.filter((item) => item.state === "active").length;
-      const pendingCount = portfolioEditorState.pending_count ?? entries.filter((item) => item.state === "pending").length;
-      $("portfolioEditorStatus").textContent = `Manual: ${activeCount} en mercado, ${pendingCount} pendientes. Version: ${portfolioEditorState.standard_version || "n/a"}.`;
+    function portfolioClientLines() {
+      const report = portfolioLatestReport || {};
+      if (Array.isArray(report.client_lines) && report.client_lines.length) return report.client_lines;
+      return (report.message_lines || []).map((message, index) => ({
+        id: "A" + (index + 1),
+        display_id: "A" + (index + 1),
+        message,
+        state: "",
+        symbol: "",
+        approved_for_client_report: !String(message || "").toLowerCase().includes("precio actual no validado")
+      }));
+    }
+
+    function portfolioSelectedClientIds() {
+      return Array.from(selectedPortfolioClientIds).sort((a, b) => Number(a.replace(/\D/g, "") || 0) - Number(b.replace(/\D/g, "") || 0));
+    }
+
+    function portfolioMessagesForSelected(includeBalance = false) {
+      const ids = new Set(portfolioSelectedClientIds);
+      const report = portfolioLatestReport || {};
+      const lines = portfolioClientLines();
+      const chosen = ids.size ? lines.filter((line) => ids.has(String(line.id || "").toUpperCase())) : lines;
+      const messages = chosen.map((line) => line.message).filter(Boolean);
+      if (includeBalance && report.balance_line) messages.push(report.balance_line);
+      return messages;
+    }
+
+    function renderPortfolioClientView() {
+      const lines = portfolioClientLines();
+      if (!lines.length) {
+        $("portfolioEditorList").innerHTML = "<small>Recarga porcentajes para generar la Vista Cliente.</small>";
+        return;
+      }
+      $("portfolioEditorList").innerHTML = lines.map((line) => {
+        const id = String(line.id || line.display_id || "").toUpperCase();
+        const checked = selectedPortfolioClientIds.has(id) ? "checked" : "";
+        const stateLabel = line.state === "pending" ? "Pendiente" : (line.state === "active" ? "En mercado" : "Cliente");
+        const blocked = line.approved_for_client_report ? "" : " · precio bloqueado";
+        return `
+          <article class="portfolio-order-row" data-portfolio-client-id="${escapeHtml(id)}">
+            <div class="portfolio-order-head">
+              <label>
+                <input type="checkbox" data-portfolio-client-select="${escapeHtml(id)}" ${checked}>
+                <span class="portfolio-order-title">${escapeHtml(id)} · ${escapeHtml(line.label || line.symbol || "Orden")}</span>
+              </label>
+              <span class="portfolio-order-state">${escapeHtml(stateLabel + blocked)}</span>
+            </div>
+            <div class="portfolio-order-metrics">
+              <span>${escapeHtml(line.current_price_display || "Sin precio")}</span>
+              <span>${escapeHtml(line.client_phrase || line.variation_display || "Sin porcentaje")}</span>
+              <span>${escapeHtml(line.is_consolidated ? "Consolidada" : "Linea cliente")}</span>
+            </div>
+            <pre class="portfolio-report-preview">${escapeHtml(line.message || "")}</pre>
+            <div class="portfolio-order-actions">
+              <button class="secondary inline-button" type="button" data-portfolio-client-copy="${escapeHtml(id)}">Copiar linea</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+      document.querySelectorAll("[data-portfolio-client-select]").forEach((input) => {
+        input.onchange = () => {
+          const id = String(input.dataset.portfolioClientSelect || "").toUpperCase();
+          if (input.checked) selectedPortfolioClientIds.add(id);
+          else selectedPortfolioClientIds.delete(id);
+          $("portfolioEditorStatus").textContent = `${portfolioSelectedClientIds().length} linea(s) seleccionadas.`;
+        };
+      });
+      document.querySelectorAll("[data-portfolio-client-copy]").forEach((button) => {
+        button.onclick = async () => {
+          const id = String(button.dataset.portfolioClientCopy || "").toUpperCase();
+          const line = lines.find((item) => String(item.id || "").toUpperCase() === id);
+          await copyTextToClipboard(line?.message || "");
+          $("portfolioEditorStatus").textContent = id + " copiada.";
+        };
+      });
+    }
+
+    function renderPortfolioSuggestions() {
+      const suggestions = portfolioSuggestionsState?.suggestions || [];
+      $("portfolioEditorList").innerHTML = suggestions.length ? suggestions.map((item) => {
+        const preview = item.preview || {};
+        const members = (preview.members || []).map((member) => `${member.client_id || member.id}: ${paperMoney(member.amount_usd)} @ ${paperPrice(member.entry_price)}`).join(" · ");
+        return `
+          <article class="portfolio-order-row">
+            <div class="portfolio-order-head">
+              <span class="portfolio-order-title">${escapeHtml(item.label || item.symbol || "Aglomeracion")}</span>
+              <span class="portfolio-order-state">${escapeHtml((preview.member_count || 0) + " tramos")}</span>
+            </div>
+            <div class="portfolio-order-metrics">
+              <span>Total ${escapeHtml(paperMoney(preview.total_amount_usd))} USD</span>
+              <span>Promedio ${escapeHtml(paperPrice(preview.fee_adjusted_average_price))}</span>
+              <span>Fee ${escapeHtml(String(preview.fee_rate_pct || 0))}%</span>
+            </div>
+            <small>${escapeHtml(members || preview.summary || "")}</small>
+          </article>
+        `;
+      }).join("") : "<small>No hay sugerencias de aglomeracion pendientes.</small>";
+    }
+
+    function renderPortfolioTechnicalView(entries) {
       $("portfolioEditorList").innerHTML = entries.length ? entries.map((item) => {
         const key = escapeHtml(portfolioOrderKey(item));
         const stateLabel = item.state === "pending" ? "Pendiente" : "En mercado";
@@ -3697,6 +3862,25 @@
       wirePortfolioEditorRows();
     }
 
+    function renderPortfolioEditor(data) {
+      portfolioEditorState = data || portfolioEditorState || {};
+      const entries = (portfolioEditorState.manual_entries || []).slice().sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
+      const activeCount = portfolioEditorState.active_count ?? entries.filter((item) => item.state === "active").length;
+      const pendingCount = portfolioEditorState.pending_count ?? entries.filter((item) => item.state === "pending").length;
+      const clientCount = portfolioClientLines().length;
+      $("portfolioEditorStatus").textContent = `Manual: ${activeCount} en mercado, ${pendingCount} pendientes. Cliente: ${clientCount || "sin reporte"}. Version: ${portfolioEditorState.standard_version || "n/a"}.`;
+      document.querySelectorAll("[data-portfolio-view]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.portfolioView === portfolioViewMode);
+      });
+      if (portfolioViewMode === "client") {
+        renderPortfolioClientView();
+      } else if (portfolioViewMode === "suggestions") {
+        renderPortfolioSuggestions();
+      } else {
+        renderPortfolioTechnicalView(entries);
+      }
+    }
+
     async function loadPortfolioEditor(options = {}) {
       const data = await post("/api/portfolio", {
         action: options.normalize ? "normalize_manual_orders" : "manual_orders",
@@ -3705,6 +3889,18 @@
       const result = data.result || {};
       if (!result.ok) throw new Error(result.error || "No pude leer portfolio manual.");
       renderPortfolioEditor(result);
+      return result;
+    }
+
+    async function loadPortfolioSuggestions() {
+      const data = await post("/api/portfolio", {
+        action: "aggregation_suggestions",
+        parameters: {}
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || "No pude leer sugerencias.");
+      portfolioSuggestionsState = result;
+      renderPortfolioEditor(portfolioEditorState || {});
       return result;
     }
 
@@ -3737,6 +3933,11 @@
       if (!window.confirm("Eliminar esta orden manual del portafolio? " + title)) return null;
       const data = await post("/api/portfolio", {action: "delete_manual_order", parameters: {id: row.dataset.portfolioId}});
       const result = data.result || {};
+      if (result.requires_confirmation) {
+        capturePreparedApiAction(result);
+        $("portfolioEditorStatus").textContent = "Eliminacion preparada. Confirma con PIN/frase en el panel.";
+        return result;
+      }
       if (!result.ok) throw new Error(result.error || "No pude eliminar la orden.");
       renderPortfolioEditor(result.manual_orders || {});
       $("portfolioEditorStatus").textContent = "Orden eliminada del override manual.";
@@ -3766,7 +3967,7 @@
       });
     }
 
-    async function refreshPortfolioPercentages(sendToWhatsapp = false) {
+    async function refreshPortfolioPercentages(sendToWhatsapp = false, extraParameters = {}) {
       const action = sendToWhatsapp ? "send_whatsapp_report" : "client_report";
       $("portfolioEditorStatus").textContent = sendToWhatsapp ? "Enviando WhatsApp con precios frescos..." : "Recargando porcentajes con Binance, MEXC y Bybit...";
       const data = await post("/api/portfolio", {
@@ -3775,21 +3976,58 @@
           providers: ["binance", "mexc", "bybit"],
           force_refresh_prices: true,
           save_standard: !sendToWhatsapp,
-          context_id: "PORTFOLIO-SR-ELI-MANUAL-PANEL-" + new Date().toISOString().slice(0, 10)
+          context_id: "PORTFOLIO-SR-ELI-MANUAL-PANEL-" + new Date().toISOString().slice(0, 10),
+          ...extraParameters
         }
       });
       const result = data.result || {};
       if (!result.ok) throw new Error(result.error || (sendToWhatsapp ? "WhatsApp no quedo entregado." : "No pude recalcular."));
       portfolioLatestReport = sendToWhatsapp ? result.report : result;
-      const messages = portfolioLatestReport.whatsapp_messages || portfolioLatestReport.message_lines || [];
+      const messages = sendToWhatsapp ? (result.messages || []) : (portfolioLatestReport.whatsapp_messages || portfolioLatestReport.message_lines || []);
       $("portfolioReportPreview").textContent = messages.join("\n\n") || portfolioLatestReport.summary || "Reporte sin lineas.";
       await loadPortfolioEditor();
       if (sendToWhatsapp) {
-        $("portfolioEditorStatus").textContent = `WhatsApp: aceptados ${result.accepted_count || result.sent_count || 0}/${result.message_count || 0}, entregados ${result.delivered_count || 0}, rechazados ${result.rejected_count || 0}.`;
+        $("portfolioEditorStatus").textContent = `WhatsApp ${result.scope || "all"}: aceptados ${result.accepted_count || result.sent_count || 0}/${result.message_count || 0}, entregados ${result.delivered_count || 0}, rechazados ${result.rejected_count || 0}.`;
       } else {
         $("portfolioEditorStatus").textContent = `Porcentajes recalculados. Activas: ${(portfolioLatestReport.active_positions || []).length}; pendientes: ${(portfolioLatestReport.pending_orders || []).length}.`;
       }
       return result;
+    }
+
+    async function previewPortfolioWhatsapp(extraParameters = {}) {
+      $("portfolioEditorStatus").textContent = "Preparando preflight de WhatsApp...";
+      const data = await post("/api/portfolio", {
+        action: "whatsapp_preview",
+        parameters: {
+          providers: ["binance", "mexc", "bybit"],
+          force_refresh_prices: true,
+          context_id: "PORTFOLIO-SR-ELI-MANUAL-PANEL-" + new Date().toISOString().slice(0, 10),
+          ...extraParameters
+        }
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || "No pude preparar preview.");
+      portfolioLatestReport = result.report || portfolioLatestReport;
+      const preview = result.preview || {};
+      $("portfolioReportPreview").textContent = (result.messages || []).join("\n\n") || "Preview sin mensajes.";
+      await loadPortfolioEditor();
+      const blocked = preview.blocked_lines || [];
+      $("portfolioEditorStatus").textContent = `Preflight: ${preview.message_count || 0} mensaje(s), seleccion ${((preview.selected_ids || []).join(", ") || "todo")}. Bloqueos: ${blocked.length}.`;
+      if (blocked.length) {
+        throw new Error("Faltan precios validados: " + blocked.map((item) => item.id || item.symbol || "?").join(", "));
+      }
+      return result;
+    }
+
+    async function sendPortfolioWhatsapp(extraParameters = {}) {
+      const preview = await previewPortfolioWhatsapp(extraParameters);
+      const count = preview.preview?.message_count || 0;
+      const ids = (preview.preview?.selected_ids || []).join(", ") || "todo";
+      if (!window.confirm(`Enviar ${count} mensaje(s) por WhatsApp al numero del doctor? Seleccion: ${ids}`)) {
+        $("portfolioEditorStatus").textContent = "Envio cancelado despues del preflight.";
+        return null;
+      }
+      return refreshPortfolioPercentages(true, extraParameters);
     }
 
     function renderFundamentalHistory(result) {
@@ -4490,7 +4728,12 @@
         const data = await post("/api/api-bridge", {
           provider: "all",
           action: "confirm_prepared",
-          parameters: {prepared_action_id: pendingApiAction.id},
+          parameters: {
+            prepared_action_id: pendingApiAction.id,
+            security_pin: $("confirmSecurityPin").value.trim(),
+            security_phrase: $("confirmSecurityPhrase").value.trim(),
+            session_id: sessionId
+          },
           confirm: true,
           transcript: transcript.value,
           session_id: sessionId
@@ -4504,6 +4747,8 @@
         }
         appendMessage("Codex", "Accion confirmada.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
         $("apiBridgeState").textContent = "Cambio confirmado";
+        $("confirmSecurityPin").value = "";
+        $("confirmSecurityPhrase").value = "";
         renderPendingApiAction(null);
         refreshMemoryState();
       } catch (error) {
@@ -4636,10 +4881,21 @@
     $("paperSync").onclick = async () => {
       await runPaperTradeTool({action: "sync", parameters: {trigger: "manual_panel_sync"}});
     };
+    document.querySelectorAll("[data-portfolio-view]").forEach((button) => {
+      button.onclick = async () => {
+        portfolioViewMode = button.dataset.portfolioView || "client";
+        try {
+          if (portfolioViewMode === "suggestions") await loadPortfolioSuggestions();
+          else renderPortfolioEditor(portfolioEditorState || {});
+        } catch (error) {
+          $("portfolioEditorStatus").textContent = "No pude cambiar vista: " + error.message;
+        }
+      };
+    });
     $("portfolioNormalize").onclick = async () => {
       try {
         await loadPortfolioEditor({normalize: true});
-        $("portfolioEditorStatus").textContent = "Estados normalizados: A1-A12 mercado, A13+ pendientes.";
+        $("portfolioEditorStatus").textContent = "Estados normalizados segun override manual; revisa Vista Cliente antes de enviar.";
       } catch (error) {
         $("portfolioEditorStatus").textContent = "No pude normalizar: " + error.message;
       }
@@ -4653,20 +4909,48 @@
     };
     $("portfolioCopyAll").onclick = async () => {
       try {
-        const report = portfolioLatestReport || {};
-        const text = (report.whatsapp_messages || report.message_lines || []).join("\n\n") || $("portfolioReportPreview").textContent || "";
+        const selected = portfolioSelectedClientIds();
+        const text = portfolioMessagesForSelected(!selected.length).join("\n\n") || $("portfolioReportPreview").textContent || "";
         if (!text.trim()) throw new Error("Primero recarga porcentajes para generar reporte.");
         await copyTextToClipboard(text);
-        $("portfolioEditorStatus").textContent = "Reporte copiado al portapapeles.";
+        $("portfolioEditorStatus").textContent = selected.length ? "Seleccion copiada al portapapeles." : "Reporte completo copiado al portapapeles.";
       } catch (error) {
         $("portfolioEditorStatus").textContent = "No pude copiar: " + error.message;
       }
     };
     $("portfolioSendWhatsapp").onclick = async () => {
       try {
-        await refreshPortfolioPercentages(true);
+        await sendPortfolioWhatsapp({send_scope: "all"});
       } catch (error) {
         $("portfolioEditorStatus").textContent = "WhatsApp falló: " + error.message;
+      }
+    };
+    $("portfolioSendSelected").onclick = async () => {
+      try {
+        const ids = portfolioSelectedClientIds();
+        if (!ids.length) throw new Error("Selecciona al menos una linea en Vista Cliente.");
+        await sendPortfolioWhatsapp({send_scope: "ids", ids});
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "WhatsApp seleccion falló: " + error.message;
+      }
+    };
+    $("portfolioSendRange").onclick = async () => {
+      try {
+        const range = $("portfolioRange").value.trim();
+        if (!range) throw new Error("Escribe un rango, por ejemplo A13-A21.");
+        await sendPortfolioWhatsapp({send_scope: "range", range});
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "WhatsApp rango falló: " + error.message;
+      }
+    };
+    $("portfolioSendCorrection").onclick = async () => {
+      try {
+        const ids = portfolioSelectedClientIds();
+        const range = $("portfolioRange").value.trim();
+        const params = ids.length ? {send_scope: "correction", ids} : {send_scope: "correction", range};
+        await sendPortfolioWhatsapp(params);
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "WhatsApp correccion falló: " + error.message;
       }
     };
     $("fundamentalHistory").onclick = async () => {
