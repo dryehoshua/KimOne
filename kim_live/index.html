@@ -1103,9 +1103,9 @@
 
     .paper-desk {
       background: #ffffff;
-      padding: 12px 14px;
+      padding: 10px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       min-height: 0;
       grid-template-rows: auto auto minmax(0, 1fr);
       overflow: auto;
@@ -1186,11 +1186,17 @@
     }
 
     .paper-status {
-      display: grid;
-      gap: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 12px;
       color: #344054;
-      font-size: 13px;
-      line-height: 1.35;
+      font-size: 12px;
+      line-height: 1.3;
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #fbfcfd;
     }
 
     .paper-status code,
@@ -1202,16 +1208,16 @@
     .paper-subtabs {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
 
     .paper-subtab {
       width: auto;
-      min-height: 34px;
-      padding: 7px 10px;
+      min-height: 30px;
+      padding: 6px 9px;
       border-color: #cbd5dc;
       background: #ffffff;
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
     }
 
@@ -1221,20 +1227,40 @@
       background: var(--soft-teal);
     }
 
+    .paper-content-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(260px, 0.72fr) minmax(540px, 1.28fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .paper-broker-panel {
+      min-height: 0;
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fbfcfd;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+    }
+
     .paper-list {
       min-height: 0;
       display: grid;
-      gap: 10px;
+      gap: 7px;
       overflow: auto;
+      align-content: start;
     }
 
     .paper-card {
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
+      padding: 8px;
       background: #ffffff;
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
 
     .paper-card-head {
@@ -1258,10 +1284,10 @@
 
     .paper-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
       color: #344054;
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .paper-grid span {
@@ -1275,17 +1301,21 @@
     }
 
     .portfolio-editor {
-      border-top: 1px solid var(--line);
-      padding-top: 12px;
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      padding: 8px;
+      background: #ffffff;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
+      min-height: 0;
+      grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto;
     }
 
     .portfolio-editor-head {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
+      gap: 8px;
       align-items: start;
     }
 
@@ -1299,31 +1329,31 @@
     .portfolio-editor-head p {
       margin: 0;
       color: #667085;
-      font-size: 12px;
-      line-height: 1.35;
+      font-size: 11px;
+      line-height: 1.3;
     }
 
     .portfolio-editor-actions {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 6px;
     }
 
     .portfolio-selection-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+      gap: 6px;
       align-items: center;
     }
 
     .portfolio-selection-bar input,
     .portfolio-selection-bar select {
       width: 100%;
-      min-height: 34px;
+      min-height: 31px;
       border: 1px solid #cbd5dc;
       border-radius: 8px;
-      padding: 7px 8px;
+      padding: 6px 8px;
       background: #ffffff;
       color: var(--ink);
       font-size: 12px;
@@ -1334,7 +1364,7 @@
     }
 
     .portfolio-selection-bar button {
-      min-height: 34px;
+      min-height: 31px;
       width: 100%;
       justify-content: center;
     }
@@ -1342,7 +1372,7 @@
     .portfolio-editor-status {
       border: 1px solid #d7dde3;
       border-radius: 8px;
-      padding: 9px 10px;
+      padding: 7px 9px;
       color: #344054;
       background: #fbfcfd;
       font-size: 12px;
@@ -1352,20 +1382,21 @@
 
     .portfolio-editor-list {
       display: grid;
-      gap: 8px;
+      gap: 7px;
       min-width: 0;
-      max-height: min(58dvh, 640px);
+      max-height: none;
       overflow: auto;
       padding-right: 2px;
+      align-content: start;
     }
 
     .portfolio-order-row {
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       background: #ffffff;
       display: grid;
-      gap: 8px;
+      gap: 6px;
       min-width: 0;
     }
 
@@ -1418,17 +1449,17 @@
     .portfolio-order-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       justify-content: flex-end;
     }
 
     .portfolio-order-row input,
     .portfolio-order-row select {
       width: 100%;
-      min-height: 34px;
+      min-height: 31px;
       border: 1px solid #cbd5dc;
       border-radius: 8px;
-      padding: 7px 8px;
+      padding: 6px 8px;
       background: #ffffff;
       color: var(--ink);
       font-size: 12px;
@@ -1447,8 +1478,8 @@
       background: #f7fafc;
       color: #344054;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-      padding: 10px;
-      max-height: 190px;
+      padding: 8px;
+      max-height: 120px;
       overflow: auto;
       white-space: pre-wrap;
     }
@@ -1460,8 +1491,8 @@
       background: #fbfcfd;
       color: #344054;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-      padding: 9px;
-      max-height: 170px;
+      padding: 8px;
+      max-height: 132px;
       overflow: auto;
       white-space: pre-wrap;
     }
@@ -1878,6 +1909,20 @@
       min-height: 42px;
     }
 
+    @media (max-width: 1180px) {
+      .paper-content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .paper-broker-panel {
+        max-height: 260px;
+      }
+
+      .portfolio-editor {
+        min-height: 620px;
+      }
+    }
+
     @media (max-width: 880px) {
       body {
         display: block;
@@ -2118,6 +2163,14 @@
       .paper-desk {
         padding: 10px;
         min-height: calc(100dvh - 150px);
+      }
+
+      .paper-content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .paper-broker-panel {
+        max-height: none;
       }
 
       .paper-toolbar {
@@ -2623,17 +2676,20 @@
         <div class="paper-status" id="paperStatus">
           <span>Paper Broker local para Sr. Eli. TradingView puede mandar alertas; BIFROST conserva el ledger.</span>
         </div>
-        <div class="paper-subtabs" aria-label="Estados de paper broker">
-          <button class="paper-subtab active" data-paper-filter="pending" type="button">Pendientes</button>
-          <button class="paper-subtab" data-paper-filter="filled" type="button">Ejecutadas</button>
-          <button class="paper-subtab" data-paper-filter="cancelled" type="button">Canceladas</button>
-          <button class="paper-subtab" data-paper-filter="alerts" type="button">Alertas</button>
-          <button class="secondary inline-button" id="paperSync" type="button">Sincronizar precios</button>
-        </div>
-        <div class="paper-list" id="paperList">
-          <small>Cargando paper broker...</small>
-        </div>
-        <div class="portfolio-editor" aria-label="Portfolio manual Sr. Eli">
+        <div class="paper-content-grid">
+          <div class="paper-broker-panel" aria-label="Ordenes paper y alertas">
+            <div class="paper-subtabs" aria-label="Estados de paper broker">
+              <button class="paper-subtab active" data-paper-filter="pending" type="button">Pendientes</button>
+              <button class="paper-subtab" data-paper-filter="filled" type="button">Ejecutadas</button>
+              <button class="paper-subtab" data-paper-filter="cancelled" type="button">Canceladas</button>
+              <button class="paper-subtab" data-paper-filter="alerts" type="button">Alertas</button>
+              <button class="secondary inline-button" id="paperSync" type="button">Sync</button>
+            </div>
+            <div class="paper-list" id="paperList">
+              <small>Cargando paper broker...</small>
+            </div>
+          </div>
+          <div class="portfolio-editor" aria-label="Portfolio manual Sr. Eli">
           <div class="portfolio-editor-head">
             <div>
               <h3>Portfolio Manual Sr. Eli</h3>
@@ -2673,6 +2729,7 @@
           <div class="portfolio-editor-status" id="portfolioEditorStatus">Cargando portfolio manual...</div>
           <div class="portfolio-editor-list" id="portfolioEditorList"></div>
           <div class="portfolio-report-preview" id="portfolioReportPreview">Sin reporte recalculado todavia.</div>
+          </div>
         </div>
       </section>
 

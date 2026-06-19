@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0113",
-  "updated_at": "2026-06-19T00:01:42+00:00",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0113 conserva 12 posiciones activas y 11 pendientes; ADA/DOGE consolidadas con sus refuerzos de 1800 consumidos, ONDO removida, A14 APT se queda en 0.54, A25 DOT refuerzo a 0.72 y A26 FTT refuerzo a 0.18. El panel separa ejecutadas, pendientes y removidas.",
+  "standard_version": "KIM-0114",
+  "updated_at": "2026-06-19T01:35:06+00:00",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -263,18 +263,19 @@
     },
     {
       "symbol": "ICPUSDT",
-      "state": "pending",
+      "state": "active",
       "order": 18,
       "label": "ICP/USDT",
       "invested_usd": 1800,
       "entry_price": 2.205,
       "quantity": 816.3265306122448,
       "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A18 ICP orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada.",
+      "source": "kim_0114_doctor_market_update",
+      "notes": "A18 ICP orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. KIM-0114: el doctor confirma que ICP A18 ya esta en mercado; mantener a credito y sacarla de pendientes.",
       "side": "BUY",
       "id": "kim0101-a18-icpusdt",
-      "updated_at": "2026-06-17T21:03:01"
+      "updated_at": "2026-06-19T01:35:06+00:00",
+      "executed_at": "2026-06-19T01:35:06+00:00"
     },
     {
       "symbol": "WLDUSDT",
@@ -336,14 +337,17 @@
       "order": 24,
       "id": "kim0108-a24-suiusdt",
       "symbol": "SUIUSDT",
-      "state": "pending",
+      "state": "active",
       "side": "BUY",
       "label": "SUI/USDT",
       "invested_usd": 1800,
       "entry_price": 0.72,
       "credit_usd": 1800,
-      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo.",
-      "quantity": 2500.0
+      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo. KIM-0114: el doctor confirma que SUI A24 ya esta en mercado; mantener a credito y sacarla de pendientes.",
+      "quantity": 2500.0,
+      "executed_at": "2026-06-19T01:35:06+00:00",
+      "source": "kim_0114_doctor_market_update",
+      "updated_at": "2026-06-19T01:35:06+00:00"
     },
     {
       "id": "kim0113-a25-dotusdt-refuerzo",
@@ -361,7 +365,7 @@
       "updated_at": "2026-06-19T00:01:42+00:00"
     },
     {
-      "id": "kim0113-a26-fttusdt-refuerzo",
+      "id": "kim0114-a26-fttusdt-refuerzo",
       "symbol": "FTTUSDT",
       "state": "pending",
       "order": 26,
@@ -371,9 +375,9 @@
       "quantity": 10000.0,
       "credit_usd": 1800,
       "side": "BUY",
-      "source": "kim_0113_doctor_current_override",
-      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT.",
-      "updated_at": "2026-06-19T00:01:42+00:00"
+      "source": "kim_0114_doctor_confirmed_pending_refuerzo",
+      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito.",
+      "updated_at": "2026-06-19T01:35:06+00:00"
     }
   ],
   "closed_positions": [
@@ -423,7 +427,7 @@
     "GOATUSDT",
     "ZECUSDT"
   ],
-  "provider_note": "KIM-0113: reporte cliente con numeracion corrida sin huecos; ADA/DOGE consolidadas; ONDO/A20 eliminado; A25 DOT 0.72 y A26 FTT 0.18 agregadas; precios frescos obligatorios antes de WhatsApp.",
+  "provider_note": "KIM-0114: reporte cliente con 23 ordenes vivas; ICP A18 y SUI A24 en mercado; FTT A26 pendiente @ 0.18; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -466,7 +470,10 @@
     "KIM-0111: los identificadores historicos originales se conservan solo en auditoria interna, no como numeros visibles si dejan posiciones vacias.",
     "KIM-0113: instruccion fresca 2026-06-18: A25 DOT 1800 USD @ 0.72 a credito; A26 FTT 1800 USD @ 0.18 a credito; A14 APT se mantiene en 0.54.",
     "KIM-0113: ADA y DOGE tienen refuerzos de 1800 ya consumidos en posiciones consolidadas; no revivir A13 ni A15 como pendientes separadas.",
-    "KIM-0113: el frontend debe separar ejecutadas, pendientes y removidas; cualquier nueva orden pendiente se agrega desde el panel antes de enviarla por WhatsApp."
+    "KIM-0113: el frontend debe separar ejecutadas, pendientes y removidas; cualquier nueva orden pendiente se agrega desde el panel antes de enviarla por WhatsApp.",
+    "KIM-0114: ICP A18 y SUI A24 ya estan en mercado; mantener a credito y no presentarlas como pendientes.",
+    "KIM-0114: FTT A26 es compra pendiente de refuerzo por 1800 USD @ 0.18 a credito; no afecta FTT activa hasta ejecucion confirmada.",
+    "KIM-0114: no hay cambio en montos en firme; nuevas ordenes y cambios de estado conservan credito segun override manual."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -543,6 +550,14 @@
       "entries_total": 23,
       "active_count": 12,
       "pending_count": 11
+    },
+    {
+      "at": "2026-06-19T01:35:06+00:00",
+      "action": "kim_0114_market_state_update",
+      "summary": "ICP A18 y SUI A24 pasan a mercado; FTT A26 queda compra pendiente 1800 USD @ 0.18 a credito; sin cambios en monto en firme.",
+      "entries_total": 23,
+      "active_count": 14,
+      "pending_count": 9
     }
   ],
   "consumed_orders": [
