@@ -1311,14 +1311,15 @@
     }
 
     .portfolio-selection-bar {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
       gap: 8px;
       align-items: center;
     }
 
-    .portfolio-selection-bar input {
-      width: 150px;
+    .portfolio-selection-bar input,
+    .portfolio-selection-bar select {
+      width: 100%;
       min-height: 34px;
       border: 1px solid #cbd5dc;
       border-radius: 8px;
@@ -1326,6 +1327,16 @@
       background: #ffffff;
       color: var(--ink);
       font-size: 12px;
+    }
+
+    .portfolio-selection-bar .wide-input {
+      grid-column: span 2;
+    }
+
+    .portfolio-selection-bar button {
+      min-height: 34px;
+      width: 100%;
+      justify-content: center;
     }
 
     .portfolio-editor-status {
@@ -1343,8 +1354,9 @@
       display: grid;
       gap: 8px;
       min-width: 0;
-      max-height: 52dvh;
+      max-height: min(58dvh, 640px);
       overflow: auto;
+      padding-right: 2px;
     }
 
     .portfolio-order-row {
@@ -1363,6 +1375,7 @@
       justify-content: space-between;
       gap: 10px;
       min-width: 0;
+      flex-wrap: wrap;
     }
 
     .portfolio-order-head label {
@@ -1397,7 +1410,7 @@
 
     .portfolio-order-fields {
       display: grid;
-      grid-template-columns: 76px minmax(120px, 1.1fr) minmax(120px, 1fr) minmax(100px, 0.75fr) minmax(100px, 0.75fr);
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
       gap: 8px;
       align-items: end;
     }
@@ -1431,11 +1444,24 @@
     .portfolio-report-preview {
       border: 1px solid #e2e8ee;
       border-radius: 8px;
-      background: #fbfcfd;
+      background: #f7fafc;
       color: #344054;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
       padding: 10px;
-      max-height: 280px;
+      max-height: 190px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .portfolio-client-message {
+      margin: 0;
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      background: #fbfcfd;
+      color: #344054;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 9px;
+      max-height: 170px;
       overflow: auto;
       white-space: pre-wrap;
     }
@@ -2246,6 +2272,19 @@
         grid-template-columns: 1fr 1fr;
       }
 
+      .portfolio-selection-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .portfolio-selection-bar .wide-input {
+        grid-column: 1 / -1;
+      }
+
+      .portfolio-order-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
       .market-toolbar .field:first-child {
         grid-column: 1 / -1;
       }
@@ -2618,6 +2657,19 @@
             <button class="secondary inline-button" id="portfolioSendRange" type="button">Enviar rango</button>
             <button class="secondary inline-button" id="portfolioSendCorrection" type="button">Enviar correccion</button>
           </div>
+          <div class="portfolio-selection-bar" aria-label="Edicion tecnica de portfolio">
+            <select id="portfolioStateFilter" aria-label="Filtrar ordenes">
+              <option value="all">Todas</option>
+              <option value="active">Ejecutadas</option>
+              <option value="pending">Pendientes</option>
+              <option value="removed">Removidas</option>
+            </select>
+            <input id="portfolioNewOrder" placeholder="A25" spellcheck="false">
+            <input id="portfolioNewSymbol" placeholder="DOT" spellcheck="false">
+            <input id="portfolioNewEntry" placeholder="Entrada">
+            <input id="portfolioNewAmount" placeholder="Monto USD" value="1800">
+            <button class="secondary inline-button" id="portfolioAddOrder" type="button">Agregar orden</button>
+          </div>
           <div class="portfolio-editor-status" id="portfolioEditorStatus">Cargando portfolio manual...</div>
           <div class="portfolio-editor-list" id="portfolioEditorList"></div>
           <div class="portfolio-report-preview" id="portfolioReportPreview">Sin reporte recalculado todavia.</div>
@@ -2742,6 +2794,7 @@
     let portfolioEditorState = null;
     let portfolioLatestReport = null;
     let portfolioViewMode = "client";
+    let portfolioManualFilter = "all";
     let selectedPortfolioClientIds = new Set();
     let portfolioSuggestionsState = null;
     let fundamentalLatestReport = null;
@@ -3672,13 +3725,28 @@
       const report = portfolioLatestReport || {};
       const orderNumber = Number(item?.order);
       const symbol = String(item?.symbol || "");
+      const manualKey = String(portfolioOrderKey(item) || "");
       const candidates = [
         ...(report.active_positions || []),
         ...(report.pending_orders || [])
       ];
       return candidates.find((entry) => {
-        const entryOrder = Number(entry.report_order || entry.canonical_report_order);
-        return entryOrder === orderNumber && String(entry.symbol || "") === symbol;
+        const entryOrders = [
+          entry.internal_order,
+          entry.canonical_report_order,
+          entry.report_order,
+          entry.resolved_report_order,
+          entry.order
+        ].map((value) => Number(value)).filter((value) => Number.isFinite(value));
+        const entryIds = [
+          entry.source_id,
+          entry.id,
+          entry.transaction_id
+        ].map((value) => String(value || ""));
+        return String(entry.symbol || "") === symbol && (
+          entryOrders.includes(orderNumber) ||
+          (manualKey && entryIds.includes(manualKey))
+        );
       }) || null;
     }
 
@@ -3738,7 +3806,7 @@
     }
 
     function portfolioMessagesForSelected(includeBalance = false) {
-      const ids = new Set(portfolioSelectedClientIds);
+      const ids = new Set(portfolioSelectedClientIds());
       const report = portfolioLatestReport || {};
       const lines = portfolioClientLines();
       const chosen = ids.size ? lines.filter((line) => ids.has(String(line.id || "").toUpperCase())) : lines;
@@ -3772,7 +3840,7 @@
               <span>${escapeHtml(line.client_phrase || line.variation_display || "Sin porcentaje")}</span>
               <span>${escapeHtml(line.is_consolidated ? "Consolidada" : "Linea cliente")}</span>
             </div>
-            <pre class="portfolio-report-preview">${escapeHtml(line.message || "")}</pre>
+            <pre class="portfolio-client-message">${escapeHtml(line.message || "")}</pre>
             <div class="portfolio-order-actions">
               <button class="secondary inline-button" type="button" data-portfolio-client-copy="${escapeHtml(id)}">Copiar linea</button>
             </div>
@@ -3802,8 +3870,9 @@
       $("portfolioEditorList").innerHTML = suggestions.length ? suggestions.map((item) => {
         const preview = item.preview || {};
         const members = (preview.members || []).map((member) => `${member.client_id || member.id}: ${paperMoney(member.amount_usd)} @ ${paperPrice(member.entry_price)}`).join(" · ");
+        const symbol = escapeHtml(item.symbol || (preview.symbols || [])[0] || "");
         return `
-          <article class="portfolio-order-row">
+          <article class="portfolio-order-row" data-portfolio-suggestion="${symbol}">
             <div class="portfolio-order-head">
               <span class="portfolio-order-title">${escapeHtml(item.label || item.symbol || "Aglomeracion")}</span>
               <span class="portfolio-order-state">${escapeHtml((preview.member_count || 0) + " tramos")}</span>
@@ -3814,15 +3883,58 @@
               <span>Fee ${escapeHtml(String(preview.fee_rate_pct || 0))}%</span>
             </div>
             <small>${escapeHtml(members || preview.summary || "")}</small>
+            <div class="portfolio-order-actions">
+              <button class="secondary inline-button" type="button" data-portfolio-agglomerate="${symbol}">Preparar aglomeracion</button>
+            </div>
           </article>
         `;
       }).join("") : "<small>No hay sugerencias de aglomeracion pendientes.</small>";
+      document.querySelectorAll("[data-portfolio-agglomerate]").forEach((button) => {
+        button.onclick = async () => {
+          try {
+            await preparePortfolioAgglomeration(button.dataset.portfolioAgglomerate || "");
+          } catch (error) {
+            $("portfolioEditorStatus").textContent = "No pude preparar aglomeracion: " + error.message;
+          }
+        };
+      });
+    }
+
+    async function preparePortfolioAgglomeration(symbol) {
+      const cleanSymbol = String(symbol || "").trim().toUpperCase();
+      if (!cleanSymbol) throw new Error("Falta simbolo para aglomerar.");
+      const data = await post("/api/portfolio", {
+        action: "agglomerate_manual_orders",
+        parameters: {
+          symbols: [cleanSymbol],
+          source: "kim_live_panel_agglomeration",
+          notes: "Aglomeracion preparada desde panel Kim Live; requiere confirmacion humana."
+        },
+        confirm: false,
+        session_id: sessionId
+      });
+      const result = data.result || {};
+      if (result.requires_confirmation) {
+        capturePreparedApiAction(result);
+        $("portfolioEditorStatus").textContent = `Aglomeracion ${cleanSymbol} preparada. Confirma con PIN/frase en el panel.`;
+        return result;
+      }
+      if (!result.ok) throw new Error(result.error || "La API no acepto la aglomeracion.");
+      renderPortfolioEditor(result.manual_orders || {});
+      $("portfolioEditorStatus").textContent = `Aglomeracion ${cleanSymbol} aplicada.`;
+      return result;
     }
 
     function renderPortfolioTechnicalView(entries) {
-      $("portfolioEditorList").innerHTML = entries.length ? entries.map((item) => {
+      let visibleEntries = entries;
+      if (portfolioManualFilter === "active" || portfolioManualFilter === "pending") {
+        visibleEntries = entries.filter((item) => String(item.state || "").toLowerCase() === portfolioManualFilter);
+      } else if (portfolioManualFilter === "removed") {
+        visibleEntries = (portfolioEditorState?.removed_orders || []).slice().sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
+      }
+      $("portfolioEditorList").innerHTML = visibleEntries.length ? visibleEntries.map((item) => {
         const key = escapeHtml(portfolioOrderKey(item));
-        const stateLabel = item.state === "pending" ? "Pendiente" : "En mercado";
+        const stateLabel = item.state === "pending" ? "Pendiente" : (portfolioManualFilter === "removed" ? "Removida" : "En mercado");
         const reportItem = portfolioReportItemForManual(item);
         const pct = reportItem?.client_phrase || reportItem?.variation_display || "Sin porcentaje recargado";
         const price = reportItem?.current_price_display || "Sin precio recargado";
@@ -3854,11 +3966,14 @@
             <div class="portfolio-order-actions">
               <button class="secondary inline-button" type="button" data-portfolio-action="copy">Copiar orden</button>
               <button class="secondary inline-button" type="button" data-portfolio-action="save">Guardar edit</button>
+              <button class="secondary inline-button" type="button" data-portfolio-action="mark-active">Marcar ejecutada</button>
+              <button class="secondary inline-button" type="button" data-portfolio-action="mark-pending">Marcar pendiente</button>
+              ${Array.isArray(item.split_members) && item.split_members.length ? '<button class="secondary inline-button" type="button" data-portfolio-action="split">Separar</button>' : ''}
               <button class="secondary inline-button" type="button" data-portfolio-action="delete">Eliminar</button>
             </div>
           </article>
         `;
-      }).join("") : "<small>No hay ordenes manuales cargadas.</small>";
+      }).join("") : "<small>No hay ordenes para este filtro.</small>";
       wirePortfolioEditorRows();
     }
 
@@ -3872,6 +3987,7 @@
       document.querySelectorAll("[data-portfolio-view]").forEach((button) => {
         button.classList.toggle("active", button.dataset.portfolioView === portfolioViewMode);
       });
+      if ($("portfolioStateFilter")) $("portfolioStateFilter").value = portfolioManualFilter;
       if (portfolioViewMode === "client") {
         renderPortfolioClientView();
       } else if (portfolioViewMode === "suggestions") {
@@ -3944,6 +4060,51 @@
       return result;
     }
 
+    async function addPortfolioOrderFromPanel() {
+      const rawOrder = $("portfolioNewOrder").value.trim();
+      const orderNumber = Number(rawOrder.replace(/\D/g, ""));
+      const rawSymbol = $("portfolioNewSymbol").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const symbol = rawSymbol && rawSymbol.endsWith("USDT") ? rawSymbol : rawSymbol + "USDT";
+      const entryPrice = $("portfolioNewEntry").value.trim();
+      const amount = $("portfolioNewAmount").value.trim() || "1800";
+      if (!orderNumber || !rawSymbol || !entryPrice) {
+        throw new Error("Completa orden, simbolo y entrada.");
+      }
+      const id = `kim-panel-a${orderNumber}-${symbol.toLowerCase()}`;
+      const data = await post("/api/portfolio", {
+        action: "update_manual_order",
+        parameters: {
+          id,
+          create_if_missing: true,
+          updates: {
+            id,
+            order: orderNumber,
+            state: "pending",
+            symbol,
+            label: symbol.replace("USDT", "/USDT") + " refuerzo",
+            invested_usd: amount,
+            entry_price: entryPrice,
+            credit_usd: amount,
+            side: "BUY",
+            source: "kim_live_panel",
+            notes: `Orden agregada desde panel Kim Live como ${rawOrder || "A" + orderNumber}; pendiente a credito.`
+          }
+        }
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || "No pude agregar orden.");
+      $("portfolioNewOrder").value = "";
+      $("portfolioNewSymbol").value = "";
+      $("portfolioNewEntry").value = "";
+      $("portfolioNewAmount").value = "1800";
+      portfolioViewMode = "technical";
+      portfolioManualFilter = "pending";
+      $("portfolioStateFilter").value = "pending";
+      renderPortfolioEditor(result.manual_orders || {});
+      $("portfolioEditorStatus").textContent = `Orden A${orderNumber} ${symbol} agregada como pendiente a credito.`;
+      return result;
+    }
+
     function wirePortfolioEditorRows() {
       document.querySelectorAll("[data-portfolio-action]").forEach((button) => {
         button.onclick = async () => {
@@ -3957,6 +4118,31 @@
               $("portfolioEditorStatus").textContent = "Orden copiada al portapapeles.";
             } else if (button.dataset.portfolioAction === "save") {
               await savePortfolioRow(row);
+            } else if (button.dataset.portfolioAction === "mark-active") {
+              const state = row.querySelector('[data-portfolio-field="state"]');
+              if (state) state.value = "active";
+              await savePortfolioRow(row);
+            } else if (button.dataset.portfolioAction === "mark-pending") {
+              const state = row.querySelector('[data-portfolio-field="state"]');
+              if (state) state.value = "pending";
+              await savePortfolioRow(row);
+            } else if (button.dataset.portfolioAction === "split") {
+              const data = await post("/api/portfolio", {
+                action: "split_consolidated_order",
+                parameters: {id: row.dataset.portfolioId},
+                confirm: false,
+                session_id: sessionId
+              });
+              const result = data.result || {};
+              if (result.requires_confirmation) {
+                capturePreparedApiAction(result);
+                $("portfolioEditorStatus").textContent = "Separacion preparada. Confirma con PIN/frase en el panel.";
+              } else if (!result.ok) {
+                throw new Error(result.error || "No pude preparar separacion.");
+              } else {
+                renderPortfolioEditor(result.manual_orders || {});
+                $("portfolioEditorStatus").textContent = "Posicion separada.";
+              }
             } else if (button.dataset.portfolioAction === "delete") {
               await deletePortfolioRow(row);
             }
@@ -4880,6 +5066,18 @@
     };
     $("paperSync").onclick = async () => {
       await runPaperTradeTool({action: "sync", parameters: {trigger: "manual_panel_sync"}});
+    };
+    $("portfolioStateFilter").onchange = () => {
+      portfolioManualFilter = $("portfolioStateFilter").value || "all";
+      portfolioViewMode = "technical";
+      renderPortfolioEditor(portfolioEditorState || {});
+    };
+    $("portfolioAddOrder").onclick = async () => {
+      try {
+        await addPortfolioOrderFromPanel();
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "No pude agregar orden: " + error.message;
+      }
     };
     document.querySelectorAll("[data-portfolio-view]").forEach((button) => {
       button.onclick = async () => {

@@ -1,12 +1,13 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0111",
-  "updated_at": "2026-06-18T04:11:26+00:00",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0111 conserva 12 posiciones activas y 9 pendientes; ADA/DOGE consolidadas, ONDO eliminado y reporte cliente renumerado sin huecos.",
+  "standard_version": "KIM-0113",
+  "updated_at": "2026-06-19T00:01:42+00:00",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0113 conserva 12 posiciones activas y 11 pendientes; ADA/DOGE consolidadas con sus refuerzos de 1800 consumidos, ONDO removida, A14 APT se queda en 0.54, A25 DOT refuerzo a 0.72 y A26 FTT refuerzo a 0.18. El panel separa ejecutadas, pendientes y removidas.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
+  "preserve_report_order_ids": true,
   "credit_mark": "(c)",
   "credit_symbols": [],
   "credit_amounts": {},
@@ -44,6 +45,22 @@
       "notes": "A1 ADA consolidada: 1800 USD @ 0.261 + 1800 USD @ 0.171. Promedio base 0.206625000; precio visible con fee 1.2% 0.209104500. A13 consumida; no reportar refuerzo separado.",
       "raw_weighted_average_price": 0.206625,
       "fee_adjusted_average_price": 0.2091045,
+      "weighted_average_components": [
+        {
+          "label": "A1",
+          "amount_usd": 1800,
+          "price": 0.261,
+          "quantity": 6896.551724137931,
+          "notes": "Compra original ADA."
+        },
+        {
+          "label": "A13",
+          "amount_usd": 1800,
+          "price": 0.171,
+          "quantity": 10526.315789473683,
+          "notes": "Refuerzo ADA ejecutado y consumido en la consolidacion."
+        }
+      ],
       "consumed_orders": [
         "A13"
       ]
@@ -73,6 +90,22 @@
       "notes": "A3 DOGE consolidada: 2554 USD @ 0.1143 + 1800 USD @ 0.0864. Promedio base 0.100838296; precio visible con fee 1.2% 0.102048355. A15 consumida; no reportar refuerzo separado.",
       "raw_weighted_average_price": 0.10083829593232359,
       "fee_adjusted_average_price": 0.10204835548351147,
+      "weighted_average_components": [
+        {
+          "label": "A3",
+          "amount_usd": 2554,
+          "price": 0.1143,
+          "quantity": 22344.706911636047,
+          "notes": "Compra original DOGE."
+        },
+        {
+          "label": "A15",
+          "amount_usd": 1800,
+          "price": 0.0864,
+          "quantity": 20833.333333333336,
+          "notes": "Refuerzo DOGE ejecutado y consumido en la consolidacion."
+        }
+      ],
       "consumed_orders": [
         "A15"
       ]
@@ -195,10 +228,10 @@
       "quantity": 3333.333333333333,
       "credit_usd": 1800,
       "source": "kim_0101_manual_standard",
-      "notes": "A14 refuerzo APT pendiente, a credito completo. No afecta APT activa hasta ejecucion confirmada.",
+      "notes": "A14 refuerzo APT pendiente, a credito completo. No afecta APT activa hasta ejecucion confirmada. KIM-0113: el doctor confirma que APT refuerzo se queda en 0.54.",
       "side": "BUY",
       "id": "kim0101-a14-aptusdt",
-      "updated_at": "2026-06-15T12:52:57"
+      "updated_at": "2026-06-19T00:01:42+00:00"
     },
     {
       "symbol": "LUNCUSDT",
@@ -311,6 +344,36 @@
       "credit_usd": 1800,
       "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo.",
       "quantity": 2500.0
+    },
+    {
+      "id": "kim0113-a25-dotusdt-refuerzo",
+      "symbol": "DOTUSDT",
+      "state": "pending",
+      "order": 25,
+      "label": "DOT/USDT refuerzo",
+      "invested_usd": 1800,
+      "entry_price": 0.72,
+      "quantity": 2500.0,
+      "credit_usd": 1800,
+      "side": "BUY",
+      "source": "kim_0113_doctor_current_override",
+      "notes": "A25 DOT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.72. Esta instruccion fresca reemplaza memoria previa que decia 0.7002.",
+      "updated_at": "2026-06-19T00:01:42+00:00"
+    },
+    {
+      "id": "kim0113-a26-fttusdt-refuerzo",
+      "symbol": "FTTUSDT",
+      "state": "pending",
+      "order": 26,
+      "label": "FTT/USDT refuerzo",
+      "invested_usd": 1800,
+      "entry_price": 0.18,
+      "quantity": 10000.0,
+      "credit_usd": 1800,
+      "side": "BUY",
+      "source": "kim_0113_doctor_current_override",
+      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT.",
+      "updated_at": "2026-06-19T00:01:42+00:00"
     }
   ],
   "closed_positions": [
@@ -360,7 +423,7 @@
     "GOATUSDT",
     "ZECUSDT"
   ],
-  "provider_note": "KIM-0111: reporte cliente con numeracion corrida sin huecos; ADA/DOGE consolidadas; ONDO/A20 eliminado; precios frescos obligatorios antes de WhatsApp.",
+  "provider_note": "KIM-0113: reporte cliente con numeracion corrida sin huecos; ADA/DOGE consolidadas; ONDO/A20 eliminado; A25 DOT 0.72 y A26 FTT 0.18 agregadas; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -400,7 +463,10 @@
     "KIM-0110: A20 ONDO fue borrada; no aparece en panel cliente, WhatsApp, pendientes ni totales.",
     "KIM-0110: pendientes vigentes: A14 APT, A16 LUNC, A17 AVAX, A18 ICP, A19 WLD, A21 NEAR, A22 HYPE, A23 SOL expansion, A24 SUI.",
     "KIM-0111: en el reporte cliente no dejar huecos de identificador; despues de consumir/borrar ordenes, recorrer pendientes para que salgan A13-A21.",
-    "KIM-0111: los identificadores historicos originales se conservan solo en auditoria interna, no como numeros visibles si dejan posiciones vacias."
+    "KIM-0111: los identificadores historicos originales se conservan solo en auditoria interna, no como numeros visibles si dejan posiciones vacias.",
+    "KIM-0113: instruccion fresca 2026-06-18: A25 DOT 1800 USD @ 0.72 a credito; A26 FTT 1800 USD @ 0.18 a credito; A14 APT se mantiene en 0.54.",
+    "KIM-0113: ADA y DOGE tienen refuerzos de 1800 ya consumidos en posiciones consolidadas; no revivir A13 ni A15 como pendientes separadas.",
+    "KIM-0113: el frontend debe separar ejecutadas, pendientes y removidas; cualquier nueva orden pendiente se agrega desde el panel antes de enviarla por WhatsApp."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -469,6 +535,14 @@
       "version": "KIM-0111",
       "updated_at": "2026-06-18T04:11:26+00:00",
       "summary": "Activa numeracion compacta en reporte cliente para recorrer pendientes sin huecos tras consumir A13/A15 y eliminar A20."
+    },
+    {
+      "at": "2026-06-19T00:01:42+00:00",
+      "action": "kim_0113_portfolio_repair",
+      "summary": "Se agregan A25 DOT 0.72 y A26 FTT 0.18; A14 APT queda 0.54; se explicita no revivir ADA/DOGE consumidas ni ONDO removida.",
+      "entries_total": 23,
+      "active_count": 12,
+      "pending_count": 11
     }
   ],
   "consumed_orders": [
@@ -531,5 +605,17 @@
       "reason": "Dr. Yehoshua confirms ONDO ya no esta; borrada del portafolio."
     }
   ],
-  "compact_client_ordering": true
+  "compact_client_ordering": true,
+  "ledger_warning_resolved_symbols": [
+    "ADAUSDT",
+    "APTUSDT",
+    "LUNCUSDT",
+    "DOTUSDT"
+  ],
+  "ledger_warning_resolutions": {
+    "ADAUSDT": "KIM-0113: usar A1 ADA consolidada manual; el draft antiguo del ledger no debe cambiar promedio ni P/L.",
+    "APTUSDT": "KIM-0113: usar A2 activa 0.99 y A14 pendiente 0.54; no consolidar hasta ejecucion confirmada.",
+    "LUNCUSDT": "KIM-0113: usar A4 activa y A16 pendiente separadas; no consolidar hasta ejecucion confirmada.",
+    "DOTUSDT": "KIM-0113: usar A5 activa 1.26 y A25 pendiente 0.72; memoria previa DOT 0.7002 queda reemplazada."
+  }
 }

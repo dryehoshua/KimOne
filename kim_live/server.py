@@ -13479,6 +13479,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0113"
 
 
 def portfolio_float(value, default=None):
@@ -13822,11 +13823,16 @@ def portfolio_manual_orders(summary, parameters=None):
         config, changed = portfolio_enforce_manual_order_states(config)
         if changed:
             config["updated_at"] = now_iso()
-            config["standard_version"] = "KIM-0105"
+            config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
             portfolio_write_override_config(config)
     else:
         changed = []
     entries = [portfolio_normalize_manual_entry(entry) for entry in (config.get("manual_entries") or []) if isinstance(entry, dict)]
+    removed_orders = [
+        portfolio_normalize_manual_entry(entry)
+        for entry in (config.get("removed_orders") or [])
+        if isinstance(entry, dict)
+    ]
     result = {
         "ok": True,
         "provider": "portfolio",
@@ -13834,8 +13840,10 @@ def portfolio_manual_orders(summary, parameters=None):
         "portfolio_id": config.get("portfolio_id"),
         "standard_version": config.get("standard_version"),
         "manual_entries": entries,
+        "removed_orders": removed_orders,
         "active_count": sum(1 for item in entries if str(item.get("state")) == "active"),
         "pending_count": sum(1 for item in entries if str(item.get("state")) == "pending"),
+        "removed_count": len(removed_orders),
         "state_changes": changed,
     }
     if boolish(first_value(parameters, "include_report", "with_report", default=False)):
@@ -13879,9 +13887,9 @@ def portfolio_update_manual_order(summary, parameters=None):
         entries[matched_index] = entry
     config["manual_entries"] = entries
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0105"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
-    rule = "KIM-0105: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita."
+    rule = "KIM-0113: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita."
     if rule not in rules:
         rules.append(rule)
         config["doctor_rules"] = rules
@@ -13925,7 +13933,7 @@ def portfolio_delete_manual_order(summary, parameters=None):
         )
     config["removed_orders"] = removed_orders
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0112"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     portfolio_write_override_config(config)
     append_memory("portfolio_manual_order_deleted", {"removed": removed, "parameters": parameters})
     return {
@@ -14121,7 +14129,7 @@ def portfolio_agglomerate_manual_orders(summary, parameters=None):
     config["manual_entries"] = kept
     config["consumed_orders"] = consumed_orders
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0112"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     portfolio_write_override_config(config)
     return {
         "ok": True,
@@ -14156,7 +14164,7 @@ def portfolio_split_manual_order(summary, parameters=None):
     new_entries.extend(restored)
     config["manual_entries"] = new_entries
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0112"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     change_log = config.get("change_log") if isinstance(config.get("change_log"), list) else []
     change_log.append(
         {
@@ -14202,9 +14210,9 @@ def portfolio_sync_manual_sale_to_overrides(parameters, calc):
     config["manual_entries"] = kept
     config["closed_positions"] = closed_positions
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0099"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
-    rule = "KIM-0099: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado."
+    rule = "KIM-0113: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado."
     if rule not in rules:
         rules.append(rule)
         config["doctor_rules"] = rules
@@ -14238,7 +14246,7 @@ def portfolio_sync_manual_execution_to_overrides(parameters):
         return {"updated": False, "reason": "manual_entry_not_found"}
     config["manual_entries"] = manual_entries
     config["updated_at"] = now_iso()
-    config["standard_version"] = "KIM-0099"
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
     portfolio_write_override_config(config)
     return {"updated": True, "matched_count": len(changed), "executed_entries": changed}
 
@@ -19035,7 +19043,13 @@ def portfolio_symbol_ledger_warnings(summary, symbol):
     return warnings
 
 
-def portfolio_collect_ledger_warnings(summary, symbols=None):
+def portfolio_collect_ledger_warnings(summary, symbols=None, override_config=None):
+    override_config = override_config if isinstance(override_config, dict) else portfolio_report_override_config(summary)
+    resolved_symbols = {
+        portfolio_normalize_symbol(symbol)
+        for symbol in (override_config.get("ledger_warning_resolved_symbols") or [])
+        if str(symbol or "").strip()
+    }
     chosen = []
     seen = set()
     for symbol in symbols or []:
@@ -19045,6 +19059,8 @@ def portfolio_collect_ledger_warnings(summary, symbols=None):
             seen.add(token)
     warnings = []
     for token in chosen:
+        if token in resolved_symbols:
+            continue
         warnings.extend(portfolio_symbol_ledger_warnings(summary, token))
     return warnings
 
@@ -19991,6 +20007,7 @@ def portfolio_client_report(summary, parameters=None):
             *(item.get("symbol") for item in active_items),
             *(item.get("symbol") for item in pending_items),
         ],
+        override_config,
     )
 
     message_lines = []
