@@ -180,12 +180,18 @@ RUNTIME_PORTFOLIO_REPORT_OVERRIDES = RUNTIME_CONTEXT / "portfolio_report_overrid
 IGNIS_FINANCIALS_ROOT = MEMORY_ROOT / "IGNIS_FINANCIALS"
 RUNTIME_IGNIS_FINANCIALS_ROOT = RUNTIME_MEMORY_ROOT / "IGNIS_FINANCIALS"
 LEGACY_PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
+FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR = MEMORY_ROOT / "portfolios" / "sr_eli_2026"
 PORTFOLIO_SR_ELI_MEMORY_DIR = IGNIS_FINANCIALS_ROOT / "portfolios" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026"
 RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR = RUNTIME_IGNIS_FINANCIALS_ROOT / "portfolios" / "sr_eli_2026"
+RUNTIME_FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR = RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026"
 PORTFOLIO_SR_ELI_STANDARD_JSON = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
 RUNTIME_PORTFOLIO_SR_ELI_STANDARD_JSON = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
+FLAT_PORTFOLIO_SR_ELI_STANDARD_JSON = FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
+RUNTIME_FLAT_PORTFOLIO_SR_ELI_STANDARD_JSON = RUNTIME_FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json"
 PORTFOLIO_SR_ELI_STANDARD_MD = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
 RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
+FLAT_PORTFOLIO_SR_ELI_STANDARD_MD = FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
+RUNTIME_FLAT_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
 PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 TRADINGVIEW_WEBHOOK_CONFIG = MEMORY_CONTEXT_DIR / "tradingview_webhook.json"
@@ -13479,7 +13485,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0113"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0115"
 
 
 def portfolio_float(value, default=None):
@@ -13661,6 +13667,9 @@ def portfolio_closed_duplicate(existing, record):
 
 
 def portfolio_write_override_config(payload):
+    payload = dict(payload or {})
+    payload["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
+    payload["updated_at"] = now_iso()
     write_json_file_both(PORTFOLIO_REPORT_OVERRIDES, RUNTIME_PORTFOLIO_REPORT_OVERRIDES, payload)
 
 
@@ -13748,6 +13757,126 @@ def portfolio_parse_client_ids(value):
         if normalized:
             ids.add(normalized)
     return ids
+
+
+def portfolio_text_ascii(text):
+    translation = str.maketrans(
+        {
+            "á": "a",
+            "é": "e",
+            "í": "i",
+            "ó": "o",
+            "ú": "u",
+            "ü": "u",
+            "ñ": "n",
+            "Á": "a",
+            "É": "e",
+            "Í": "i",
+            "Ó": "o",
+            "Ú": "u",
+            "Ü": "u",
+            "Ñ": "n",
+        }
+    )
+    return str(text or "").translate(translation).lower()
+
+
+def portfolio_last_client_number_from_report(report):
+    numbers = []
+    for line in portfolio_client_lines_from_report(report or {}):
+        match = re.search(r"([0-9]+)", str(line.get("id") or line.get("display_id") or ""))
+        if match:
+            numbers.append(int(match.group(1)))
+    return max(numbers) if numbers else None
+
+
+def portfolio_parse_range_from_text(text, last_number=None):
+    clean = portfolio_text_ascii(text)
+    range_patterns = [
+        r"\ba\s*([0-9]+)\s*[-:]\s*a?\s*([0-9]+)\b",
+        r"\b(?:de\s+)?(?:la\s+)?(?:orden\s+)?a?\s*([0-9]+)\s+(?:a|al|hasta)\s+(?:la\s+)?(?:orden\s+)?a?\s*([0-9]+)\b",
+        r"\b(?:de\s+)?(?:la\s+)?(?:orden\s+)?a?\s*([0-9]+)\s+(?:a|al|hasta)\s+(?:la\s+)?(?:ultima|final)\b",
+    ]
+    for pattern in range_patterns:
+        match = re.search(pattern, clean)
+        if not match:
+            continue
+        start = int(match.group(1))
+        if len(match.groups()) >= 2 and match.group(2):
+            end = int(match.group(2))
+        else:
+            end = int(last_number or start)
+        if start > end:
+            start, end = end, start
+        return f"A{start}-A{end}"
+    return ""
+
+
+def portfolio_doctor_text_command(text, last_number=None):
+    raw = str(text or "").strip()
+    clean = portfolio_text_ascii(raw)
+    if not raw:
+        return None
+    portfolio_terms = {"portafolio", "portfolio", "orden", "ordenes", "sr eli", "senor eli", "eli"}
+    has_client_id_context = bool(re.search(r"\ba\s*[0-9]+", clean))
+    quick_send_term = bool(re.search(r"\b(manda|mandame|enviar|envia|enviame|whatsapp|mandalo|mandalas|mandarlos)\b", clean))
+    has_state_context = bool(re.search(r"\b(pendiente|pendientes|activas|ejecutadas|mercado)\b", clean))
+    has_portfolio_context = any(term in clean for term in portfolio_terms) or has_client_id_context or (quick_send_term and has_state_context)
+    line_reference = bool(re.search(r"\ba\s*[0-9]+\s*[\.:]", clean)) and bool(re.search(r"\b(usdt|usd)\b", clean))
+    if line_reference and not re.search(r"\b(manda|mandame|enviar|envia|enviame|whatsapp|reporte|portafolio)\b", clean):
+        return {
+            "kind": "reference_line",
+            "action": "record_reference",
+            "parameters": {"raw_text": raw},
+        }
+    if not has_portfolio_context:
+        return None
+    wants_send = bool(
+        quick_send_term
+        or "portafolio actualizado" in clean
+        or "portafolio completo" in clean
+    )
+    wants_preview = bool(re.search(r"\b(preview|preflight|vista previa|revisa antes|sin enviar)\b", clean))
+    wants_report = wants_send or wants_preview or bool(re.search(r"\b(reporte|actualizado|completo|como va)\b", clean))
+    if not wants_report:
+        return None
+    parameters = {
+        "providers": ["binance", "mexc", "bybit"],
+        "force_refresh_prices": True,
+        "context_id": "PORTFOLIO-SR-ELI-DOCTOR-COMMAND-" + today(),
+        "source": "doctor_text_command",
+    }
+    if "pendiente" in clean:
+        parameters.update({"send_scope": "state", "state": "pending"})
+    elif re.search(r"\b(activas|ejecutadas|mercado|en mercado)\b", clean):
+        parameters.update({"send_scope": "state", "state": "active"})
+    range_value = portfolio_parse_range_from_text(raw, last_number=last_number)
+    ids = portfolio_parse_client_ids(re.findall(r"\ba\s*[0-9]+\b", clean))
+    if range_value:
+        parameters.update({"send_scope": "range", "range": range_value})
+    elif len(ids) >= 1 and not parameters.get("send_scope"):
+        parameters.update({"send_scope": "ids", "ids": sorted(ids)})
+    if "correccion" in clean:
+        parameters["send_scope"] = "correction"
+    if wants_preview:
+        return {"kind": "portfolio_report", "action": "whatsapp_preview", "parameters": parameters}
+    if wants_send:
+        return {"kind": "portfolio_report", "action": "send_whatsapp_report", "parameters": parameters}
+    return {"kind": "portfolio_report", "action": "client_report", "parameters": {**parameters, "save_standard": True}}
+
+
+def portfolio_canonical_report_parameters(parameters=None, mode="report"):
+    data = dict(parameters or {})
+    data.setdefault("providers", ["binance", "mexc", "bybit"])
+    data.setdefault("portfolio_id", "sr_eli_2026")
+    data.setdefault("context_id", "PORTFOLIO-SR-ELI-" + today())
+    if mode in {"send", "preview", "doctor_command"}:
+        data.setdefault("force_refresh_prices", True)
+    if mode == "report":
+        data.setdefault("save_standard", True)
+    elif mode in {"preview"}:
+        data.setdefault("save_standard", False)
+    return data
 
 
 def portfolio_cast_manual_value(field, value):
@@ -14488,11 +14617,55 @@ def portfolio_cli(action, parameters=None):
         result = {**clear_result, "providers": providers, "symbols": symbols, "source_warmup": warmup}
     elif action == "summary":
         result = module.portfolio_summary_json()
+    elif action in {"doctor_command", "doctor_text_command", "kim_doctor_command", "comando_doctor"}:
+        command_text = str(first_value(parameters, "text", "command", "instruction", "mensaje", default="") or "").strip()
+        if not command_text:
+            raise ValueError("Falta text/command para interpretar la orden del portafolio.")
+        seed_report = portfolio_client_report(
+            module.portfolio_summary_json(),
+            portfolio_canonical_report_parameters({**parameters, "save_standard": False}, mode="preview"),
+        )
+        parsed_command = portfolio_doctor_text_command(
+            command_text,
+            last_number=portfolio_last_client_number_from_report(seed_report),
+        )
+        if not parsed_command or parsed_command.get("kind") == "reference_line":
+            result = {
+                "ok": True,
+                "provider": "portfolio",
+                "action": "doctor_command",
+                "handled": bool(parsed_command),
+                "parsed": parsed_command,
+                "message": (
+                    "Recibi la linea como referencia, pero no modifique ni envie el portafolio sin selector/comando estructurado."
+                    if parsed_command
+                    else "No detecte una orden estructurada de portafolio."
+                ),
+                "report": seed_report,
+            }
+        else:
+            target_action = parsed_command.get("action") or "client_report"
+            target_parameters = portfolio_canonical_report_parameters(
+                {**parameters, **(parsed_command.get("parameters") or {})},
+                mode="send" if target_action == "send_whatsapp_report" else "preview" if target_action == "whatsapp_preview" else "report",
+            )
+            if boolish(first_value(parameters, "dry_run", "preview_only", default=False)) and target_action == "send_whatsapp_report":
+                target_action = "whatsapp_preview"
+            target_result = portfolio_cli(target_action, target_parameters)
+            result = {
+                "ok": bool(target_result.get("ok", True)),
+                "provider": "portfolio",
+                "action": "doctor_command",
+                "parsed": parsed_command,
+                "executed_action": target_action,
+                "result": target_result,
+            }
     elif action in {"client_report", "eli_client_report", "sr_eli_report"}:
-        result = portfolio_client_report(module.portfolio_summary_json(), parameters)
+        result = portfolio_client_report(module.portfolio_summary_json(), portfolio_canonical_report_parameters(parameters, mode="report"))
     elif action in {"whatsapp_preview", "preview_whatsapp_report", "compose_whatsapp_report", "portfolio_whatsapp_preview"}:
-        report = portfolio_client_report(module.portfolio_summary_json(), {**parameters, "save_standard": False})
-        composed = portfolio_compose_whatsapp_messages(report, {**parameters, "dry_run": True, "allow_unvalidated": True})
+        preview_parameters = portfolio_canonical_report_parameters({**parameters, "save_standard": False}, mode="preview")
+        report = portfolio_client_report(module.portfolio_summary_json(), preview_parameters)
+        composed = portfolio_compose_whatsapp_messages(report, {**preview_parameters, "dry_run": True, "allow_unvalidated": True})
         result = {
             "ok": True,
             "provider": "portfolio",
@@ -14547,7 +14720,7 @@ def portfolio_cli(action, parameters=None):
         "mandar_portafolio",
         "enviame_portafolio_actualizado",
     }:
-        result = portfolio_send_whatsapp_report(module.portfolio_summary_json(), parameters)
+        result = portfolio_send_whatsapp_report(module.portfolio_summary_json(), portfolio_canonical_report_parameters(parameters, mode="send"))
     elif action == "init":
         result = module.init_db()
     elif action in {"record_consultation", "record_market_consultation"}:
@@ -17006,6 +17179,10 @@ def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=No
         return "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado para seguimiento."
     thread = thread or load_whatsapp_thread(sender, called=called)
     contact = thread.get("contact") or {}
+    if contact.get("is_doctor") or portfolio_target_is_doctor_control(sender):
+        portfolio_reply = portfolio_doctor_whatsapp_command_reply(clean, sender=sender, session_id=session_id)
+        if portfolio_reply:
+            return portfolio_reply
     route = memory_router("classify_whatsapp", clean, session_id=session_id)
     intent = whatsapp_classify_intent(clean)
     availability = doctor_public_availability_summary()
@@ -17652,7 +17829,7 @@ def realtime_session_config():
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
                                     "Google Maps: status, validate_key, find_place, geocode, route_distance, timezone. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
-                                    "Portfolio: client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
+                                    "Portfolio: doctor_command, client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
                                     "Paper Broker: status, preview, place_order, cancel_order, sync. "
                                     "Twilio: status, list_numbers, send_sms, send_whatsapp, call_phone, call_report, latest_call, whatsapp_report, sync_call_attempts, schedule_call, schedule_sms. "
                                     "Scheduler: schedule_action, list_schedules, cancel_schedule. "
@@ -17708,7 +17885,7 @@ def realtime_session_config():
                         "properties": {
                             "action": {
                                 "type": "string",
-                                    "description": "status, summary, client_report, weighted_average_breakdown, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order, aggregate_order o set_position.",
+                                    "description": "status, summary, doctor_command, client_report, weighted_average_breakdown, fundamental_report, send_whatsapp_report, init, record_consultation, record_final_change, add_transaction, cancel_transaction, replace_draft_order, aggregate_order o set_position.",
                             },
                             "parameters": {
                                 "type": "object",
@@ -17719,6 +17896,7 @@ def realtime_session_config():
                                     "replace_draft_order requiere old_symbol, new_symbol, price y gross_amount. "
                                     "aggregate_order requiere canonical_order, symbol y members; members puede incluir member_order, source_order, amount_usd, price y quantity. "
                                     "weighted_average_breakdown acepta symbol y canonical_order para devolver tramos, unidades y operaciones exactas del promedio ponderado. "
+                                    "doctor_command acepta text/command y traduce 'manda portafolio', 'manda A13-A23', 'manda pendientes' o 'preflight' a la accion estructurada correcta. "
                                     "client_report acepta include_units=true si el doctor las pide; por defecto devuelve "
                                     "monto invertido, entrada, precio actual validado, variacion porcentual y estado de ordenes pendientes. "
                                     "fundamental_report genera analisis con fuentes, catalizadores internacionales, narrativas cripto populares, oportunidades y riesgos, sin enviar mensajes por defecto. "
@@ -18703,6 +18881,9 @@ def portfolio_standard_markdown(payload):
 
 def portfolio_save_current_standard(summary, report):
     override_config = portfolio_report_override_config(summary)
+    if override_config.get("standard_version") != PORTFOLIO_CURRENT_STANDARD_VERSION:
+        override_config = {**override_config, "standard_version": PORTFOLIO_CURRENT_STANDARD_VERSION}
+        portfolio_write_override_config(override_config)
     identifier_prefix = str(override_config.get("identifier_prefix") or "").strip()
 
     def position_payload(item):
@@ -18733,7 +18914,7 @@ def portfolio_save_current_standard(summary, report):
 
     payload = {
         "app_version": APP_VERSION,
-        "standard_version": override_config.get("standard_version") or "KIM-0096",
+        "standard_version": PORTFOLIO_CURRENT_STANDARD_VERSION,
         "standard_saved_at": now_iso(),
         "portfolio_id": summary.get("portfolio_id"),
         "portfolio_label": override_config.get("portfolio_label") or "A",
@@ -18770,7 +18951,30 @@ def portfolio_save_current_standard(summary, report):
         ],
     }
     json_paths = write_json_file_both(PORTFOLIO_SR_ELI_STANDARD_JSON, RUNTIME_PORTFOLIO_SR_ELI_STANDARD_JSON, payload)
-    md_paths = write_text_file_both(PORTFOLIO_SR_ELI_STANDARD_MD, RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD, portfolio_standard_markdown(payload))
+    md_text = portfolio_standard_markdown(payload)
+    md_paths = write_text_file_both(PORTFOLIO_SR_ELI_STANDARD_MD, RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD, md_text)
+    for path in [
+        FLAT_PORTFOLIO_SR_ELI_STANDARD_JSON,
+        RUNTIME_FLAT_PORTFOLIO_SR_ELI_STANDARD_JSON,
+        LEGACY_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.json",
+    ]:
+        try:
+            write_json_file(path, payload)
+            if str(path) not in json_paths:
+                json_paths.append(str(path))
+        except (PermissionError, OSError):
+            continue
+    for path in [
+        FLAT_PORTFOLIO_SR_ELI_STANDARD_MD,
+        RUNTIME_FLAT_PORTFOLIO_SR_ELI_STANDARD_MD,
+        LEGACY_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md",
+    ]:
+        try:
+            write_text_file(path, md_text)
+            if str(path) not in md_paths:
+                md_paths.append(str(path))
+        except (PermissionError, OSError):
+            continue
     append_memory("portfolio_sr_eli_standard_saved", {"standard_version": payload["standard_version"], "json_paths": json_paths, "md_paths": md_paths})
     return {"json_paths": json_paths, "markdown_paths": md_paths, "standard_version": payload["standard_version"]}
 
@@ -19807,11 +20011,18 @@ def portfolio_client_report(summary, parameters=None):
     position_map = {str(item.get("symbol") or "").upper(): item for item in positions}
     symbol_validations = {}
     merged_draft_keys = set()
+    override_seed = portfolio_report_override_config(summary)
+    manual_report_symbols = [
+        str(entry.get("symbol") or "").upper()
+        for entry in (override_seed.get("manual_entries") or [])
+        if isinstance(entry, dict) and str(entry.get("symbol") or "").strip()
+    ]
     report_symbols = [
         str(tx.get("symbol") or "").upper()
         for tx in [*final_transactions, *draft_transactions, *positions]
         if str(tx.get("symbol") or "").strip()
     ]
+    report_symbols = list(dict.fromkeys([*report_symbols, *manual_report_symbols]))
     source_warmup = warm_market_price_sources(report_symbols, providers=providers)
     failed_warmup_providers = {str(item.get("provider") or "").lower() for item in source_warmup.get("failures") or []}
     if failed_warmup_providers:
@@ -20722,6 +20933,7 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
     messages = list(composed.get("messages") or [])
     if not messages:
         raise ValueError("No se generaron lineas de portafolio para enviar.")
+    standard_save = portfolio_save_current_standard(summary, report)
     preview = {
         "to": target,
         "doctor_control_recipient": doctor_control,
@@ -20740,6 +20952,7 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
             "messages": messages,
             "selected_lines": composed.get("selected_lines", []),
             "report": report,
+            "portfolio_standard": standard_save,
         }
     if not confirmed:
         return confirmation_preview(
@@ -20833,6 +21046,7 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
         "delivery_results": delivery_results,
         "errors": errors,
         "report": report,
+        "portfolio_standard": standard_save,
         "sent_at": now_iso(),
     }
     append_jsonl_any(
@@ -20844,6 +21058,76 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
     )
     append_memory("portfolio_whatsapp_report_sent", {k: v for k, v in result.items() if k != "report"})
     return result
+
+
+def portfolio_doctor_whatsapp_command_reply(text, sender="", session_id=""):
+    clean = str(text or "").strip()
+    if not clean:
+        return ""
+    try:
+        result = portfolio_cli(
+            "doctor_command",
+            {
+                "text": clean,
+                "context_id": session_id or "PORTFOLIO-SR-ELI-WHATSAPP-" + today(),
+                "source": "doctor_whatsapp_inbound",
+            },
+        )
+    except Exception as exc:
+        append_memory(
+            "portfolio_doctor_whatsapp_command_error",
+            {"from": sender, "session_id": session_id, "text": brief(clean, 500), "error": brief(str(exc), 800)},
+        )
+        return ""
+    if not result.get("parsed"):
+        return ""
+    if (result.get("parsed") or {}).get("kind") == "reference_line":
+        append_memory(
+            "portfolio_doctor_whatsapp_reference_line",
+            {"from": sender, "session_id": session_id, "text": brief(clean, 900), "handled_at": now_iso()},
+        )
+        return (
+            "Recibido, doctor. Lo guardo como referencia de portafolio, pero no voy a recalcular ni modificar "
+            "la fuente canónica desde una línea suelta; usemos el panel o un comando estructurado para evitar errores."
+        )
+    executed = result.get("executed_action") or ""
+    inner = result.get("result") if isinstance(result.get("result"), dict) else {}
+    append_memory(
+        "portfolio_doctor_whatsapp_command_handled",
+        {
+            "from": sender,
+            "session_id": session_id,
+            "text": brief(clean, 500),
+            "executed_action": executed,
+            "ok": inner.get("ok", result.get("ok")),
+            "scope": inner.get("scope") or (inner.get("preview") or {}).get("scope"),
+            "selected_ids": inner.get("selected_ids") or (inner.get("preview") or {}).get("selected_ids"),
+            "message_count": inner.get("message_count") or (inner.get("preview") or {}).get("message_count"),
+        },
+    )
+    if executed == "send_whatsapp_report":
+        if inner.get("ok"):
+            selected = ", ".join(inner.get("selected_ids") or []) or "todo"
+            return (
+                f"Listo, doctor. Envié el portafolio Sr. Eli por WhatsApp con precios validados: "
+                f"{inner.get('message_count') or 0} mensaje(s), selección {selected}."
+            )
+        return "Doctor, intenté enviar el portafolio, pero el envío no quedó limpio: " + brief(inner.get("errors") or inner.get("error") or "revisar preflight", 300)
+    if executed == "whatsapp_preview":
+        preview = inner.get("preview") or {}
+        selected = ", ".join(preview.get("selected_ids") or []) or "todo"
+        blocked = preview.get("blocked_lines") or []
+        return (
+            f"Preflight listo: {preview.get('message_count') or 0} mensaje(s), selección {selected}, "
+            f"bloqueos {len(blocked)}. No envié WhatsApp."
+        )
+    if executed == "client_report":
+        report = inner
+        return (
+            f"Reporte Sr. Eli recalculado: {len(report.get('client_lines') or [])} líneas cliente, "
+            f"{len(report.get('active_positions') or [])} en mercado y {len(report.get('pending_orders') or [])} pendientes."
+        )
+    return ""
 
 
 def multipart_field(boundary, name, value, content_type=None):

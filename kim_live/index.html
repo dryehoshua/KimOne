@@ -2707,6 +2707,11 @@
             <button class="paper-subtab" data-portfolio-view="technical" type="button">Vista Tecnica</button>
             <button class="paper-subtab" data-portfolio-view="suggestions" type="button">Aglomeraciones</button>
           </div>
+          <div class="portfolio-selection-bar" aria-label="Comando estructurado de portfolio">
+            <input class="wide-input" id="portfolioDoctorCommand" placeholder="Ej: manda portafolio completo / manda A13-A23 / manda pendientes" spellcheck="false">
+            <button class="secondary inline-button" id="portfolioCommandPreview" type="button">Preflight comando</button>
+            <button class="primary inline-button" id="portfolioCommandRun" type="button">Ejecutar comando</button>
+          </div>
           <div class="portfolio-selection-bar" aria-label="Envio dinamico de portfolio">
             <input id="portfolioRange" placeholder="A13-A21" spellcheck="false">
             <button class="secondary inline-button" id="portfolioSendSelected" type="button">Enviar seleccionadas</button>
@@ -4273,6 +4278,38 @@
       return refreshPortfolioPercentages(true, extraParameters);
     }
 
+    async function runPortfolioDoctorCommand(dryRun = false) {
+      const text = $("portfolioDoctorCommand").value.trim();
+      if (!text) throw new Error("Escribe un comando, por ejemplo: manda A13-A23.");
+      $("portfolioEditorStatus").textContent = dryRun ? "Interpretando comando sin enviar..." : "Ejecutando comando estructurado...";
+      const data = await post("/api/portfolio", {
+        action: "doctor_command",
+        parameters: {
+          text,
+          dry_run: dryRun,
+          providers: ["binance", "mexc", "bybit"],
+          force_refresh_prices: true,
+          context_id: "PORTFOLIO-SR-ELI-PANEL-COMMAND-" + new Date().toISOString().slice(0, 10)
+        },
+        session_id: sessionId
+      });
+      const result = data.result || {};
+      if (!result.ok) throw new Error(result.error || result.message || "El comando no quedo limpio.");
+      const inner = result.result || {};
+      const report = inner.report || (inner.report_type ? inner : null);
+      if (report) portfolioLatestReport = report;
+      const messages = inner.messages || report?.whatsapp_messages || report?.message_lines || [];
+      $("portfolioReportPreview").textContent = messages.join("\n\n") || inner.message || result.message || "Comando sin mensajes de reporte.";
+      await loadPortfolioEditor();
+      const preview = inner.preview || {};
+      const action = result.executed_action || "sin accion";
+      const count = inner.message_count || preview.message_count || messages.length || 0;
+      const selected = (inner.selected_ids || preview.selected_ids || []).join(", ") || "todo";
+      const blocked = preview.blocked_lines || [];
+      $("portfolioEditorStatus").textContent = `Comando ${action}: ${count} mensaje(s), seleccion ${selected}, bloqueos ${blocked.length}.`;
+      return result;
+    }
+
     function renderFundamentalHistory(result) {
       const reports = result?.reports || [];
       $("fundamentalHistoryList").innerHTML = reports.length ? reports.map((item) => {
@@ -5134,6 +5171,22 @@
         await addPortfolioOrderFromPanel();
       } catch (error) {
         $("portfolioEditorStatus").textContent = "No pude agregar orden: " + error.message;
+      }
+    };
+    $("portfolioCommandPreview").onclick = async () => {
+      try {
+        await runPortfolioDoctorCommand(true);
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "Preflight comando falló: " + error.message;
+      }
+    };
+    $("portfolioCommandRun").onclick = async () => {
+      try {
+        const text = $("portfolioDoctorCommand").value.trim();
+        if (!window.confirm("Ejecutar comando de portafolio? " + text)) return;
+        await runPortfolioDoctorCommand(false);
+      } catch (error) {
+        $("portfolioEditorStatus").textContent = "Comando falló: " + error.message;
       }
     };
     document.querySelectorAll("[data-portfolio-view]").forEach((button) => {

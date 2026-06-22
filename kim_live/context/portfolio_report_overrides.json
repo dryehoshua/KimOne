@@ -1,8 +1,8 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0114",
-  "updated_at": "2026-06-19T01:35:06+00:00",
+  "standard_version": "KIM-0115",
+  "updated_at": "2026-06-22T10:41:30",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
