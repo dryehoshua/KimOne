@@ -104,6 +104,8 @@ API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
 RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
 TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
+EXECUTION_TRUTH_LOG = MEMORY_CONTEXT_DIR / "execution_truth_actions.jsonl"
+RUNTIME_EXECUTION_TRUTH_LOG = RUNTIME_CONTEXT / "execution_truth_actions.jsonl"
 WHATSAPP_THREAD_DIR = MEMORY_ROOT / "whatsapp_threads"
 RUNTIME_WHATSAPP_THREAD_DIR = RUNTIME_MEMORY_ROOT / "whatsapp_threads"
 WHATSAPP_THREAD_INDEX = MEMORY_CONTEXT_DIR / "whatsapp_thread_index.json"
@@ -192,6 +194,10 @@ PORTFOLIO_SR_ELI_STANDARD_MD = PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standa
 RUNTIME_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
 FLAT_PORTFOLIO_SR_ELI_STANDARD_MD = FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
 RUNTIME_FLAT_PORTFOLIO_SR_ELI_STANDARD_MD = RUNTIME_FLAT_PORTFOLIO_SR_ELI_MEMORY_DIR / "portfolio_a_standard.md"
+PORTFOLIO_SR_ELI_LATEST_CONTEXT_JSON = MEMORY_CONTEXT_DIR / "kim_sr_eli_latest_portfolio_snapshot.json"
+RUNTIME_PORTFOLIO_SR_ELI_LATEST_CONTEXT_JSON = RUNTIME_CONTEXT / "kim_sr_eli_latest_portfolio_snapshot.json"
+PORTFOLIO_SR_ELI_LATEST_CONTEXT_MD = MEMORY_CONTEXT_DIR / "kim_sr_eli_latest_portfolio_snapshot.md"
+RUNTIME_PORTFOLIO_SR_ELI_LATEST_CONTEXT_MD = RUNTIME_CONTEXT / "kim_sr_eli_latest_portfolio_snapshot.md"
 PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 RUNTIME_PORTFOLIO_SR_ELI_FUNDAMENTAL_LOG = RUNTIME_PORTFOLIO_SR_ELI_MEMORY_DIR / "fundamental_reports.jsonl"
 TRADINGVIEW_WEBHOOK_CONFIG = MEMORY_CONTEXT_DIR / "tradingview_webhook.json"
@@ -252,7 +258,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.82"
+APP_VERSION = "1.5.83"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -261,6 +267,17 @@ VERSION_MEMORY_BASELINE_NOTES = [
 DEFAULT_SCHEDULER_TIMEZONE = "America/Mexico_City"
 DOCTOR_DUBAI_WHATSAPP_NUMBER = "+971585943726"
 DOCTOR_DUBAI_WHATSAPP_TO = f"whatsapp:{DOCTOR_DUBAI_WHATSAPP_NUMBER}"
+DOCTOR_CANONICAL_CHANNELS = {
+    "doctor_control_whatsapp": {
+        "label": "Dr. Yehoshua Dubai WhatsApp",
+        "phone": DOCTOR_DUBAI_WHATSAPP_NUMBER,
+        "to": DOCTOR_DUBAI_WHATSAPP_TO,
+        "purpose": "Canal por defecto para reportes Ignis/portafolio y control del doctor.",
+    }
+}
+TWILIO_MESSAGE_DELIVERED_STATUSES = {"delivered", "read"}
+TWILIO_MESSAGE_ACCEPTED_STATUSES = {"accepted", "queued", "sending", "sent", "delivered", "read"}
+TWILIO_MESSAGE_FAILED_STATUSES = {"failed", "undelivered"}
 KEYCHAIN_READ_TIMEOUT = 8
 RESEARCH_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
 DOCUMENT_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
@@ -342,6 +359,16 @@ REMOTE_SECRETARY_BRIDGE_POLICY = (
     "explicar ofertas y servicios de AI People, Tesca Elements e Ignis, y proponer cita o seguimiento. Nunca debe revelar "
     "agenda privada, memoria de otros contactos, datos de clientes/inversionistas, portafolios privados ni tareas internas "
     "del doctor. Si el contacto no esta identificado, primero pide nombre, empresa y necesidad."
+)
+EXECUTION_TRUTH_POLICY = (
+    "Kim no puede decir enviado, registrado, actualizado o completado sin evidencia. "
+    "Twilio accepted/queued/sent solo significa aceptado por proveedor; delivered/read significa entregado. "
+    "Si falta verificacion, Kim debe decir estado pendiente y el siguiente paso concreto."
+)
+IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY = (
+    "Cuando el tema sea Sr. Eli, Ignis, portafolio, ordenes, precios, fondeos, credito, comisiones, ganancias o perdidas, "
+    "Kim debe permanecer dentro del modulo Ignis Financials. No debe saltar a ClickUp, Pipedrive, tareas generales ni "
+    "culpar APIs ajenas salvo que la accion requerida realmente use esa API. El ledger/override canonico gana sobre memoria vieja."
 )
 INBOUND_RELATIONSHIP_GOODWILL_POLICY = (
     "Cada inbound de terceros debe desarrollar relacion comercial o buen nombre para Dr. Yehoshua, Tesca Elements, "
@@ -688,7 +715,7 @@ def record_public_lead(handler, body):
 
 
 def is_public_get_path(path):
-    return path in {"/", "/index.html", "/api/auth/status", "/twilio/health"} or path.startswith("/twilio/")
+    return path in {"/", "/index.html", "/api/auth/status", "/twilio/health", "/api/health/operational", "/api/kim/health"} or path.startswith("/twilio/")
 
 
 def is_public_post_path(path):
@@ -956,6 +983,59 @@ def append_jsonl_any(paths, payload):
     if last_error:
         raise last_error
     return None
+
+
+def execution_truth_state(provider, action, raw_status="", ok=True, errors=None):
+    status = str(raw_status or "").strip().lower()
+    errors = errors or []
+    if errors or ok is False or status in TWILIO_MESSAGE_FAILED_STATUSES:
+        return "failed"
+    if provider == "twilio" and action in {"send_sms", "send_whatsapp", "send_whatsapp_report"}:
+        if status in TWILIO_MESSAGE_DELIVERED_STATUSES:
+            return "delivered"
+        if status in TWILIO_MESSAGE_ACCEPTED_STATUSES:
+            return "accepted_not_delivered"
+        return "queued_pending_verification"
+    if ok:
+        return "completed"
+    return "unknown"
+
+
+def execution_truth_language(state, action_label="accion"):
+    if state == "delivered":
+        return f"{action_label} entregada y verificada."
+    if state == "accepted_not_delivered":
+        return f"{action_label} aceptada por el proveedor; entrega aun no verificada."
+    if state == "queued_pending_verification":
+        return f"{action_label} en cola; falta verificacion del proveedor."
+    if state == "failed":
+        return f"{action_label} fallo; revisar errores antes de afirmar que se completo."
+    if state == "completed":
+        return f"{action_label} completada con evidencia interna."
+    return f"{action_label} sin estado verificable."
+
+
+def record_execution_truth(provider, action, result=None, raw_status="", ok=True, errors=None, metadata=None):
+    result = result if isinstance(result, dict) else {}
+    errors = errors if errors is not None else result.get("errors") or []
+    state = execution_truth_state(provider, action, raw_status or result.get("status"), ok=ok if ok is not None else result.get("ok"), errors=errors)
+    event = {
+        "at": now_iso(),
+        "provider": provider,
+        "action": action,
+        "state": state,
+        "raw_status": raw_status or result.get("status") or "",
+        "ok": bool(ok if ok is not None else result.get("ok", True)),
+        "errors": errors,
+        "sid": result.get("sid") or result.get("message_sid") or result.get("call_sid") or "",
+        "context_id": result.get("context_id") or "",
+        "metadata": metadata or {},
+    }
+    try:
+        append_jsonl_any([EXECUTION_TRUTH_LOG, RUNTIME_EXECUTION_TRUTH_LOG], event)
+    except Exception:
+        pass
+    return event
 
 
 def write_jsonl(path, entries):
@@ -5690,6 +5770,16 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
         "confirmed": True,
         "sent_at": now_iso(),
     }
+    truth = record_execution_truth(
+        "twilio",
+        action,
+        event,
+        raw_status=event.get("status"),
+        ok=True,
+        metadata={"channel": channel, "to": event.get("to"), "recipient_label": event.get("recipient_label")},
+    )
+    event["execution_state"] = truth["state"]
+    event["execution_message"] = execution_truth_language(truth["state"], f"{channel.upper()} Twilio")
     if not context_id and not call_sid:
         context_id = record_outbound_context_expansion(parameters, preview, event, channel=channel)
         event["context_id"] = context_id
@@ -6803,6 +6893,8 @@ def twilio_inbound_caller_profile(caller="", called=""):
         "sales_discovery_flow": AI_PEOPLE_DISCOVERY_FLOW,
         "commercial_guardrails": AI_PEOPLE_COMMERCIAL_GUARDRAILS,
         "remote_secretary_bridge_policy": REMOTE_SECRETARY_BRIDGE_POLICY,
+        "execution_truth_policy": EXECUTION_TRUTH_POLICY,
+        "ignis_financials_context_lock_policy": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
         "inbound_relationship_goodwill_policy": INBOUND_RELATIONSHIP_GOODWILL_POLICY,
         "whatsapp_sales_pr_meeting_playbook": WHATSAPP_SALES_PR_MEETING_PLAYBOOK,
         "privacy_summary": (
@@ -6841,7 +6933,9 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "Este canal debe funcionar aunque el doctor no este frente a la computadora: recibe instrucciones, tareas, "
             "contexto, recados y solicitudes de seguimiento; registralas en memoria local, notifica Kim Live y prepara "
             "acciones cuando corresponda. Si algo requiere ejecucion fuera de la llamada, confirma que quedara registrado "
-            "o preparado, pero no afirmes que ya se ejecuto si no existe resultado confirmado por API o scheduler."
+            "o preparado, pero no afirmes que ya se ejecuto si no existe resultado confirmado por API o scheduler. "
+            f"Politica de verdad operativa: {EXECUTION_TRUTH_POLICY} "
+            f"Si el doctor habla de Ignis o Sr. Eli: {IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY}"
         )
         questions = "Pregunta que necesita ejecutar o revisar ahora."
     elif known:
@@ -6924,6 +7018,8 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             f"Discovery comercial: {profile.get('sales_discovery_flow') or AI_PEOPLE_DISCOVERY_FLOW}. "
             f"Guardrails comerciales: {profile.get('commercial_guardrails') or AI_PEOPLE_COMMERCIAL_GUARDRAILS}."
             f" Politica secretaria/puente: {profile.get('remote_secretary_bridge_policy') or REMOTE_SECRETARY_BRIDGE_POLICY}."
+            f" Politica verdad operativa: {profile.get('execution_truth_policy') or EXECUTION_TRUTH_POLICY}."
+            f" Politica Ignis: {profile.get('ignis_financials_context_lock_policy') or IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY}."
             f" Politica relacion/buen nombre: {profile.get('inbound_relationship_goodwill_policy') or INBOUND_RELATIONSHIP_GOODWILL_POLICY}."
         ),
         "objective": objective,
@@ -11550,6 +11646,8 @@ def agent_action_defaults(action, parameters):
         "sr_eli_fundamental",
     }:
         return "portfolio", "fundamental_report", data
+    if action in {"record_funding", "record_deposit", "registrar_fondeo", "fondeo", "deposito_ignis"}:
+        return "portfolio", "record_funding", data
     if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
         return "twilio", "call_phone", data
     if action in {"call_report", "latest_call", "get_call", "call_summary", "reporte_llamada", "ultima_llamada"}:
@@ -13464,6 +13562,7 @@ def start_paper_broker_watcher_once():
 
 PORTFOLIO_SALE_ACTIONS = {"sell_position", "close_position", "record_sale", "venta_final", "cerrar_posicion"}
 PORTFOLIO_EXECUTION_ACTIONS = {"execute_pending_order", "mark_order_executed", "confirm_pending_order"}
+PORTFOLIO_ACCOUNTING_ACTIONS = {"record_funding", "record_funding_event", "record_deposit", "registrar_fondeo", "fondeo"}
 PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
     "manual_delete_order",
     "delete_manual_order",
@@ -13483,9 +13582,9 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
     "separate_order",
     "separate_orders",
 }
-PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
+PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0115"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0116"
 
 
 def portfolio_float(value, default=None):
@@ -13699,7 +13798,7 @@ def portfolio_manual_entry_matches(entry, parameters):
     state_matches = not requested_state or str(entry.get("state") or "").strip().lower() == requested_state
     if order_matches and (not requested_symbol or symbol_matches) and state_matches:
         return True
-    if symbol_matches and state_matches and requested_id:
+    if symbol_matches and state_matches:
         return True
     return False
 
@@ -13817,7 +13916,7 @@ def portfolio_doctor_text_command(text, last_number=None):
     clean = portfolio_text_ascii(raw)
     if not raw:
         return None
-    portfolio_terms = {"portafolio", "portfolio", "orden", "ordenes", "sr eli", "senor eli", "eli"}
+    portfolio_terms = {"portafolio", "portfolio", "orden", "ordenes", "sr eli", "senor eli", "eli", "fondeo", "deposito", "deposito", "ignis"}
     has_client_id_context = bool(re.search(r"\ba\s*[0-9]+", clean))
     quick_send_term = bool(re.search(r"\b(manda|mandame|enviar|envia|enviame|whatsapp|mandalo|mandalas|mandarlos)\b", clean))
     has_state_context = bool(re.search(r"\b(pendiente|pendientes|activas|ejecutadas|mercado)\b", clean))
@@ -13831,6 +13930,61 @@ def portfolio_doctor_text_command(text, last_number=None):
         }
     if not has_portfolio_context:
         return None
+    funding_match = re.search(r"\b(?:fondeo|deposito|depositaron|fondearon|capitalizaron)\b", clean)
+    if funding_match:
+        usd_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:usd|usdt|dolares|dolares)", clean)
+        mxn_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:mxn|pesos)", clean)
+        def parsed_amount(match):
+            if not match:
+                return None
+            token = re.sub(r"[^0-9.]", "", match.group(1).replace(",", ""))
+            try:
+                return float(token)
+            except ValueError:
+                return None
+        return {
+            "kind": "portfolio_accounting",
+            "action": "record_funding",
+            "parameters": {
+                "amount_usd": parsed_amount(usd_match),
+                "amount_mxn": parsed_amount(mxn_match),
+                "payment_method": "cash" if re.search(r"\b(efectivo|cash)\b", clean) else "",
+                "summary": raw,
+                "source": "doctor_text_command",
+            },
+        }
+    execution_match = re.search(r"\b([a-z]{2,10})\b.*\b(ejecuto|ejecutada|ejecutado|entro|entro|en mercado|toco entrada)\b.*?(?:a|en|precio)?\s*([0-9]+(?:[\.,][0-9]+)?)?", clean)
+    if execution_match:
+        symbol = execution_match.group(1)
+        ignored = {"orden", "portafolio", "portfolio", "sr", "senor", "eli"}
+        if symbol not in ignored:
+            price = execution_match.group(3)
+            if not price:
+                price_match = re.search(r"(?:\ba\b|\ben\b|precio)\s*([0-9]+(?:[\.,][0-9]+)?)", clean)
+                price = price_match.group(1) if price_match else None
+            return {
+                "kind": "portfolio_execution",
+                "action": "execute_pending_order",
+                "parameters": {
+                    "symbol": symbol,
+                    "price": float(price.replace(",", ".")) if price else None,
+                    "summary": raw,
+                    "source": "doctor_text_command",
+                },
+            }
+    sale_match = re.search(r"\b([a-z]{2,10})\b.*\b(vendida|vendido|vendio|cerrada|cerrado|salio|salida)\b.*?(?:a|en|precio)?\s*([0-9]+(?:[\.,][0-9]+)?)?", clean)
+    if sale_match:
+        symbol = sale_match.group(1)
+        ignored = {"orden", "portafolio", "portfolio", "sr", "senor", "eli"}
+        if symbol not in ignored:
+            price = sale_match.group(3)
+            if not price:
+                price_match = re.search(r"(?:\ba\b|\ben\b|precio)\s*([0-9]+(?:[\.,][0-9]+)?)", clean)
+                price = price_match.group(1) if price_match else None
+            params = {"symbol": symbol, "summary": raw, "source": "doctor_text_command"}
+            if price:
+                params["sell_price"] = float(price.replace(",", "."))
+            return {"kind": "portfolio_sale", "action": "sell_position", "parameters": params}
     wants_send = bool(
         quick_send_term
         or "portafolio actualizado" in clean
@@ -14380,6 +14534,90 @@ def portfolio_sync_manual_execution_to_overrides(parameters):
     return {"updated": True, "matched_count": len(changed), "executed_entries": changed}
 
 
+def portfolio_find_manual_entry(parameters, preferred_states=None):
+    summary_hint = {"portfolio_id": (parameters or {}).get("portfolio_id") or "sr_eli_2026"}
+    config = portfolio_report_override_config(summary_hint)
+    manual_entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    for entry in manual_entries:
+        if portfolio_entry_matches(entry, parameters, preferred_states=preferred_states):
+            return dict(entry)
+    symbol = portfolio_normalize_symbol(first_value(parameters or {}, "symbol", "ticker", "asset", "moneda"))
+    if symbol:
+        for entry in manual_entries:
+            if portfolio_normalize_symbol(entry.get("symbol")) == symbol and (not preferred_states or str(entry.get("state") or "").strip().lower() in preferred_states):
+                return dict(entry)
+    return {}
+
+
+def portfolio_record_funding_event(parameters):
+    parameters = dict(parameters or {})
+    amount_usd = portfolio_float(first_value(parameters, "amount_usd", "usd_amount", "amount", "monto_usd"))
+    amount_mxn = portfolio_float(first_value(parameters, "amount_mxn", "mxn_amount", "monto_mxn", "mxn"))
+    if amount_usd in (None, 0) and amount_mxn in (None, 0):
+        raise ValueError("Falta amount_usd o amount_mxn para registrar fondeo Ignis.")
+    summary = str(first_value(parameters, "summary", "notes", "description", default="") or "").strip()
+    status = str(first_value(parameters, "status", "estado", default="confirmed") or "confirmed").strip().lower()
+    funding_id = str(first_value(parameters, "id", "funding_id", default="funding_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S")) or "").strip()
+    config = portfolio_report_override_config({"portfolio_id": parameters.get("portfolio_id") or "sr_eli_2026"})
+    accounting = dict(config.get("accounting") or {})
+    conversions = accounting.get("funding_conversions") if isinstance(accounting.get("funding_conversions"), list) else []
+    event = {
+        "id": funding_id,
+        "type": str(first_value(parameters, "type", "event_type", default="funding") or "funding"),
+        "status": status,
+        "amount_usd": round_opt(amount_usd, 2),
+        "amount_mxn": round_opt(amount_mxn, 2),
+        "exchange_rate_mxn_per_usd": round_opt((amount_mxn / amount_usd) if amount_usd and amount_mxn else None, 6),
+        "payment_method": str(first_value(parameters, "payment_method", "method", "metodo", default="cash") or "cash"),
+        "occurred_at": first_value(parameters, "occurred_at", "date", "fecha", default=now_iso()),
+        "source": str(first_value(parameters, "source", default="kim_live_ignis_funding") or "kim_live_ignis_funding"),
+        "notes": summary or "Fondeo registrado desde instruccion del doctor.",
+    }
+    existing_ids = {str(item.get("id") or "") for item in conversions if isinstance(item, dict)}
+    if funding_id not in existing_ids:
+        conversions.append(event)
+    else:
+        conversions = [event if str(item.get("id") or "") == funding_id else item for item in conversions]
+    accounting["funding_conversions"] = conversions
+    rule = "KIM-0116: todo fondeo/deposito/retiro de Ignis se registra como evento contable; no debe quedar solo como memoria conversacional."
+    rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
+    if rule not in rules:
+        rules.append(rule)
+    config["doctor_rules"] = rules
+    config["accounting"] = accounting
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
+    portfolio_write_override_config(config)
+    append_jsonl_any(
+        [
+            MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "ledger_events.jsonl",
+            RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026_ledger_events.jsonl",
+        ],
+        {"at": now_iso(), "event_type": "funding", "portfolio_id": "sr_eli_2026", "event": event},
+    )
+    append_memory("ignis_funding_event_recorded", event)
+    return {"ok": True, "provider": "portfolio", "action": "record_funding", "event": event, "accounting": accounting}
+
+
+def portfolio_suppress_symbol_from_live_report(symbol, reason=""):
+    symbol = portfolio_normalize_symbol(symbol)
+    if not symbol:
+        return {"updated": False, "reason": "missing_symbol"}
+    config = portfolio_report_override_config({"portfolio_id": "sr_eli_2026"})
+    suppressed = [str(item or "").upper() for item in (config.get("suppress_symbols") or []) if str(item or "").strip()]
+    if symbol not in suppressed:
+        suppressed.append(symbol)
+    rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
+    rule = "KIM-0116: simbolos vendidos/cerrados se suprimen del reporte vivo aunque queden transacciones historicas en ledger."
+    if rule not in rules:
+        rules.append(rule)
+    config["suppress_symbols"] = suppressed
+    config["doctor_rules"] = rules
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
+    portfolio_write_override_config(config)
+    append_memory("portfolio_symbol_suppressed_from_live_report", {"symbol": symbol, "reason": reason})
+    return {"updated": True, "symbol": symbol, "suppress_symbols": suppressed}
+
+
 def portfolio_execute_sale(module, ns, parameters, override_config):
     calc = portfolio_sale_calculation(parameters, override_config)
     notes = str(first_value(parameters, "notes", "summary", "rationale", default="") or "").strip()
@@ -14433,6 +14671,7 @@ def portfolio_execute_sale(module, ns, parameters, override_config):
         )
     )
     override_sync = portfolio_sync_manual_sale_to_overrides(parameters, calc)
+    suppress_sync = portfolio_suppress_symbol_from_live_report(calc["symbol"], reason=notes)
     return {
         "ok": True,
         "action": "sell_position",
@@ -14441,6 +14680,7 @@ def portfolio_execute_sale(module, ns, parameters, override_config):
         "cancelled_pending": cancelled_pending,
         "final_change": change["record"],
         "override_sync": override_sync,
+        "suppress_sync": suppress_sync,
         "message": portfolio_sale_preview(parameters, override_config)["summary"],
         "database": str(module.DB_PATH),
     }
@@ -14450,9 +14690,18 @@ def portfolio_execute_pending_order(module, ns, parameters):
     symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "new_symbol", "ticker", "asset"))
     if not symbol:
         raise ValueError("Falta symbol para ejecutar orden pendiente.")
+    manual_entry = portfolio_find_manual_entry({**parameters, "symbol": symbol}, preferred_states={"pending"})
     gross_amount = portfolio_float(first_value(parameters, "gross_amount", "amount", "usd_amount", "invested_usd"))
     price = portfolio_float(first_value(parameters, "price", "entry_price", "precio_entrada"))
     quantity = portfolio_float(first_value(parameters, "quantity", "units", "cantidad"))
+    if gross_amount is None and manual_entry:
+        gross_amount = portfolio_float(manual_entry.get("invested_usd"))
+    if price in (None, 0) and manual_entry:
+        price = portfolio_float(manual_entry.get("entry_price"))
+    if quantity is None and manual_entry:
+        quantity = portfolio_float(manual_entry.get("quantity"))
+    if quantity is None and gross_amount not in (None, 0) and price not in (None, 0):
+        quantity = gross_amount / price
     if gross_amount is None:
         raise ValueError("Falta gross_amount/amount para ejecutar orden pendiente.")
     if price in (None, 0):
@@ -14533,6 +14782,11 @@ def portfolio_cli(action, parameters=None):
         "delete_manual_order",
         "remove_manual_order",
         "normalize_manual_orders",
+        "record_funding",
+        "record_funding_event",
+        "record_deposit",
+        "registrar_fondeo",
+        "fondeo",
         *PORTFOLIO_MANUAL_SENSITIVE_ACTIONS,
         *PORTFOLIO_SALE_ACTIONS,
         *PORTFOLIO_EXECUTION_ACTIONS,
@@ -14558,8 +14812,9 @@ def portfolio_cli(action, parameters=None):
         )
     if action in PORTFOLIO_EXECUTION_ACTIONS and not confirm:
         symbol = portfolio_normalize_symbol(first_value(parameters, "symbol", "new_symbol", "ticker", "asset"))
-        gross_amount = first_value(parameters, "gross_amount", "amount", "usd_amount", "invested_usd")
-        price = first_value(parameters, "price", "entry_price", "precio_entrada")
+        manual_entry = portfolio_find_manual_entry({**parameters, "symbol": symbol}, preferred_states={"pending"}) if symbol else {}
+        gross_amount = first_value(parameters, "gross_amount", "amount", "usd_amount", "invested_usd") or manual_entry.get("invested_usd")
+        price = first_value(parameters, "price", "entry_price", "precio_entrada") or manual_entry.get("entry_price")
         return confirmation_preview(
             "portfolio",
             "execute_pending_order",
@@ -14568,7 +14823,21 @@ def portfolio_cli(action, parameters=None):
                 "symbol": symbol,
                 "gross_amount": gross_amount,
                 "price": price,
+                "matched_manual_order": manual_entry.get("identifier") or manual_entry.get("order") or "",
                 "notes": parameters.get("notes") or parameters.get("summary") or "",
+            },
+            execution_parameters={**parameters, "symbol": symbol, "gross_amount": gross_amount, "price": price, "confirm": True},
+        )
+    if action in PORTFOLIO_ACCOUNTING_ACTIONS and not confirm:
+        return confirmation_preview(
+            "portfolio",
+            "record_funding",
+            "Confirmar fondeo/deposito del portafolio Sr. Eli antes de registrarlo en el ledger Ignis.",
+            {
+                "amount_usd": first_value(parameters, "amount_usd", "usd", "usdt", "dolares"),
+                "amount_mxn": first_value(parameters, "amount_mxn", "mxn", "pesos"),
+                "payment_method": first_value(parameters, "payment_method", "method", "metodo", default=""),
+                "summary": parameters.get("summary") or parameters.get("notes") or "",
             },
             execution_parameters={**parameters, "confirm": True},
         )
@@ -14621,14 +14890,17 @@ def portfolio_cli(action, parameters=None):
         command_text = str(first_value(parameters, "text", "command", "instruction", "mensaje", default="") or "").strip()
         if not command_text:
             raise ValueError("Falta text/command para interpretar la orden del portafolio.")
-        seed_report = portfolio_client_report(
-            module.portfolio_summary_json(),
-            portfolio_canonical_report_parameters({**parameters, "save_standard": False}, mode="preview"),
-        )
-        parsed_command = portfolio_doctor_text_command(
-            command_text,
-            last_number=portfolio_last_client_number_from_report(seed_report),
-        )
+        parsed_command = portfolio_doctor_text_command(command_text, last_number=None)
+        seed_report = None
+        if not parsed_command or parsed_command.get("kind") in {"portfolio_report", "reference_line"}:
+            seed_report = portfolio_client_report(
+                module.portfolio_summary_json(),
+                portfolio_canonical_report_parameters({**parameters, "save_standard": False}, mode="preview"),
+            )
+            parsed_command = portfolio_doctor_text_command(
+                command_text,
+                last_number=portfolio_last_client_number_from_report(seed_report),
+            )
         if not parsed_command or parsed_command.get("kind") == "reference_line":
             result = {
                 "ok": True,
@@ -14641,8 +14913,9 @@ def portfolio_cli(action, parameters=None):
                     if parsed_command
                     else "No detecte una orden estructurada de portafolio."
                 ),
-                "report": seed_report,
             }
+            if seed_report is not None:
+                result["report"] = seed_report
         else:
             target_action = parsed_command.get("action") or "client_report"
             target_parameters = portfolio_canonical_report_parameters(
@@ -14712,6 +14985,8 @@ def portfolio_cli(action, parameters=None):
         result = portfolio_fundamental_report(module.portfolio_summary_json(), parameters)
     elif action in {"fundamental_history", "portfolio_fundamental_history", "news_history", "historial_fundamental"}:
         result = portfolio_fundamental_history(parameters)
+    elif action in {"record_funding", "record_funding_event", "record_deposit", "registrar_fondeo", "fondeo"}:
+        result = portfolio_record_funding_event(parameters)
     elif action in {
         "send_whatsapp_report",
         "send_updated_portfolio",
@@ -15730,6 +16005,44 @@ def list_kim_live_notifications(limit=25):
             if len(entries) >= limit:
                 return entries
     return entries
+
+
+def kim_operational_health(limit=12):
+    try:
+        limit = max(1, min(int(limit or 12), 50))
+    except (TypeError, ValueError):
+        limit = 12
+    execution_events = []
+    seen = set()
+    for path in [RUNTIME_EXECUTION_TRUTH_LOG, EXECUTION_TRUTH_LOG]:
+        for item in reversed(read_jsonl_entries(path, limit=limit * 3)):
+            key = item.get("sid") or f"{item.get('at')}:{item.get('provider')}:{item.get('action')}"
+            if key in seen:
+                continue
+            seen.add(key)
+            execution_events.append(item)
+            if len(execution_events) >= limit:
+                break
+        if len(execution_events) >= limit:
+            break
+    return {
+        "ok": True,
+        "app_version": APP_VERSION,
+        "generated_at": now_iso(),
+        "channel_registry": DOCTOR_CANONICAL_CHANNELS,
+        "policies": {
+            "execution_truth": EXECUTION_TRUTH_POLICY,
+            "ignis_financials_context_lock": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
+            "remote_secretary_bridge": REMOTE_SECRETARY_BRIDGE_POLICY,
+        },
+        "execution_truth_recent": execution_events,
+        "twilio_realtime": twilio_realtime_health_status(),
+        "scheduler": {
+            "pending": list_scheduled_actions(status="pending", limit=limit),
+            "failed": list_scheduled_actions(status="failed", limit=min(limit, 20)),
+        },
+        "notifications": list_kim_live_notifications(limit=min(limit, 25)),
+    }
 
 
 def set_twilio_realtime_health(status="ok", reason="", metadata=None, notify=True):
@@ -18921,6 +19234,9 @@ def portfolio_save_current_standard(summary, report):
         "identifier_prefix": identifier_prefix or "A",
         "default_whatsapp_target": DOCTOR_DUBAI_WHATSAPP_TO,
         "never_auto_send_without_doctor_instruction": True,
+        "channel_registry": DOCTOR_CANONICAL_CHANNELS,
+        "execution_truth_policy": EXECUTION_TRUTH_POLICY,
+        "ignis_financials_context_lock_policy": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
         "doctor_rules": override_config.get("doctor_rules", []),
         "report_overrides": override_config,
         "standard_positions": {
@@ -18977,6 +19293,137 @@ def portfolio_save_current_standard(summary, report):
             continue
     append_memory("portfolio_sr_eli_standard_saved", {"standard_version": payload["standard_version"], "json_paths": json_paths, "md_paths": md_paths})
     return {"json_paths": json_paths, "markdown_paths": md_paths, "standard_version": payload["standard_version"]}
+
+
+def portfolio_latest_context_markdown(payload):
+    balance = payload.get("balance") if isinstance(payload.get("balance"), dict) else {}
+    scope = payload.get("scope") or "all"
+    selected_ids = payload.get("selected_ids") or []
+    selected_text = ", ".join(str(item) for item in selected_ids) if selected_ids else "todo el portafolio"
+    lines = [
+        "# Kim Live - Ultimo snapshot canonico Sr. Eli",
+        "",
+        f"- Guardado: {payload.get('saved_at') or ''}",
+        f"- Accion: {payload.get('action') or ''}",
+        f"- Context ID: {payload.get('context_id') or ''}",
+        f"- Destino: {payload.get('to') or ''}",
+        f"- Control doctor: {'si' if payload.get('doctor_control_recipient') else 'no'}",
+        f"- Scope: {scope}",
+        f"- Seleccion: {selected_text}",
+        f"- Version estandar: {payload.get('standard_version') or ''}",
+        f"- Activas: {payload.get('active_count') or 0}",
+        f"- Pendientes: {payload.get('pending_count') or 0}",
+        f"- En ganancia: {payload.get('gain_count') or 0}",
+        f"- Mensajes enviados: {payload.get('sent_count') or 0}",
+        f"- Mensajes entregados: {payload.get('delivered_count') or 0}",
+        "",
+        "## Balance",
+        "",
+        f"- Monto en firme: {format_usd_amount(balance.get('firm_total_usd'))} USD",
+        f"- Credito: {format_usd_amount(balance.get('credit_total_usd'))} USD",
+        f"- Saldo disponible: {format_usd_amount(balance.get('available_balance_usd'))} USD",
+        f"- P/L total neto: {signed_usd_text(balance.get('total_pnl_after_fees_usd'))}",
+        "",
+        "## Posiciones en Ganancia",
+        "",
+    ]
+    gain_positions = payload.get("gain_positions") or []
+    if gain_positions:
+        for item in gain_positions:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- Ninguna.")
+    lines.extend(
+        [
+            "",
+            "## Mayores Perdidas",
+            "",
+        ]
+    )
+    loss_positions = payload.get("largest_losses") or []
+    if loss_positions:
+        for item in loss_positions:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- No identificadas.")
+    lines.extend(
+        [
+            "",
+            "## Regla Operativa",
+            "",
+            "- No reconstruir el portafolio desde notas libres, historiales mezclados ni respuestas conversacionales.",
+            "- Para Sr. Eli usar solo doctor_command, client_report, whatsapp_preview o send_whatsapp_report sobre el override canonico.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def portfolio_save_latest_context_snapshot(summary, report, parameters=None, send_result=None, standard_save=None):
+    parameters = dict(parameters or {})
+    send_result = dict(send_result or {})
+    standard_save = standard_save or {}
+    override_config = portfolio_report_override_config(summary)
+    active_positions = report.get("active_positions") or []
+    pending_orders = report.get("pending_orders") or []
+    gain_positions = []
+    loss_rows = []
+    for item in active_positions:
+        label = str(item.get("label") or item.get("symbol") or "").strip()
+        pct = portfolio_client_performance_pct(item)
+        if pct is not None and pct > 0:
+            gain_positions.append(f"{label} {signed_percent_text(round_opt(pct, 2))}")
+        if pct is not None:
+            loss_rows.append((float(pct), f"{label} {signed_percent_text(round_opt(pct, 2))}"))
+    loss_rows.sort(key=lambda row: row[0])
+    payload = {
+        "saved_at": now_iso(),
+        "portfolio_id": summary.get("portfolio_id") or "sr_eli_2026",
+        "action": send_result.get("action") or "send_whatsapp_report",
+        "context_id": send_result.get("context_id") or first_value(parameters, "context_id", "kim_context_id", default=""),
+        "to": send_result.get("to") or portfolio_default_whatsapp_target(parameters),
+        "doctor_control_recipient": bool(send_result.get("doctor_control_recipient")),
+        "scope": send_result.get("scope") or "all",
+        "selected_ids": send_result.get("selected_ids") or [],
+        "active_count": len(active_positions),
+        "pending_count": len(pending_orders),
+        "gain_count": len(gain_positions),
+        "gain_positions": gain_positions,
+        "largest_losses": [item[1] for item in loss_rows[:5]],
+        "sent_count": int(send_result.get("sent_count") or 0),
+        "delivered_count": int(send_result.get("delivered_count") or 0),
+        "message_count": int(send_result.get("message_count") or len(report.get("whatsapp_messages") or [])),
+        "standard_version": standard_save.get("standard_version") or override_config.get("standard_version") or PORTFOLIO_CURRENT_STANDARD_VERSION,
+        "standard_paths": {
+            "json": standard_save.get("json_paths") or [],
+            "markdown": standard_save.get("markdown_paths") or [],
+        },
+        "balance": report.get("balance") or {},
+        "balance_line": report.get("balance_line") or "",
+        "whatsapp_messages": report.get("whatsapp_messages") or [],
+        "source_rule": "No reconstruir desde notas libres; usar el override canonico y comandos estructurados.",
+    }
+    json_paths = write_json_file_both(
+        PORTFOLIO_SR_ELI_LATEST_CONTEXT_JSON,
+        RUNTIME_PORTFOLIO_SR_ELI_LATEST_CONTEXT_JSON,
+        payload,
+    )
+    md_text = portfolio_latest_context_markdown(payload)
+    md_paths = write_text_file_both(
+        PORTFOLIO_SR_ELI_LATEST_CONTEXT_MD,
+        RUNTIME_PORTFOLIO_SR_ELI_LATEST_CONTEXT_MD,
+        md_text,
+    )
+    append_memory(
+        "portfolio_sr_eli_latest_snapshot_saved",
+        {
+            "portfolio_id": payload["portfolio_id"],
+            "context_id": payload["context_id"],
+            "action": payload["action"],
+            "json_paths": json_paths,
+            "md_paths": md_paths,
+        },
+    )
+    return {"json_paths": json_paths, "markdown_paths": md_paths, "saved_at": payload["saved_at"]}
 
 
 def portfolio_override_sort_key(item, preferred):
@@ -21020,16 +21467,26 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
                 )
         except Exception as exc:
             delivery_results.append({"index": item.get("index"), "sid": sid, "status": item.get("status"), "poll_error": brief(str(exc), 500)})
-    accepted_statuses = {"accepted", "queued", "sending", "sent", "delivered", "read"}
-    delivered_statuses = {"delivered", "read"}
-    rejected_statuses = {"failed", "undelivered"}
+    accepted_statuses = TWILIO_MESSAGE_ACCEPTED_STATUSES
+    delivered_statuses = TWILIO_MESSAGE_DELIVERED_STATUSES
+    rejected_statuses = TWILIO_MESSAGE_FAILED_STATUSES
     accepted_count = sum(1 for item in delivery_results if item.get("status") in accepted_statuses) or len(send_results)
     delivered_count = sum(1 for item in delivery_results if item.get("status") in delivered_statuses)
     rejected_count = sum(1 for item in delivery_results if item.get("status") in rejected_statuses)
+    if rejected_count or errors:
+        execution_state = "failed"
+    elif delivered_count == len(messages):
+        execution_state = "delivered"
+    elif accepted_count == len(messages):
+        execution_state = "accepted_not_delivered"
+    else:
+        execution_state = "queued_pending_verification"
     result = {
-        "ok": not errors and rejected_count == 0,
+        "ok": execution_state in {"delivered", "accepted_not_delivered"},
         "provider": "portfolio",
         "action": "send_whatsapp_report",
+        "execution_state": execution_state,
+        "execution_message": execution_truth_language(execution_state, "Reporte WhatsApp Sr. Eli"),
         "to": target,
         "doctor_control_recipient": doctor_control,
         "context_id": context_id,
@@ -21049,6 +21506,18 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
         "portfolio_standard": standard_save,
         "sent_at": now_iso(),
     }
+    truth = record_execution_truth(
+        "twilio",
+        "send_whatsapp_report",
+        result,
+        raw_status=execution_state,
+        ok=result["ok"],
+        errors=errors,
+        metadata={"target": target, "message_count": len(messages), "accepted_count": accepted_count, "delivered_count": delivered_count},
+    )
+    result["execution_truth"] = truth
+    latest_context_snapshot = portfolio_save_latest_context_snapshot(summary, report, parameters, result, standard_save)
+    result["latest_context_snapshot"] = latest_context_snapshot
     append_jsonl_any(
         [
             MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "whatsapp_report_sends.jsonl",
@@ -21108,9 +21577,15 @@ def portfolio_doctor_whatsapp_command_reply(text, sender="", session_id=""):
     if executed == "send_whatsapp_report":
         if inner.get("ok"):
             selected = ", ".join(inner.get("selected_ids") or []) or "todo"
+            state = inner.get("execution_state") or ""
+            if state == "delivered":
+                return (
+                    f"Listo, doctor. El portafolio Sr. Eli quedó entregado por WhatsApp: "
+                    f"{inner.get('message_count') or 0} mensaje(s), selección {selected}."
+                )
             return (
-                f"Listo, doctor. Envié el portafolio Sr. Eli por WhatsApp con precios validados: "
-                f"{inner.get('message_count') or 0} mensaje(s), selección {selected}."
+                f"Doctor, el portafolio Sr. Eli fue aceptado por Twilio pero aun no tengo entrega verificada: "
+                f"{inner.get('message_count') or 0} mensaje(s), selección {selected}, estado {state or 'pendiente'}."
             )
         return "Doctor, intenté enviar el portafolio, pero el envío no quedó limpio: " + brief(inner.get("errors") or inner.get("error") or "revisar preflight", 300)
     if executed == "whatsapp_preview":
@@ -21442,6 +21917,11 @@ class Handler(BaseHTTPRequestHandler):
             params = urllib.parse.parse_qs(parsed.query)
             limit = int((params.get("limit") or ["25"])[0] or 25)
             write_json(self, {"ok": True, "notifications": list_kim_live_notifications(limit=limit)})
+            return
+        if parsed.path in {"/api/health/operational", "/api/kim/health"}:
+            params = urllib.parse.parse_qs(parsed.query)
+            limit = int((params.get("limit") or ["12"])[0] or 12)
+            write_json(self, kim_operational_health(limit=limit))
             return
         if parsed.path == "/api/whatsapp-summary":
             params = urllib.parse.parse_qs(parsed.query)
