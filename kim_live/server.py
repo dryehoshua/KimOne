@@ -20917,16 +20917,22 @@ def portfolio_client_report(summary, parameters=None):
     realized_fee_usd = sum(float(item.get("fee_usd") or 0) for item in closed_positions)
     realized_net_pnl_usd = sum(float(item.get("net_pnl_usd") or 0) for item in closed_positions)
     available_balance_usd = operating_remnants_usd + max(0.0, realized_net_pnl_usd)
+    position_credit_total_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
     configured_firm_capital = accounting_config.get("firm_capital_usd")
     if configured_firm_capital not in (None, ""):
         base_firm_capital_usd = float(configured_firm_capital)
-        total_firm_usd = min(total_portfolio_usd, base_firm_capital_usd + available_balance_usd)
-        total_credit_usd = max(0.0, total_portfolio_usd - total_firm_usd)
+        formula_credit_usd = max(0.0, total_portfolio_usd - min(total_portfolio_usd, base_firm_capital_usd + available_balance_usd))
+        if position_credit_total_usd > 0:
+            total_credit_usd = position_credit_total_usd
+            credit_source = "position_credit_marks_with_firm_capital_context"
+        else:
+            total_credit_usd = formula_credit_usd
+            credit_source = "firm_capital_plus_available_realized_profit"
+        total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
         base_only_credit_usd = max(0.0, total_portfolio_usd - base_firm_capital_usd)
-        credit_source = "firm_capital_plus_available_realized_profit"
     else:
         base_firm_capital_usd = None
-        total_credit_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
+        total_credit_usd = position_credit_total_usd
         total_firm_usd = max(0.0, total_portfolio_usd - total_credit_usd)
         base_only_credit_usd = total_credit_usd
         credit_source = "position_credit_marks"
