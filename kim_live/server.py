@@ -258,7 +258,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.84"
+APP_VERSION = "1.5.85"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -13204,6 +13204,7 @@ def sync_paper_broker_runtime_to_bifrost(runtime_root, bifrost_root):
 def import_paper_broker_module():
     spec = importlib.util.spec_from_file_location("kim_paper_broker", PAPER_BROKER_TOOL)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     runtime_root, bifrost_root = configure_paper_broker_module(module)
     return module, runtime_root, bifrost_root
@@ -14175,6 +14176,10 @@ def portfolio_manual_orders(summary, parameters=None):
         "standard_version": config.get("standard_version"),
         "manual_entries": entries,
         "removed_orders": removed_orders,
+        "closed_positions": config.get("closed_positions") if isinstance(config.get("closed_positions"), list) else [],
+        "accounting": config.get("accounting") if isinstance(config.get("accounting"), dict) else {},
+        "module": config.get("module") if isinstance(config.get("module"), dict) else {},
+        "doctor_rules_tail": (config.get("doctor_rules") or [])[-12:] if isinstance(config.get("doctor_rules"), list) else [],
         "active_count": sum(1 for item in entries if str(item.get("state")) == "active"),
         "pending_count": sum(1 for item in entries if str(item.get("state")) == "pending"),
         "removed_count": len(removed_orders),
@@ -14814,6 +14819,20 @@ def portfolio_execute_pending_order(module, ns, parameters):
     }
 
 
+def portfolio_module_snapshot(parameters=None):
+    parameters = parameters or {}
+    module_path = pathlib.Path(__file__).resolve().parent / "kimtools" / "ignis_portfolio_module.py"
+    spec = importlib.util.spec_from_file_location("ignis_portfolio_module", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    override_path = pathlib.Path(str(first_value(parameters, "override_path", "path", default="") or "")) if first_value(parameters, "override_path", "path", default="") else module.DEFAULT_OVERRIDE_PATH
+    portfolio = module.IgnisPortfolioModule(override_path)
+    payload = portfolio.snapshot()
+    payload["provider"] = "portfolio"
+    payload["action"] = "module_snapshot"
+    return payload
+
+
 def portfolio_cli(action, parameters=None):
     action = (action or "status").strip().lower()
     parameters = parameters or {}
@@ -14924,7 +14943,9 @@ def portfolio_cli(action, parameters=None):
             execution_parameters={**parameters, "confirm": True},
         )
 
-    if action == "status":
+    if action in {"module_snapshot", "ignis_module_snapshot", "portfolio_module_snapshot"}:
+        result = portfolio_module_snapshot(parameters)
+    elif action == "status":
         try:
             result = module.status_json()
         except Exception as exc:
@@ -20984,9 +21005,11 @@ def portfolio_client_report(summary, parameters=None):
         "Balance validado Sr. Eli: "
         f"total invertido/comprometido {format_usd_amount(balance['invested_total_usd'])} USD; "
         f"monto a crédito {format_usd_amount(balance['credit_total_usd'])} USD; "
-        f"monto en firme {format_usd_amount(balance['firm_total_usd'])} USD; "
+        f"monto en firme usado {format_usd_amount(balance['firm_total_usd'])} USD; "
+        f"capital firme base {format_usd_amount(balance['deposits_total_usd'])} USD; "
         f"saldo disponible {format_usd_amount(balance['available_balance_usd'])} USD; "
-        f"depositos/fondeo confirmado {format_usd_amount(balance['deposits_total_usd'])} USD; "
+        f"fondeos/conversiones confirmadas {format_usd_amount(fee_summary.get('cash_in_usd'))} USD"
+        f" / {format_usd_amount(accounting_config.get('confirmed_cash_funding_total_mxn'))} MXN; "
         f"remanentes operativos {format_usd_amount(balance['operating_remnants_usd'])} USD; "
         f"valor actual del portafolio {format_usd_amount(balance['portfolio_current_value_usd_validated_only'])} USD; "
         f"P/L bruto {signed_usd_text(balance['portfolio_unrealized_pnl_usd_validated_only'])}; "

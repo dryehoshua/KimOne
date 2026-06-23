@@ -1230,9 +1230,10 @@
     .paper-content-grid {
       min-height: 0;
       display: grid;
-      grid-template-columns: minmax(260px, 0.72fr) minmax(540px, 1.28fr);
+      grid-template-columns: minmax(260px, 0.62fr) minmax(420px, 1.38fr);
       gap: 10px;
       align-items: stretch;
+      overflow: hidden;
     }
 
     .paper-broker-panel {
@@ -1308,8 +1309,10 @@
       display: grid;
       gap: 8px;
       min-width: 0;
-      min-height: 0;
-      grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto;
+      min-height: min(720px, calc(100vh - 240px));
+      max-height: calc(100vh - 220px);
+      grid-template-rows: auto auto auto auto auto minmax(220px, 1fr) auto;
+      overflow: hidden;
     }
 
     .portfolio-editor-head {
@@ -1441,7 +1444,7 @@
 
     .portfolio-order-fields {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
       gap: 8px;
       align-items: end;
     }
@@ -1479,9 +1482,38 @@
       color: #344054;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
       padding: 8px;
-      max-height: 120px;
+      max-height: 150px;
       overflow: auto;
       white-space: pre-wrap;
+    }
+
+    .portfolio-accounting-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+    }
+
+    .portfolio-accounting-card {
+      border: 1px solid #e2e8ee;
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 9px;
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .portfolio-accounting-card strong {
+      color: var(--teal-dark);
+      font-size: 12px;
+    }
+
+    .portfolio-accounting-card small,
+    .portfolio-accounting-card span {
+      color: #344054;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     .portfolio-client-message {
@@ -2705,6 +2737,7 @@
           <div class="paper-subtabs" aria-label="Vistas de portfolio">
             <button class="paper-subtab active" data-portfolio-view="client" type="button">Vista Cliente</button>
             <button class="paper-subtab" data-portfolio-view="technical" type="button">Vista Tecnica</button>
+            <button class="paper-subtab" data-portfolio-view="accounting" type="button">Contabilidad</button>
             <button class="paper-subtab" data-portfolio-view="suggestions" type="button">Aglomeraciones</button>
           </div>
           <div class="portfolio-selection-bar" aria-label="Comando estructurado de portfolio">
@@ -3927,6 +3960,52 @@
       });
     }
 
+
+    function renderPortfolioAccountingView() {
+      const state = portfolioEditorState || {};
+      const accounting = state.accounting || {};
+      const closed = state.closed_positions || [];
+      const cashflows = accounting.funding_conversions || [];
+      const rules = state.doctor_rules_tail || [];
+      const moduleInfo = state.module || {};
+      const cashflowCards = cashflows.length ? cashflows.map((item, index) => `
+        <article class="portfolio-accounting-card">
+          <strong>${escapeHtml(index + 1)}. ${escapeHtml(item.type || "cashflow")} · ${escapeHtml(item.status || "confirmed")}</strong>
+          <span>${escapeHtml(paperMoney(item.amount_usd))} USD${item.amount_mxn ? " · " + escapeHtml(paperMoney(item.amount_mxn)) + " MXN" : ""}</span>
+          <small>${escapeHtml(item.payment_method || "sin metodo")} · ${escapeHtml(item.occurred_at || "sin fecha")}</small>
+          <small>${escapeHtml(item.notes || "")}</small>
+        </article>
+      `).join("") : '<article class="portfolio-accounting-card"><strong>Cashflows</strong><span>Sin fondeos/retiros confirmados.</span></article>';
+      const closedCards = closed.length ? closed.map((item, index) => `
+        <article class="portfolio-accounting-card">
+          <strong>${escapeHtml(index + 1)}. ${escapeHtml(item.label || item.symbol || "Cerrada")}</strong>
+          <span>Entrada ${escapeHtml(paperPrice(item.entry_price))} · Salida ${escapeHtml(paperPrice(item.sell_price))}</span>
+          <span>P/L bruto ${escapeHtml(paperMoney(item.gross_pnl_usd))} USD · Fee ${escapeHtml(paperMoney(item.fee_usd))} USD · Neto ${escapeHtml(paperMoney(item.net_pnl_usd))} USD</span>
+          <small>${escapeHtml(item.notes || "")}</small>
+        </article>
+      `).join("") : '<article class="portfolio-accounting-card"><strong>Cerradas</strong><span>Sin operaciones cerradas confirmadas.</span></article>';
+      $("portfolioEditorList").innerHTML = `
+        <div class="portfolio-accounting-grid">
+          <article class="portfolio-accounting-card">
+            <strong>Modulo</strong>
+            <span>${escapeHtml(moduleInfo.id || "ignis_financials.sr_eli.portfolio")}</span>
+            <small>${escapeHtml(moduleInfo.source_of_truth || "portfolio_report_overrides + ledger")}</small>
+          </article>
+          <article class="portfolio-accounting-card">
+            <strong>Capital y fee</strong>
+            <span>Firme base: ${escapeHtml(paperMoney(accounting.firm_capital_usd))} USD</span>
+            <span>Fee: ${escapeHtml(String(((accounting.operation_fee_rate || 0) * 100).toFixed ? ((accounting.operation_fee_rate || 0) * 100).toFixed(2) : 1.2))}%</span>
+          </article>
+          ${cashflowCards}
+          ${closedCards}
+          <article class="portfolio-accounting-card">
+            <strong>Reglas recientes</strong>
+            <small>${escapeHtml(rules.slice(-6).join("\n"))}</small>
+          </article>
+        </div>
+      `;
+    }
+
     function renderPortfolioSuggestions() {
       const suggestions = portfolioSuggestionsState?.suggestions || [];
       $("portfolioEditorList").innerHTML = suggestions.length ? suggestions.map((item) => {
@@ -4025,6 +4104,9 @@
               <div class="field"><label>Fuente</label><input data-portfolio-field="source" value="${escapeHtml(item.source || "kim_live_panel")}" spellcheck="false"></div>
               <div class="field"><label>ID</label><input data-portfolio-field="id" value="${escapeHtml(portfolioOrderKey(item))}" spellcheck="false"></div>
             </div>
+            <div class="portfolio-order-fields">
+              <div class="field"><label>Notas / razon de cambio</label><input data-portfolio-field="notes" value="${escapeHtml(item.notes || "")}" spellcheck="false"></div>
+            </div>
             <div class="portfolio-order-actions">
               <button class="secondary inline-button" type="button" data-portfolio-action="copy">Copiar orden</button>
               <button class="secondary inline-button" type="button" data-portfolio-action="save">Guardar edit</button>
@@ -4054,6 +4136,8 @@
         renderPortfolioClientView();
       } else if (portfolioViewMode === "suggestions") {
         renderPortfolioSuggestions();
+      } else if (portfolioViewMode === "accounting") {
+        renderPortfolioAccountingView();
       } else {
         renderPortfolioTechnicalView(entries);
       }
@@ -4062,7 +4146,7 @@
     async function loadPortfolioEditor(options = {}) {
       const data = await post("/api/portfolio", {
         action: options.normalize ? "normalize_manual_orders" : "manual_orders",
-        parameters: {normalize_states: Boolean(options.normalize)}
+        parameters: {normalize_states: Boolean(options.normalize), include_accounting: true}
       });
       const result = data.result || {};
       if (!result.ok) throw new Error(result.error || "No pude leer portfolio manual.");
@@ -4095,7 +4179,8 @@
           entry_price: portfolioInputValue(row, "entry_price"),
           credit_usd: portfolioInputValue(row, "credit_usd"),
           side: portfolioInputValue(row, "side"),
-          source: portfolioInputValue(row, "source")
+          source: portfolioInputValue(row, "source"),
+          notes: portfolioInputValue(row, "notes")
         }
       };
       const data = await post("/api/portfolio", {action: "update_manual_order", parameters: payload});
