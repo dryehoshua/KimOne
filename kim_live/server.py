@@ -258,7 +258,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.83"
+APP_VERSION = "1.5.84"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -369,6 +369,12 @@ IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY = (
     "Cuando el tema sea Sr. Eli, Ignis, portafolio, ordenes, precios, fondeos, credito, comisiones, ganancias o perdidas, "
     "Kim debe permanecer dentro del modulo Ignis Financials. No debe saltar a ClickUp, Pipedrive, tareas generales ni "
     "culpar APIs ajenas salvo que la accion requerida realmente use esa API. El ledger/override canonico gana sobre memoria vieja."
+)
+IGNIS_ACCOUNTING_COMMAND_POLICY = (
+    "Fondeos, depositos, retiros, conversiones, cierres, ventas, perdidas, ganancias realizadas y fees se registran como "
+    "eventos contables Ignis con confirmacion. Una correccion de precio, monto o ID no es retiro ni venta salvo que el "
+    "doctor lo diga explicitamente. Kim debe poder preparar solo la seccion solicitada: balance, fondeos/retiros, "
+    "cerradas, P/L realizado, pendientes, activas, rango o simbolos."
 )
 INBOUND_RELATIONSHIP_GOODWILL_POLICY = (
     "Cada inbound de terceros debe desarrollar relacion comercial o buen nombre para Dr. Yehoshua, Tesca Elements, "
@@ -6895,6 +6901,7 @@ def twilio_inbound_caller_profile(caller="", called=""):
         "remote_secretary_bridge_policy": REMOTE_SECRETARY_BRIDGE_POLICY,
         "execution_truth_policy": EXECUTION_TRUTH_POLICY,
         "ignis_financials_context_lock_policy": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
+        "ignis_accounting_command_policy": IGNIS_ACCOUNTING_COMMAND_POLICY,
         "inbound_relationship_goodwill_policy": INBOUND_RELATIONSHIP_GOODWILL_POLICY,
         "whatsapp_sales_pr_meeting_playbook": WHATSAPP_SALES_PR_MEETING_PLAYBOOK,
         "privacy_summary": (
@@ -7020,6 +7027,7 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             f" Politica secretaria/puente: {profile.get('remote_secretary_bridge_policy') or REMOTE_SECRETARY_BRIDGE_POLICY}."
             f" Politica verdad operativa: {profile.get('execution_truth_policy') or EXECUTION_TRUTH_POLICY}."
             f" Politica Ignis: {profile.get('ignis_financials_context_lock_policy') or IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY}."
+            f" Politica contable Ignis: {profile.get('ignis_accounting_command_policy') or IGNIS_ACCOUNTING_COMMAND_POLICY}."
             f" Politica relacion/buen nombre: {profile.get('inbound_relationship_goodwill_policy') or INBOUND_RELATIONSHIP_GOODWILL_POLICY}."
         ),
         "objective": objective,
@@ -11646,7 +11654,9 @@ def agent_action_defaults(action, parameters):
         "sr_eli_fundamental",
     }:
         return "portfolio", "fundamental_report", data
-    if action in {"record_funding", "record_deposit", "registrar_fondeo", "fondeo", "deposito_ignis"}:
+    if action in {"record_funding", "record_deposit", "registrar_fondeo", "fondeo", "deposito_ignis", "record_withdrawal", "registrar_retiro", "retiro_ignis"}:
+        if action in {"record_withdrawal", "registrar_retiro", "retiro_ignis"}:
+            data.setdefault("type", "withdrawal")
         return "portfolio", "record_funding", data
     if action in {"call_phone", "call", "make_call", "llamar", "llamada"}:
         return "twilio", "call_phone", data
@@ -13562,7 +13572,16 @@ def start_paper_broker_watcher_once():
 
 PORTFOLIO_SALE_ACTIONS = {"sell_position", "close_position", "record_sale", "venta_final", "cerrar_posicion"}
 PORTFOLIO_EXECUTION_ACTIONS = {"execute_pending_order", "mark_order_executed", "confirm_pending_order"}
-PORTFOLIO_ACCOUNTING_ACTIONS = {"record_funding", "record_funding_event", "record_deposit", "registrar_fondeo", "fondeo"}
+PORTFOLIO_ACCOUNTING_ACTIONS = {
+    "record_funding",
+    "record_funding_event",
+    "record_deposit",
+    "registrar_fondeo",
+    "fondeo",
+    "record_withdrawal",
+    "registrar_retiro",
+    "retiro_ignis",
+}
 PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
     "manual_delete_order",
     "delete_manual_order",
@@ -13916,7 +13935,31 @@ def portfolio_doctor_text_command(text, last_number=None):
     clean = portfolio_text_ascii(raw)
     if not raw:
         return None
-    portfolio_terms = {"portafolio", "portfolio", "orden", "ordenes", "sr eli", "senor eli", "eli", "fondeo", "deposito", "deposito", "ignis"}
+    portfolio_terms = {
+        "portafolio",
+        "portfolio",
+        "orden",
+        "ordenes",
+        "sr eli",
+        "senor eli",
+        "eli",
+        "fondeo",
+        "deposito",
+        "deposito",
+        "retiro",
+        "retiraron",
+        "retirar",
+        "ignis",
+        "perdida",
+        "perdidas",
+        "ganancia",
+        "ganancias",
+        "balance",
+        "credito",
+        "margen",
+        "cerradas",
+        "cerrados",
+    }
     has_client_id_context = bool(re.search(r"\ba\s*[0-9]+", clean))
     quick_send_term = bool(re.search(r"\b(manda|mandame|enviar|envia|enviame|whatsapp|mandalo|mandalas|mandarlos)\b", clean))
     has_state_context = bool(re.search(r"\b(pendiente|pendientes|activas|ejecutadas|mercado)\b", clean))
@@ -13930,10 +13973,11 @@ def portfolio_doctor_text_command(text, last_number=None):
         }
     if not has_portfolio_context:
         return None
-    funding_match = re.search(r"\b(?:fondeo|deposito|depositaron|fondearon|capitalizaron)\b", clean)
-    if funding_match:
+    cashflow_match = re.search(r"\b(?:fondeo|deposito|depositaron|fondearon|capitalizaron|retiro|retiraron|retirar|retiramos|salida de capital)\b", clean)
+    if cashflow_match:
         usd_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:usd|usdt|dolares|dolares)", clean)
         mxn_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:mxn|pesos)", clean)
+        is_withdrawal = bool(re.search(r"\b(?:retiro|retiraron|retirar|retiramos|salida de capital)\b", clean))
         def parsed_amount(match):
             if not match:
                 return None
@@ -13946,6 +13990,7 @@ def portfolio_doctor_text_command(text, last_number=None):
             "kind": "portfolio_accounting",
             "action": "record_funding",
             "parameters": {
+                "type": "withdrawal" if is_withdrawal else "funding",
                 "amount_usd": parsed_amount(usd_match),
                 "amount_mxn": parsed_amount(mxn_match),
                 "payment_method": "cash" if re.search(r"\b(efectivo|cash)\b", clean) else "",
@@ -14004,6 +14049,12 @@ def portfolio_doctor_text_command(text, last_number=None):
         parameters.update({"send_scope": "state", "state": "pending"})
     elif re.search(r"\b(activas|ejecutadas|mercado|en mercado)\b", clean):
         parameters.update({"send_scope": "state", "state": "active"})
+    elif re.search(r"\b(fondeos?|depositos?|retiros?|conversiones?)\b", clean):
+        parameters.update({"send_scope": "accounting", "accounting_section": "cashflows"})
+    elif re.search(r"\b(cerradas|cerrados|vendidas|vendidos|ventas|p/l realizado|pl realizado|ganancias realizadas|perdidas realizadas)\b", clean):
+        parameters.update({"send_scope": "accounting", "accounting_section": "closed_positions"})
+    elif re.search(r"\b(balance|perdidas|ganancias|p/l|pl|margen|credito|en firme)\b", clean):
+        parameters.update({"send_scope": "accounting", "accounting_section": "balance"})
     range_value = portfolio_parse_range_from_text(raw, last_number=last_number)
     ids = portfolio_parse_client_ids(re.findall(r"\ba\s*[0-9]+\b", clean))
     if range_value:
@@ -14563,7 +14614,7 @@ def portfolio_record_funding_event(parameters):
     conversions = accounting.get("funding_conversions") if isinstance(accounting.get("funding_conversions"), list) else []
     event = {
         "id": funding_id,
-        "type": str(first_value(parameters, "type", "event_type", default="funding") or "funding"),
+        "type": str(first_value(parameters, "type", "event_type", default="funding") or "funding").strip().lower(),
         "status": status,
         "amount_usd": round_opt(amount_usd, 2),
         "amount_mxn": round_opt(amount_mxn, 2),
@@ -14579,7 +14630,10 @@ def portfolio_record_funding_event(parameters):
     else:
         conversions = [event if str(item.get("id") or "") == funding_id else item for item in conversions]
     accounting["funding_conversions"] = conversions
-    rule = "KIM-0116: todo fondeo/deposito/retiro de Ignis se registra como evento contable; no debe quedar solo como memoria conversacional."
+    rule = (
+        "KIM-0117: todo fondeo/deposito/retiro/conversion de Ignis se registra como evento contable separado; "
+        "no debe quedar solo como memoria conversacional y no debe mezclarse con correcciones de orden."
+    )
     rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
     if rule not in rules:
         rules.append(rule)
@@ -14592,7 +14646,7 @@ def portfolio_record_funding_event(parameters):
             MEMORY_ROOT / "portfolios" / "ignis_stock_financials" / "clientes" / "manejo_de_portafolios" / "sr_eli_2026" / "ledger_events.jsonl",
             RUNTIME_MEMORY_ROOT / "portfolios" / "sr_eli_2026_ledger_events.jsonl",
         ],
-        {"at": now_iso(), "event_type": "funding", "portfolio_id": "sr_eli_2026", "event": event},
+        {"at": now_iso(), "event_type": event["type"], "portfolio_id": "sr_eli_2026", "event": event},
     )
     append_memory("ignis_funding_event_recorded", event)
     return {"ok": True, "provider": "portfolio", "action": "record_funding", "event": event, "accounting": accounting}
@@ -14785,8 +14839,11 @@ def portfolio_cli(action, parameters=None):
         "record_funding",
         "record_funding_event",
         "record_deposit",
+        "record_withdrawal",
         "registrar_fondeo",
+        "registrar_retiro",
         "fondeo",
+        "retiro_ignis",
         *PORTFOLIO_MANUAL_SENSITIVE_ACTIONS,
         *PORTFOLIO_SALE_ACTIONS,
         *PORTFOLIO_EXECUTION_ACTIONS,
@@ -14985,7 +15042,9 @@ def portfolio_cli(action, parameters=None):
         result = portfolio_fundamental_report(module.portfolio_summary_json(), parameters)
     elif action in {"fundamental_history", "portfolio_fundamental_history", "news_history", "historial_fundamental"}:
         result = portfolio_fundamental_history(parameters)
-    elif action in {"record_funding", "record_funding_event", "record_deposit", "registrar_fondeo", "fondeo"}:
+    elif action in {"record_funding", "record_funding_event", "record_deposit", "registrar_fondeo", "fondeo", "record_withdrawal", "registrar_retiro", "retiro_ignis"}:
+        if action in {"record_withdrawal", "registrar_retiro", "retiro_ignis"}:
+            parameters = {**parameters, "type": "withdrawal"}
         result = portfolio_record_funding_event(parameters)
     elif action in {
         "send_whatsapp_report",
@@ -16033,6 +16092,7 @@ def kim_operational_health(limit=12):
         "policies": {
             "execution_truth": EXECUTION_TRUTH_POLICY,
             "ignis_financials_context_lock": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
+            "ignis_accounting_command": IGNIS_ACCOUNTING_COMMAND_POLICY,
             "remote_secretary_bridge": REMOTE_SECRETARY_BRIDGE_POLICY,
         },
         "execution_truth_recent": execution_events,
@@ -17533,6 +17593,7 @@ def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=No
             f"Scope comercial permitido: {contact.get('company_scope_summary') or 'AI People, Tesca Elements, Dr. Yehoshua'}.\n"
             f"Fuentes de conocimiento cargadas: {', '.join(contact.get('knowledge_sources') or ['seller_pack_public'])}.\n"
             f"Politica secretaria/puente: {REMOTE_SECRETARY_BRIDGE_POLICY}\n"
+            f"Politica contable Ignis: {IGNIS_ACCOUNTING_COMMAND_POLICY}\n"
             f"Politica relacion/buen nombre: {INBOUND_RELATIONSHIP_GOODWILL_POLICY}\n"
             f"Playbook ventas/RP a reunion: {WHATSAPP_SALES_PR_MEETING_PLAYBOOK}\n"
             f"Regla de enfoque: {seller_focus}\n"
@@ -17801,6 +17862,7 @@ def kim_sms_reply(user_text, sender="", called="", session_id=""):
         "Maximo 2 frases. No uses markdown. No prometas acciones externas no confirmadas.\n\n"
         f"{mode}\n\n"
         f"Politica secretaria/puente: {REMOTE_SECRETARY_BRIDGE_POLICY}\n\n"
+        f"Politica contable Ignis: {IGNIS_ACCOUNTING_COMMAND_POLICY}\n\n"
         f"Politica relacion/buen nombre: {INBOUND_RELATIONSHIP_GOODWILL_POLICY}\n\n"
         f"Playbook ventas/RP a reunion: {WHATSAPP_SALES_PR_MEETING_PLAYBOOK}\n\n"
         f"Perfil: {profile.get('display_name')} | conocido={profile.get('known_contact')} | doctor={profile.get('is_doctor')} "
@@ -19237,6 +19299,7 @@ def portfolio_save_current_standard(summary, report):
         "channel_registry": DOCTOR_CANONICAL_CHANNELS,
         "execution_truth_policy": EXECUTION_TRUTH_POLICY,
         "ignis_financials_context_lock_policy": IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY,
+        "ignis_accounting_command_policy": IGNIS_ACCOUNTING_COMMAND_POLICY,
         "doctor_rules": override_config.get("doctor_rules", []),
         "report_overrides": override_config,
         "standard_positions": {
@@ -19904,6 +19967,13 @@ def portfolio_fee_summary(active_items, summary, override_config):
         for item in funding_conversions
         if str((item or {}).get("status") or "confirmed").lower() == "confirmed"
     )
+    funding_confirmed = [
+        item
+        for item in funding_conversions
+        if isinstance(item, dict) and str(item.get("status") or "confirmed").lower() == "confirmed"
+    ]
+    cash_in_usd = sum(float(item.get("amount_usd") or 0) for item in funding_confirmed if str(item.get("type") or "funding").lower() in {"funding", "deposit", "deposito", "cash_in"})
+    cash_out_usd = sum(float(item.get("amount_usd") or 0) for item in funding_confirmed if str(item.get("type") or "").lower() in {"withdrawal", "withdraw", "retiro", "cash_out"})
     excluded_event_types = [
         "modificacion",
         "modification",
@@ -19922,6 +19992,9 @@ def portfolio_fee_summary(active_items, summary, override_config):
         "confirmed_operation_fee_usd": round_opt(operation_fee, 2),
         "funding_conversion_volume_usd": round_opt(funding_volume, 2),
         "funding_conversion_fee_usd": round_opt(funding_fee, 2),
+        "cash_in_usd": round_opt(cash_in_usd, 2),
+        "cash_out_usd": round_opt(cash_out_usd, 2),
+        "net_cashflow_usd": round_opt(cash_in_usd - cash_out_usd, 2),
         "total_fee_usd": round_opt(total_fee, 2),
         "fee_policy": accounting.get("fee_policy")
         or "Fee de 1.2% solo sobre operaciones confirmadas y conversiones MXN/USDT/USDT/MXN confirmadas; modificaciones, reemplazos y correcciones no generan fee.",
@@ -20956,6 +21029,7 @@ def portfolio_client_report(summary, parameters=None):
         "active_positions": active_items,
         "executed_preliminary_orders": executed_preliminary,
         "pending_orders": pending_items,
+        "closed_positions": closed_positions,
         "balance": balance,
         "balance_line": balance_line,
         "client_lines": client_lines,
@@ -21318,8 +21392,94 @@ def portfolio_selected_client_lines(report, parameters=None):
     return scope, selected, selected_ids_out, missing_ids
 
 
+def portfolio_accounting_whatsapp_messages(report, parameters=None):
+    parameters = parameters or {}
+    section = str(first_value(parameters, "accounting_section", "section", "seccion", default="balance") or "balance").strip().lower()
+    balance = report.get("balance") if isinstance(report.get("balance"), dict) else {}
+    fees = balance.get("fees") if isinstance(balance.get("fees"), dict) else {}
+    messages = []
+    if section in {"cashflows", "cashflow", "fondeos", "retiros", "conversiones"}:
+        events = fees.get("funding_conversions") if isinstance(fees.get("funding_conversions"), list) else []
+        if not events:
+            messages.append("Ignis Sr. Eli: no hay fondeos, retiros o conversiones confirmadas registradas.")
+        for index, item in enumerate(events, start=1):
+            event_type = str(item.get("type") or "funding").strip().lower()
+            label = {
+                "funding": "Fondeo",
+                "deposit": "Deposito",
+                "deposito": "Deposito",
+                "withdrawal": "Retiro",
+                "withdraw": "Retiro",
+                "retiro": "Retiro",
+            }.get(event_type, event_type.capitalize() or "Evento")
+            parts = [
+                f"{index}. {label} {str(item.get('status') or 'confirmed')}:",
+                f"{format_usd_amount(item.get('amount_usd'))} USD" if item.get("amount_usd") not in (None, "") else "",
+                f"{format_usd_amount(item.get('amount_mxn'))} MXN" if item.get("amount_mxn") not in (None, "") else "",
+                f"metodo {item.get('payment_method')}" if item.get("payment_method") else "",
+                f"fecha {item.get('occurred_at')}" if item.get("occurred_at") else "",
+            ]
+            note = str(item.get("notes") or "").strip()
+            message = " ".join(part for part in parts if part).strip()
+            if note:
+                message += f". Nota: {brief(note, 220)}"
+            messages.append(message)
+        messages.append(
+            "Resumen cashflow Ignis: "
+            f"entradas {format_usd_amount(fees.get('cash_in_usd'))} USD; "
+            f"salidas {format_usd_amount(fees.get('cash_out_usd'))} USD; "
+            f"neto {format_usd_amount(fees.get('net_cashflow_usd'))} USD; "
+            f"fee conversiones {format_usd_amount(fees.get('funding_conversion_fee_usd'))} USD."
+        )
+    elif section in {"closed_positions", "cerradas", "ventas", "realized", "pl_realizado", "pnl_realizado"}:
+        closed = report.get("closed_positions") if isinstance(report.get("closed_positions"), list) else []
+        if not closed:
+            messages.append("Ignis Sr. Eli: no hay posiciones cerradas confirmadas en el reporte actual.")
+        for index, item in enumerate(closed, start=1):
+            symbol = str(item.get("symbol") or item.get("label") or "").upper()
+            messages.append(
+                f"{index}. {symbol}: entrada {item.get('entry_price')}; salida {item.get('sell_price')}; "
+                f"monto {format_usd_amount(item.get('invested_usd'))} USD; "
+                f"P/L bruto {signed_usd_text(item.get('gross_pnl_usd'))}; "
+                f"fee {format_usd_amount(item.get('fee_usd'))} USD; "
+                f"P/L neto {signed_usd_text(item.get('net_pnl_usd'))}."
+            )
+        messages.append(
+            "Resumen P/L realizado Ignis: "
+            f"cerradas {balance.get('realized_closed_count')}; "
+            f"P/L bruto {signed_usd_text(balance.get('realized_gross_pnl_usd'))}; "
+            f"fees {format_usd_amount(balance.get('realized_fee_usd'))} USD; "
+            f"P/L neto {signed_usd_text(balance.get('realized_net_pnl_usd'))}."
+        )
+    else:
+        messages.append(str(report.get("balance_line") or "Balance Ignis no disponible.").strip())
+    preview = {
+        "scope": "accounting",
+        "accounting_section": section,
+        "selected_ids": [],
+        "missing_ids": [],
+        "include_balance": False,
+        "message_count": len(messages),
+        "blocked_lines": [],
+        "first_message": messages[0] if messages else "",
+        "balance_line": report.get("balance_line", ""),
+    }
+    return {
+        "messages": messages,
+        "selected_lines": [],
+        "selected_ids": [],
+        "missing_ids": [],
+        "scope": "accounting",
+        "include_balance": False,
+        "blocked_lines": [],
+        "preview": preview,
+    }
+
+
 def portfolio_compose_whatsapp_messages(report, parameters=None):
     parameters = parameters or {}
+    if portfolio_whatsapp_scope_from_parameters(parameters) == "accounting":
+        return portfolio_accounting_whatsapp_messages(report, parameters)
     scope, selected, selected_ids, missing_ids = portfolio_selected_client_lines(report, parameters)
     if not selected:
         raise ValueError("La seleccion no genero lineas de portafolio para enviar.")
