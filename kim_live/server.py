@@ -1363,6 +1363,40 @@ def normalize_security_text(value):
     return text
 
 
+SECURITY_DIGIT_WORDS = {
+    "cero": "0",
+    "zero": "0",
+    "uno": "1",
+    "una": "1",
+    "one": "1",
+    "dos": "2",
+    "two": "2",
+    "tres": "3",
+    "three": "3",
+    "cuatro": "4",
+    "four": "4",
+    "cinco": "5",
+    "five": "5",
+    "seis": "6",
+    "six": "6",
+    "siete": "7",
+    "seven": "7",
+    "ocho": "8",
+    "eight": "8",
+    "nueve": "9",
+    "nine": "9",
+}
+
+
+def security_text_variants(value):
+    normalized = normalize_security_text(value)
+    compact = re.sub(r"\s+", "", normalized)
+    literal_digits = re.sub(r"[^0-9]+", "", str(value or ""))
+    word_digits = "".join(SECURITY_DIGIT_WORDS.get(token, "") for token in normalized.split())
+    variants = [normalized, compact, literal_digits, word_digits]
+    return [item for item in variants if item]
+
+
 def security_secret_candidates(force=False):
     now_ts = dt.datetime.now(dt.timezone.utc).timestamp()
     if not force and SECURITY_SECRET_CACHE.get("loaded_once"):
@@ -1462,18 +1496,17 @@ def security_authorization_from_input(parameters=None, transcript=""):
     ]:
         if parameters.get(key):
             texts.append(str(parameters.get(key)))
-    normalized_inputs = [normalize_security_text(text) for text in texts if str(text or "").strip()]
-    compact_inputs = [re.sub(r"\s+", "", item) for item in normalized_inputs]
-    for candidate in security_secret_candidates():
-        secret = normalize_security_text(candidate.get("value"))
-        if not secret:
-            continue
-        compact_secret = re.sub(r"\s+", "", secret)
-        for normalized, compact in zip(normalized_inputs, compact_inputs):
-            if secret and secret in normalized:
-                return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
-            if compact_secret and compact_secret in compact:
-                return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
+    input_variants = []
+    for text in texts:
+        if str(text or "").strip():
+            input_variants.extend(security_text_variants(text))
+    for force_reload in [False, True]:
+        for candidate in security_secret_candidates(force=force_reload):
+            secret_variants = security_text_variants(candidate.get("value"))
+            for secret in secret_variants:
+                for provided in input_variants:
+                    if secret and provided and (secret in provided or provided == secret):
+                        return authorize_security_session(method=candidate["method"], session_id=parameters.get("session_id", ""))
     return {"authorized": False}
 
 
@@ -1484,13 +1517,11 @@ def security_secret_matches(provided, expected):
         return False
     if hmac.compare_digest(provided_text, expected_text):
         return True
-    provided_norm = normalize_security_text(provided_text)
-    expected_norm = normalize_security_text(expected_text)
-    if provided_norm and expected_norm and hmac.compare_digest(provided_norm, expected_norm):
-        return True
-    provided_compact = re.sub(r"\s+", "", provided_norm)
-    expected_compact = re.sub(r"\s+", "", expected_norm)
-    return bool(provided_compact and expected_compact and hmac.compare_digest(provided_compact, expected_compact))
+    for provided_variant in security_text_variants(provided_text):
+        for expected_variant in security_text_variants(expected_text):
+            if provided_variant and expected_variant and hmac.compare_digest(provided_variant, expected_variant):
+                return True
+    return False
 
 
 def validate_bifrost_export_authorization(pin="", phrase=""):
@@ -13931,6 +13962,31 @@ def portfolio_parse_range_from_text(text, last_number=None):
     return ""
 
 
+def portfolio_parse_cashflow_date(text):
+    clean = portfolio_text_ascii(text)
+    zone = scheduler_zone({"timezone": DEFAULT_SCHEDULER_TIMEZONE})
+    base = dt.datetime.now(zone)
+    if "ayer" in clean or "yesterday" in clean:
+        return (base.date() - dt.timedelta(days=1)).isoformat()
+    target = scheduler_parse_date(text, base)
+    if target:
+        return target.isoformat()
+    return ""
+
+
+def portfolio_parse_cashflow_concept(text, is_withdrawal=False):
+    clean = portfolio_text_ascii(text)
+    if is_withdrawal:
+        return "retiro"
+    if "cobertura" in clean and "credito" in clean:
+        return "cobertura de credito"
+    if "conversion" in clean or "convert" in clean:
+        return "conversion MXN/USDT"
+    if "aportacion" in clean:
+        return "aportacion en efectivo"
+    return ""
+
+
 def portfolio_doctor_text_command(text, last_number=None):
     raw = str(text or "").strip()
     clean = portfolio_text_ascii(raw)
@@ -13979,6 +14035,11 @@ def portfolio_doctor_text_command(text, last_number=None):
         usd_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:usd|usdt|dolares|dolares)", clean)
         mxn_match = re.search(r"([0-9][0-9,\.\s]*)\s*(?:mxn|pesos)", clean)
         is_withdrawal = bool(re.search(r"\b(?:retiro|retiraron|retirar|retiramos|salida de capital)\b", clean))
+        payment_method = ""
+        if re.search(r"\b(efectivo|cash)\b", clean):
+            payment_method = "cash"
+        elif re.search(r"\b(transferencia|spei|wire|bank)\b", clean):
+            payment_method = "transferencia"
         def parsed_amount(match):
             if not match:
                 return None
@@ -13994,7 +14055,9 @@ def portfolio_doctor_text_command(text, last_number=None):
                 "type": "withdrawal" if is_withdrawal else "funding",
                 "amount_usd": parsed_amount(usd_match),
                 "amount_mxn": parsed_amount(mxn_match),
-                "payment_method": "cash" if re.search(r"\b(efectivo|cash)\b", clean) else "",
+                "occurred_at": portfolio_parse_cashflow_date(raw),
+                "concept": portfolio_parse_cashflow_concept(raw, is_withdrawal=is_withdrawal),
+                "payment_method": payment_method,
                 "summary": raw,
                 "source": "doctor_text_command",
             },
@@ -14605,8 +14668,77 @@ def portfolio_find_manual_entry(parameters, preferred_states=None):
     return {}
 
 
+def portfolio_funding_intake_requirements(parameters):
+    parameters = dict(parameters or {})
+    amount_usd = portfolio_float(first_value(parameters, "amount_usd", "usd_amount", "amount", "monto_usd"))
+    amount_mxn = portfolio_float(first_value(parameters, "amount_mxn", "mxn_amount", "monto_mxn", "mxn"))
+    occurred_at = first_value(parameters, "occurred_at", "date", "fecha", default="")
+    purpose = first_value(parameters, "purpose", "concept", "concepto", "reason", "summary", "notes", default="")
+    payment_method = first_value(parameters, "payment_method", "method", "metodo", default="")
+    missing = []
+    if amount_mxn in (None, 0):
+        missing.append("monto_mxn")
+    if amount_usd in (None, 0):
+        missing.append("monto_usd")
+    if not str(occurred_at or "").strip():
+        missing.append("fecha")
+    if not str(purpose or "").strip():
+        missing.append("concepto")
+    if not str(payment_method or "").strip():
+        missing.append("forma_de_pago")
+    return {
+        "complete": not missing,
+        "missing_fields": missing,
+        "captured": {
+            "amount_mxn": amount_mxn,
+            "amount_usd": amount_usd,
+            "fecha": occurred_at,
+            "concepto": purpose,
+            "forma_de_pago": payment_method,
+        },
+        "required_fields": [
+            "fecha del fondeo",
+            "monto en MXN",
+            "monto recibido en USD/USDT",
+            "concepto: fondeo nuevo, cobertura de credito, retiro o conversion",
+            "forma de pago: efectivo, transferencia u otra",
+        ],
+        "optional_fields": [
+            "recibo o foto si existe",
+            "ordenes a cubrir si el concepto es cobertura de credito",
+            "tipo de cambio usado si ya viene calculado",
+        ],
+    }
+
+
+def portfolio_funding_more_information_result(parameters, confirm=False):
+    intake = portfolio_funding_intake_requirements(parameters)
+    return {
+        "ok": False,
+        "provider": "portfolio",
+        "action": "record_funding",
+        "requires_more_information": True,
+        "requires_confirmation": False,
+        "confirm_attempted": bool(confirm),
+        "message": (
+            "Para registrar un fondeo de Ignis necesito estos datos antes de tocar el ledger: "
+            + ", ".join(intake["required_fields"])
+            + "."
+        ),
+        "missing_fields": intake["missing_fields"],
+        "captured": intake["captured"],
+        "question": (
+            "Doctor, para registrar el fondeo indique: fecha, monto MXN, monto USD/USDT, "
+            "concepto y forma de pago. Si hay recibo o cubre ordenes especificas, agreguelo tambien."
+        ),
+    }
+
+
 def portfolio_record_funding_event(parameters):
     parameters = dict(parameters or {})
+    intake = portfolio_funding_intake_requirements(parameters)
+    if not intake.get("complete"):
+        return portfolio_funding_more_information_result(parameters, confirm=True)
     amount_usd = portfolio_float(first_value(parameters, "amount_usd", "usd_amount", "amount", "monto_usd"))
     amount_mxn = portfolio_float(first_value(parameters, "amount_mxn", "mxn_amount", "monto_mxn", "mxn"))
     if amount_usd in (None, 0) and amount_mxn in (None, 0):
@@ -14905,6 +15037,9 @@ def portfolio_cli(action, parameters=None):
             execution_parameters={**parameters, "symbol": symbol, "gross_amount": gross_amount, "price": price, "confirm": True},
         )
     if action in PORTFOLIO_ACCOUNTING_ACTIONS and not confirm:
+        intake = portfolio_funding_intake_requirements(parameters)
+        if not intake.get("complete"):
+            return portfolio_funding_more_information_result(parameters, confirm=False)
         return confirmation_preview(
             "portfolio",
             "record_funding",
@@ -14912,6 +15047,8 @@ def portfolio_cli(action, parameters=None):
             {
                 "amount_usd": first_value(parameters, "amount_usd", "usd", "usdt", "dolares"),
                 "amount_mxn": first_value(parameters, "amount_mxn", "mxn", "pesos"),
+                "date": first_value(parameters, "occurred_at", "date", "fecha", default=""),
+                "concept": first_value(parameters, "purpose", "concept", "concepto", default=""),
                 "payment_method": first_value(parameters, "payment_method", "method", "metodo", default=""),
                 "summary": parameters.get("summary") or parameters.get("notes") or "",
             },
