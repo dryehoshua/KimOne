@@ -22,6 +22,7 @@ Kim Diagrams Bridge permite que Kim edite diagramas de diagrams.net/draw.io conv
 - `preview_svg`: genera un SVG simple para vista previa en Kim Live.
 - `present_file`: abre el archivo en diagrams.net/draw.io o app predeterminada.
 - `close_file`: cierra ventana frontal de draw.io/diagrams.net con confirmacion.
+- `create_diagram`: crea un `.drawio` nuevo desde operaciones semanticas.
 - `queue_edit`: guarda una solicitud cuando la instruccion es demasiado ambigua.
 - `apply_text_replacements`: reemplaza textos en nodos.
 - `apply_operations`: aplica operaciones estructuradas.
@@ -33,6 +34,8 @@ Kim Diagrams Bridge permite que Kim edite diagramas de diagrams.net/draw.io conv
 - `move`: mueve un cuadro por `dx/dy` o `direction=right|left|up|down`.
 - `resize`: ajusta ancho/alto o incrementos `dw/dh`.
 - `align`: alinea un nodo contra otro por eje `x` o `y`.
+
+Para crear un diagrama nuevo desde cero, usar primero `create_diagram`. Si Kim llama `apply_operations` sin `path` y con operaciones `create`, el bridge lo redirige a `create_diagram`, pero el uso recomendado sigue siendo explicito.
 
 Ejemplo:
 
@@ -50,6 +53,8 @@ Ejemplo:
 
 ## Reglas visuales
 
+- Preferir diagramas por capas para arquitectura/estrategia: holding, unidades, plataformas, flujos y notas.
+- Usar contenedores para agrupar funciones relacionadas.
 - Mantener un flujo dominante: izquierda a derecha o arriba hacia abajo.
 - Evitar mezclar orientaciones salvo por swimlanes o grupos claros.
 - Mantener espaciado consistente de 40 a 80 px entre nodos principales.
@@ -59,6 +64,14 @@ Ejemplo:
 - Usar maximo 5 a 7 elementos por grupo visual; dividir si crece.
 - En procesos, usar verbos cortos. En entidades, usar nombres claros.
 - Priorizar simetria, alineacion por columnas/filas y conectores limpios.
+- Reducir cruces: si una relacion es secundaria, ponerla como nota o flujo sintetico en vez de dibujar demasiadas lineas.
+
+Referencias base:
+
+- diagrams.net automatic layout: https://drawio-app.com/blog/automatic-layout-in-draw-io/
+- Microsoft Visio alignment: https://support.microsoft.com/en-us/visio/align-and-position-shapes-in-a-diagram
+- Microsoft Visio connectors: https://support.microsoft.com/en-us/visio/edit-connector-lines-arrows-or-points
+- Lucidchart process mapping: https://www.lucidchart.com/pages/tutorial/process-mapping-guide-and-symbols
 
 ## Formato requerido
 
@@ -71,3 +84,12 @@ Toda accion que escribe el archivo guarda backup y requiere confirmacion. Accion
 ## Presentacion
 
 `preview_svg` permite mostrar una vista rapida dentro de Kim Live. `present_file` abre el diagrama real en diagrams.net/draw.io. Si el archivo ya estaba abierto y fue modificado por Python, la app puede requerir recargar/reabrir para reflejar cambios externos.
+
+## Leccion KIM-0135
+
+El 2026-06-24 Kim fallo al intentar crear un diagrama estrategico porque uso `queue_edit` y despues preparo `apply_operations` sin `path`, con operaciones genericas `create`. Eso solo dejo una solicitud/confirmacion, no un archivo. La correccion es:
+
+1. Usar `create_diagram` para diagramas nuevos.
+2. Verificar que la respuesta incluya `ok=true`, `path`, `preview_path` y `layout.ok=true`.
+3. No reportar "diagrama generado" si la accion fue solo `queue_edit`.
+4. Ejecutar `layout_analyze` y corregir solapes antes de presentar.

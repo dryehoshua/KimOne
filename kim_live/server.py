@@ -107,6 +107,8 @@ DIAGRAM_REQUESTS_JSONL = MEMORY_CONTEXT_DIR / "diagram_edit_requests.jsonl"
 RUNTIME_DIAGRAM_REQUESTS_JSONL = RUNTIME_CONTEXT / "diagram_edit_requests.jsonl"
 DIAGRAMS_MEMORY_DIR = MEMORY_ROOT / "diagrams"
 RUNTIME_DIAGRAMS_MEMORY_DIR = RUNTIME_MEMORY_ROOT / "diagrams"
+TOOL_REGISTRY_MD = MEMORY_ROOT / "tools" / "kim_tool_registry.md"
+RUNTIME_TOOL_REGISTRY_MD = RUNTIME_MEMORY_ROOT / "tools" / "kim_tool_registry.md"
 TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
 EXECUTION_TRUTH_LOG = MEMORY_CONTEXT_DIR / "execution_truth_actions.jsonl"
@@ -3364,6 +3366,7 @@ def api_bridge_config_status(live=False):
             "capabilities": ["schedule_action", "list_schedules", "cancel_schedule"],
         },
         "crm": crm_status(),
+        "tools": tool_registry_status(),
         "diagrams": diagram_bridge_status(),
         "security": security_status(),
         "product_backlog": backlog,
@@ -3888,6 +3891,7 @@ def diagram_bridge_status():
             "queue_edit",
             "list_requests",
             "inspect_file",
+            "create_diagram",
             "layout_analyze",
             "preview_svg",
             "present_file",
@@ -3901,6 +3905,62 @@ def diagram_bridge_status():
         "latest_request": latest,
         "guardrail": "No automatizar mouse/UI de diagrams.net como ruta principal; editar XML .drawio con Python, guardar backup antes de cambios y usar preview/presentacion para validar el resultado visual.",
     }
+
+
+def tool_registry_status():
+    path = TOOL_REGISTRY_MD if TOOL_REGISTRY_MD.exists() else RUNTIME_TOOL_REGISTRY_MD
+    return {
+        "configured": path.exists(),
+        "write_requires_confirmation": False,
+        "registry_path": str(path),
+        "capabilities": ["status", "registry", "get_registry", "get_provider", "manual"],
+        "purpose": "Manual operativo de herramientas para que Kim consulte provider, action, parametros, confirmacion, exito real y errores comunes antes de ejecutar.",
+    }
+
+
+def tool_registry_text():
+    for path in [TOOL_REGISTRY_MD, RUNTIME_TOOL_REGISTRY_MD]:
+        if path.exists():
+            return path.read_text(encoding="utf-8"), str(path)
+    return "", str(TOOL_REGISTRY_MD)
+
+
+def tool_registry_provider_section(provider_name):
+    text, path = tool_registry_text()
+    provider_name = str(provider_name or "").strip().lower()
+    if not text:
+        return {"ok": False, "provider": "tools", "action": "get_provider", "error": "REGISTRY_NOT_FOUND", "path": path}
+    if not provider_name:
+        return {"ok": True, "provider": "tools", "action": "registry", "path": path, "content": text}
+    headings = list(re.finditer(r"^##\\s+(.+)$", text, flags=re.M))
+    selected = ""
+    for index, match in enumerate(headings):
+        title = match.group(1).strip()
+        start = match.start()
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        normalized_title = normalize_security_text(title)
+        if provider_name in normalized_title or normalized_title in provider_name or provider_name.replace("_", " ") in normalized_title:
+            selected = text[start:end].strip()
+            break
+    if not selected:
+        selected = text[:3000]
+    return {"ok": True, "provider": "tools", "action": "get_provider", "path": path, "requested_provider": provider_name, "content": selected}
+
+
+def run_tool_registry_bridge(action, parameters=None):
+    parameters = parameters or {}
+    action = (action or "status").strip().lower()
+    if action in {"status", "estado"}:
+        return {"ok": True, "provider": "tools", "action": "status", "status": tool_registry_status()}
+    if action in {"registry", "get_registry", "manual", "read", "leer"}:
+        text, path = tool_registry_text()
+        if not text:
+            return {"ok": False, "provider": "tools", "action": action, "error": "REGISTRY_NOT_FOUND", "path": path}
+        limit = int(first_value(parameters, "limit", default=12000) or 12000)
+        return {"ok": True, "provider": "tools", "action": action, "path": path, "content": text[:limit]}
+    if action in {"get_provider", "provider", "provider_manual", "manual_provider", "como_usar"}:
+        return tool_registry_provider_section(first_value(parameters, "provider", "tool", "name", "nombre", default=""))
+    raise ValueError("Accion tools no soportada. Usa status, registry o get_provider.")
 
 
 def diagram_request_id():
@@ -4135,6 +4195,36 @@ def diagram_vertex_snapshots(cells):
     return vertices
 
 
+def diagram_style_lookup(style, key, default=""):
+    for part in str(style or "").split(";"):
+        if "=" not in part:
+            continue
+        part_key, part_value = part.split("=", 1)
+        if part_key == key:
+            return part_value
+    return default
+
+
+def diagram_svg_text_lines(label, max_chars=24, max_lines=5):
+    lines = []
+    for raw_line in str(label or "").splitlines():
+        words = raw_line.split()
+        current = ""
+        for word in words:
+            candidate = (current + " " + word).strip()
+            if len(candidate) <= max_chars:
+                current = candidate
+            else:
+                if current:
+                    lines.append(current)
+                current = word[:max_chars]
+        if current:
+            lines.append(current)
+    if len(lines) > max_lines:
+        lines = lines[: max_lines - 1] + ["..."]
+    return lines or [""]
+
+
 def diagram_layout_analyze(parameters=None):
     parameters = parameters or {}
     path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
@@ -4149,11 +4239,15 @@ def diagram_layout_analyze(parameters=None):
     vertices = diagram_vertex_snapshots(root.findall(".//mxCell"))
     issues = []
     for index, a in enumerate(vertices):
+        if diagram_style_lookup(a.get("style", ""), "dashed") == "1":
+            continue
         if a["width"] < 90 or a["height"] < 42:
             issues.append({"type": "too_small", "id": a["id"], "label": a["label"], "recommendation": "Usar cajas legibles: minimo sugerido 120x56 px."})
         if len(a["label"]) > 42 and a["width"] < 170:
             issues.append({"type": "text_fit_risk", "id": a["id"], "label": a["label"], "recommendation": "Aumentar ancho o dividir el texto para evitar saturacion."})
         for b in vertices[index + 1:]:
+            if diagram_style_lookup(b.get("style", ""), "dashed") == "1":
+                continue
             overlap_x = max(0, min(a["x"] + a["width"], b["x"] + b["width"]) - max(a["x"], b["x"]))
             overlap_y = max(0, min(a["y"] + a["height"], b["y"] + b["height"]) - max(a["y"], b["y"]))
             if overlap_x > 6 and overlap_y > 6:
@@ -4191,9 +4285,24 @@ def diagram_preview_svg(parameters=None):
         root = ET.parse(path).getroot()
     except ET.ParseError as exc:
         return {"ok": False, "provider": "diagrams", "action": "preview_svg", "error": "XML_PARSE_ERROR", "message": brief(str(exc), 240), "path": str(path)}
-    vertices = diagram_vertex_snapshots(root.findall(".//mxCell"))
+    cells = root.findall(".//mxCell")
+    vertices = diagram_vertex_snapshots(cells)
     if not vertices:
         return {"ok": False, "provider": "diagrams", "action": "preview_svg", "error": "NO_VERTEX_GEOMETRY", "path": str(path)}
+    vertex_by_id = {v["id"]: v for v in vertices}
+    edges = []
+    for cell in cells:
+        if cell.attrib.get("edge") != "1":
+            continue
+        source = vertex_by_id.get(cell.attrib.get("source"))
+        target = vertex_by_id.get(cell.attrib.get("target"))
+        if not source or not target:
+            continue
+        edges.append({
+            "source": source,
+            "target": target,
+            "label": diagram_plain_label(cell.attrib.get("value", "")),
+        })
     min_x = min(v["x"] for v in vertices) - 40
     min_y = min(v["y"] for v in vertices) - 40
     max_x = max(v["x"] + v["width"] for v in vertices) + 40
@@ -4208,15 +4317,262 @@ def diagram_preview_svg(parameters=None):
         output = output_dir / (path.stem + "_preview.svg")
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height:.0f}" viewBox="{min_x:.0f} {min_y:.0f} {width:.0f} {height:.0f}">',
+        '<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs>',
         '<rect x="{:.0f}" y="{:.0f}" width="{:.0f}" height="{:.0f}" fill="#f8fafc"/>'.format(min_x, min_y, width, height),
     ]
+    for edge in edges:
+        source = edge["source"]
+        target = edge["target"]
+        x1 = source["x"] + source["width"] / 2
+        y1 = source["y"] + source["height"] / 2
+        x2 = target["x"] + target["width"] / 2
+        y2 = target["y"] + target["height"] / 2
+        lines.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrow)" opacity="0.78"/>')
+        if edge["label"]:
+            lx = (x1 + x2) / 2
+            ly = (y1 + y2) / 2 - 6
+            lines.append(f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" fill="#475569">{html.escape(edge["label"][:36])}</text>')
     for v in vertices:
-        label = html.escape(v["label"][:80])
-        lines.append(f'<rect x="{v["x"]:.1f}" y="{v["y"]:.1f}" width="{v["width"]:.1f}" height="{v["height"]:.1f}" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>')
-        lines.append(f'<text x="{v["x"] + 12:.1f}" y="{v["y"] + 24:.1f}" font-family="Inter, Arial, sans-serif" font-size="13" fill="#0f172a">{label}</text>')
+        fill = diagram_style_lookup(v.get("style", ""), "fillColor", "#dae8fc")
+        stroke = diagram_style_lookup(v.get("style", ""), "strokeColor", "#6c8ebf")
+        font_size = 13
+        lines.append(f'<rect x="{v["x"]:.1f}" y="{v["y"]:.1f}" width="{v["width"]:.1f}" height="{v["height"]:.1f}" rx="8" fill="{html.escape(fill)}" stroke="{html.escape(stroke)}" stroke-width="1.5"/>')
+        text_lines = diagram_svg_text_lines(v["label"], max_chars=max(12, int(v["width"] / 7.5)), max_lines=max(2, int(v["height"] / 18)))
+        lines.append(f'<text x="{v["x"] + 12:.1f}" y="{v["y"] + 23:.1f}" font-family="Inter, Arial, sans-serif" font-size="{font_size}" fill="#0f172a">')
+        for idx, text_line in enumerate(text_lines):
+            dy = "0" if idx == 0 else "17"
+            lines.append(f'<tspan x="{v["x"] + 12:.1f}" dy="{dy}">{html.escape(text_line)}</tspan>')
+        lines.append("</text>")
     lines.append("</svg>")
     output.write_text("\n".join(lines), encoding="utf-8")
     return {"ok": True, "provider": "diagrams", "action": "preview_svg", "path": str(path), "preview_path": str(output), "vertex_count": len(vertices)}
+
+
+def diagram_slug(value, fallback="diagram"):
+    text = normalize_security_text(str(value or "").strip())
+    text = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+    return text[:80] or fallback
+
+
+def diagram_mx_value(value):
+    return str(value or "").strip().replace("\n", "<br>")
+
+
+def diagram_output_path(parameters):
+    raw = diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default=""))
+    if raw:
+        path = pathlib.Path(raw).expanduser()
+        if path.is_dir():
+            title = str(first_value(parameters, "title", "name", default="kim_diagram") or "kim_diagram")
+            path = path / (diagram_slug(title) + ".drawio")
+        return path
+    title = str(first_value(parameters, "title", "name", default="kim_diagram") or "kim_diagram")
+    DIAGRAMS_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+    return DIAGRAMS_MEMORY_DIR / (diagram_slug(title) + "_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S") + ".drawio")
+
+
+def diagram_add_vertex(root_cell, cell_id, label, x, y, width=190, height=70, fill="#dae8fc", stroke="#6c8ebf", extra_style=""):
+    style = f"rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor={fill};strokeColor={stroke};fontColor=#0f172a;spacing=10;"
+    if extra_style:
+        style += extra_style
+    cell = ET.SubElement(root_cell, "mxCell", {
+        "id": cell_id,
+        "value": diagram_mx_value(label),
+        "style": style,
+        "vertex": "1",
+        "parent": "1",
+    })
+    ET.SubElement(cell, "mxGeometry", {"x": str(round(x, 2)), "y": str(round(y, 2)), "width": str(width), "height": str(height), "as": "geometry"})
+    return cell
+
+
+def diagram_add_edge(root_cell, edge_id, source_id, target_id, label="", stroke="#64748b"):
+    cell = ET.SubElement(root_cell, "mxCell", {
+        "id": edge_id,
+        "value": diagram_mx_value(label),
+        "style": f"edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor={stroke};endArrow=block;endFill=1;fontColor=#475569;",
+        "edge": "1",
+        "parent": "1",
+        "source": source_id,
+        "target": target_id,
+    })
+    ET.SubElement(cell, "mxGeometry", {"relative": "1", "as": "geometry"})
+    return cell
+
+
+def diagram_label_from_value(value):
+    if isinstance(value, dict):
+        name = str(value.get("name") or value.get("title") or value.get("label") or "Nodo")
+        details = []
+        for key in ["type", "description", "products", "sub_brands", "partners", "functions", "controls", "cadence", "steps"]:
+            raw = value.get(key)
+            if raw in (None, "", []):
+                continue
+            if isinstance(raw, list):
+                raw = ", ".join(str(item) for item in raw)
+            details.append(f"{key.replace('_', ' ').title()}: {raw}")
+        return name + ("\n" + "\n".join(details[:3]) if details else "")
+    return str(value or "Nodo")
+
+
+def diagram_create_from_semantic(parameters=None, confirm=False):
+    parameters = parameters or {}
+    operations = parameters.get("operations") or []
+    title = str(first_value(parameters, "title", "name", default="Kim Strategic Diagram") or "Kim Strategic Diagram").strip()
+    content = str(first_value(parameters, "content", "description", "prompt", default="") or "").strip()
+    if not operations and not content:
+        raise ValueError("Faltan operations o content para crear el diagrama.")
+    output_path = diagram_output_path(parameters)
+    preview = {"path": str(output_path), "title": title, "operation_count": len(operations), "content_preview": brief(content, 800)}
+    if not confirm:
+        return confirmation_preview("diagrams", "create_diagram", f"Crear diagrama nuevo {output_path.name}.", preview, execution_parameters={**parameters, "path": str(output_path)})
+
+    mxfile = ET.Element("mxfile", {"host": "kim-live", "modified": now_iso(), "agent": "Kim Diagrams Bridge"})
+    diagram = ET.SubElement(mxfile, "diagram", {"id": diagram_request_id(), "name": title[:80]})
+    model = ET.SubElement(diagram, "mxGraphModel", {
+        "dx": "1600",
+        "dy": "1000",
+        "grid": "1",
+        "gridSize": "10",
+        "guides": "1",
+        "tooltips": "1",
+        "connect": "1",
+        "arrows": "1",
+        "fold": "1",
+        "page": "1",
+        "pageScale": "1",
+        "pageWidth": "1600",
+        "pageHeight": "1100",
+        "math": "0",
+        "shadow": "0",
+    })
+    root_cell = ET.SubElement(model, "root")
+    ET.SubElement(root_cell, "mxCell", {"id": "0"})
+    ET.SubElement(root_cell, "mxCell", {"id": "1", "parent": "0"})
+
+    created = {}
+    aliases = {}
+    node_specs = []
+    connections = []
+    for index, op in enumerate(operations):
+        if str(first_value(op, "op", "type", "action", default="")).lower() != "create":
+            continue
+        op_path = str(op.get("path") or f"/node/{index}")
+        value = op.get("value")
+        if op_path.rstrip("/").endswith("connections") or (isinstance(value, dict) and value.get("from") and value.get("to")):
+            connections.append(value or {})
+            continue
+        name = value.get("name") if isinstance(value, dict) else None
+        label = diagram_label_from_value(value)
+        node_id = "node_" + diagram_slug(name or op_path, fallback=f"node_{index}")
+        node_type = "node"
+        if "central" in op_path or "core_concept" in op_path:
+            node_type = "central"
+        elif "/companies/" in op_path:
+            node_type = "company"
+        elif "/domains/" in op_path:
+            node_type = "domain"
+        elif "integration" in op_path:
+            node_type = "integration"
+        elif "cycle" in op_path or "improvement" in op_path:
+            node_type = "cycle"
+        node_specs.append({"id": node_id, "name": name or label.split("\n")[0], "label": label, "type": node_type, "value": value, "path": op_path})
+        aliases[normalize_security_text(name or "")] = node_id
+        aliases[normalize_security_text(label.split("\n")[0])] = node_id
+
+    if not node_specs and content:
+        node_specs.append({"id": "node_summary", "name": title, "label": title + "\n" + brief(content, 240), "type": "central", "value": {}, "path": "/summary"})
+        aliases[normalize_security_text(title)] = "node_summary"
+
+    central = next((n for n in node_specs if n["type"] == "central"), node_specs[0])
+    diagram_add_vertex(root_cell, central["id"], central["label"], 620, 70, 330, 90, fill="#fff2cc", stroke="#d6b656", extra_style="fontStyle=1;fontSize=14;")
+    created[central["id"]] = central
+
+    companies = [n for n in node_specs if n["type"] == "company"]
+    domains = [n for n in node_specs if n["type"] == "domain"]
+    others = [n for n in node_specs if n["id"] != central["id"] and n["type"] not in {"company", "domain"}]
+    primary = companies or domains or others
+    start_x = max(80, 780 - (len(primary) * 220) / 2)
+    for index, node in enumerate(primary):
+        x = start_x + index * 220
+        y = 260
+        fill = "#dae8fc" if node["type"] == "company" else "#d5e8d4"
+        stroke = "#6c8ebf" if node["type"] == "company" else "#82b366"
+        diagram_add_vertex(root_cell, node["id"], node["label"], x, y, 190, 96, fill=fill, stroke=stroke)
+        created[node["id"]] = node
+        diagram_add_edge(root_cell, "edge_" + secrets.token_hex(5), central["id"], node["id"], "estructura")
+
+    detail_specs = []
+    for node in primary:
+        value = node.get("value") if isinstance(node.get("value"), dict) else {}
+        for key in ["products", "sub_brands", "partners"]:
+            for item in value.get(key) or []:
+                detail_specs.append({"parent": node["id"], "name": str(item), "kind": key})
+    detail_count_by_parent = {}
+    for index, detail in enumerate(detail_specs):
+        parent_index = next((i for i, n in enumerate(primary) if n["id"] == detail["parent"]), index)
+        parent_detail_index = detail_count_by_parent.get(detail["parent"], 0)
+        detail_count_by_parent[detail["parent"]] = parent_detail_index + 1
+        x = start_x + parent_index * 220
+        y = 430 + parent_detail_index * 82
+        detail_id = "node_" + diagram_slug(detail["parent"] + "_" + detail["name"], fallback=f"detail_{index}")
+        diagram_add_vertex(root_cell, detail_id, detail["name"], x, y, 170, 58, fill="#f8cecc", stroke="#b85450")
+        diagram_add_edge(root_cell, "edge_" + secrets.token_hex(5), detail["parent"], detail_id, detail["kind"].replace("_", " "))
+        aliases[normalize_security_text(detail["name"])] = detail_id
+
+    for index, node in enumerate(others):
+        if node["id"] in created:
+            continue
+        x = 260 + index * 300
+        y = 650
+        diagram_add_vertex(root_cell, node["id"], node["label"], x, y, 250, 88, fill="#e1d5e7", stroke="#9673a6")
+        created[node["id"]] = node
+        diagram_add_edge(root_cell, "edge_" + secrets.token_hex(5), central["id"], node["id"], "soporta")
+
+    for connection in connections:
+        source_name = normalize_security_text(connection.get("from", ""))
+        source_id = aliases.get(source_name)
+        targets = connection.get("to") or []
+        if isinstance(targets, str):
+            targets = [targets]
+        relation = str(connection.get("relation") or "relacion")
+        for target in targets:
+            target_id = aliases.get(normalize_security_text(target))
+            if source_id and target_id and source_id != target_id:
+                diagram_add_edge(root_cell, "edge_" + secrets.token_hex(5), source_id, target_id, relation)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    ET.ElementTree(mxfile).write(output_path, encoding="utf-8", xml_declaration=True)
+    RUNTIME_DIAGRAMS_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+    runtime_path = RUNTIME_DIAGRAMS_MEMORY_DIR / output_path.name
+    shutil.copy2(output_path, runtime_path)
+    preview_result = diagram_preview_svg({"path": str(output_path)})
+    layout_result = diagram_layout_analyze({"path": str(output_path)})
+    event = {
+        "id": diagram_request_id(),
+        "created_at": now_iso(),
+        "status": "created",
+        "provider": "diagrams",
+        "action": "create_diagram",
+        "path": str(output_path),
+        "runtime_path": str(runtime_path),
+        "title": title,
+        "node_count": len(node_specs) + len(detail_specs),
+        "connection_count": len(connections),
+        "preview_path": preview_result.get("preview_path") if isinstance(preview_result, dict) else "",
+    }
+    append_jsonl_any([DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL], event)
+    return {
+        "ok": True,
+        "provider": "diagrams",
+        "action": "create_diagram",
+        "path": str(output_path),
+        "runtime_path": str(runtime_path),
+        "preview": preview_result,
+        "layout": layout_result,
+        "event": event,
+        "confirmed": True,
+    }
 
 
 def diagram_present_file(parameters=None):
@@ -4258,9 +4614,12 @@ def diagram_close_file(parameters=None, confirm=False):
 
 def diagram_apply_operations(parameters=None, confirm=False):
     parameters = parameters or {}
-    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    raw_path = diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default=""))
     operations = parameters.get("operations") or []
-    if not path or not operations:
+    if not raw_path and operations and any(str(first_value(op, "op", "type", "action", default="")).lower() == "create" for op in operations):
+        return diagram_create_from_semantic(parameters, confirm=confirm)
+    path = pathlib.Path(raw_path)
+    if not raw_path or not operations:
         raise ValueError("Falta path y operations para modificar el diagrama.")
     preview = {"path": str(path), "operation_count": len(operations), "operations": operations[:20]}
     if not confirm:
@@ -4404,6 +4763,8 @@ def run_diagram_bridge(action, parameters=None, confirm=False, session_id="", tr
         return diagram_layout_analyze(parameters)
     if action in {"preview_svg", "preview", "vista_previa", "generar_preview"}:
         return diagram_preview_svg(parameters)
+    if action in {"create_diagram", "new_diagram", "generar_diagrama", "crear_diagrama"}:
+        return diagram_create_from_semantic(parameters, confirm=confirm)
     if action in {"present_file", "open_file", "open_diagram", "abrir_diagrama", "presentar_diagrama"}:
         return diagram_present_file(parameters)
     if action in {"close_file", "close_diagram", "cerrar_diagrama"}:
@@ -13560,6 +13921,8 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_gmail_bridge(action, parameters, confirm=confirm)
     elif provider in {"google_maps", "maps", "places", "geocoding", "routes"}:
         result = run_google_maps_bridge(action, parameters, confirm=confirm)
+    elif provider in {"tools", "tool_registry", "manual", "registry", "herramientas"}:
+        result = run_tool_registry_bridge(action, parameters)
     elif provider in {"diagrams", "drawio", "diagrams.net", "diagramas"}:
         sensitive_action = action in {
             "apply_text_replacements",
@@ -13572,6 +13935,10 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
             "close_file",
             "close_diagram",
             "cerrar_diagrama",
+            "create_diagram",
+            "new_diagram",
+            "generar_diagrama",
+            "crear_diagrama",
         }
         if sensitive_action:
             security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
@@ -18828,7 +19195,8 @@ def realtime_session_config():
                 "Si sospechas que faltan intentos viejos, usa provider=twilio action=sync_call_attempts con since/limit; esa accion no llama a nadie. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
                 "Para lugares, rutas, direcciones o negocios fisicos usa provider=google_maps: find_place, geocode, route_distance o timezone; "
-                "Para diagramas diagrams.net/draw.io usa provider=diagrams: status, inspect_file, layout_analyze, preview_svg, present_file, queue_edit, apply_operations o apply_text_replacements. "
+                "Antes de usar herramientas complejas, si dudas de parametros, significado de exito o confirmacion, usa provider=tools action=get_provider para consultar el manual operativo de esa herramienta. "
+                "Para diagramas diagrams.net/draw.io usa provider=diagrams: status, inspect_file, create_diagram, layout_analyze, preview_svg, present_file, queue_edit, apply_operations o apply_text_replacements. "
                 "La ruta recomendada es conversar con Kim; Kim debe inspeccionar el archivo, preparar operaciones estructuradas, ejecutar provider=diagrams con apply_operations/apply_text_replacements, "
                 "analizar calidad visual con layout_analyze y generar preview_svg para Kim Live. Usa present_file cuando el doctor quiera abrirlo en diagrams.net/draw.io. "
                 "queue_edit se usa solo cuando la instruccion sea ambigua o demasiado visual. Todo cambio guarda backup y requiere confirmacion. "
@@ -18953,7 +19321,8 @@ def realtime_session_config():
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
                                     "Google Maps: status, validate_key, find_place, geocode, route_distance, timezone. "
-                                    "Diagrams: status, queue_edit, list_requests, inspect_file, layout_analyze, preview_svg, present_file, close_file, apply_text_replacements, apply_operations. "
+                                    "Tools registry: status, registry, get_provider. "
+                                    "Diagrams: status, queue_edit, list_requests, inspect_file, create_diagram, layout_analyze, preview_svg, present_file, close_file, apply_text_replacements, apply_operations. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Portfolio: doctor_command, client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
                                     "Paper Broker: status, preview, place_order, cancel_order, sync. "
