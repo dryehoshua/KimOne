@@ -32,6 +32,7 @@ import shutil
 import smtplib
 import sqlite3
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -12003,8 +12004,11 @@ def api_bridge_templates():
                 },
                 "rule": (
                     "Usar cuando el doctor pida reporte fundamental, catalizadores, oportunidades o contexto macro del Portafolio Sr. Eli. "
-                    "Primero genera el client_report validado, despues investiga fuentes actuales y estructura: catalizadores internacionales, "
-                    "narrativas cripto populares, catalizadores por activo, oportunidades, riesgos/fuentes y siguiente accion. "
+                    "Si el doctor dice solo 'fundamentales' o 'reporte fundamental', interpretarlo como panorama general de mercado y portafolio, no como analisis de un token aislado. "
+                    "Primero genera el client_report validado, despues investiga fuentes actuales y estructura: catalizador internacional dominante con estado concreto, "
+                    "Fed/tasas/liquidez en una linea si aplica, calendario economico inmediato de alto impacto, oportunidades populares, cripto/origen de movimientos, "
+                    "noticias relevantes del portafolio solo si existen, riesgos/fuentes y siguiente accion. "
+                    "No basta decir 'Medio Oriente' o 'Iran': debe explicar que paso, si hay negociacion o escalada, que cambio y como afecta petroleo/dolar/riesgo. "
                     "No envia WhatsApp automaticamente y no debe inventar catalizadores sin fuente reciente."
                 ),
             },
@@ -19298,6 +19302,7 @@ def portfolio_fundamental_report_standard():
             "Para WhatsApp o texto final al cliente, iniciar con saludo tipo: Buenos dias, senor Eli. Le compartimos nuestro informe de hoy:",
             "Redactar en 2 a 4 parrafos densos y bien conectados; no usar bullets, listas numeradas, tablas ni encabezados salvo instruccion explicita del doctor.",
             "Usar causalidad economica: dato publicado -> lectura de mercado -> efecto probable en riesgo, liquidez, dolar, tasas, equities o cripto.",
+            "Si el catalizador principal es geopolitico, explicar el estado concreto del hilo: que paso en las ultimas 24 horas, quienes negocian o escalan, que cambio frente al dia anterior, y por que mueve petroleo, dolar, tasas o apetito por riesgo.",
             "Incluir cifras puntuales entre parentesis cuando existan en fuentes frescas: dato observado, esperado y previo.",
             "Usar solo noticias de las ultimas 24 horas; seguimiento de noticia anterior solo si sigue siendo hilo vivo que afecta al mercado hoy.",
             "Cerrar con cripto solo si hay noticia realmente material; si no la hay, decirlo en una frase breve al final.",
@@ -19308,11 +19313,19 @@ def portfolio_fundamental_report_standard():
             "Catalizadores internacionales y seguimiento de noticias",
             "Reserva Federal, tasas y liquidez",
             "Oportunidades populares en mercados",
+            "Calendario economico inmediato",
             "Criptonoticias y origen de movimientos",
             "Noticias relevantes del portafolio",
             "Riesgos e invalidaciones",
             "Fuentes validadas",
             "Siguiente accion sugerida",
+        ],
+        "preferred_daily_shape": [
+            "Parrafo 1: catalizador internacional dominante con estado concreto, no etiqueta generica.",
+            "Parrafo 2: Fed/tasas/liquidez en una linea o pocas frases solo si hay dato, declaracion, repricing o fecha inminente.",
+            "Parrafo 3: oportunidades populares en equities, tecnologia, commodities, divisas o narrativas con flujo verificable.",
+            "Parrafo 4: cripto y portafolio solo si hay noticia material; si no, cierre breve de ausencia de catalizador.",
+            "Cierre interno opcional: agenda economica de proximas 24-72 horas para el doctor, no necesariamente para el cliente.",
         ],
         "source_policy": [
             "No usar precios recordados ni reportes viejos como precios actuales.",
@@ -19329,6 +19342,22 @@ def portfolio_fundamental_report_standard():
             "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
             "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos.",
             "Si las fuentes no son suficientes, declarar la brecha y pedir validacion manual.",
+        ],
+        "source_stack": {
+            "primary_calendar": ["Federal Reserve", "BLS", "BEA", "US Treasury", "EIA", "ECB", "Bank of Mexico"],
+            "market_news": ["Reuters", "AP", "Bloomberg", "Financial Times", "Wall Street Journal", "MarketWatch", "Investing.com only when clearly carrying a wire/source"],
+            "crypto_news": ["CoinDesk", "The Block", "Cointelegraph only with confirmation", "exchange/project official blogs", "ETF issuer/regulator pages"],
+            "trend_detection": [
+                "Google Trends API alpha if credentials are configured; otherwise Google Trends manual/export is not a stable automation source.",
+                "GDELT DOC/Event APIs for media-volume and topic-spike detection; use as alert signal, not as final truth.",
+                "Trading Economics economic calendar API if key is configured; otherwise official Fed/BLS/BEA/EIA calendars.",
+            ],
+        },
+        "alert_rules": [
+            "Escalar de inmediato si hay declaracion de guerra, ataque confirmado, cierre/bloqueo de estrecho, ruptura de negociaciones, sancion energetica material o movimiento de crudo >3% intradia.",
+            "Escalar si CPI/PCE/NFP/FOMC sorprende de forma material, si el 2Y/10Y Treasury o DXY se mueven bruscamente, o si cambia la expectativa de tasas.",
+            "Escalar si BTC cae/sube >5% en 24h, liquidaciones crypto superan umbral material, o ETFs/flows registran cambio excepcional.",
+            "Escalar si GDELT/Google Trends detectan crecimiento anormal en terminos como Iran, Israel, Hormuz, ceasefire, Fed hike, CPI shock, Bitcoin crash o nombres del portafolio.",
         ],
         "market_scope": [
             "Catalizadores internacionales: Medio Oriente, conflictos, energia, dolar, liquidez global, comercio, China/Europa/EE.UU. y eventos que cambien apetito de riesgo.",
@@ -21221,12 +21250,20 @@ def portfolio_fundamental_report_queries(report, parameters=None):
     custom_query = str(first_value(parameters, "query", "question", "pregunta", "tema", default="")).strip()
     queries = [
         (
-            f"{date_label} last 24 hours top international market catalysts Middle East geopolitics oil dollar risk appetite "
-            "global liquidity markets latest trend follow-up from yesterday only if still moving markets"
+            f"{date_label} last 24 hours Middle East Iran United States Israel negotiations ceasefire Strait of Hormuz "
+            "oil shipping energy supply what changed today market impact Reuters AP latest"
         ),
         (
             f"{date_label} last 24 hours Federal Reserve interest rates inflation jobs FOMC officials comments treasury yields "
             "market expectations latest only material updates"
+        ),
+        (
+            f"{date_label} next 72 hours high impact economic calendar United States CPI PCE jobs Fed Treasury EIA oil "
+            "events consensus previous actual official calendar"
+        ),
+        (
+            f"{date_label} last 24 hours Google Trends GDELT rising searches market shock Iran Hormuz oil Fed Bitcoin "
+            "crypto equities technology trending topics abnormal spike"
         ),
         (
             f"{date_label} last 24 hours most popular crypto market narratives opportunities BTC ETH SOL XRP DOGE ADA "
@@ -21265,9 +21302,9 @@ def portfolio_fundamental_report(summary, parameters=None):
     report = portfolio_client_report(summary, {**parameters, "save_standard": True})
     dry_run = boolish(first_value(parameters, "dry_run", "preview_only", "solo_preview", "skip_research", default=False))
     try:
-        max_queries = int(first_value(parameters, "max_queries", "research_queries", default=3) or 3)
+        max_queries = int(first_value(parameters, "max_queries", "research_queries", default=5) or 5)
     except (TypeError, ValueError):
-        max_queries = 3
+        max_queries = 5
     max_queries = max(1, min(max_queries, 5))
     queries = portfolio_fundamental_report_queries(report, parameters)[:max_queries]
     research_results = []
@@ -21304,6 +21341,11 @@ def portfolio_fundamental_report(summary, parameters=None):
             "No uses encabezados, bullets, listas numeradas, tablas ni desglose moneda por moneda salvo que el doctor lo pida explicitamente. "
             "Regla temporal critica: usa solo noticias de las ultimas 24 horas, o seguimiento de una noticia del dia anterior/hilo semanal/mensual "
             "solo si sigue moviendo el mercado hoy. No hagas panoramas generalistas del mes ni repitas contexto viejo como noticia de hoy. "
+            "Cuando menciones un frente como Medio Oriente, Iran, Israel, Ormuz, petroleo o negociaciones EE.UU.-Iran, esta prohibido dejarlo en etiqueta generica: "
+            "debes explicar en una frase que paso exactamente, si hay negociacion/alto al fuego/ruptura/escalada, que cambio frente al reporte previo y cual es el canal de mercado. "
+            "Si la fuente no permite saber el estado concreto, dilo y baja la conviccion; no llenes con vaguedades. "
+            "Incluye calendario economico inmediato solo con eventos de alto impacto de las proximas 24-72 horas, no una lista mensual amplia. "
+            "Si detectas una noticia con potencial de escalada, marca internamente 'ALERTA' y explica por que amerita seguimiento extraordinario. "
             "Escribe 2 a 4 parrafos corridos, densos y bien conectados. Usa estructura macro como guion interno: primero el catalizador internacional "
             "mas relevante y su tendencia; despues Fed/tasas/liquidez solo si hay evento real o fecha cercana; despues oportunidades populares en monedas, acciones o sectores; "
             "despues cripto y origen de movimientos; finalmente una frase de portafolio solo si hay noticia fresca y material para sus activos. "
