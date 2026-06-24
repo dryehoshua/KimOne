@@ -103,6 +103,10 @@ API_BRIDGE_LOG = MEMORY_CONTEXT_DIR / "api_bridge_actions.jsonl"
 RUNTIME_API_BRIDGE_LOG = RUNTIME_CONTEXT / "api_bridge_actions.jsonl"
 API_PREPARED_ACTIONS = MEMORY_CONTEXT_DIR / "api_bridge_prepared_actions.json"
 RUNTIME_API_PREPARED_ACTIONS = RUNTIME_CONTEXT / "api_bridge_prepared_actions.json"
+DIAGRAM_REQUESTS_JSONL = MEMORY_CONTEXT_DIR / "diagram_edit_requests.jsonl"
+RUNTIME_DIAGRAM_REQUESTS_JSONL = RUNTIME_CONTEXT / "diagram_edit_requests.jsonl"
+DIAGRAMS_MEMORY_DIR = MEMORY_ROOT / "diagrams"
+RUNTIME_DIAGRAMS_MEMORY_DIR = RUNTIME_MEMORY_ROOT / "diagrams"
 TWILIO_SMS_LOG = MEMORY_CONTEXT_DIR / "twilio_sms_actions.jsonl"
 RUNTIME_TWILIO_SMS_LOG = RUNTIME_CONTEXT / "twilio_sms_actions.jsonl"
 EXECUTION_TRUTH_LOG = MEMORY_CONTEXT_DIR / "execution_truth_actions.jsonl"
@@ -3360,6 +3364,7 @@ def api_bridge_config_status(live=False):
             "capabilities": ["schedule_action", "list_schedules", "cancel_schedule"],
         },
         "crm": crm_status(),
+        "diagrams": diagram_bridge_status(),
         "security": security_status(),
         "product_backlog": backlog,
         "templates": api_bridge_templates(),
@@ -3857,6 +3862,557 @@ def zoom_s2s_configured():
 
 def zoom_authorized():
     return bool(load_keychain_secret(ZOOM_REFRESH_TOKEN_KEYCHAIN_SERVICE, required=False))
+
+
+
+
+def diagram_bridge_status():
+    queue_count = 0
+    latest = None
+    for path in [DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL]:
+        if not path.exists():
+            continue
+        try:
+            entries = read_jsonl_entries(path, limit=0)
+        except Exception:
+            entries = []
+        queue_count = max(queue_count, len(entries))
+        if entries:
+            latest = entries[-1]
+    return {
+        "configured": True,
+        "write_requires_confirmation": True,
+        "mode": "Kim conversa; el bridge Python inspecciona y modifica archivos .drawio XML. Codex queda solo como fallback de desarrollo.",
+        "capabilities": [
+            "status",
+            "queue_edit",
+            "list_requests",
+            "inspect_file",
+            "layout_analyze",
+            "preview_svg",
+            "present_file",
+            "close_file",
+            "apply_text_replacements",
+            "apply_operations",
+        ],
+        "queue": str(DIAGRAM_REQUESTS_JSONL),
+        "runtime_queue": str(RUNTIME_DIAGRAM_REQUESTS_JSONL),
+        "queue_count": queue_count,
+        "latest_request": latest,
+        "guardrail": "No automatizar mouse/UI de diagrams.net como ruta principal; editar XML .drawio con Python, guardar backup antes de cambios y usar preview/presentacion para validar el resultado visual.",
+    }
+
+
+def diagram_request_id():
+    return "DIAGRAM-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3).upper()
+
+
+def diagram_normalize_path(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        return str(pathlib.Path(raw).expanduser())
+    except Exception:
+        return raw
+
+
+def diagram_plain_label(value):
+    text = html.unescape(str(value or ""))
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    return text.strip()
+
+
+def diagram_inspect_file(parameters=None):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    if not path:
+        raise ValueError("Falta path/diagram_path del archivo .drawio.")
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "inspect_file", "error": "FILE_NOT_FOUND", "path": str(path)}
+    if path.suffix.lower() not in {".drawio", ".xml", ".mxfile"}:
+        return {"ok": False, "provider": "diagrams", "action": "inspect_file", "error": "UNSUPPORTED_EXTENSION", "path": str(path)}
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as exc:
+        return {"ok": False, "provider": "diagrams", "action": "inspect_file", "error": "XML_PARSE_ERROR", "message": brief(str(exc), 240), "path": str(path)}
+    diagrams = root.findall(".//diagram") if root.tag != "diagram" else [root]
+    compressed = False
+    labels = []
+    cells = root.findall(".//mxCell")
+    if not cells and diagrams:
+        compressed = any((diagram.text or "").strip() and not list(diagram) for diagram in diagrams)
+    for cell in cells:
+        value = cell.attrib.get("value")
+        if value:
+            labels.append({
+                "id": cell.attrib.get("id"),
+                "label": diagram_plain_label(value),
+                "raw_value": value,
+                "style": cell.attrib.get("style", ""),
+            })
+    return {
+        "ok": True,
+        "provider": "diagrams",
+        "action": "inspect_file",
+        "path": str(path),
+        "format": "drawio_xml",
+        "compressed_diagram_payload": compressed,
+        "diagram_count": len(diagrams) or (1 if root.tag == "mxGraphModel" else 0),
+        "cell_count": len(cells),
+        "label_count": len(labels),
+        "labels": labels[: int(first_value(parameters, "limit", default=80) or 80)],
+        "note": "Si compressed_diagram_payload=true, guarda el archivo desde diagrams.net como XML no comprimido antes de edicion automatica fina.",
+    }
+
+
+def diagram_queue_edit(parameters=None, session_id="", transcript=""):
+    parameters = parameters or {}
+    request = {
+        "id": diagram_request_id(),
+        "created_at": now_iso(),
+        "status": "queued_for_kim_diagrams_worker",
+        "provider": "diagrams",
+        "diagram_path": diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")),
+        "instruction": str(first_value(parameters, "instruction", "instructions", "prompt", "change", "cambio", default="") or "").strip(),
+        "operations": parameters.get("operations") or [],
+        "context": str(first_value(parameters, "context", "conversation_context", "notes", default="") or "").strip(),
+        "session_id": session_id,
+        "transcript_excerpt": brief(transcript, 1800),
+        "recommended_executor": first_value(parameters, "executor", default="kim_diagrams_python_bridge"),
+        "source": "kim_api_bridge",
+    }
+    if not request["instruction"] and not request["operations"]:
+        raise ValueError("Falta instruction/operations para la edicion del diagrama.")
+    append_jsonl_any([DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL], request)
+    try:
+        DIAGRAMS_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+        RUNTIME_DIAGRAMS_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    return {
+        "ok": True,
+        "provider": "diagrams",
+        "action": "queue_edit",
+        "request": request,
+        "message": "Solicitud de edicion de diagrama guardada para Kim Diagrams Bridge. El worker Python puede aplicar cambios sin depender de Codex.",
+    }
+
+
+def diagram_list_requests(parameters=None):
+    parameters = parameters or {}
+    limit = int(first_value(parameters, "limit", default=20) or 20)
+    entries = []
+    for path in [DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL]:
+        if path.exists():
+            entries = read_jsonl_entries(path, limit=0)
+            break
+    return {"ok": True, "provider": "diagrams", "action": "list_requests", "count": len(entries), "requests": entries[-limit:]}
+
+
+def diagram_apply_text_replacements(parameters=None, confirm=False):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    replacements = parameters.get("replacements") or parameters.get("text_replacements") or []
+    if isinstance(replacements, dict):
+        replacements = [{"from": k, "to": v} for k, v in replacements.items()]
+    if not path or not replacements:
+        raise ValueError("Falta path y replacements para aplicar cambios de texto.")
+    preview = {"path": str(path), "replacement_count": len(replacements), "replacements": replacements[:20]}
+    if not confirm:
+        return confirmation_preview("diagrams", "apply_text_replacements", f"Aplicar {len(replacements)} reemplazo(s) de texto en {path.name}.", preview, execution_parameters=parameters)
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "apply_text_replacements", "error": "FILE_NOT_FOUND", "path": str(path)}
+    tree = ET.parse(path)
+    root = tree.getroot()
+    cells = root.findall(".//mxCell")
+    if not cells:
+        return {"ok": False, "provider": "diagrams", "action": "apply_text_replacements", "error": "NO_UNCOMPRESSED_MXCELLS", "message": "No encontre mxCell editables. Guarda el .drawio como XML no comprimido para edicion automatica por Kim Diagrams Bridge.", "path": str(path)}
+    changes = []
+    for cell in cells:
+        value = cell.attrib.get("value")
+        if value is None:
+            continue
+        new_value = value
+        plain = diagram_plain_label(value)
+        for repl in replacements:
+            src = str(first_value(repl, "from", "old", "old_text", "buscar", default="") or "")
+            dst = str(first_value(repl, "to", "new", "new_text", "reemplazar", default="") or "")
+            if not src:
+                continue
+            if src in new_value:
+                new_value = new_value.replace(src, dst)
+            elif src == plain:
+                new_value = html.escape(dst)
+        if new_value != value:
+            cell.set("value", new_value)
+            changes.append({"id": cell.attrib.get("id"), "old": diagram_plain_label(value), "new": diagram_plain_label(new_value)})
+    if not changes:
+        return {"ok": False, "provider": "diagrams", "action": "apply_text_replacements", "error": "NO_MATCHES", "path": str(path), "replacements": replacements}
+    backup = path.with_suffix(path.suffix + ".bak_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S"))
+    shutil.copy2(path, backup)
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+    event = {"id": diagram_request_id(), "created_at": now_iso(), "status": "applied", "path": str(path), "backup": str(backup), "changes": changes}
+    append_jsonl_any([DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL], event)
+    return {"ok": True, "provider": "diagrams", "action": "apply_text_replacements", "path": str(path), "backup": str(backup), "changes": changes, "confirmed": True}
+
+
+
+
+def diagram_next_geometry(cells):
+    max_y = 20
+    max_x = 20
+    for cell in cells:
+        geo = cell.find("mxGeometry")
+        if geo is None:
+            continue
+        try:
+            x = float(geo.attrib.get("x") or 0)
+            y = float(geo.attrib.get("y") or 0)
+            h = float(geo.attrib.get("height") or 0)
+            max_y = max(max_y, y + h)
+            max_x = max(max_x, x)
+        except ValueError:
+            continue
+    return max_x, max_y + 40
+
+
+def diagram_find_cell_by_label(cells, label):
+    wanted = str(label or "").strip()
+    if not wanted:
+        return None
+    for cell in cells:
+        if cell.attrib.get("id") == wanted:
+            return cell
+    wanted_norm = normalize_security_text(wanted)
+    for cell in cells:
+        value = cell.attrib.get("value")
+        if value is not None and normalize_security_text(diagram_plain_label(value)) == wanted_norm:
+            return cell
+    for cell in cells:
+        value = cell.attrib.get("value")
+        if value is not None and wanted_norm in normalize_security_text(diagram_plain_label(value)):
+            return cell
+    return None
+
+
+def diagram_cell_geometry(cell):
+    geo = cell.find("mxGeometry")
+    if geo is None:
+        return None
+    def as_float(key, default=0.0):
+        try:
+            return float(geo.attrib.get(key) or default)
+        except (TypeError, ValueError):
+            return float(default)
+    return {
+        "element": geo,
+        "x": as_float("x"),
+        "y": as_float("y"),
+        "width": as_float("width", 120),
+        "height": as_float("height", 60),
+    }
+
+
+def diagram_vertex_snapshots(cells):
+    vertices = []
+    for cell in cells:
+        if cell.attrib.get("vertex") != "1":
+            continue
+        geom = diagram_cell_geometry(cell)
+        if not geom:
+            continue
+        vertices.append({
+            "id": cell.attrib.get("id"),
+            "label": diagram_plain_label(cell.attrib.get("value", "")),
+            "x": geom["x"],
+            "y": geom["y"],
+            "width": geom["width"],
+            "height": geom["height"],
+            "style": cell.attrib.get("style", ""),
+        })
+    return vertices
+
+
+def diagram_layout_analyze(parameters=None):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    if not path:
+        raise ValueError("Falta path/diagram_path del archivo .drawio.")
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "layout_analyze", "error": "FILE_NOT_FOUND", "path": str(path)}
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as exc:
+        return {"ok": False, "provider": "diagrams", "action": "layout_analyze", "error": "XML_PARSE_ERROR", "message": brief(str(exc), 240), "path": str(path)}
+    vertices = diagram_vertex_snapshots(root.findall(".//mxCell"))
+    issues = []
+    for index, a in enumerate(vertices):
+        if a["width"] < 90 or a["height"] < 42:
+            issues.append({"type": "too_small", "id": a["id"], "label": a["label"], "recommendation": "Usar cajas legibles: minimo sugerido 120x56 px."})
+        if len(a["label"]) > 42 and a["width"] < 170:
+            issues.append({"type": "text_fit_risk", "id": a["id"], "label": a["label"], "recommendation": "Aumentar ancho o dividir el texto para evitar saturacion."})
+        for b in vertices[index + 1:]:
+            overlap_x = max(0, min(a["x"] + a["width"], b["x"] + b["width"]) - max(a["x"], b["x"]))
+            overlap_y = max(0, min(a["y"] + a["height"], b["y"] + b["height"]) - max(a["y"], b["y"]))
+            if overlap_x > 6 and overlap_y > 6:
+                issues.append({"type": "overlap", "ids": [a["id"], b["id"]], "labels": [a["label"], b["label"]], "overlap": [round(overlap_x, 1), round(overlap_y, 1)], "recommendation": "Separar nodos; mantener al menos 24 px de aire visual."})
+    xs = sorted({round(v["x"], 1) for v in vertices})
+    ys = sorted({round(v["y"], 1) for v in vertices})
+    recommendations = [
+        "Mantener flujo principal de izquierda a derecha o de arriba hacia abajo, sin mezclar ambos salvo por secciones.",
+        "Alinear nodos por columnas/filas y usar espaciado consistente de 40-80 px.",
+        "Usar verbos cortos en procesos y sustantivos claros en entidades.",
+        "Evitar mas de 5-7 elementos por grupo visual; si crece, dividir en swimlanes o subdiagramas.",
+    ]
+    return {
+        "ok": True,
+        "provider": "diagrams",
+        "action": "layout_analyze",
+        "path": str(path),
+        "vertex_count": len(vertices),
+        "alignment_columns": xs[:40],
+        "alignment_rows": ys[:40],
+        "issues": issues[:100],
+        "recommendations": recommendations,
+    }
+
+
+def diagram_preview_svg(parameters=None):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    output_raw = diagram_normalize_path(first_value(parameters, "output", "output_path", "preview_path", default=""))
+    if not path:
+        raise ValueError("Falta path/diagram_path del archivo .drawio.")
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "preview_svg", "error": "FILE_NOT_FOUND", "path": str(path)}
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as exc:
+        return {"ok": False, "provider": "diagrams", "action": "preview_svg", "error": "XML_PARSE_ERROR", "message": brief(str(exc), 240), "path": str(path)}
+    vertices = diagram_vertex_snapshots(root.findall(".//mxCell"))
+    if not vertices:
+        return {"ok": False, "provider": "diagrams", "action": "preview_svg", "error": "NO_VERTEX_GEOMETRY", "path": str(path)}
+    min_x = min(v["x"] for v in vertices) - 40
+    min_y = min(v["y"] for v in vertices) - 40
+    max_x = max(v["x"] + v["width"] for v in vertices) + 40
+    max_y = max(v["y"] + v["height"] for v in vertices) + 40
+    width = max(320, max_x - min_x)
+    height = max(240, max_y - min_y)
+    if output_raw:
+        output = pathlib.Path(output_raw).expanduser()
+    else:
+        output_dir = RUNTIME_DIAGRAMS_MEMORY_DIR
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output = output_dir / (path.stem + "_preview.svg")
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height:.0f}" viewBox="{min_x:.0f} {min_y:.0f} {width:.0f} {height:.0f}">',
+        '<rect x="{:.0f}" y="{:.0f}" width="{:.0f}" height="{:.0f}" fill="#f8fafc"/>'.format(min_x, min_y, width, height),
+    ]
+    for v in vertices:
+        label = html.escape(v["label"][:80])
+        lines.append(f'<rect x="{v["x"]:.1f}" y="{v["y"]:.1f}" width="{v["width"]:.1f}" height="{v["height"]:.1f}" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>')
+        lines.append(f'<text x="{v["x"] + 12:.1f}" y="{v["y"] + 24:.1f}" font-family="Inter, Arial, sans-serif" font-size="13" fill="#0f172a">{label}</text>')
+    lines.append("</svg>")
+    output.write_text("\n".join(lines), encoding="utf-8")
+    return {"ok": True, "provider": "diagrams", "action": "preview_svg", "path": str(path), "preview_path": str(output), "vertex_count": len(vertices)}
+
+
+def diagram_present_file(parameters=None):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    app = str(first_value(parameters, "app", "application", default="") or "").strip()
+    mode = str(first_value(parameters, "mode", default="open") or "open").strip().lower()
+    if not path:
+        raise ValueError("Falta path/diagram_path para presentar el diagrama.")
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "present_file", "error": "FILE_NOT_FOUND", "path": str(path)}
+    app_candidates = [app] if app else ["draw.io", "diagrams.net", ""]
+    attempts = []
+    for candidate in app_candidates:
+        try:
+            cmd = ["open", str(path)] if not candidate else ["open", "-a", candidate, str(path)]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+            attempts.append({"app": candidate or "default", "returncode": proc.returncode, "stderr": brief(proc.stderr, 240)})
+            if proc.returncode == 0:
+                return {"ok": True, "provider": "diagrams", "action": "present_file", "mode": mode, "path": str(path), "app": candidate or "default", "message": "Diagrama abierto/presentado. Si ya estaba abierto, diagrams.net puede requerir recargar o reabrir para reflejar cambios externos."}
+        except Exception as exc:
+            attempts.append({"app": candidate or "default", "error": brief(str(exc), 240)})
+    return {"ok": False, "provider": "diagrams", "action": "present_file", "error": "OPEN_FAILED", "path": str(path), "attempts": attempts}
+
+
+def diagram_close_file(parameters=None, confirm=False):
+    parameters = parameters or {}
+    app = str(first_value(parameters, "app", "application", default="draw.io") or "draw.io").strip()
+    allowed = {"draw.io", "diagrams.net"}
+    preview = {"app": app, "warning": "Cierra la ventana frontal de diagrams.net/draw.io. Usar solo si el archivo ya fue guardado por el bridge."}
+    if app not in allowed:
+        return {"ok": False, "provider": "diagrams", "action": "close_file", "error": "UNSUPPORTED_APP", "allowed_apps": sorted(allowed)}
+    if not confirm:
+        return confirmation_preview("diagrams", "close_file", f"Cerrar ventana frontal de {app}.", preview, execution_parameters=parameters)
+    script = f'tell application "{app}" to close front window saving no'
+    proc = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=12)
+    return {"ok": proc.returncode == 0, "provider": "diagrams", "action": "close_file", "app": app, "returncode": proc.returncode, "stdout": brief(proc.stdout, 240), "stderr": brief(proc.stderr, 240)}
+
+
+def diagram_apply_operations(parameters=None, confirm=False):
+    parameters = parameters or {}
+    path = pathlib.Path(diagram_normalize_path(first_value(parameters, "path", "diagram_path", "file", "archivo", default="")))
+    operations = parameters.get("operations") or []
+    if not path or not operations:
+        raise ValueError("Falta path y operations para modificar el diagrama.")
+    preview = {"path": str(path), "operation_count": len(operations), "operations": operations[:20]}
+    if not confirm:
+        return confirmation_preview("diagrams", "apply_operations", f"Aplicar {len(operations)} operacion(es) en {path.name}.", preview, execution_parameters=parameters)
+    if not path.exists():
+        return {"ok": False, "provider": "diagrams", "action": "apply_operations", "error": "FILE_NOT_FOUND", "path": str(path)}
+    tree = ET.parse(path)
+    root = tree.getroot()
+    cells = root.findall(".//mxCell")
+    if not cells:
+        return {"ok": False, "provider": "diagrams", "action": "apply_operations", "error": "NO_UNCOMPRESSED_MXCELLS", "message": "No encontre mxCell editables. Guarda el .drawio como XML no comprimido.", "path": str(path)}
+    root_cell = root.find(".//root")
+    if root_cell is None:
+        return {"ok": False, "provider": "diagrams", "action": "apply_operations", "error": "NO_GRAPH_ROOT", "path": str(path)}
+    changes = []
+    for op in operations:
+        kind = str(first_value(op, "op", "type", "action", default="") or "").strip().lower()
+        if kind in {"update_label", "rename", "set_label", "change_text"}:
+            target = first_value(op, "id", "target_id", "target", "label", "from", default="")
+            new_text = str(first_value(op, "text", "new_text", "to", "value", default="") or "")
+            cell = diagram_find_cell_by_label(cells, target)
+            if cell is None:
+                changes.append({"op": kind, "status": "not_found", "target": target})
+                continue
+            old = diagram_plain_label(cell.attrib.get("value", ""))
+            cell.set("value", html.escape(new_text))
+            changes.append({"op": kind, "status": "applied", "id": cell.attrib.get("id"), "old": old, "new": new_text})
+        elif kind in {"add_text_node", "add_node", "add_box", "add_shape"}:
+            label = str(first_value(op, "text", "label", "value", default="Nuevo nodo") or "Nuevo nodo")
+            x = first_value(op, "x", default="")
+            y = first_value(op, "y", default="")
+            try:
+                x = float(x) if x != "" else None
+                y = float(y) if y != "" else None
+            except ValueError:
+                x = y = None
+            if x is None or y is None:
+                x, y = diagram_next_geometry(cells)
+            width = float(first_value(op, "width", "w", default=180) or 180)
+            height = float(first_value(op, "height", "h", default=70) or 70)
+            style = str(first_value(op, "style", default="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;") or "")
+            cell_id = str(first_value(op, "id", default="") or "").strip() or "kim_" + secrets.token_hex(6)
+            cell = ET.SubElement(root_cell, "mxCell", {
+                "id": cell_id,
+                "value": html.escape(label),
+                "style": style,
+                "vertex": "1",
+                "parent": str(first_value(op, "parent", default="1") or "1"),
+            })
+            ET.SubElement(cell, "mxGeometry", {"x": str(x), "y": str(y), "width": str(width), "height": str(height), "as": "geometry"})
+            cells.append(cell)
+            changes.append({"op": kind, "status": "applied", "id": cell_id, "label": label, "x": x, "y": y})
+        elif kind in {"move", "move_cell", "move_node", "mover", "mover_cuadro"}:
+            target = first_value(op, "id", "target_id", "target", "label", default="")
+            cell = diagram_find_cell_by_label(cells, target)
+            if cell is None:
+                changes.append({"op": kind, "status": "not_found", "target": target})
+                continue
+            geom = diagram_cell_geometry(cell)
+            if not geom:
+                changes.append({"op": kind, "status": "no_geometry", "target": target})
+                continue
+            dx = float(first_value(op, "dx", "move_x", default=0) or 0)
+            dy = float(first_value(op, "dy", "move_y", default=0) or 0)
+            if str(first_value(op, "direction", "direccion", default="")).lower() in {"right", "derecha"} and not dx:
+                dx = float(first_value(op, "amount", "cantidad", default=80) or 80)
+            if str(first_value(op, "direction", "direccion", default="")).lower() in {"left", "izquierda"} and not dx:
+                dx = -float(first_value(op, "amount", "cantidad", default=80) or 80)
+            if str(first_value(op, "direction", "direccion", default="")).lower() in {"down", "abajo"} and not dy:
+                dy = float(first_value(op, "amount", "cantidad", default=60) or 60)
+            if str(first_value(op, "direction", "direccion", default="")).lower() in {"up", "arriba"} and not dy:
+                dy = -float(first_value(op, "amount", "cantidad", default=60) or 60)
+            old = {"x": geom["x"], "y": geom["y"]}
+            geom["element"].set("x", str(round(geom["x"] + dx, 2)))
+            geom["element"].set("y", str(round(geom["y"] + dy, 2)))
+            changes.append({"op": kind, "status": "applied", "id": cell.attrib.get("id"), "label": diagram_plain_label(cell.attrib.get("value", "")), "old": old, "new": {"x": geom["x"] + dx, "y": geom["y"] + dy}})
+        elif kind in {"resize", "resize_cell", "resize_node", "aumentar", "redimensionar"}:
+            target = first_value(op, "id", "target_id", "target", "label", default="")
+            cell = diagram_find_cell_by_label(cells, target)
+            if cell is None:
+                changes.append({"op": kind, "status": "not_found", "target": target})
+                continue
+            geom = diagram_cell_geometry(cell)
+            if not geom:
+                changes.append({"op": kind, "status": "no_geometry", "target": target})
+                continue
+            old = {"width": geom["width"], "height": geom["height"]}
+            width = first_value(op, "width", "w", default="")
+            height = first_value(op, "height", "h", default="")
+            dw = float(first_value(op, "dw", "delta_width", default=0) or 0)
+            dh = float(first_value(op, "dh", "delta_height", default=0) or 0)
+            new_width = float(width) if width != "" else geom["width"] + dw
+            new_height = float(height) if height != "" else geom["height"] + dh
+            geom["element"].set("width", str(round(max(60, new_width), 2)))
+            geom["element"].set("height", str(round(max(36, new_height), 2)))
+            changes.append({"op": kind, "status": "applied", "id": cell.attrib.get("id"), "label": diagram_plain_label(cell.attrib.get("value", "")), "old": old, "new": {"width": max(60, new_width), "height": max(36, new_height)}})
+        elif kind in {"align", "align_to", "alinear"}:
+            target = first_value(op, "id", "target_id", "target", "label", default="")
+            reference = first_value(op, "reference", "reference_id", "with", "con", default="")
+            axis = str(first_value(op, "axis", "eje", default="x") or "x").lower()
+            cell = diagram_find_cell_by_label(cells, target)
+            ref = diagram_find_cell_by_label(cells, reference)
+            if cell is None or ref is None:
+                changes.append({"op": kind, "status": "not_found", "target": target, "reference": reference})
+                continue
+            geom = diagram_cell_geometry(cell)
+            ref_geom = diagram_cell_geometry(ref)
+            if not geom or not ref_geom:
+                changes.append({"op": kind, "status": "no_geometry", "target": target, "reference": reference})
+                continue
+            old = {"x": geom["x"], "y": geom["y"]}
+            if axis in {"x", "left", "vertical"}:
+                geom["element"].set("x", str(round(ref_geom["x"], 2)))
+            if axis in {"y", "top", "horizontal"}:
+                geom["element"].set("y", str(round(ref_geom["y"], 2)))
+            changes.append({"op": kind, "status": "applied", "id": cell.attrib.get("id"), "reference": ref.attrib.get("id"), "axis": axis, "old": old})
+        else:
+            changes.append({"op": kind or "unknown", "status": "unsupported", "raw": op})
+    applied = [c for c in changes if c.get("status") == "applied"]
+    if not applied:
+        return {"ok": False, "provider": "diagrams", "action": "apply_operations", "error": "NO_APPLIED_CHANGES", "path": str(path), "changes": changes}
+    backup = path.with_suffix(path.suffix + ".bak_" + dt.datetime.now().strftime("%Y%m%d_%H%M%S"))
+    shutil.copy2(path, backup)
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+    event = {"id": diagram_request_id(), "created_at": now_iso(), "status": "applied", "path": str(path), "backup": str(backup), "changes": changes}
+    append_jsonl_any([DIAGRAM_REQUESTS_JSONL, RUNTIME_DIAGRAM_REQUESTS_JSONL], event)
+    return {"ok": True, "provider": "diagrams", "action": "apply_operations", "path": str(path), "backup": str(backup), "changes": changes, "confirmed": True}
+
+def run_diagram_bridge(action, parameters=None, confirm=False, session_id="", transcript=""):
+    action = (action or "status").strip().lower()
+    parameters = parameters or {}
+    if action in {"status", "estado"}:
+        return {"ok": True, "provider": "diagrams", "action": "status", "status": diagram_bridge_status()}
+    if action in {"queue_edit", "prepare_edit", "request_edit", "solicitar_edicion", "preparar_edicion"}:
+        return diagram_queue_edit(parameters, session_id=session_id, transcript=transcript)
+    if action in {"list_requests", "pending", "requests", "listar_solicitudes"}:
+        return diagram_list_requests(parameters)
+    if action in {"inspect_file", "inspect", "leer_diagrama", "list_labels"}:
+        return diagram_inspect_file(parameters)
+    if action in {"layout_analyze", "analyze_layout", "analizar_layout", "analizar_diagrama"}:
+        return diagram_layout_analyze(parameters)
+    if action in {"preview_svg", "preview", "vista_previa", "generar_preview"}:
+        return diagram_preview_svg(parameters)
+    if action in {"present_file", "open_file", "open_diagram", "abrir_diagrama", "presentar_diagrama"}:
+        return diagram_present_file(parameters)
+    if action in {"close_file", "close_diagram", "cerrar_diagrama"}:
+        return diagram_close_file(parameters, confirm=confirm)
+    if action in {"apply_text_replacements", "replace_text", "reemplazar_texto"}:
+        return diagram_apply_text_replacements(parameters, confirm=confirm)
+    if action in {"apply_operations", "apply_ops", "operaciones", "modificar_diagrama"}:
+        return diagram_apply_operations(parameters, confirm=confirm)
+    raise ValueError("Accion diagrams no soportada. Usa status, queue_edit, list_requests, inspect_file, layout_analyze, preview_svg, present_file, close_file, apply_text_replacements o apply_operations.")
 
 
 def zoom_api_base_from_token_payload(payload=None):
@@ -13004,6 +13560,34 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result = run_gmail_bridge(action, parameters, confirm=confirm)
     elif provider in {"google_maps", "maps", "places", "geocoding", "routes"}:
         result = run_google_maps_bridge(action, parameters, confirm=confirm)
+    elif provider in {"diagrams", "drawio", "diagrams.net", "diagramas"}:
+        sensitive_action = action in {
+            "apply_text_replacements",
+            "replace_text",
+            "reemplazar_texto",
+            "apply_operations",
+            "apply_ops",
+            "operaciones",
+            "modificar_diagrama",
+            "close_file",
+            "close_diagram",
+            "cerrar_diagrama",
+        }
+        if sensitive_action:
+            security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
+            if not security.get("authorized"):
+                result = {
+                    "ok": False,
+                    "provider": provider,
+                    "action": action,
+                    "requires_security_phrase": True,
+                    "security": security,
+                    "message": "Edicion de diagrama bloqueada. Di la frase de autorizacion o escribe el PIN y vuelve a confirmar.",
+                }
+                record = record_api_bridge_action(provider or result.get("provider"), action or result.get("action"), parameters, result, session_id, transcript)
+                result["action_log"] = record
+                return result
+        result = run_diagram_bridge(action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
     elif provider in {"zoom", "zoom_meetings", "zoom_calendar"}:
         security = ensure_api_security(provider, action, parameters, confirm=confirm, session_id=session_id, transcript=transcript)
         if not security.get("authorized"):
@@ -13142,7 +13726,7 @@ def run_api_bridge(provider, action, parameters=None, confirm=False, session_id=
         result["agent_routing"] = {"from_provider": provider, "from_action": action, "to_provider": target_provider, "to_action": target_action}
         return result
     else:
-        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, zoom, portfolio, paper_broker, twilio, crm o all/status.")
+        raise ValueError("Proveedor no soportado. Usa clickup, notion, pipedrive, gmail, hostinger_mail, zoom, diagrams, portfolio, paper_broker, twilio, crm o all/status.")
     if isinstance(result, dict) and result.get("requires_confirmation") and result.get("confirm_payload"):
         prepared = store_prepared_action(result, session_id=session_id, transcript=transcript)
         if prepared:
@@ -18244,6 +18828,10 @@ def realtime_session_config():
                 "Si sospechas que faltan intentos viejos, usa provider=twilio action=sync_call_attempts con since/limit; esa accion no llama a nadie. "
                 "para clientes/contactos usa provider crm: status, list_contacts, upsert_contact o record_note. "
                 "Para lugares, rutas, direcciones o negocios fisicos usa provider=google_maps: find_place, geocode, route_distance o timezone; "
+                "Para diagramas diagrams.net/draw.io usa provider=diagrams: status, inspect_file, layout_analyze, preview_svg, present_file, queue_edit, apply_operations o apply_text_replacements. "
+                "La ruta recomendada es conversar con Kim; Kim debe inspeccionar el archivo, preparar operaciones estructuradas, ejecutar provider=diagrams con apply_operations/apply_text_replacements, "
+                "analizar calidad visual con layout_analyze y generar preview_svg para Kim Live. Usa present_file cuando el doctor quiera abrirlo en diagrams.net/draw.io. "
+                "queue_edit se usa solo cuando la instruccion sea ambigua o demasiado visual. Todo cambio guarda backup y requiere confirmacion. "
                 "Google Maps es de consulta y puede generar cargos pequenos, asi que resume resultados utiles y no hagas busquedas repetidas innecesarias. "
                 "Antes de llamar o escribir a un cliente, consulta CRM si tienes duda y guarda contactos relevantes en BIFROST/CRM. "
                 "No esperes a que el doctor diga 'guarda esto' cuando el contexto sea claro: si detectas datos estables de cliente, "
@@ -18350,7 +18938,7 @@ def realtime_session_config():
                         "properties": {
                             "provider": {
                                 "type": "string",
-                                "description": "Proveedor: clickup, notion, pipedrive, gmail, google_maps, hostinger_mail, zoom, portfolio, twilio, scheduler, crm o all.",
+                                "description": "Proveedor: clickup, notion, pipedrive, gmail, google_maps, diagrams, hostinger_mail, zoom, portfolio, twilio, scheduler, crm o all.",
                             },
                             "action": {
                                 "type": "string",
@@ -18365,6 +18953,7 @@ def realtime_session_config():
                                     "send_email, reply_email, move_message, mark_spam, move_to_trash, archive_message. "
                                     "Zoom: status, auth_url, list_users, list_meetings, create_meeting, create_and_send_invite, get_transcript, send_transcript. "
                                     "Google Maps: status, validate_key, find_place, geocode, route_distance, timezone. "
+                                    "Diagrams: status, queue_edit, list_requests, inspect_file, layout_analyze, preview_svg, present_file, close_file, apply_text_replacements, apply_operations. "
                                     "Pipedrive: status, search_persons, list_persons, get_person, upsert_person, list_deals, create_deal, update_deal, create_activity, create_note. "
                                     "Portfolio: doctor_command, client_report, fundamental_report, send_whatsapp_report, aggregate_order, execute_pending_order, sell_position. "
                                     "Paper Broker: status, preview, place_order, cancel_order, sync. "
