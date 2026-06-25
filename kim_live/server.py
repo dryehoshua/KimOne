@@ -14468,6 +14468,124 @@ def paper_broker_sync(parameters=None, trigger="polling_watcher"):
     return result
 
 
+def portfolio_next_manual_order(config):
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    orders = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        order = portfolio_float(entry.get("order"))
+        if order is not None:
+            orders.append(int(order))
+    return (max(orders) + 1) if orders else 1
+
+
+def portfolio_manual_id_for_paper_order(order):
+    raw = str((order or {}).get("order_id") or "").strip()
+    safe = re.sub(r"[^A-Za-z0-9]+", "-", raw).strip("-").lower()
+    return f"paper-{safe}" if safe else ""
+
+
+def portfolio_sync_paper_order_to_manual_override(order, event_action="place_order"):
+    order = order or {}
+    if not isinstance(order, dict):
+        return {"ok": False, "skipped": "invalid_order"}
+    portfolio_id = str(order.get("portfolio_id") or "sr_eli_2026").strip() or "sr_eli_2026"
+    if portfolio_id != "sr_eli_2026":
+        return {"ok": True, "skipped": "not_sr_eli_portfolio", "portfolio_id": portfolio_id}
+    if order.get("source_portfolio_pending_id"):
+        return {
+            "ok": True,
+            "skipped": "already_mirrors_portfolio_pending",
+            "source_portfolio_pending_id": order.get("source_portfolio_pending_id"),
+        }
+    config = portfolio_report_override_config({"portfolio_id": portfolio_id})
+    if not config:
+        return {"ok": False, "error": "override_config_missing"}
+    manual_id = portfolio_manual_id_for_paper_order(order)
+    if not manual_id:
+        return {"ok": False, "error": "missing_order_id"}
+    symbol = portfolio_normalize_symbol(order.get("symbol"))
+    amount_usd = portfolio_float(order.get("amount_usd"))
+    limit_price = portfolio_float(order.get("limit_price") or order.get("price") or order.get("entry_price"))
+    quantity = portfolio_float(order.get("quantity"))
+    if quantity is None and amount_usd not in (None, 0) and limit_price not in (None, 0):
+        quantity = amount_usd / limit_price
+    if not symbol or amount_usd in (None, 0) or limit_price in (None, 0):
+        return {
+            "ok": False,
+            "error": "incomplete_order",
+            "symbol": symbol,
+            "amount_usd": amount_usd,
+            "limit_price": limit_price,
+        }
+    entries = config.get("manual_entries") if isinstance(config.get("manual_entries"), list) else []
+    matched_index = None
+    for index, entry in enumerate(entries):
+        if isinstance(entry, dict) and str(entry.get("id") or "").strip() == manual_id:
+            matched_index = index
+            break
+    status = str(order.get("status") or "pending").strip().lower()
+    if status in {"filled", "executed", "active"}:
+        state = "active"
+    elif status in {"cancelled", "canceled", "void"}:
+        state = "cancelled"
+    else:
+        state = "pending"
+    old_entry = dict(entries[matched_index]) if matched_index is not None else {}
+    entry_order = first_value(order, "report_order", "order", default=None)
+    if entry_order in (None, ""):
+        entry_order = old_entry.get("order") if old_entry else portfolio_next_manual_order(config)
+    sync_note = (
+        f"Sincronizada desde Kim Paper Broker {order.get('order_id')} ({event_action}) el {now_iso()}. "
+        "Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json."
+    )
+    notes = str(order.get("notes") or "").strip()
+    entry = {
+        **old_entry,
+        "id": manual_id,
+        "paper_order_id": order.get("order_id"),
+        "order": int(float(entry_order)),
+        "symbol": symbol,
+        "label": str(order.get("label") or portfolio_symbol_label(symbol)).strip(),
+        "state": state,
+        "side": str(order.get("side") or "BUY").upper(),
+        "invested_usd": round_opt(amount_usd, 2),
+        "entry_price": round_price(limit_price),
+        "quantity": round_opt(quantity, 12) if quantity is not None else None,
+        "credit": True,
+        "credit_usd": round_opt(amount_usd, 2),
+        "source": "kim_paper_broker",
+        "notes": (notes + " " + sync_note).strip(),
+        "updated_at": now_iso(),
+    }
+    entry = portfolio_normalize_manual_entry(entry)
+    if matched_index is None:
+        entries.append(entry)
+    else:
+        entries[matched_index] = entry
+    config["manual_entries"] = entries
+    rules = config.get("doctor_rules") if isinstance(config.get("doctor_rules"), list) else []
+    rule = (
+        "KIM-0118: toda orden paper creada por Kim para Sr. Eli debe sincronizarse tambien a manual_entries; "
+        "WhatsApp nunca debe reportar desde un snapshot anterior a paper_orders.json."
+    )
+    if rule not in rules:
+        rules.append(rule)
+    config["doctor_rules"] = rules
+    config["updated_at"] = now_iso()
+    config["standard_version"] = PORTFOLIO_CURRENT_STANDARD_VERSION
+    portfolio_write_override_config(config)
+    return {
+        "ok": True,
+        "provider": "portfolio",
+        "action": "sync_paper_order_to_manual_override",
+        "created": matched_index is None,
+        "manual_entry": entry,
+        "paper_order_id": order.get("order_id"),
+    }
+
+
 PAPER_BROKER_CONFIRMABLE_ACTIONS = {"place_order", "place", "buy", "sell", "cancel_order", "cancel"}
 PAPER_BROKER_WATCHER_STARTED = False
 
@@ -14498,8 +14616,18 @@ def paper_broker_cli(action, parameters=None, confirm=False, internal=False):
         )
     elif action in {"place_order", "place", "buy", "sell"}:
         result = module.cli("place_order", {**parameters, "confirm": confirm or boolish(parameters.get("confirm")) or internal})
+        if isinstance(result, dict) and isinstance(result.get("order"), dict):
+            result["portfolio_manual_sync"] = portfolio_sync_paper_order_to_manual_override(
+                result.get("order"),
+                event_action="place_order",
+            )
     elif action in {"cancel_order", "cancel"}:
         result = module.cli("cancel_order", {**parameters, "confirm": confirm or boolish(parameters.get("confirm")) or internal})
+        if isinstance(result, dict) and isinstance(result.get("order"), dict):
+            result["portfolio_manual_sync"] = portfolio_sync_paper_order_to_manual_override(
+                result.get("order"),
+                event_action="cancel_order",
+            )
     elif action in {"record_alert", "webhook_alert", "tradingview_alert"}:
         result = module.cli("record_alert", parameters)
     else:
@@ -14603,7 +14731,7 @@ def portfolio_float(value, default=None):
 
 
 def portfolio_normalize_symbol(symbol):
-    token = str(symbol or "").upper().strip().replace(" ", "")
+    token = str(symbol or "").upper().strip().replace(" ", "").replace("/", "").replace("-", "")
     if token and ":" in token:
         token = token.split(":", 1)[1]
     if token and token.isalpha() and not token.endswith("USDT"):
@@ -22538,7 +22666,17 @@ def portfolio_selected_client_lines(report, parameters=None):
     elif scope in {"ids", "range"}:
         if not selected_ids:
             raise ValueError("No hay IDs seleccionados para enviar por WhatsApp.")
-        selected = [line for line in lines if portfolio_normalize_client_id(line.get("id")) in selected_ids]
+        def line_selector_ids(line):
+            selectors = {
+                portfolio_normalize_client_id(line.get("id")),
+                portfolio_normalize_client_id(line.get("display_id")),
+                portfolio_client_id_from_number(line.get("order")),
+                portfolio_client_id_from_number(line.get("internal_order")),
+            }
+            selectors.discard("")
+            return selectors
+
+        selected = [line for line in lines if line_selector_ids(line).intersection(selected_ids)]
     elif scope == "symbols":
         if not symbols:
             raise ValueError("No hay simbolos seleccionados para enviar por WhatsApp.")
@@ -22554,7 +22692,13 @@ def portfolio_selected_client_lines(report, parameters=None):
     else:
         raise ValueError(f"Scope de WhatsApp no soportado: {scope}.")
     selected_ids_out = [str(line.get("id") or "").upper() for line in selected]
-    missing_ids = sorted(selected_ids - set(selected_ids_out)) if selected_ids and scope in {"ids", "range"} else []
+    if selected_ids and scope in {"ids", "range"}:
+        matched_requested = set()
+        for line in selected:
+            matched_requested.update(line_selector_ids(line).intersection(selected_ids))
+        missing_ids = sorted(selected_ids - matched_requested)
+    else:
+        missing_ids = []
     return scope, selected, selected_ids_out, missing_ids
 
 
