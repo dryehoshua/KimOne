@@ -14302,19 +14302,19 @@ def paper_broker_order_key_from_pending(item):
 
 
 def paper_broker_bootstrap_portfolio_pending(module, status_payload):
+    state = module.read_state()
+    paper_orders = state.get("orders") if isinstance(state.get("orders"), list) else []
     existing_keys = {
         str(order.get("source_portfolio_pending_id") or order.get("order_id") or "")
-        for bucket in ("pending", "filled", "cancelled", "errors")
-        for order in (status_payload.get(bucket) or [])
+        for order in paper_orders
         if isinstance(order, dict)
     }
-    if status_payload.get("pending"):
-        return {"ok": True, "created_count": 0, "skipped": "paper_pending_exists"}
     try:
         report = portfolio_cli("client_report", {"save_standard": False, "providers": ["binance", "mexc", "bybit"]})
     except Exception as exc:
         return {"ok": False, "created_count": 0, "error": brief(str(exc), 700)}
     created = []
+    updated = []
     for item in report.get("pending_orders") or []:
         if not isinstance(item, dict):
             continue
@@ -14324,7 +14324,53 @@ def paper_broker_bootstrap_portfolio_pending(module, status_payload):
         if not symbol or amount_usd in (None, 0) or limit_price in (None, 0):
             continue
         order_id = paper_broker_order_key_from_pending(item)
-        if order_id in existing_keys:
+        source_id = str(item.get("id") or item.get("report_order") or order_id)
+        matched = None
+        for order in paper_orders:
+            if not isinstance(order, dict):
+                continue
+            if str(order.get("source_portfolio_pending_id") or "") == source_id or str(order.get("order_id") or "") == order_id:
+                matched = order
+                break
+        if matched is None:
+            symbol_matches = [
+                order
+                for order in paper_orders
+                if isinstance(order, dict)
+                and str(order.get("status") or "") == "pending"
+                and portfolio_normalize_symbol(order.get("symbol")) == symbol
+                and not str(order.get("source_portfolio_pending_id") or "").strip()
+            ]
+            if len(symbol_matches) == 1:
+                matched = symbol_matches[0]
+        if matched is not None:
+            changed = False
+            quantity = amount_usd / limit_price if limit_price else None
+            updates = {
+                "symbol": symbol,
+                "side": item.get("side") or matched.get("side") or "BUY",
+                "status": "pending",
+                "amount_usd": amount_usd,
+                "limit_price": limit_price,
+                "quantity": quantity,
+                "source_portfolio_pending_id": source_id,
+                "portfolio_pending_snapshot": item,
+                "source": matched.get("source") or "portfolio_pending_bootstrap",
+                "notes": f"Mirror actualizado de orden pendiente del portafolio Sr. Eli: {item.get('label') or symbol}.",
+            }
+            for key, value in updates.items():
+                if value is not None and matched.get(key) != value:
+                    matched[key] = value
+                    changed = True
+            for key in ("filled_at", "fill_price", "fill_source", "portfolio_sync"):
+                if key in matched:
+                    matched.pop(key, None)
+                    changed = True
+            if changed:
+                matched["updated_at"] = now_iso()
+                updated.append(matched.get("order_id"))
+            existing_keys.add(source_id)
+            existing_keys.add(order_id)
             continue
         placed = module.cli(
             "place_order",
@@ -14336,25 +14382,34 @@ def paper_broker_bootstrap_portfolio_pending(module, status_payload):
                 "limit_price": limit_price,
                 "confirm": True,
                 "source": "portfolio_pending_bootstrap",
-                "source_portfolio_pending_id": item.get("id") or item.get("report_order") or order_id,
+                "source_portfolio_pending_id": source_id,
                 "client_id": "sr_eli",
                 "client_name": "Sr. Eli",
                 "notes": f"Mirror de orden pendiente del portafolio Sr. Eli: {item.get('label') or symbol}.",
             },
         )
         order = placed.get("order") or {}
-        order["source_portfolio_pending_id"] = item.get("id") or item.get("report_order") or order_id
+        order["source_portfolio_pending_id"] = source_id
         order["portfolio_pending_snapshot"] = item
+        if order.get("order_id") and not any(
+            isinstance(existing, dict) and existing.get("order_id") == order.get("order_id")
+            for existing in paper_orders
+        ):
+            paper_orders.append(order)
         created.append(order.get("order_id"))
         existing_keys.add(order_id)
-    if created:
-        module_state = module.read_state()
-        module.write_state(module_state)
-        append_memory("paper_broker_bootstrap_pending", {"created_count": len(created), "order_ids": created})
+    if created or updated:
+        module.write_state(state)
+        append_memory(
+            "paper_broker_bootstrap_pending",
+            {"created_count": len(created), "updated_count": len(updated), "order_ids": created, "updated_order_ids": updated},
+        )
     return {
         "ok": True,
         "created_count": len(created),
+        "updated_count": len(updated),
         "order_ids": created,
+        "updated_order_ids": updated,
         "portfolio_pending_count": len(report.get("pending_orders") or []),
     }
 
