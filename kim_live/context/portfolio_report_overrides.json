@@ -1,8 +1,8 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0115",
-  "updated_at": "2026-06-22T10:41:30",
+  "standard_version": "KIM-0116",
+  "updated_at": "2026-06-25T14:47:43",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
@@ -27,9 +27,600 @@
     ],
     "operating_remnants_usd": 707.05,
     "operating_remnants_note": "Remanentes acumulados mencionados en consulta operativa previa; mantener visible hasta reconciliacion completa.",
-    "funding_conversions": [],
+    "funding_conversions": [
+      {
+        "id": "funding_2026_06_23_cash_50000_mxn_2877_usd",
+        "type": "funding",
+        "status": "confirmed",
+        "amount_usd": 2877.0,
+        "amount_mxn": 50000.0,
+        "exchange_rate_mxn_per_usd": 17.379214,
+        "payment_method": "cash",
+        "occurred_at": "2026-06-23T13:20:45",
+        "source": "KIM-0116-canonical-fix",
+        "notes": "Fondeo confirmado por el doctor: 2,877 USD equivalentes a 50,000 MXN pagados en efectivo."
+      },
+      {
+        "id": "funding_2026_06_23_cash_50000_mxn_2846_usd_second",
+        "type": "funding",
+        "status": "confirmed",
+        "amount_usd": 2846.0,
+        "amount_mxn": 50000.0,
+        "exchange_rate_mxn_per_usd": 17.568517,
+        "payment_method": "cash",
+        "occurred_at": "2026-06-23T16:58:00-06:00",
+        "source": "kim_0119_doctor_second_cash_funding_corrected",
+        "notes": "Segundo fondeo de efectivo confirmado por el doctor el 2026-06-23: 50,000 MXN equivalentes a 2,846 USD. Esta correccion reemplaza la estimacion previa de 2,877 USD para el segundo fondeo; el primer fondeo de 2,877 USD permanece separado.",
+        "corrected_at": "2026-06-23T23:11:46+00:00"
+      }
+    ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
-    "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged."
+    "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged.",
+    "confirmed_cash_funding_total_usd": 5723.0,
+    "confirmed_cash_funding_total_mxn": 100000.0,
+    "last_funding_note": "KIM-0119: segundo fondeo corregido a 50,000 MXN = 2,846 USD; primer fondeo 50,000 MXN = 2,877 USD permanece separado.",
+    "credit_coverage_events": [
+      {
+        "id": "credit_coverage_2026_06_23_pepe_lunc_active",
+        "type": "credit_coverage",
+        "status": "confirmed",
+        "amount_usd": 2600.0,
+        "covered_positions": [
+          {
+            "symbol": "LUNCUSDT",
+            "label": "LUNC/USDT",
+            "covered_usd": 800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          },
+          {
+            "symbol": "PEPEUSDT",
+            "label": "PEPE/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          }
+        ],
+        "source_pool": {
+          "realized_net_pnl_usd": 935.09,
+          "funding_1_usd": 2877.0,
+          "funding_2_usd": 2846.0,
+          "pool_without_operating_remnants_usd": 6658.09,
+          "operating_remnants_optional_usd": 707.05
+        },
+        "remaining_pool_without_operating_remnants_usd": 4058.09,
+        "remaining_pool_with_operating_remnants_usd": 4765.14,
+        "occurred_at": "2026-06-23T17:30:00-06:00",
+        "notes": "El doctor instruye cubrir PEPE y la LUNC activa. No cubrir el refuerzo LUNC pendiente @0.000054."
+      },
+      {
+        "id": "credit_coverage_2026_06_23_dot_trump_active",
+        "type": "credit_coverage",
+        "status": "confirmed",
+        "amount_usd": 3600.0,
+        "covered_positions": [
+          {
+            "symbol": "DOTUSDT",
+            "label": "DOT/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          },
+          {
+            "symbol": "TRUMPUSDT",
+            "label": "TRUMP/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          }
+        ],
+        "previous_remaining_pool_without_operating_remnants_usd": 4058.09,
+        "previous_remaining_pool_with_operating_remnants_usd": 4765.14,
+        "remaining_pool_without_operating_remnants_usd": 458.09,
+        "remaining_pool_with_operating_remnants_usd": 1165.14,
+        "occurred_at": "2026-06-23T17:45:00-06:00",
+        "notes": "El doctor instruye cubrir DOT activa y TRUMP activa. No cubrir DOT refuerzo pendiente ni otras pendientes."
+      }
+    ],
+    "last_credit_coverage_note": "KIM-0122: cubiertos DOT activa 1800 USD y TRUMP activa 1800 USD; no tocar DOT refuerzo pendiente.",
+    "available_credit_coverage_pool_after_kim0121_usd": 4058.09,
+    "available_credit_coverage_pool_after_kim0121_with_remnants_usd": 4765.14,
+    "available_credit_coverage_pool_after_kim0122_usd": 458.09,
+    "available_credit_coverage_pool_after_kim0122_with_remnants_usd": 1165.14,
+    "credit_reallocation_events": [
+      {
+        "id": "credit_reallocation_2026_06_23_dot_trump_xrp_to_partials",
+        "type": "credit_reallocation",
+        "status": "confirmed",
+        "amount_usd": 5400.0,
+        "from_positions": [
+          "DOTUSDT",
+          "TRUMPUSDT",
+          "XRPUSDT"
+        ],
+        "to_positions": [
+          "ADAUSDT",
+          "DOGEUSDT",
+          "NEARUSDT"
+        ],
+        "net_new_cash_usd": 0.0,
+        "notes": "Reclasificacion solicitada por el doctor: preferir cubrir completamente las posiciones parciales ADA, DOGE y NEAR, dejando DOT/TRUMP/XRP a credito completo. No cambia monto total en firme; solo elimina posiciones a medias.",
+        "occurred_at": "2026-06-23T18:05:00-06:00",
+        "changes": [
+          {
+            "symbol": "ADAUSDT",
+            "action": "cover_remaining_partial_credit",
+            "old_credit": 1800.0,
+            "new_credit": 0
+          },
+          {
+            "symbol": "DOGEUSDT",
+            "action": "cover_remaining_partial_credit",
+            "old_credit": 1800.0,
+            "new_credit": 0
+          },
+          {
+            "symbol": "DOTUSDT",
+            "action": "set_active_credit_full",
+            "old_credit": 0.0,
+            "new_credit": 1800.0
+          },
+          {
+            "symbol": "TRUMPUSDT",
+            "action": "set_active_credit_full",
+            "old_credit": 0.0,
+            "new_credit": 1800.0
+          },
+          {
+            "symbol": "XRPUSDT",
+            "action": "set_active_credit_full",
+            "old_credit": 0.0,
+            "new_credit": 1800.0
+          },
+          {
+            "symbol": "NEARUSDT",
+            "action": "cover_remaining_partial_credit",
+            "old_credit": 1800.0,
+            "new_credit": 0
+          }
+        ]
+      }
+    ],
+    "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
+    "report_protocol": {
+      "version": "KIM-0132",
+      "updated_at": "2026-06-23T20:19:35-06:00",
+      "name": "Estado de cuenta Sr. Eli - Balance de Credito",
+      "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
+      "client_facing_fundings": [
+        {
+          "date": "06-mar-2025",
+          "mxn": 50000,
+          "usd": 2808.99
+        },
+        {
+          "date": "05-may-2025",
+          "mxn": 18000,
+          "usd": 1034.48
+        },
+        {
+          "date": "06-may-2025",
+          "mxn": 100000,
+          "usd": 5780.35
+        },
+        {
+          "date": "02-jun-2026",
+          "mxn": 50000,
+          "usd": 2890.17,
+          "concept": "NEAR Orden 2700"
+        },
+        {
+          "date": "22-jun-2026",
+          "mxn": 50000,
+          "usd": 2877.0
+        },
+        {
+          "date": "23-jun-2026",
+          "mxn": 50000,
+          "usd": 2844.0,
+          "concept": "Cobertura de credito"
+        }
+      ],
+      "client_funding_total_mxn": 318000,
+      "client_funding_total_usd": 18234.99,
+      "realized_profit_for_statement_usd": 935.09,
+      "realized_profit_note": "Profit actual generado conservador: FTT neto +1032.57, menos ZEC -0.55 y AVAX -96.93 = 935.09 USD.",
+      "client_total_net_considered_usd": 19170.08,
+      "firm_assigned_usd": 17854,
+      "available_balance_usd": 1316.08,
+      "credit_bought_pending_payment_usd": 16200,
+      "credit_pending_execution_usd": 16200,
+      "credit_total_usd": 32400,
+      "covered_orders": [
+        [
+          "ADA",
+          3600
+        ],
+        [
+          "DOGE",
+          4354
+        ],
+        [
+          "LUNC",
+          1800
+        ],
+        [
+          "PEPE",
+          2700
+        ],
+        [
+          "NEAR",
+          3600
+        ],
+        [
+          "FTT",
+          1800
+        ]
+      ],
+      "bought_on_credit_pending_payment": [
+        [
+          "APT",
+          1800
+        ],
+        [
+          "DOT",
+          1800
+        ],
+        [
+          "TRUMP",
+          1800
+        ],
+        [
+          "XRP",
+          1800
+        ],
+        [
+          "HBAR",
+          1800
+        ],
+        [
+          "SOL",
+          1800
+        ],
+        [
+          "ICP",
+          1800
+        ],
+        [
+          "WLD",
+          1800
+        ],
+        [
+          "SUI",
+          1800
+        ]
+      ],
+      "pending_to_buy_on_credit": [
+        [
+          "APT refuerzo",
+          1800
+        ],
+        [
+          "LUNC refuerzo",
+          1800
+        ],
+        [
+          "HYPE",
+          1800
+        ],
+        [
+          "SOL refuerzo",
+          1800
+        ],
+        [
+          "DOT refuerzo",
+          1800
+        ],
+        [
+          "FTT refuerzo",
+          1800
+        ],
+        [
+          "ZEC",
+          1800
+        ],
+        [
+          "WIF",
+          1800
+        ],
+        [
+          "XLM",
+          1800
+        ]
+      ],
+      "language_rules": [
+        "Usar refuerzo, no expansion.",
+        "No decir enviado si Twilio no confirma sent/delivered.",
+        "No mezclar balance de credito con reporte de precios.",
+        "Si cambia una orden, enviar solo correccion o seleccion, no todo el portafolio."
+      ]
+    },
+    "funding_reconciliation": {
+      "updated_at": "2026-06-23T18:38:26-06:00",
+      "status": "receipt_confirmed_historical_plus_recent",
+      "historical_base_funding": [
+        {
+          "id": "firm_capital_canonical_2026_06_05",
+          "status": "confirmed_usd_pending_receipt_details",
+          "amount_usd": 12514.0,
+          "amount_mxn": null,
+          "exchange_rate_mxn_per_usd": null,
+          "occurred_at": "pendiente_recibo",
+          "fee_rate": 0.012,
+          "fee_usd_if_conversion_applies": 150.17,
+          "notes": "Monto en firme confirmado por el doctor. Falta adjuntar/desglosar recibos historicos: fecha, MXN y tasa de conversion para auditoria fina."
+        }
+      ],
+      "confirmed_recent_funding_conversions": [
+        {
+          "id": "funding_2026_06_23_cash_50000_mxn_2877_usd",
+          "status": "confirmed",
+          "occurred_at": "2026-06-22",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2877.0,
+          "exchange_rate_mxn_per_usd": 17.379214,
+          "fee_rate": 0.012,
+          "fee_usd": 34.52,
+          "fee_mxn_equivalent": 600.0,
+          "notes": "Fondeo reciente confirmado por conversacion: 50,000 MXN = 2,877 USD.",
+          "client_display_date": "22-jun-2026"
+        },
+        {
+          "id": "funding_2026_06_24_cash_50000_mxn_2844_usd_receipt_confirmed",
+          "status": "receipt_confirmed",
+          "occurred_at": "2026-06-23",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2844.0,
+          "previous_verbal_estimate_usd": 2846.0,
+          "exchange_rate_mxn_per_usd": 17.580872,
+          "fee_rate": 0.012,
+          "fee_usd": 34.13,
+          "fee_mxn_equivalent": 600.0,
+          "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
+          "notes": "Ultimo recibo: 50,000 MXN, cobertura de credito 2,844 USD.",
+          "client_display_date": "23-jun-2026"
+        }
+      ],
+      "known_recent_total_usd": 5721.0,
+      "known_recent_total_mxn": 100000.0,
+      "historical_base_total_usd": 12513.99,
+      "total_funding_usd_including_historical_base": 18234.99,
+      "known_recent_funding_fee_usd": 68.65,
+      "historical_base_fee_usd_if_conversion_applies": 150.17,
+      "policy": "No convertir recibos MXN a USD sin tasa/comprobante de conversion. Guardar recibo, fecha, MXN y estado pending_usd_conversion.",
+      "confirmed_historical_receipt_total_mxn": 218000.0,
+      "confirmed_historical_receipt_total_usd": 12513.99,
+      "total_mxn_confirmed_by_receipts_and_recent_funding": 318000.0,
+      "total_usd_confirmed_excluding_mxn_only_receipt": 18234.99,
+      "june_funding_policy": "Fondeo 02-jun-2026 queda confirmado por PDF/recibo KIM-0131: 50,000 MXN, concepto NEAR Orden 2700. Fondeos recientes adicionales: 50,000 MXN = 2,877 USD y 50,000 MXN = 2,844 USD.",
+      "historical_base_total_mxn": 218000.0,
+      "client_statement_protocol_version": "KIM-0132",
+      "client_statement_date_policy": "Para reporte cliente usar fechas finales de WhatsApp: 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD."
+    },
+    "funding_receipts_mxn": [
+      {
+        "id": "funding_2025_03_06_receipt_fondeo_1_50000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2808.99,
+        "exchange_rate_mxn_per_usd": 17.8,
+        "occurred_at": "2025-03-06",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg",
+        "notes": "Fondeo 1 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04."
+      },
+      {
+        "id": "funding_2025_05_05_receipt_fondeo_2_18000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 18000.0,
+        "amount_usd": 1034.48,
+        "exchange_rate_mxn_per_usd": 17.4,
+        "occurred_at": "2025-05-05",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg",
+        "notes": "Fondeo 2 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04."
+      },
+      {
+        "id": "funding_2025_05_06_receipt_fondeo_3_100000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 100000.0,
+        "amount_usd": 5780.35,
+        "exchange_rate_mxn_per_usd": 17.3,
+        "occurred_at": "2025-05-06",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg",
+        "notes": "Fondeo 3 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04."
+      },
+      {
+        "id": "funding_2026_06_02_receipt_fondeo_4_50000_mxn_near_2700",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2890.17,
+        "exchange_rate_mxn_per_usd": 17.3,
+        "occurred_at": "2026-06-02",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg",
+        "concept": "NEAR Orden 2700",
+        "notes": "Fondeo 4 confirmado por PDF/recibo nuevo: 02-jun-2026, 50,000 MXN, concepto NEAR Orden 2700. USD/tasa tomada de conversacion previa."
+      }
+    ],
+    "funding_receipts_summary": {
+      "updated_at": "2026-06-23T18:38:26-06:00",
+      "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+      "receipt_date": "2026-06-02",
+      "received_from": "Sr. Eli Sacal",
+      "company": "IGNIS SF SAPI DE CV",
+      "place": "Ciudad de Mexico",
+      "confirmed_receipt_total_mxn": 218000.0,
+      "confirmed_receipt_total_usd": 12513.99,
+      "status": "receipt_confirmed_with_conversation_rates",
+      "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg",
+      "note": "PDF/recibo confirma cuatro fondeos por 218,000 MXN, incluyendo fondeo 4 del 02-jun-2026 por 50,000 MXN, concepto NEAR Orden 2700. Equivalente USD usa tasas conversadas previamente."
+    },
+    "june_funding_disambiguation": {
+      "updated_at": "2026-06-23T18:38:26-06:00",
+      "status": "receipt_confirmed",
+      "rule": "El fondeo del 02-jun-2026 si existe y esta confirmado por PDF/recibo; no eliminar.",
+      "confirmed_june_fundings": [
+        {
+          "id": "funding_2026_06_02_receipt_fondeo_4_50000_mxn_near_2700",
+          "occurred_at": "2026-06-02",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2890.17,
+          "concept": "NEAR Orden 2700",
+          "source": "recibo KIM-0131"
+        },
+        {
+          "id": "funding_2026_06_23_cash_50000_mxn_2877_usd",
+          "occurred_at": "2026-06-23",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2877.0,
+          "source": "conversacion"
+        },
+        {
+          "id": "funding_2026_06_23_cash_50000_mxn_2844_usd_receipt_confirmed",
+          "occurred_at": "2026-06-23",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2844.0,
+          "source": "recibo KIM-0130"
+        }
+      ],
+      "june_total": {
+        "amount_mxn": 150000.0,
+        "amount_usd": 8611.17
+      }
+    },
+    "funding_receipts_usd": [
+      {
+        "id": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
+        "type": "funding_credit_coverage",
+        "status": "receipt_confirmed",
+        "received_from": "Sr. Eli Sacal",
+        "company": "IGNIS SF SAPI DE CV",
+        "place": "Ciudad de Mexico",
+        "occurred_at": "2026-06-23",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2844.0,
+        "exchange_rate_mxn_per_usd": 17.580872,
+        "payment_method": "cash",
+        "concept": "Cobertura de credito 2844 USD",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0130_fondeo_sr_eli_recibo_2026_06_23_50000_mxn_2844_usd.jpg",
+        "source": "receipt_image_kim0130",
+        "notes": "Ultimo recibo enviado por el doctor. Corrige/precisa la cifra verbal previa de 2,846 USD si se usa el recibo como fuente oficial."
+      }
+    ],
+    "funding_canonical_events": [
+      {
+        "id": "funding_2025_03_06_receipt_fondeo_1_50000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2808.99,
+        "exchange_rate_mxn_per_usd": 17.8,
+        "occurred_at": "2025-03-06",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "notes": "Fondeo 1 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04.",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg"
+      },
+      {
+        "id": "funding_2025_05_05_receipt_fondeo_2_18000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 18000.0,
+        "amount_usd": 1034.48,
+        "exchange_rate_mxn_per_usd": 17.4,
+        "occurred_at": "2025-05-05",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "notes": "Fondeo 2 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04.",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg"
+      },
+      {
+        "id": "funding_2025_05_06_receipt_fondeo_3_100000_mxn",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 100000.0,
+        "amount_usd": 5780.35,
+        "exchange_rate_mxn_per_usd": 17.3,
+        "occurred_at": "2025-05-06",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "notes": "Fondeo 3 confirmado en recibo total 218,000 MXN; USD/tasa tomada de conversacion previa 2026-06-04.",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg"
+      },
+      {
+        "id": "funding_2026_06_02_receipt_fondeo_4_50000_mxn_near_2700",
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_02_218000_mxn",
+        "type": "funding",
+        "status": "receipt_confirmed_with_conversation_rate",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2890.17,
+        "exchange_rate_mxn_per_usd": 17.3,
+        "occurred_at": "2026-06-02",
+        "payment_method": "cash",
+        "source": "receipt_image_kim0131",
+        "concept": "NEAR Orden 2700",
+        "notes": "Fondeo 4 confirmado por PDF/recibo nuevo: 02-jun-2026, 50,000 MXN, concepto NEAR Orden 2700. USD/tasa tomada de conversacion previa.",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0131_fondeos_sr_eli_recibo_2026_06_02_total_218000_mxn.jpg"
+      },
+      {
+        "id": "funding_2026_06_23_cash_50000_mxn_2877_usd",
+        "status": "confirmed",
+        "occurred_at": "2026-06-22",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2877.0,
+        "exchange_rate_mxn_per_usd": 17.379214,
+        "fee_rate": 0.012,
+        "fee_usd": 34.52,
+        "fee_mxn_equivalent": 600.0,
+        "notes": "Fondeo reciente confirmado por conversacion: 50,000 MXN = 2,877 USD. Client-facing date corrected from final WhatsApp: 22-jun-2026.",
+        "client_display_date": "22-jun-2026"
+      },
+      {
+        "id": "funding_2026_06_24_cash_50000_mxn_2844_usd_receipt_confirmed",
+        "status": "receipt_confirmed",
+        "occurred_at": "2026-06-23",
+        "amount_mxn": 50000.0,
+        "amount_usd": 2844.0,
+        "previous_verbal_estimate_usd": 2846.0,
+        "exchange_rate_mxn_per_usd": 17.580872,
+        "fee_rate": 0.012,
+        "fee_usd": 34.13,
+        "fee_mxn_equivalent": 600.0,
+        "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
+        "notes": "Ultimo recibo: 50,000 MXN, cobertura de credito 2,844 USD. Client-facing date from receipt/final WhatsApp: 23-jun-2026.",
+        "client_display_date": "23-jun-2026"
+      }
+    ],
+    "canonical_total_funded_usd": 18234.99,
+    "canonical_total_funded_mxn": 318000.0,
+    "historical_receipt_converted_usd": 12513.99
   },
   "manual_entries": [
     {
@@ -40,9 +631,9 @@
       "invested_usd": 3600,
       "entry_price": 0.2091045,
       "quantity": 17422.867513611614,
-      "credit_usd": 1800,
-      "source": "kim_0109_consolidated_standard",
-      "notes": "A1 ADA consolidada: 1800 USD @ 0.261 + 1800 USD @ 0.171. Promedio base 0.206625000; precio visible con fee 1.2% 0.209104500. A13 consumida; no reportar refuerzo separado.",
+      "credit_usd": 0,
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "A1 ADA consolidada: 1800 USD @ 0.261 + 1800 USD @ 0.171. Promedio base 0.206625000; precio visible con fee 1.2% 0.209104500. A13 consumida; no reportar refuerzo separado. KIM-0123: credito restante cubierto por reclasificacion desde DOT/TRUMP/XRP; posicion queda cubierta completa; no es venta ni nueva compra.",
       "raw_weighted_average_price": 0.206625,
       "fee_adjusted_average_price": 0.2091045,
       "weighted_average_components": [
@@ -63,7 +654,8 @@
       ],
       "consumed_orders": [
         "A13"
-      ]
+      ],
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "APTUSDT",
@@ -85,9 +677,9 @@
       "invested_usd": 4354,
       "entry_price": 0.10204835548351147,
       "quantity": 43178.04024496938,
-      "credit_usd": 1800,
-      "source": "kim_0109_consolidated_standard",
-      "notes": "A3 DOGE consolidada: 2554 USD @ 0.1143 + 1800 USD @ 0.0864. Promedio base 0.100838296; precio visible con fee 1.2% 0.102048355. A15 consumida; no reportar refuerzo separado.",
+      "credit_usd": 0,
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "A3 DOGE consolidada: 2554 USD @ 0.1143 + 1800 USD @ 0.0864. Promedio base 0.100838296; precio visible con fee 1.2% 0.102048355. A15 consumida; no reportar refuerzo separado. KIM-0123: credito restante cubierto por reclasificacion desde DOT/TRUMP/XRP; posicion queda cubierta completa; no es venta ni nueva compra.",
       "raw_weighted_average_price": 0.10083829593232359,
       "fee_adjusted_average_price": 0.10204835548351147,
       "weighted_average_components": [
@@ -108,7 +700,8 @@
       ],
       "consumed_orders": [
         "A15"
-      ]
+      ],
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "LUNCUSDT",
@@ -118,9 +711,10 @@
       "invested_usd": 1800,
       "entry_price": 9.371865e-05,
       "quantity": 19206422.62772671,
-      "credit_usd": 800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A4 LUNC activa canonica: 1000 USD iniciales + 800 USD ya ejecutados a credito parcial. A16 es nueva pendiente separada y no entra en este promedio."
+      "credit_usd": 0,
+      "source": "kim_0121_credit_coverage",
+      "notes": "A2/A4 LUNC activa canonica: una sola orden en mercado de 1800 USD @ 0.00009371865 con credito parcial de 800 USD. No aglomerar con el refuerzo pendiente. KIM-0121: credito parcial de 800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. El refuerzo LUNC pendiente @0.000054 no se toca.",
+      "updated_at": "2026-06-23T23:27:49+00:00"
     },
     {
       "symbol": "DOTUSDT",
@@ -130,9 +724,10 @@
       "invested_usd": 1800,
       "entry_price": 1.26,
       "quantity": 1428.5714285714287,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A5 DOT activa canonica a credito."
+      "credit_usd": 1800.0,
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "A5 DOT activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "TRUMPUSDT",
@@ -142,9 +737,10 @@
       "invested_usd": 1800,
       "entry_price": 2.16,
       "quantity": 833.3333333333333,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A6 TRUMP activa canonica a credito."
+      "credit_usd": 1800.0,
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "A6 TRUMP activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "XRPUSDT",
@@ -154,9 +750,10 @@
       "invested_usd": 1800,
       "entry_price": 1.386,
       "quantity": 1298.7012987012988,
-      "credit_usd": 0,
-      "source": "kim_0101_manual_standard",
-      "notes": "A7 XRP activa canonica."
+      "credit_usd": 1800.0,
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "PEPEUSDT",
@@ -166,9 +763,10 @@
       "invested_usd": 2700,
       "entry_price": 3.156434135364e-06,
       "quantity": 855395640.843504,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A8 PEPE activa aglomerada: 1800 USD base + refuerzo 900 USD; credito visible 1800 USD. No registrar como venta/retiro."
+      "credit_usd": 0,
+      "source": "kim_0121_credit_coverage",
+      "notes": "A8 PEPE activa aglomerada: 1800 USD base + refuerzo 900 USD; credito visible 1800 USD. No registrar como venta/retiro. KIM-0121: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor.",
+      "updated_at": "2026-06-23T23:27:49+00:00"
     },
     {
       "symbol": "HBARUSDT",
@@ -183,16 +781,36 @@
       "notes": "A9 HBAR activa canonica a credito."
     },
     {
-      "symbol": "NEARUSDT",
-      "state": "active",
+      "id": "kim0118-nearusdt-consolidated",
       "order": 10,
-      "label": "NEAR/USDT",
-      "invested_usd": 1800,
-      "entry_price": 2.25,
-      "quantity": 800.0,
+      "symbol": "NEARUSDT",
+      "label": "NEAR/USDT consolidada",
+      "state": "active",
+      "invested_usd": 3600,
+      "entry_price": 2.15625,
       "credit_usd": 0,
-      "source": "kim_0101_manual_standard",
-      "notes": "A10 NEAR activa canonica; A21 es nueva pendiente separada."
+      "side": "BUY",
+      "source": "kim_0123_credit_coverage_reallocation",
+      "notes": "KIM-0118: NEAR consolidada por promedio ponderado: 1800 USD @ 2.25 + 1800 USD @ 2.07 = 3600 USD @ 2.15625. No mantener A21 como pendiente separada. KIM-0123: credito restante cubierto por reclasificacion desde DOT/TRUMP/XRP; posicion queda cubierta completa; no es venta ni nueva compra.",
+      "split_members": [
+        {
+          "id": "near_2_25",
+          "member_order": "A10",
+          "amount_usd": 1800,
+          "price": 2.25,
+          "state": "active",
+          "role": "base"
+        },
+        {
+          "id": "near_2_07",
+          "member_order": "A21",
+          "amount_usd": 1800,
+          "price": 2.07,
+          "state": "active",
+          "role": "reinforcement"
+        }
+      ],
+      "updated_at": "2026-06-23T23:37:48+00:00"
     },
     {
       "symbol": "FTTUSDT",
@@ -223,43 +841,30 @@
       "state": "pending",
       "order": 14,
       "label": "APT/USDT refuerzo",
-      "invested_usd": 1800,
-      "entry_price": 0.54,
+      "invested_usd": 1800.0,
+      "entry_price": 0.45,
       "quantity": 3333.333333333333,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A14 refuerzo APT pendiente, a credito completo. No afecta APT activa hasta ejecucion confirmada. KIM-0113: el doctor confirma que APT refuerzo se queda en 0.54.",
+      "credit_usd": 1800.0,
+      "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente APT refuerzo a 0.45.",
       "side": "BUY",
       "id": "kim0101-a14-aptusdt",
-      "updated_at": "2026-06-19T00:01:42+00:00"
+      "updated_at": "2026-06-25T13:06:46"
     },
     {
       "symbol": "LUNCUSDT",
       "state": "pending",
       "order": 16,
-      "label": "LUNC/USDT refuerzo",
-      "invested_usd": 1800,
-      "entry_price": 6.3e-05,
-      "quantity": 28571428.57142857,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A16 refuerzo LUNC pendiente, a credito completo. Mantener separado de A4; no aglomerar ni recalcular LUNC activa hasta ejecucion confirmada.",
+      "label": "LUNC/USDT refuerzo pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 4.86e-05,
+      "quantity": 33333333.333333336,
+      "credit_usd": 1800.0,
+      "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente LUNC refuerzo a 0.0000486.",
       "side": "BUY",
-      "id": "kim0101-a16-luncusdt"
-    },
-    {
-      "symbol": "AVAXUSDT",
-      "state": "pending",
-      "order": 17,
-      "label": "AVAX/USDT",
-      "invested_usd": 1800,
-      "entry_price": 3.5,
-      "quantity": 514.2857142857143,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A17 AVAX nueva orden pendiente indicada el 2026-06-11, a credito completo.",
-      "side": "BUY",
-      "id": "kim0101-a17-avaxusdt"
+      "id": "kim0101-a16-luncusdt",
+      "updated_at": "2026-06-25T13:06:45"
     },
     {
       "symbol": "ICPUSDT",
@@ -279,33 +884,19 @@
     },
     {
       "symbol": "WLDUSDT",
-      "state": "pending",
+      "state": "active",
       "order": 19,
       "label": "WLD/USDT",
       "invested_usd": 1800,
       "entry_price": 0.54,
       "quantity": 3333.333333333333,
       "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada.",
+      "source": "KIM-0116-canonical-fix",
+      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes.",
       "side": "BUY",
       "id": "kim0101-a19-wldusdt",
-      "updated_at": "2026-06-17T21:02:25"
-    },
-    {
-      "symbol": "NEARUSDT",
-      "state": "pending",
-      "order": 21,
-      "label": "NEAR/USDT expansion",
-      "invested_usd": 1800,
-      "entry_price": 2.07,
-      "quantity": 869.5652173913044,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A21 NEAR expansion pendiente, a credito completo; no afecta A10 activa hasta ejecucion confirmada.",
-      "side": "BUY",
-      "id": "kim0101-a21-nearusdt",
-      "updated_at": "2026-06-17T20:52:41"
+      "updated_at": "2026-06-17T21:02:25",
+      "executed_at": "2026-06-23T13:20:43"
     },
     {
       "order": 22,
@@ -314,11 +905,13 @@
       "state": "pending",
       "side": "BUY",
       "label": "HYPE/USDT",
-      "invested_usd": 1800,
-      "entry_price": 63,
-      "credit_usd": 1800,
-      "notes": "A22 HYPE nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo.",
-      "quantity": 28.571428571428573
+      "invested_usd": 1800.0,
+      "entry_price": 45.0,
+      "credit_usd": 1800.0,
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45.",
+      "quantity": 28.571428571428573,
+      "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
+      "updated_at": "2026-06-25T13:06:47"
     },
     {
       "order": 23,
@@ -326,12 +919,14 @@
       "symbol": "SOLUSDT",
       "state": "pending",
       "side": "BUY",
-      "label": "SOL/USDT expansion",
-      "invested_usd": 1800,
-      "entry_price": 67.5,
-      "credit_usd": 1800,
-      "notes": "A23 expansion/refuerzo SOL pendiente indicada en llamada del 2026-06-18; A12 SOL @ 63 permanece activa separada.",
-      "quantity": 26.666666666666668
+      "label": "SOL/USDT refuerzo",
+      "invested_usd": 1800.0,
+      "entry_price": 54.0,
+      "credit_usd": 1800.0,
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente SOL refuerzo a 54.",
+      "quantity": 26.666666666666668,
+      "updated_at": "2026-06-25T13:06:47",
+      "source": "doctor_explicit_pending_price_adjustment_2026_06_25"
     },
     {
       "order": 24,
@@ -355,14 +950,14 @@
       "state": "pending",
       "order": 25,
       "label": "DOT/USDT refuerzo",
-      "invested_usd": 1800,
-      "entry_price": 0.72,
+      "invested_usd": 1800.0,
+      "entry_price": 0.675,
       "quantity": 2500.0,
-      "credit_usd": 1800,
+      "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "kim_0113_doctor_current_override",
-      "notes": "A25 DOT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.72. Esta instruccion fresca reemplaza memoria previa que decia 0.7002.",
-      "updated_at": "2026-06-19T00:01:42+00:00"
+      "source": "doctor_confirmed_sr_eli_pending_updates_2026_06_25",
+      "notes": "DOT refuerzo pendiente actualizado por el doctor 2026-06-25: 0.675. Sustituye 0.72.",
+      "updated_at": "2026-06-25T14:44:06"
     },
     {
       "id": "kim0114-a26-fttusdt-refuerzo",
@@ -378,6 +973,72 @@
       "source": "kim_0114_doctor_confirmed_pending_refuerzo",
       "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito.",
       "updated_at": "2026-06-19T01:35:06+00:00"
+    },
+    {
+      "id": "kim0119-a27-zecusdt-pending",
+      "symbol": "ZECUSDT",
+      "state": "pending",
+      "order": 27,
+      "label": "ZEC/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 296.0,
+      "quantity": 5.405405405405405,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_confirmed_sr_eli_pending_updates_2026_06_25",
+      "notes": "ZEC pendiente actualizada por el doctor 2026-06-25: 296. Sustituye 333.",
+      "updated_at": "2026-06-25T14:44:06"
+    },
+    {
+      "id": "kim0119-a28-wifusdt-pending",
+      "symbol": "WIFUSDT",
+      "state": "pending",
+      "order": 28,
+      "label": "WIF/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 0.1008,
+      "quantity": 14285.714285714286,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_corrected_wif_pending_price_2026_06_25",
+      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada.",
+      "updated_at": "2026-06-25T13:33:22",
+      "executed_at": "2026-06-25T13:30:26"
+    },
+    {
+      "id": "kim0119-a29-xlmusdt-pending",
+      "symbol": "XLMUSDT",
+      "state": "pending",
+      "order": 29,
+      "label": "XLM/USDT nueva orden pendiente",
+      "invested_usd": 1800,
+      "entry_price": 0.1395,
+      "quantity": 12903.225806451612,
+      "credit_usd": 1800,
+      "side": "BUY",
+      "source": "kim_0119_doctor_new_pending_orders",
+      "notes": "A29 XLM/USDT nueva orden pendiente a credito completo indicada por el doctor el 2026-06-23: 1800 USD @ 0.1395.",
+      "updated_at": "2026-06-23T23:11:26+00:00"
+    },
+    {
+      "id": "paper-kpb-20260625161632-d05ad5",
+      "paper_order_id": "KPB-20260625161632-D05AD5",
+      "order": 30,
+      "symbol": "LABUSDT",
+      "label": "LAB/USDT",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 12.6,
+      "quantity": 153.8461538462,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_confirmed_sr_eli_pending_updates_2026_06_25",
+      "notes": "LAB pendiente actualizada por el doctor 2026-06-25: 12.6. Precio actual manual LAB sigue 18.60 salvo nueva referencia.",
+      "updated_at": "2026-06-25T14:44:06",
+      "current_price": 18.6,
+      "current_price_status": "manual_doctor_validated",
+      "current_price_source": "doctor_explicit_reference_2026_06_25"
     }
   ],
   "closed_positions": [
@@ -419,6 +1080,26 @@
       "sold_at": "2026-06-08",
       "credit": true,
       "notes": "FTT A13 refuerzo confirmado ejecutado y vendido por instruccion del Dr. Yehoshua. Entrada 0.216, salida 0.3425, venta bruta 2854.17 USD, P/L bruto +1054.17 USD, fee 21.60 USD, P/L neto +1032.57 USD. No debe reaparecer como pendiente ni activa."
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "identifier": "AVAX cierre 2026-06-22",
+      "label": "AVAX/USDT",
+      "state": "sold",
+      "invested_usd": 1800.0,
+      "entry_price": 6.03,
+      "quantity": 298.5074626866,
+      "sell_price": 5.85,
+      "gross_sale_usd": 1746.27,
+      "gross_pnl_usd": -53.73,
+      "fee_rate": 0.024,
+      "fee_base_usd": 1800.0,
+      "fee_usd": 43.2,
+      "net_pnl_usd": -96.93,
+      "source": "kim_0118_avax_sale_reconciliation",
+      "sold_at": "2026-06-22",
+      "credit": true,
+      "notes": "AVAX se compro en 6.03 y se vendio en 5.85 por 1800 USD. El doctor pidio sumar comision de compra y venta 2.4%; perdida neta aproximada -96.93 USD. No debe reaparecer viva ni pendiente."
     }
   ],
   "suppress_symbols": [
@@ -473,7 +1154,29 @@
     "KIM-0113: el frontend debe separar ejecutadas, pendientes y removidas; cualquier nueva orden pendiente se agrega desde el panel antes de enviarla por WhatsApp.",
     "KIM-0114: ICP A18 y SUI A24 ya estan en mercado; mantener a credito y no presentarlas como pendientes.",
     "KIM-0114: FTT A26 es compra pendiente de refuerzo por 1800 USD @ 0.18 a credito; no afecta FTT activa hasta ejecucion confirmada.",
-    "KIM-0114: no hay cambio en montos en firme; nuevas ordenes y cambios de estado conservan credito segun override manual."
+    "KIM-0114: no hay cambio en montos en firme; nuevas ordenes y cambios de estado conservan credito segun override manual.",
+    "KIM-0116: todo fondeo/deposito/retiro de Ignis se registra como evento contable; no debe quedar solo como memoria conversacional.",
+    "KIM-0116: simbolos vendidos/cerrados se suprimen del reporte vivo aunque queden transacciones historicas en ledger.",
+    "KIM-0118: AVAX cerrada: compra 6.03, venta 5.85, monto 1800 USD, fee total 2.4%, perdida neta aprox -96.93 USD; no aparece viva.",
+    "KIM-0118: HYPE pendiente corregida a 54 por 1800 USD a credito.",
+    "KIM-0118: SOL refuerzo pendiente corregido a 60.3 por 1800 USD a credito.",
+    "KIM-0118: NEAR consolidada activa: 1800 @ 2.25 + 1800 @ 2.07 => 3600 @ 2.15625; no mantener A21 pendiente separada.",
+    "KIM-0118: panel de portafolio debe distinguir Vista Cliente, Vista Tecnica y Contabilidad; cambios manuales requieren confirmacion si afectan ledger.",
+    "KIM-0119: agregar nuevas ordenes pendientes a credito completo: ZEC 1800 USD @ 333, WIF 1800 USD @ 0.126, XLM 1800 USD @ 0.1395. No tocar monto en firme; son credito.",
+    "KIM-0119: registrar segundo fondeo de efectivo de 50,000 MXN de hoy como funding contable separado; no convertirlo en orden ni mezclarlo con correcciones.",
+    "KIM-0119: correccion del segundo fondeo de hoy: son 50,000 MXN equivalentes a 2,846 USD, no 2,877 USD. El primer fondeo de 2,877 USD sigue separado.",
+    "KIM-0120: LUNC no esta aglomerada. La orden activa es 1800 USD @ 0.00009371865 con credito parcial; el refuerzo esta pendiente a 0.000054 y no se ha ejecutado.",
+    "KIM-0121: credito cubierto: PEPE activa 1800 USD y LUNC activa 800 USD. No tocar LUNC refuerzo pendiente @0.000054.",
+    "KIM-0122: credito cubierto: DOT activa 1800 USD y TRUMP activa 1800 USD. No tocar DOT refuerzo pendiente.",
+    "KIM-0123: preferencia operativa: evitar posiciones parcialmente cubiertas. Reclasificar cobertura de DOT/TRUMP/XRP hacia ADA/DOGE/NEAR; no es venta ni compra, solo fuente de cobertura.",
+    "KIM-0124: protocolo de reporte Sr. Eli: al final del portafolio incluir siempre resumen contable con 3 listas: compradas cubiertas completas, compradas a credito completo, pendientes por comprar a credito; incluir tambien fondeos registrados y total fondeado en USD/MXN.",
+    "KIM-0125: para Sr. Eli no usar la palabra expansion en ordenes destinadas a promediar/aglomerse; usar siempre refuerzo.",
+    "KIM-0127: fondeos Sr. Eli deben auditarse con fecha, MXN, USD, tasa MXN/USD, fuente/recibo y comision 1.2%; el capital base historico 12,514 USD esta confirmado en USD pero falta desglose MXN/tasa/recibos.",
+    "KIM-0128: recibo historico Sr. Eli confirma 168,000 MXN en tres fondeos: 50,000 MXN 2025-03-06, 18,000 MXN 2025-05-05, 100,000 MXN 2025-05-06. USD/tasa pendiente de comprobante; no inventar conversion.",
+    "KIM-0128: separar fondeos MXN confirmados por recibo de fondeos USD/USDT confirmados; no alterar monto en firme USD hasta reconciliar tasa.",
+    "KIM-0118: toda orden paper creada por Kim para Sr. Eli debe sincronizarse tambien a manual_entries; WhatsApp nunca debe reportar desde un snapshot anterior a paper_orders.json.",
+    "KIM-0113: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita.",
+    "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -618,6 +1321,23 @@
       "removed_at": "2026-06-18T04:05:06+00:00",
       "status": "removed_from_portfolio",
       "reason": "Dr. Yehoshua confirms ONDO ya no esta; borrada del portafolio."
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "state": "pending",
+      "order": 17,
+      "label": "AVAX/USDT",
+      "invested_usd": 1800,
+      "entry_price": 3.5,
+      "quantity": 514.2857142857143,
+      "credit_usd": 1800,
+      "source": "kim_0101_manual_standard",
+      "notes": "A17 AVAX nueva orden pendiente indicada el 2026-06-11, a credito completo.",
+      "side": "BUY",
+      "id": "kim0101-a17-avaxusdt",
+      "removed_at": "2026-06-23T13:22:19",
+      "removed_by": "kim_live_panel",
+      "remove_reason": "KIM-0116: AVAX ya fue vendida/cerrada; remover orden pendiente fantasma del reporte cliente."
     }
   ],
   "compact_client_ordering": true,
@@ -632,5 +1352,49 @@
     "APTUSDT": "KIM-0113: usar A2 activa 0.99 y A14 pendiente 0.54; no consolidar hasta ejecucion confirmada.",
     "LUNCUSDT": "KIM-0113: usar A4 activa y A16 pendiente separadas; no consolidar hasta ejecucion confirmada.",
     "DOTUSDT": "KIM-0113: usar A5 activa 1.26 y A25 pendiente 0.72; memoria previa DOT 0.7002 queda reemplazada."
+  },
+  "superseded_facts": [
+    {
+      "at": "2026-06-25T14:47:43",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "reason": "doctor_confirmed_pending_order_updates",
+      "supersedes": [
+        {
+          "symbol": "ZECUSDT",
+          "old_entry_price": 333,
+          "new_entry_price": 296
+        },
+        {
+          "symbol": "DOTUSDT",
+          "old_entry_price": 0.72,
+          "new_entry_price": 0.675,
+          "scope": "refuerzo pendiente"
+        },
+        {
+          "symbol": "LABUSDT",
+          "old_entry_price": 11.7,
+          "new_entry_price": 12.6
+        }
+      ],
+      "rule": "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa."
+    }
+  ],
+  "module": {
+    "id": "ignis_financials.sr_eli.portfolio",
+    "source_of_truth": "portfolio_report_overrides.json + portfolio_ledger.sqlite",
+    "views": [
+      "client",
+      "technical",
+      "accounting",
+      "health"
+    ],
+    "rules": [
+      "client_display_id is generated A1...An without gaps from the report; internal order is technical only",
+      "closed_positions do not appear in active/pending reports but count in realized P/L",
+      "pending reinforcements stay separate until explicitly consolidated or executed",
+      "cashflows/funding/withdrawals are accounting events, not portfolio positions"
+    ],
+    "last_structural_update": "KIM-0119",
+    "last_structural_update_note": "Se agregaron ZEC, WIF y XLM como pendientes a credito y se registro segundo fondeo de efectivo por 50,000 MXN."
   }
 }
