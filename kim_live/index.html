@@ -2872,6 +2872,7 @@
     let rtcChannel = null;
     let rtcStream = null;
     let conversationActive = false;
+    let realtimeResponseActive = false;
     let kimDraftText = "";
     let kimDraftBubble = null;
     let activeUploadedFiles = [];
@@ -3406,7 +3407,7 @@
             content: [{type: "input_text", text}]
           }
         }));
-        rtcChannel.send(JSON.stringify(realtimeResponse(instruction || "Analiza el snapshot con tendencia, soportes, resistencias, momentum, volumen, escenarios, invalidacion y riesgo. Aclara que no estas viendo el iframe; estas analizando datos.")));
+        requestRealtimeResponse(instruction || "Analiza el snapshot con tendencia, soportes, resistencias, momentum, volumen, escenarios, invalidacion y riesgo. Aclara que no estas viendo el iframe; estas analizando datos.", "market_snapshot");
       } else {
         setStatus("Snapshot listo. Pulsa Conversar para que Kim lo analice en voz.", "idle");
       }
@@ -3557,7 +3558,20 @@
       return message;
     }
 
+    function requestRealtimeResponse(instructions = null, reason = "manual") {
+      if (!rtcChannel || rtcChannel.readyState !== "open") return false;
+      if (realtimeResponseActive) {
+        clientLog("realtime_response_suppressed", {reason, instructions: (instructions || "").slice(0, 220)});
+        setStatus("Kim sigue respondiendo; espero a que termine antes de pedir otra respuesta.", "speaking");
+        return false;
+      }
+      realtimeResponseActive = true;
+      rtcChannel.send(JSON.stringify(realtimeResponse(instructions)));
+      return true;
+    }
+
     function cleanupRealtime() {
+      realtimeResponseActive = false;
       if (rtcChannel) {
         try { rtcChannel.close(); } catch (_) {}
         rtcChannel = null;
@@ -4743,6 +4757,7 @@
         setStatus("Kim esta hablando...", "speaking");
       }
       if (data.type === "response.done") {
+        realtimeResponseActive = false;
         finalizeKimDraft();
         if (conversationActive) setStatus("Escuchando...", "listening");
       }
@@ -4755,8 +4770,13 @@
       if (data.type === "error") {
         const detail = data.error?.message || data.message || "error";
         clientLog("realtime_event_error", data.error || data);
+        if (/active response/i.test(detail)) {
+          realtimeResponseActive = true;
+          setStatus("Kim sigue respondiendo; evitando respuesta duplicada.", "speaking");
+          return;
+        }
+        realtimeResponseActive = false;
         setStatus("Realtime: " + detail, "idle");
-        appendMessage("Kim", "Realtime devolvio un error: " + detail, "kim", false);
       }
     }
 
@@ -4800,7 +4820,7 @@
       rtcChannel.addEventListener("open", () => {
         clientLog("data_channel_open");
         setStatus("Realtime conectado. Ya puedes hablar.", "listening");
-        rtcChannel.send(JSON.stringify(realtimeResponse("Saluda al doctor en una frase corta y confirma que Kim Live esta lista.")));
+        requestRealtimeResponse("Saluda al doctor en una frase corta y confirma que Kim Live esta lista.", "connection_open");
       });
       rtcChannel.addEventListener("close", () => {
         clientLog("data_channel_close");
@@ -4925,7 +4945,7 @@
             content: [{type: "input_text", text}]
           }
         }));
-        rtcChannel.send(JSON.stringify(realtimeResponse("Responde al texto pegado por el doctor. Si contiene un link o pide investigacion, usa la herramienta de busqueda.")));
+        requestRealtimeResponse("Responde al texto pegado por el doctor. Si contiene un link o pide investigacion, usa la herramienta de busqueda.", "typed_message");
       } else {
         setStatus("Texto agregado al compilado. Pulsa Conversar para que Kim responda en vivo.", "idle");
       }
