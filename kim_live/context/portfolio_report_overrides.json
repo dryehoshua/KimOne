@@ -1,8 +1,8 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0116",
-  "updated_at": "2026-06-25T14:47:43",
+  "standard_version": "KIM-0126",
+  "updated_at": "2026-06-26T16:15:17",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
@@ -1039,6 +1039,22 @@
       "current_price": 18.6,
       "current_price_status": "manual_doctor_validated",
       "current_price_source": "doctor_explicit_reference_2026_06_25"
+    },
+    {
+      "id": "kim0126-aaveusdt-pending",
+      "symbol": "AAVEUSDT",
+      "state": "pending",
+      "order": 31,
+      "label": "AAVE/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 63.0,
+      "quantity": 28.571428571428573,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_requested_aave_pending_order_2026_06_26",
+      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas.",
+      "updated_at": "2026-06-26T16:14:23"
     }
   ],
   "closed_positions": [
@@ -1104,9 +1120,7 @@
   ],
   "suppress_symbols": [
     "BINANCE:GOATUSDT",
-    "BINANCE:ZECUSDT",
-    "GOATUSDT",
-    "ZECUSDT"
+    "GOATUSDT"
   ],
   "provider_note": "KIM-0114: reporte cliente con 23 ordenes vivas; ICP A18 y SUI A24 en mercado; FTT A26 pendiente @ 0.18; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
@@ -1176,7 +1190,9 @@
     "KIM-0128: separar fondeos MXN confirmados por recibo de fondeos USD/USDT confirmados; no alterar monto en firme USD hasta reconciliar tasa.",
     "KIM-0118: toda orden paper creada por Kim para Sr. Eli debe sincronizarse tambien a manual_entries; WhatsApp nunca debe reportar desde un snapshot anterior a paper_orders.json.",
     "KIM-0113: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita.",
-    "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa."
+    "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa.",
+    "KIM-0126: Sr. Eli nueva orden pendiente AAVE/USDT 1800 USD @ 63, a credito completo; debe aparecer despues de LAB como A26 en vista cliente.",
+    "KIM-0126: ZECUSDT no debe estar suprimida; ZEC 296 sigue pendiente activa en el reporte Sr. Eli, y AAVE/USDT 1800 USD @ 63 entra despues de LAB como A26 en vista cliente."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
