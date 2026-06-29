@@ -6670,11 +6670,140 @@ def record_outbound_context_expansion(parameters, preview, event, channel="sms")
     return context_id
 
 
+TWILIO_WHATSAPP_SAFE_BODY_LIMIT = 1400
+
+
+def twilio_split_long_body(body, limit=TWILIO_WHATSAPP_SAFE_BODY_LIMIT):
+    text = str(body or "").strip()
+    if len(text) <= limit:
+        return [text] if text else []
+    chunks = []
+    current = ""
+    parts = re.split(r"(\n\s*\n|\n|(?<=[.!?])\s+)", text)
+    for part in parts:
+        if not part:
+            continue
+        if len(part) > limit:
+            if current.strip():
+                chunks.append(current.strip())
+                current = ""
+            for start in range(0, len(part), limit):
+                chunk = part[start : start + limit].strip()
+                if chunk:
+                    chunks.append(chunk)
+            continue
+        if len(current) + len(part) > limit and current.strip():
+            chunks.append(current.strip())
+            current = part
+        else:
+            current += part
+    if current.strip():
+        chunks.append(current.strip())
+    total = len(chunks)
+    if total <= 1:
+        return chunks
+    return [f"({index}/{total}) {chunk}" for index, chunk in enumerate(chunks, start=1)]
+
+
+def twilio_send_message_sequence(parameters, preview, confirm=False, channel="whatsapp"):
+    body = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+    chunks = twilio_split_long_body(body)
+    action = "send_whatsapp" if channel == "whatsapp" else "send_sms"
+    if not confirm:
+        return confirmation_preview(
+            "twilio",
+            action,
+            f"Enviar {channel.upper()} Twilio largo a {preview['recipient_label']} en {len(chunks)} partes.",
+            {**preview, "chunk_count": len(chunks), "body_length": len(body)},
+            execution_parameters={**parameters, "channel": channel, "from_number": preview["from"]},
+        )
+    send_results = []
+    delivery_results = []
+    errors = []
+    for index, chunk in enumerate(chunks, start=1):
+        chunk_parameters = {**parameters, "body": chunk, "message": chunk, "text": chunk}
+        event = twilio_send_message(chunk_parameters, confirm=True, channel=channel)
+        send_results.append({"index": index, "sid": event.get("sid"), "status": event.get("status"), "to": event.get("to")})
+        time.sleep(1.0 if channel == "whatsapp" else 0.2)
+    if send_results:
+        time.sleep(3.0 if channel == "whatsapp" else 1.0)
+    for item in send_results:
+        sid = item.get("sid")
+        if not sid:
+            continue
+        try:
+            status = twilio_request(f"/Messages/{sid}.json")
+            delivery = {
+                "index": item.get("index"),
+                "sid": sid,
+                "to": status.get("to") or item.get("to"),
+                "status": status.get("status") or item.get("status"),
+                "error_code": status.get("error_code"),
+                "error_message": status.get("error_message"),
+            }
+            delivery_results.append(delivery)
+            if delivery.get("status") in TWILIO_MESSAGE_FAILED_STATUSES:
+                errors.append(delivery)
+        except Exception as exc:
+            delivery_results.append({"index": item.get("index"), "sid": sid, "status": item.get("status"), "poll_error": brief(str(exc), 500)})
+    delivered_count = sum(1 for item in delivery_results if item.get("status") in TWILIO_MESSAGE_DELIVERED_STATUSES)
+    accepted_count = sum(1 for item in delivery_results if item.get("status") in TWILIO_MESSAGE_ACCEPTED_STATUSES) or len(send_results)
+    if errors:
+        execution_state = "failed"
+    elif delivered_count == len(chunks):
+        execution_state = "delivered"
+    elif accepted_count == len(chunks):
+        execution_state = "accepted_not_delivered"
+    else:
+        execution_state = "queued_pending_verification"
+    event = {
+        "ok": execution_state in {"delivered", "accepted_not_delivered"},
+        "provider": "twilio",
+        "action": action,
+        "channel": channel,
+        "status": execution_state,
+        "to": preview.get("to"),
+        "from": preview.get("from"),
+        "context_id": str(first_value(parameters, "context_id", "kim_context_id", "context_block_id", default="") or "").strip(),
+        "recipient_label": preview.get("recipient_label", ""),
+        "chunk_count": len(chunks),
+        "sent_count": len(send_results),
+        "delivered_count": delivered_count,
+        "accepted_count": accepted_count,
+        "send_results": send_results,
+        "delivery_results": delivery_results,
+        "errors": errors,
+        "confirmed": True,
+        "sent_at": now_iso(),
+    }
+    truth = record_execution_truth(
+        "twilio",
+        action,
+        event,
+        raw_status=execution_state,
+        ok=event["ok"],
+        errors=errors,
+        metadata={"channel": channel, "to": event.get("to"), "chunk_count": len(chunks), "delivered_count": delivered_count},
+    )
+    event["execution_state"] = truth["state"]
+    event["execution_message"] = execution_truth_language(truth["state"], f"{channel.upper()} Twilio largo")
+    append_jsonl_any([TWILIO_SMS_LOG, RUNTIME_TWILIO_SMS_LOG], event)
+    append_memory("twilio_long_message_sent", event)
+    return event
+
+
 def twilio_send_message(parameters, confirm=False, channel="sms"):
     parameters = parameters or {}
     preview = twilio_message_preview(parameters, channel=channel)
     context_id = str(first_value(parameters, "context_id", "kim_context_id", "context_block_id", default="") or "").strip()
     call_sid = str(first_value(parameters, "call_sid", default="") or "").strip()
+    body_value = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+    if (
+        channel == "whatsapp"
+        and not preview.get("content_sid")
+        and len(body_value) > TWILIO_WHATSAPP_SAFE_BODY_LIMIT
+    ):
+        return twilio_send_message_sequence(parameters, preview, confirm=confirm, channel=channel)
     payload = {
         "To": preview["to"],
     }
@@ -6683,7 +6812,7 @@ def twilio_send_message(parameters, confirm=False, channel="sms"):
         if preview.get("content_variables"):
             payload["ContentVariables"] = preview["content_variables"]
     else:
-        payload["Body"] = str(first_value(parameters, "body", "message", "text", "content", "mensaje") or "").strip()
+        payload["Body"] = body_value
     for media_url in preview.get("media_urls") or []:
         payload.setdefault("MediaUrl", []).append(media_url)
     status_callback = str(first_value(parameters, "status_callback", "callback_url", default="https://kim.aipeople.app/twilio/status") or "").strip()
@@ -9671,6 +9800,14 @@ def scheduled_result_text(result):
     result = dict(result or {})
     provider = result.get("provider") or ""
     action = result.get("action") or ""
+    if provider == "portfolio" and action == "fundamental_report":
+        return str(
+            result.get("fundamental_report")
+            or result.get("report")
+            or result.get("summary")
+            or result.get("message")
+            or ""
+        ).strip() or brief(json.dumps(sanitize_for_log(result), ensure_ascii=False), 1400)
     if provider in {"hostinger_mail", "gmail"} and action in {"list_messages", "search_messages", "list"}:
         messages = result.get("messages") or []
         lines = [
@@ -22956,7 +23093,7 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
                 channel="whatsapp",
             )
             send_results.append({"index": index, "sid": event.get("sid"), "status": event.get("status"), "to": event.get("to")})
-            time.sleep(0.2)
+            time.sleep(float(first_value(parameters, "send_interval_seconds", "message_interval_seconds", default=1.0) or 1.0))
         except Exception as exc:
             errors.append({"index": index, "error": brief(str(exc), 500), "message": brief(message, 220)})
             break
@@ -23007,7 +23144,7 @@ def portfolio_send_whatsapp_report(summary, parameters=None):
     else:
         execution_state = "queued_pending_verification"
     result = {
-        "ok": execution_state in {"delivered", "accepted_not_delivered"},
+        "ok": execution_state == "delivered",
         "provider": "portfolio",
         "action": "send_whatsapp_report",
         "execution_state": execution_state,
