@@ -2,7 +2,7 @@
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
   "standard_version": "KIM-0126",
-  "updated_at": "2026-06-26T16:15:17",
+  "updated_at": "2026-06-29T18:42:01-06:00",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
@@ -52,13 +52,29 @@
         "source": "kim_0119_doctor_second_cash_funding_corrected",
         "notes": "Segundo fondeo de efectivo confirmado por el doctor el 2026-06-23: 50,000 MXN equivalentes a 2,846 USD. Esta correccion reemplaza la estimacion previa de 2,877 USD para el segundo fondeo; el primer fondeo de 2,877 USD permanece separado.",
         "corrected_at": "2026-06-23T23:11:46+00:00"
+      },
+      {
+        "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+        "type": "funding",
+        "status": "confirmed_by_doctor_exchange_rate_validated",
+        "amount_usd": 2861.16,
+        "amount_mxn": 50000.0,
+        "exchange_rate_mxn_per_usd": 17.4754,
+        "payment_method": "cash",
+        "occurred_at": "2026-06-29",
+        "client_display_date": "29-jun-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 34.33,
+        "fee_mxn_equivalent": 600.0,
+        "source": "doctor_message_2026_06_29_external_fx_frankfurter",
+        "notes": "Nuevo fondeo confirmado por el doctor: 50,000 MXN tomado al tipo de cambio externo 2026-06-29 USD/MXN 17.4754 = 2,861.16 USD. No reasignar a ordenes cubiertas sin instruccion expresa."
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
     "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged.",
-    "confirmed_cash_funding_total_usd": 5723.0,
-    "confirmed_cash_funding_total_mxn": 100000.0,
-    "last_funding_note": "KIM-0119: segundo fondeo corregido a 50,000 MXN = 2,846 USD; primer fondeo 50,000 MXN = 2,877 USD permanece separado.",
+    "confirmed_cash_funding_total_usd": 8584.16,
+    "confirmed_cash_funding_total_mxn": 150000.0,
+    "last_funding_note": "KIM-0134: nuevo fondeo 29-jun-2026 confirmado por el doctor: 50,000 MXN al tipo de cambio 17.4754 = 2,861.16 USD. Aumenta saldo disponible; no cubre ordenes automaticamente.",
     "credit_coverage_events": [
       {
         "id": "credit_coverage_2026_06_23_pepe_lunc_active",
@@ -188,8 +204,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0132",
-      "updated_at": "2026-06-23T20:19:35-06:00",
+      "version": "KIM-0134",
+      "updated_at": "2026-06-29T18:42:01-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -224,15 +240,23 @@
           "mxn": 50000,
           "usd": 2844.0,
           "concept": "Cobertura de credito"
+        },
+        {
+          "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+          "date": "29-jun-2026",
+          "mxn": 50000,
+          "usd": 2861.16,
+          "exchange_rate_mxn_per_usd": 17.4754,
+          "concept": "Fondeo adicional / saldo disponible"
         }
       ],
-      "client_funding_total_mxn": 318000,
-      "client_funding_total_usd": 18234.99,
+      "client_funding_total_mxn": 368000,
+      "client_funding_total_usd": 21096.15,
       "realized_profit_for_statement_usd": 935.09,
       "realized_profit_note": "Profit actual generado conservador: FTT neto +1032.57, menos ZEC -0.55 y AVAX -96.93 = 935.09 USD.",
-      "client_total_net_considered_usd": 19170.08,
+      "client_total_net_considered_usd": 22031.24,
       "firm_assigned_usd": 17854,
-      "available_balance_usd": 1316.08,
+      "available_balance_usd": 4177.24,
       "credit_bought_pending_payment_usd": 16200,
       "credit_pending_execution_usd": 16200,
       "credit_total_usd": 32400,
@@ -343,10 +367,11 @@
         "No decir enviado si Twilio no confirma sent/delivered.",
         "No mezclar balance de credito con reporte de precios.",
         "Si cambia una orden, enviar solo correccion o seleccion, no todo el portafolio."
-      ]
+      ],
+      "latest_funding_note": "29-jun-2026: +50,000 MXN = 2,861.16 USD al tipo de cambio 17.4754. Este saldo queda disponible hasta que el doctor asigne cobertura."
     },
     "funding_reconciliation": {
-      "updated_at": "2026-06-23T18:38:26-06:00",
+      "updated_at": "2026-06-29T18:42:01-06:00",
       "status": "receipt_confirmed_historical_plus_recent",
       "historical_base_funding": [
         {
@@ -389,23 +414,36 @@
           "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
           "notes": "Ultimo recibo: 50,000 MXN, cobertura de credito 2,844 USD.",
           "client_display_date": "23-jun-2026"
+        },
+        {
+          "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+          "status": "confirmed_by_doctor_exchange_rate_validated",
+          "occurred_at": "2026-06-29",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2861.16,
+          "exchange_rate_mxn_per_usd": 17.4754,
+          "fee_rate": 0.012,
+          "fee_usd": 34.33,
+          "fee_mxn_equivalent": 600.0,
+          "notes": "Fondeo nuevo confirmado por el doctor: 50,000 MXN = 2,861.16 USD usando tipo de cambio externo 2026-06-29.",
+          "client_display_date": "29-jun-2026"
         }
       ],
-      "known_recent_total_usd": 5721.0,
-      "known_recent_total_mxn": 100000.0,
+      "known_recent_total_usd": 8582.16,
+      "known_recent_total_mxn": 150000.0,
       "historical_base_total_usd": 12513.99,
-      "total_funding_usd_including_historical_base": 18234.99,
-      "known_recent_funding_fee_usd": 68.65,
+      "total_funding_usd_including_historical_base": 21096.15,
+      "known_recent_funding_fee_usd": 102.98,
       "historical_base_fee_usd_if_conversion_applies": 150.17,
       "policy": "No convertir recibos MXN a USD sin tasa/comprobante de conversion. Guardar recibo, fecha, MXN y estado pending_usd_conversion.",
       "confirmed_historical_receipt_total_mxn": 218000.0,
       "confirmed_historical_receipt_total_usd": 12513.99,
-      "total_mxn_confirmed_by_receipts_and_recent_funding": 318000.0,
-      "total_usd_confirmed_excluding_mxn_only_receipt": 18234.99,
-      "june_funding_policy": "Fondeo 02-jun-2026 queda confirmado por PDF/recibo KIM-0131: 50,000 MXN, concepto NEAR Orden 2700. Fondeos recientes adicionales: 50,000 MXN = 2,877 USD y 50,000 MXN = 2,844 USD.",
+      "total_mxn_confirmed_by_receipts_and_recent_funding": 368000.0,
+      "total_usd_confirmed_excluding_mxn_only_receipt": 21096.15,
+      "june_funding_policy": "Fondeo 02-jun-2026 confirmado por PDF/recibo; fondeos recientes: 22-jun 2,877 USD, 23-jun 2,844 USD, 29-jun 50,000 MXN = 2,861.16 USD al tipo de cambio 17.4754.",
       "historical_base_total_mxn": 218000.0,
-      "client_statement_protocol_version": "KIM-0132",
-      "client_statement_date_policy": "Para reporte cliente usar fechas finales de WhatsApp: 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD."
+      "client_statement_protocol_version": "KIM-0134",
+      "client_statement_date_policy": "Para reporte cliente usar fechas finales: 22-jun-2026, 23-jun-2026 y 29-jun-2026 para el nuevo fondeo."
     },
     "funding_receipts_mxn": [
       {
@@ -480,7 +518,7 @@
       "note": "PDF/recibo confirma cuatro fondeos por 218,000 MXN, incluyendo fondeo 4 del 02-jun-2026 por 50,000 MXN, concepto NEAR Orden 2700. Equivalente USD usa tasas conversadas previamente."
     },
     "june_funding_disambiguation": {
-      "updated_at": "2026-06-23T18:38:26-06:00",
+      "updated_at": "2026-06-29T18:42:01-06:00",
       "status": "receipt_confirmed",
       "rule": "El fondeo del 02-jun-2026 si existe y esta confirmado por PDF/recibo; no eliminar.",
       "confirmed_june_fundings": [
@@ -505,11 +543,19 @@
           "amount_mxn": 50000.0,
           "amount_usd": 2844.0,
           "source": "recibo KIM-0130"
+        },
+        {
+          "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+          "occurred_at": "2026-06-29",
+          "amount_mxn": 50000.0,
+          "amount_usd": 2861.16,
+          "exchange_rate_mxn_per_usd": 17.4754,
+          "source": "doctor_message + external_fx"
         }
       ],
       "june_total": {
-        "amount_mxn": 150000.0,
-        "amount_usd": 8611.17
+        "amount_mxn": 200000.0,
+        "amount_usd": 11472.33
       }
     },
     "funding_receipts_usd": [
@@ -616,10 +662,26 @@
         "receipt_id": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
         "notes": "Ultimo recibo: 50,000 MXN, cobertura de credito 2,844 USD. Client-facing date from receipt/final WhatsApp: 23-jun-2026.",
         "client_display_date": "23-jun-2026"
+      },
+      {
+        "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+        "type": "funding",
+        "status": "confirmed_by_doctor_exchange_rate_validated",
+        "amount_usd": 2861.16,
+        "amount_mxn": 50000.0,
+        "exchange_rate_mxn_per_usd": 17.4754,
+        "payment_method": "cash",
+        "occurred_at": "2026-06-29",
+        "client_display_date": "29-jun-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 34.33,
+        "fee_mxn_equivalent": 600.0,
+        "source": "doctor_message_2026_06_29_external_fx_frankfurter",
+        "notes": "Nuevo fondeo confirmado por el doctor: 50,000 MXN tomado al tipo de cambio externo 2026-06-29 USD/MXN 17.4754 = 2,861.16 USD. No reasignar a ordenes cubiertas sin instruccion expresa."
       }
     ],
-    "canonical_total_funded_usd": 18234.99,
-    "canonical_total_funded_mxn": 318000.0,
+    "canonical_total_funded_usd": 21096.15,
+    "canonical_total_funded_mxn": 368000.0,
     "historical_receipt_converted_usd": 12513.99
   },
   "manual_entries": [
