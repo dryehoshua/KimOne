@@ -2,7 +2,7 @@
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
   "standard_version": "KIM-0126",
-  "updated_at": "2026-06-29T18:45:35-06:00",
+  "updated_at": "2026-06-29T18:53:18-06:00",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
@@ -208,8 +208,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0135",
-      "updated_at": "2026-06-29T18:45:35-06:00",
+      "version": "KIM-0137",
+      "updated_at": "2026-06-29T18:53:18-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -263,8 +263,8 @@
       "firm_assigned_usd": 17854,
       "available_balance_usd": 4177.24,
       "credit_bought_pending_payment_usd": 16200,
-      "credit_pending_execution_usd": 16200,
-      "credit_total_usd": 32400,
+      "credit_pending_execution_usd": 19800,
+      "credit_total_usd": 36000,
       "covered_orders": [
         [
           "ADA",
@@ -365,15 +365,53 @@
         [
           "XLM",
           1800
+        ],
+        [
+          "LAB",
+          1800
+        ],
+        [
+          "AAVE",
+          1800
         ]
       ],
       "language_rules": [
         "Usar refuerzo, no expansion.",
         "No decir enviado si Twilio no confirma sent/delivered.",
         "No mezclar balance de credito con reporte de precios.",
-        "Si cambia una orden, enviar solo correccion o seleccion, no todo el portafolio."
+        "Si cambia una orden, enviar solo correccion o seleccion, no todo el portafolio.",
+        "No usar la frase pendientes de pago en el balance del Sr. Eli.",
+        "Usar Órdenes Compradas A Crédito para posiciones ya compradas pero cubiertas con crédito.",
+        "Usar Órdenes Pendientes A Crédito para órdenes todavía no ejecutadas.",
+        "Si se separa WhatsApp, separar por secciones inteligentes: Fondeos, Compradas/Cubiertas, Pendientes/Resumen.",
+        "Antes de enviar balance, validar que 6 + 9 + 11 = 26 ordenes vivas; si no cuadra, bloquear envio y corregir."
       ],
-      "latest_funding_note": "KIM-0135: los tres ultimos fondeos son Cobertura de credito: 22-jun-2026 50,000 MXN / 2,877 USD; 23-jun-2026 50,000 MXN / 2,844 USD; 29-jun-2026 50,000 MXN / 2,861.16 USD."
+      "latest_funding_note": "KIM-0135: los tres ultimos fondeos son Cobertura de credito: 22-jun-2026 50,000 MXN / 2,877 USD; 23-jun-2026 50,000 MXN / 2,844 USD; 29-jun-2026 50,000 MXN / 2,861.16 USD.",
+      "client_balance_section_titles": {
+        "fundings": "Fondeos",
+        "covered_orders": "Órdenes Compradas Cubiertas Completas",
+        "bought_on_credit": "Órdenes Compradas A Crédito",
+        "pending_on_credit": "Órdenes Pendientes A Crédito",
+        "summary": "Resumen"
+      },
+      "message_split_policy": [
+        "Si WhatsApp requiere separar, dividir por secciones inteligentes, no por corte automático de caracteres.",
+        "Mensaje 1: Balance de Crédito + Fondeos.",
+        "Mensaje 2: Órdenes Compradas Cubiertas Completas + Órdenes Compradas A Crédito.",
+        "Mensaje 3: Órdenes Pendientes A Crédito + Resumen."
+      ],
+      "forbidden_balance_phrases": [
+        "pendientes de pago"
+      ],
+      "latest_format_note": "KIM-0137: balance debe contener 26 ordenes vivas: 6 cubiertas, 9 compradas a credito, 11 pendientes a credito. LAB y AAVE van en pendientes a credito.",
+      "visible_order_count": 26,
+      "section_count_validation": {
+        "covered_orders": 6,
+        "bought_on_credit": 9,
+        "pending_on_credit": 11,
+        "total_visible_orders": 26,
+        "rule": "Balance Sr. Eli must contain all 26 live orders across the three sections."
+      }
     },
     "funding_reconciliation": {
       "updated_at": "2026-06-29T18:42:01-06:00",
@@ -1500,6 +1538,24 @@
         "funding_2026_06_24_cash_50000_mxn_2844_usd_receipt_confirmed",
         "funding_2026_06_29_cash_50000_mxn_2861_16_usd"
       ]
+    },
+    {
+      "at": "2026-06-29T18:48:08-06:00",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "reason": "doctor_balance_section_language_2026_06_29",
+      "rule": "KIM-0136: en balance Sr. Eli no usar pendientes de pago. Si se divide por WhatsApp, dividir por secciones inteligentes: Fondeos; Órdenes Compradas Cubiertas Completas + Órdenes Compradas A Crédito; Órdenes Pendientes A Crédito + Resumen."
+    },
+    {
+      "at": "2026-06-29T18:53:18-06:00",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "reason": "doctor_balance_order_count_26_2026_06_29",
+      "rule": "KIM-0137: Balance Sr. Eli must contain 26 live orders. Pending credit section must include LAB and AAVE; pending subtotal 19,800 USD; total credit 36,000 USD.",
+      "counts": {
+        "covered": 6,
+        "bought_on_credit": 9,
+        "pending_on_credit": 11,
+        "total": 26
+      }
     }
   ],
   "module": {
