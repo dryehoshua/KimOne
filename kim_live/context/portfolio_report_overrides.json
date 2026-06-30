@@ -2,7 +2,7 @@
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
   "standard_version": "KIM-0126",
-  "updated_at": "2026-06-29T18:53:18-06:00",
+  "updated_at": "2026-06-29T19:14:38-06:00",
   "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
@@ -140,9 +140,39 @@
         "remaining_pool_with_operating_remnants_usd": 1165.14,
         "occurred_at": "2026-06-23T17:45:00-06:00",
         "notes": "El doctor instruye cubrir DOT activa y TRUMP activa. No cubrir DOT refuerzo pendiente ni otras pendientes."
+      },
+      {
+        "id": "credit_coverage_2026_06_29_apt_dot_active",
+        "type": "credit_coverage",
+        "status": "confirmed_by_doctor",
+        "amount_usd": 3600.0,
+        "covered_positions": [
+          {
+            "symbol": "APTUSDT",
+            "label": "APT/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          },
+          {
+            "symbol": "DOTUSDT",
+            "label": "DOT/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active"
+          }
+        ],
+        "source_pool": {
+          "available_balance_before_usd": 4177.24,
+          "latest_funding_id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+          "latest_funding_concept": "Cobertura de crédito"
+        },
+        "available_balance_after_usd": 577.24,
+        "occurred_at": "2026-06-29T19:14:38-06:00",
+        "notes": "El doctor instruye usar el balance disponible para cubrir APT activa y DOT activa. No cubre APT refuerzo ni DOT refuerzo pendientes."
       }
     ],
-    "last_credit_coverage_note": "KIM-0122: cubiertos DOT activa 1800 USD y TRUMP activa 1800 USD; no tocar DOT refuerzo pendiente.",
+    "last_credit_coverage_note": "KIM-0138: cubiertas APT activa 1,800 USD y DOT activa 1,800 USD con saldo disponible; refuerzos APT/DOT siguen pendientes a credito.",
     "available_credit_coverage_pool_after_kim0121_usd": 4058.09,
     "available_credit_coverage_pool_after_kim0121_with_remnants_usd": 4765.14,
     "available_credit_coverage_pool_after_kim0122_usd": 458.09,
@@ -208,8 +238,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0137",
-      "updated_at": "2026-06-29T18:53:18-06:00",
+      "version": "KIM-0138",
+      "updated_at": "2026-06-29T19:14:38-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -260,11 +290,11 @@
       "realized_profit_for_statement_usd": 935.09,
       "realized_profit_note": "Profit actual generado conservador: FTT neto +1032.57, menos ZEC -0.55 y AVAX -96.93 = 935.09 USD.",
       "client_total_net_considered_usd": 22031.24,
-      "firm_assigned_usd": 17854,
-      "available_balance_usd": 4177.24,
-      "credit_bought_pending_payment_usd": 16200,
+      "firm_assigned_usd": 21454,
+      "available_balance_usd": 577.24,
+      "credit_bought_pending_payment_usd": 12600,
       "credit_pending_execution_usd": 19800,
-      "credit_total_usd": 36000,
+      "credit_total_usd": 32400,
       "covered_orders": [
         [
           "ADA",
@@ -289,9 +319,7 @@
         [
           "FTT",
           1800
-        ]
-      ],
-      "bought_on_credit_pending_payment": [
+        ],
         [
           "APT",
           1800
@@ -299,7 +327,9 @@
         [
           "DOT",
           1800
-        ],
+        ]
+      ],
+      "bought_on_credit_pending_payment": [
         [
           "TRUMP",
           1800
@@ -384,7 +414,8 @@
         "Usar Órdenes Compradas A Crédito para posiciones ya compradas pero cubiertas con crédito.",
         "Usar Órdenes Pendientes A Crédito para órdenes todavía no ejecutadas.",
         "Si se separa WhatsApp, separar por secciones inteligentes: Fondeos, Compradas/Cubiertas, Pendientes/Resumen.",
-        "Antes de enviar balance, validar que 6 + 9 + 11 = 26 ordenes vivas; si no cuadra, bloquear envio y corregir."
+        "Antes de enviar balance, validar que 6 + 9 + 11 = 26 ordenes vivas; si no cuadra, bloquear envio y corregir.",
+        "KIM-0138: APT y DOT activas estan cubiertas; APT refuerzo y DOT refuerzo siguen pendientes a credito."
       ],
       "latest_funding_note": "KIM-0135: los tres ultimos fondeos son Cobertura de credito: 22-jun-2026 50,000 MXN / 2,877 USD; 23-jun-2026 50,000 MXN / 2,844 USD; 29-jun-2026 50,000 MXN / 2,861.16 USD.",
       "client_balance_section_titles": {
@@ -403,11 +434,11 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0137: balance debe contener 26 ordenes vivas: 6 cubiertas, 9 compradas a credito, 11 pendientes a credito. LAB y AAVE van en pendientes a credito.",
+      "latest_format_note": "KIM-0138: con saldo disponible se cubren APT y DOT activas. Balance: 8 cubiertas, 7 compradas a credito, 11 pendientes a credito = 26.",
       "visible_order_count": 26,
       "section_count_validation": {
-        "covered_orders": 6,
-        "bought_on_credit": 9,
+        "covered_orders": 8,
+        "bought_on_credit": 7,
         "pending_on_credit": 11,
         "total_visible_orders": 26,
         "rule": "Balance Sr. Eli must contain all 26 live orders across the three sections."
@@ -739,7 +770,8 @@
     ],
     "canonical_total_funded_usd": 21096.15,
     "canonical_total_funded_mxn": 368000.0,
-    "historical_receipt_converted_usd": 12513.99
+    "historical_receipt_converted_usd": 12513.99,
+    "available_credit_coverage_pool_after_kim0138_usd": 577.24
   },
   "manual_entries": [
     {
@@ -784,9 +816,10 @@
       "invested_usd": 1800,
       "entry_price": 0.99,
       "quantity": 1818.1818181818182,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A2 Aptos/APT activa canonica a 0.99; conservar separada de A14 pendiente."
+      "credit_usd": 0,
+      "source": "kim_0138_credit_coverage_apt_dot",
+      "notes": "A2 Aptos/APT activa canonica a 0.99; conservar separada de A14 pendiente. KIM-0138: credito activo de 1800 USD cubierto con saldo disponible por instruccion del doctor; no tocar refuerzos pendientes.",
+      "updated_at": "2026-06-29T19:14:38-06:00"
     },
     {
       "symbol": "DOGEUSDT",
@@ -843,10 +876,10 @@
       "invested_usd": 1800,
       "entry_price": 1.26,
       "quantity": 1428.5714285714287,
-      "credit_usd": 1800.0,
-      "source": "kim_0123_credit_coverage_reallocation",
-      "notes": "A5 DOT activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
-      "updated_at": "2026-06-23T23:37:48+00:00"
+      "credit_usd": 0,
+      "source": "kim_0138_credit_coverage_apt_dot",
+      "notes": "A5 DOT activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0138: credito activo de 1800 USD cubierto con saldo disponible por instruccion del doctor; no tocar refuerzos pendientes.",
+      "updated_at": "2026-06-29T19:14:38-06:00"
     },
     {
       "symbol": "TRUMPUSDT",
@@ -1555,6 +1588,18 @@
         "bought_on_credit": 9,
         "pending_on_credit": 11,
         "total": 26
+      }
+    },
+    {
+      "at": "2026-06-29T19:14:38-06:00",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "reason": "doctor_cover_apt_dot_with_new_funding_2026_06_29",
+      "rule": "KIM-0138: APT active and DOT active are now covered using available balance. Do not mark APT refuerzo or DOT refuerzo as covered.",
+      "coverage": {
+        "APT": 1800,
+        "DOT": 1800,
+        "total": 3600,
+        "available_after": 577.24
       }
     }
   ],
