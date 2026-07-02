@@ -57,6 +57,22 @@ After meaningful conversations, an AI librarian should classify new learning int
 
 Only stable knowledge and confirmed preferences enter MIU.
 
+## Automatic MIU Updates
+
+After each meaningful conversation, Kim should update MIU candidates automatically.
+
+Examples of MIU updates:
+
+- Dr. Yehoshua changes how he wants Kim to follow up.
+- A client preference becomes stable, such as how Sr. Eli wants reports.
+- A company doctrine is clarified for Tesca, Ignis or AI People.
+- A personal phrase, naming convention, tone rule or operating standard becomes reusable.
+- A repeated correction reveals that old memory is obsolete and must be marked `superseded`.
+
+MIU should not absorb every transcript. The transcript is evidence; MIU is the distilled intelligence.
+
+When a change is executable, such as how to call Twilio, Notion, WhatsApp or the Ignis portfolio tool, MIU may summarize the preference but the tool documentation must hold the executable contract.
+
 ## Current Priority
 
 Separate MIU from tools:
@@ -64,4 +80,3 @@ Separate MIU from tools:
 - Sr. Eli likes reports in a specific format: MIU knowledge.
 - The Ignis tool generates and sends that report: tool.
 - Kim Live routes the request: OS/kernel.
-

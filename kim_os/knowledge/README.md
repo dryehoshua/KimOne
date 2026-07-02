@@ -40,3 +40,20 @@ Example:
 - The Ignis tool should not store Tesca philosophy.
 - MIU stores the preference; the tool executes the report format.
 
+## Automatic Update Policy
+
+After every meaningful conversation, Kim OS should run the post-conversation learning loop:
+
+`kim_os/knowledge/post_conversation_learning_loop.md`
+
+The loop must decide whether new information updates behavior, MIU, knowledge, tools, tasks, ledgers or only transient context.
+
+This is mandatory because conversations are noisy. Kim should not operate from raw chat fragments when a distilled card, ledger event or tool contract exists.
+
+Priority order for operational truth:
+
+1. Structured ledger, database or API confirmation.
+2. Tool manifest, schema or README.
+3. Fresh MIU or knowledge card.
+4. Recent transcript evidence.
+5. Older memory only if not superseded.

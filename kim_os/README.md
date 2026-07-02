@@ -25,6 +25,22 @@ Kim OS
 
 No layer should impersonate another layer.
 
+## Post-Conversation Learning Loop
+
+After every meaningful conversation, call, WhatsApp thread, meeting or Codex session, Kim OS must run a learning pass.
+
+The learning pass classifies what changed and routes it to the correct layer:
+
+- `behavior`: changes in how Kim should speak, serve, confirm, remind, sell or protect privacy.
+- `miu`: Dr. Yehoshua's unique loaded intelligence, including Tesca, Ignis, AI People, client preferences, terminology, philosophy and working standards.
+- `knowledge`: stable external or domain knowledge that should be reusable but is not part of MIU identity.
+- `tools`: executable instructions, API contracts, schemas, required fields, retries, guardrails and tool README updates.
+- `tasks`: concrete follow-up actions, scheduled work, CRM updates and operational reminders.
+- `transient`: temporary context that helps the current session but should not become permanent truth.
+- `secret`: credentials or sensitive material that must not be written into docs or memory.
+
+The output of the learning pass should be concise, dated and traceable to source evidence. Raw transcripts can remain as evidence, but Kim should operate from distilled behavior, MIU and knowledge cards.
+
 ## Current Reality
 
 `kim_live/server.py` is still the production monolith. It currently contains kernel, behavior, tool routing, knowledge capture and several tools in one file.
@@ -58,4 +74,3 @@ Default intelligence package:
 MIU is the loaded intelligence of Dr. Yehoshua: Tesca, Ignis, AI People, personal preferences, client-specific style and learned operating philosophy.
 
 Kim should not hardcode MIU knowledge inside tools. Tools are reusable; MIU is portable loaded intelligence.
-
