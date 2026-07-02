@@ -1,0 +1,34 @@
+{
+  "id": "miu",
+  "symbol": "μ",
+  "name": "MIU Loaded Intelligence",
+  "owner": "Dr. Yehoshua",
+  "type": "intelligence",
+  "version": "0.1.0",
+  "canonical_roots": [
+    "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/MIU",
+    "/Users/dryehoshuapython/Documents/BIFROST/KNOWLEDGE/MIU"
+  ],
+  "source_package": "/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/intelligences/miu",
+  "domains": [
+    "dr_yehoshua_profile",
+    "tesca_elements",
+    "ignis_financials",
+    "ai_people",
+    "client_preferences",
+    "operational_standards",
+    "philosophy",
+    "product_strategy"
+  ],
+  "loading_policy": {
+    "default": "load_manifest_then_retrieve_by_domain",
+    "do_not_load_all_memory_blindly": true,
+    "fresh_memory_priority": true,
+    "ledger_over_memory_for_finance": true
+  },
+  "librarian": {
+    "prompt": "prompts/miu_librarian.md",
+    "policy": "policies/learning_filter_policy.md",
+    "output_schema": "knowledge/miu_knowledge_schema.json"
+  }
+}

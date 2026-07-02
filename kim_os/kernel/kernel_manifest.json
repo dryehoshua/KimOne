@@ -1,0 +1,37 @@
+{
+  "id": "kim_os.kernel",
+  "name": "Kim OS Kernel",
+  "version": "0.1.0",
+  "status": "legacy_monolith_compatibility",
+  "current_runtime": "/Users/dryehoshuapython/.kim_live/server.py",
+  "current_source": "/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kim_live/server.py",
+  "responsibilities": [
+    "HTTP server",
+    "auth and local access",
+    "API routing",
+    "local scheduler",
+    "tool dispatch",
+    "memory ingestion hooks",
+    "Twilio/WhatsApp webhooks",
+    "frontend asset serving"
+  ],
+  "must_not_contain_long_term": [
+    "client-specific financial knowledge",
+    "company doctrine",
+    "prompt personality variants",
+    "tool-specific business rules",
+    "large static memory"
+  ],
+  "extraction_targets": [
+    "kim_os.kernel.http",
+    "kim_os.kernel.scheduler",
+    "kim_os.kernel.auth",
+    "kim_os.kernel.tool_router",
+    "kim_os.knowledge.librarian",
+    "kimtools.ignis_financials",
+    "kimtools.twilio",
+    "kimtools.crm",
+    "kimtools.mail"
+  ],
+  "default_intelligence": "intelligences/miu/intelligence_manifest.json"
+}

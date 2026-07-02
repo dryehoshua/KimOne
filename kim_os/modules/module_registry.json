@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0",
+  "updated_at": "2026-07-02",
+  "default_kernel": "kim_os.kernel",
+  "default_behavior": "kim_os.behavior.main",
+  "default_intelligence": "miu",
+  "modules": [
+    {
+      "id": "kim_os.kernel",
+      "type": "kernel",
+      "manifest": "kim_os/kernel/kernel_manifest.json",
+      "status": "legacy_monolith_compatibility"
+    },
+    {
+      "id": "kim_os.behavior.main",
+      "type": "behavior",
+      "source": "kim_os/behavior/main_behavior.md",
+      "status": "active_contract"
+    },
+    {
+      "id": "miu",
+      "type": "intelligence",
+      "manifest": "intelligences/miu/intelligence_manifest.json",
+      "status": "active_default"
+    },
+    {
+      "id": "ignis_financials.portfolio",
+      "type": "tool",
+      "manifest": "kimtools/ignis_financials/tool_manifest.json",
+      "status": "active"
+    }
+  ]
+}

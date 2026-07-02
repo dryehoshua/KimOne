@@ -1,6 +1,6 @@
 # BIFROST Docs Manifest
 
-Last updated: 2026-06-07
+Last updated: 2026-07-02
 
 This Git repo contains the Kim Live source, not the entire BIFROST operating
 folder. The full portable memory/docs folder lives outside this repo:
@@ -41,6 +41,24 @@ If moving to another machine or reconstructing from backup, copy the whole
 - `BIFROST/information/credentials_map.md`
 - `BIFROST/information/programs.md`
 - `BIFROST/information/channels.md`
+- `BIFROST/MEMORY/MIU/README.md`
+- `BIFROST/KNOWLEDGE/MIU/README.md`
+- `KimOne/kim_os/README.md`
+- `KimOne/intelligences/miu/README.md`
+- `KimOne/kimtools/ignis_financials/README.md`
+
+## Modular Architecture
+
+Kim is being separated into:
+
+- Kim OS kernel.
+- Behavior prompt.
+- MIU loaded intelligence.
+- Knowledge libraries.
+- Tools.
+- External libraries.
+
+`server.py` remains production compatibility glue while modules are extracted.
 
 ## Recent Critical Memory
 
