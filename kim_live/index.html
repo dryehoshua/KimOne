@@ -2879,6 +2879,8 @@
     let activeResearchSources = [];
     let pendingApiAction = null;
     const completedToolCalls = new Set();
+    let activeToolProgress = null;
+    let activeToolProgressTimer = null;
     let workingToneContext = null;
     let workingToneOscillator = null;
     let workingToneTimer = null;
@@ -3284,6 +3286,117 @@
       return message;
     }
 
+    function toolDisplayName(provider) {
+      const key = (provider || "herramienta").trim().toLowerCase();
+      const labels = {
+        all: "Kim Tools",
+        api: "API",
+        clickup: "ClickUp",
+        notion: "Notion",
+        pipedrive: "Pipedrive",
+        gmail: "Gmail",
+        hostinger_mail: "Hostinger Mail",
+        twilio: "Twilio",
+        whatsapp: "WhatsApp",
+        zoom: "Zoom",
+        scheduler: "Scheduler",
+        crm: "CRM",
+        google_maps: "Google Maps",
+        diagrams: "Diagrams",
+        portfolio: "Ignis Financials",
+        paper_broker: "Paper Broker",
+        market: "Mercado",
+        research: "Investigacion",
+        memory: "Memoria",
+        document: "Documentos"
+      };
+      return labels[key] || key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function actionDisplayName(action) {
+      return (action || "accion").trim().replace(/_/g, " ");
+    }
+
+    function setToolProgressText(text, provider = "", action = "") {
+      if (!activeToolProgress) {
+        activeToolProgress = appendMessage("Kim", text, "kim", false);
+      } else {
+        activeToolProgress.querySelector(".message-text").textContent = text;
+      }
+      if (provider || action) {
+        $("apiBridgeState").textContent = [toolDisplayName(provider), actionDisplayName(action)].filter(Boolean).join(" / ");
+      }
+      setStatus(text, "working");
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function startToolProgress(provider, action, detail = "") {
+      stopToolProgressTimer();
+      const label = toolDisplayName(provider);
+      const cleanAction = actionDisplayName(action);
+      const steps = [
+        "Trayendo herramienta: " + label + "...",
+        "Usando " + label + (cleanAction ? " para " + cleanAction : "") + "...",
+        "Esperando respuesta de " + label + "...",
+        "Verificando resultado de " + label + "..."
+      ];
+      if (detail) steps.splice(1, 0, detail);
+      let index = 0;
+      setToolProgressText(steps[index], provider, action);
+      activeToolProgressTimer = window.setInterval(() => {
+        index = (index + 1) % steps.length;
+        setToolProgressText(steps[index], provider, action);
+      }, 1800);
+    }
+
+    function stopToolProgressTimer() {
+      if (activeToolProgressTimer) window.clearInterval(activeToolProgressTimer);
+      activeToolProgressTimer = null;
+    }
+
+    function compactToolEvidence(result) {
+      if (!result || typeof result !== "object") return "";
+      const bits = [];
+      const id = result.prepared_action_id || result.id || result.call_sid || result.sid || result.message_sid || result.report_id || result.path;
+      const state = result.execution_state || result.status || result.state;
+      const count = result.message_count || result.count || result.returned || result.source_count;
+      if (id) bits.push("ID: " + String(id).slice(0, 80));
+      if (state) bits.push("estado: " + String(state).slice(0, 80));
+      if (count) bits.push(String(count) + " elemento(s)");
+      return bits.length ? "\n" + bits.join(" · ") : "";
+    }
+
+    function toolOutcomeMessage(provider, action, result = {}) {
+      const label = toolDisplayName(provider);
+      if (result.requires_security_phrase) {
+        return "Falta autorizacion de seguridad para " + label + ". Escribe PIN o frase y vuelve a confirmar.";
+      }
+      if (result.requires_confirmation) {
+        return "Accion preparada en " + label + ". Falta confirmacion antes de ejecutar.";
+      }
+      if (result.execution_message) {
+        return result.execution_message;
+      }
+      if (result.confirmed) {
+        return label + " confirmo la accion y deje evidencia guardada.";
+      }
+      if (result.ok === false || result.error) {
+        return "No pude completar " + label + ": " + (result.error || "respuesta no confirmada.");
+      }
+      return label + " respondio correctamente." + compactToolEvidence(result);
+    }
+
+    function finishToolProgress(provider, action, result = {}, options = {}) {
+      stopToolProgressTimer();
+      const message = options.message || toolOutcomeMessage(provider, action, result);
+      setToolProgressText(message, provider, action);
+      if (options.clearAfterMs !== 0) {
+        window.setTimeout(() => {
+          activeToolProgress = null;
+        }, options.clearAfterMs || 1600);
+      }
+    }
+
     function speakerTypeFromLabel(label) {
       const safe = (label || "").trim().toLowerCase();
       if (!safe) return "kim";
@@ -3620,9 +3733,8 @@
       const cleanQuery = (query || "").trim();
       if (!cleanQuery) return null;
       $("researchState").textContent = "Haciendo busqueda web";
-      setStatus("Haciendo busqueda web y guardando fuentes...", "working");
+      startToolProgress("research", "web_search", "Buscando fuentes y guardando evidencia...");
       startWorkingTone();
-      appendMessage("Kim", "Estoy buscando: " + cleanQuery, "kim", false);
       try {
         const data = await post("/api/research-agent", {
           query: cleanQuery,
@@ -3631,8 +3743,9 @@
         });
         const research = data.research;
         if (research.source_cache_item) activeResearchSources.push(research.source_cache_item);
-        const sourceLines = (research.sources || []).slice(0, 4).map((source) => "- " + source.title + ": " + source.url).join("\n");
-        appendMessage("Codex", "Investigacion guardada en BIFROST.\n" + (research.answer || "") + (sourceLines ? "\n\nFuentes:\n" + sourceLines : ""), "codex", false);
+        finishToolProgress("research", "web_search", research, {
+          message: "Investigacion guardada en BIFROST con " + ((research.sources || []).length || 0) + " fuente(s)."
+        });
         $("researchState").textContent = "Guardada";
         refreshMemoryState();
         sendRealtimeToolOutput(callId, research);
@@ -3640,18 +3753,19 @@
       } catch (error) {
         $("researchState").textContent = "Error";
         const payload = {error: error.message};
-        appendMessage("Codex", "No pude investigar: " + error.message, "codex", false);
+        finishToolProgress("research", "web_search", payload, {message: "No pude investigar: " + error.message});
         sendRealtimeToolOutput(callId, payload);
         return payload;
       } finally {
         stopWorkingTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     }
 
     async function draftDocumentFromCurrent(instruction, callId = null) {
       $("documentState").textContent = "Redactando...";
-      setStatus("Procesando datos y redactando documento...", "working");
+      startToolProgress("document", "draft_document", "Procesando contexto y redactando documento...");
       startWorkingTone();
       try {
         const data = await post("/api/draft-document", {
@@ -3660,7 +3774,9 @@
           session_id: sessionId
         });
         const doc = data.document;
-        appendMessage("Codex", "Documento redactado y guardado:\n" + doc.path + "\n\n" + (doc.preview || ""), "codex", false);
+        finishToolProgress("document", "draft_document", doc, {
+          message: "Documento redactado y guardado." + (doc.path ? "\nRuta: " + doc.path : "")
+        });
         $("documentState").textContent = "Documento guardado";
         sendRealtimeToolOutput(callId, doc);
         refreshMemoryState();
@@ -3668,11 +3784,12 @@
       } catch (error) {
         $("documentState").textContent = "Error";
         const payload = {error: error.message};
-        appendMessage("Codex", "No pude redactar el documento: " + error.message, "codex", false);
+        finishToolProgress("document", "draft_document", payload, {message: "No pude redactar el documento: " + error.message});
         sendRealtimeToolOutput(callId, payload);
         return payload;
       } finally {
         stopWorkingTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     }
@@ -3682,7 +3799,7 @@
       const action = (args.action || "").trim().toLowerCase();
       if (!provider || !action) return null;
       $("apiBridgeState").textContent = provider + " / " + action;
-      setStatus("Interactuando con " + provider + "...", "working");
+      startToolProgress(provider, action);
       startApiTone();
       try {
         const data = await post("/api/api-bridge", {
@@ -3694,10 +3811,7 @@
           session_id: sessionId
         });
         const result = data.result;
-        const message = result.requires_confirmation
-          ? "Accion preparada; necesito confirmacion explicita antes de modificar."
-          : (result.confirmed ? "Accion confirmada por la API." : "Consulta API completada.");
-        appendMessage("Codex", message + "\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        finishToolProgress(provider, action, result);
         $("apiBridgeState").textContent = result.confirmed ? "Cambio confirmado" : (result.requires_confirmation ? "Esperando confirmacion" : "Consulta completada");
         capturePreparedApiAction(result);
         if (result.confirmed && result.prepared_action_id) renderPendingApiAction(null);
@@ -3707,11 +3821,12 @@
       } catch (error) {
         $("apiBridgeState").textContent = "Error API";
         const payload = {error: error.message, provider, action};
-        appendMessage("Codex", "No pude completar la accion API: " + error.message, "codex", false);
+        finishToolProgress(provider, action, payload);
         sendRealtimeToolOutput(callId, payload);
         return payload;
       } finally {
         stopApiTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     }
@@ -3719,7 +3834,7 @@
     async function runPortfolioTool(args, callId = null) {
       const action = (args.action || "status").trim().toLowerCase();
       $("apiBridgeState").textContent = "portfolio / " + action;
-      setStatus("Guardando en portafolio BIFROST...", "working");
+      startToolProgress("portfolio", action);
       startApiTone();
       try {
         const data = await post("/api/portfolio", {
@@ -3727,7 +3842,7 @@
           parameters: args.parameters || {}
         });
         const result = data.result;
-        appendMessage("Codex", "Portafolio BIFROST actualizado.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        finishToolProgress("portfolio", action, result);
         $("apiBridgeState").textContent = "Portafolio guardado";
         sendRealtimeToolOutput(callId, result);
         refreshMemoryState();
@@ -3735,11 +3850,12 @@
       } catch (error) {
         $("apiBridgeState").textContent = "Error portafolio";
         const payload = {error: error.message, action};
-        appendMessage("Codex", "No pude guardar en portafolio: " + error.message, "codex", false);
+        finishToolProgress("portfolio", action, payload);
         sendRealtimeToolOutput(callId, payload);
         return payload;
       } finally {
         stopApiTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     }
@@ -4478,7 +4594,7 @@
     async function runPaperTradeTool(args, callId = null) {
       const action = (args.action || "status").trim().toLowerCase();
       $("apiBridgeState").textContent = "paper / " + action;
-      setStatus("Revisando Paper Broker Sr. Eli...", "working");
+      startToolProgress("paper_broker", action);
       startApiTone();
       try {
         const data = await post("/api/paper-trading", {
@@ -4490,10 +4606,10 @@
         });
         const result = data.result || {};
         if (result.requires_confirmation) {
-          appendMessage("Codex", "Orden paper preparada; falta confirmacion.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+          finishToolProgress("paper_broker", action, result, {message: "Orden paper preparada. Falta confirmacion antes de ejecutar."});
           capturePreparedApiAction(result);
         } else {
-          appendMessage("Codex", "Paper Broker actualizado.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+          finishToolProgress("paper_broker", action, result);
         }
         if (result.pending || result.filled || result.cancelled || result.alerts || result.counts) {
           renderPaperBroker(result);
@@ -4507,11 +4623,12 @@
       } catch (error) {
         $("apiBridgeState").textContent = "Error paper";
         const payload = {error: error.message, action};
-        appendMessage("Codex", "No pude completar paper broker: " + error.message, "codex", false);
+        finishToolProgress("paper_broker", action, payload);
         sendRealtimeToolOutput(callId, payload);
         return payload;
       } finally {
         stopApiTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     }
@@ -4534,6 +4651,7 @@
       const text = args.text || transcript.value || "";
       const action = (args.action || "classify").trim().toLowerCase();
       $("apiBridgeState").textContent = "memory / " + action;
+      startToolProgress("memory", action, "Clasificando el contexto en BIFROST...");
       try {
         const data = await post("/api/memory-router", {
           action,
@@ -4541,22 +4659,27 @@
           session_id: sessionId
         });
         const result = data.result;
-        appendMessage("Codex", "Memoria enroutada: " + result.route.domain + "\n" + JSON.stringify(result.route, null, 2).slice(0, 1400), "codex", false);
+        finishToolProgress("memory", action, result, {
+          message: "Memoria enroutada: " + (result.route?.domain || "general") + "."
+        });
         $("apiBridgeState").textContent = "Memoria: " + result.route.domain;
         sendRealtimeToolOutput(callId, result);
         refreshMemoryState();
         return result;
       } catch (error) {
         const payload = {error: error.message, action};
-        appendMessage("Codex", "No pude clasificar memoria: " + error.message, "codex", false);
+        finishToolProgress("memory", action, payload, {message: "No pude clasificar memoria: " + error.message});
         sendRealtimeToolOutput(callId, payload);
         return payload;
+      } finally {
+        stopToolProgressTimer();
       }
     }
 
     async function runMemorySearchTool(args, callId = null) {
       const query = args.query || args.text || "";
       const sessionIdToOpen = args.session_id || "";
+      startToolProgress("memory", "search", "Buscando en transcripts y memoria literal...");
       try {
         const data = await post("/api/memory-search", {
           query,
@@ -4565,16 +4688,20 @@
           max_chars: args.max_chars || 1800
         });
         const result = data.result;
-        appendMessage("Codex", "Memoria literal consultada: " + (result.count || 0) + " resultado(s)\n" + JSON.stringify(result, null, 2).slice(0, 2200), "codex", false);
+        finishToolProgress("memory", "search", result, {
+          message: "Memoria literal consultada: " + (result.count || 0) + " resultado(s)."
+        });
         $("apiBridgeState").textContent = "Memoria literal: " + (result.count || 0);
         sendRealtimeToolOutput(callId, result);
         refreshMemoryState();
         return result;
       } catch (error) {
         const payload = {error: error.message, query};
-        appendMessage("Codex", "No pude buscar transcripts: " + error.message, "codex", false);
+        finishToolProgress("memory", "search", payload, {message: "No pude buscar transcripts: " + error.message});
         sendRealtimeToolOutput(callId, payload);
         return payload;
+      } finally {
+        stopToolProgressTimer();
       }
     }
 
@@ -4602,20 +4729,23 @@
       }
       $("personModeStatus").textContent = "Cargando modo " + q + "...";
       $("apiBridgeState").textContent = "crm / person_context";
+      startToolProgress("crm", "person_context", "Cargando hilo aislado de persona...");
       try {
         const data = await post("/api/person-context", {query: q, limit: 1});
         const result = data.result || data;
         const summary = summarizePersonMode(result);
         $("personModeStatus").textContent = summary;
-        appendMessage("Codex", summary + "\n\n" + JSON.stringify(result.people?.[0] || {}, null, 2).slice(0, 1800), "codex", false);
+        finishToolProgress("crm", "person_context", result, {message: summary});
         if (callId) sendRealtimeToolOutput(callId, result);
         return result;
       } catch (error) {
         const payload = {error: error.message, query: q};
         $("personModeStatus").textContent = "No pude cargar modo: " + error.message;
-        appendMessage("Codex", "No pude cargar modo persona: " + error.message, "codex", false);
+        finishToolProgress("crm", "person_context", payload, {message: "No pude cargar modo persona: " + error.message});
         if (callId) sendRealtimeToolOutput(callId, payload);
         return payload;
+      } finally {
+        stopToolProgressTimer();
       }
     }
 
@@ -4625,6 +4755,7 @@
         thread_id: args.thread_id || "",
         phone: args.phone || args.from || ""
       };
+      startToolProgress("twilio", "whatsapp_report", "Leyendo hilos conductores de WhatsApp...");
       try {
         const data = await post("/api/whatsapp/threads", payload);
         const result = data.result || data;
@@ -4632,14 +4763,16 @@
         const summary = "WhatsApp: " + (result.count || 0) + " hilo(s), mostrando " + (result.returned || 0)
           + (first ? ". Primero: " + (first.display_name || first.phone || first.thread_id) : ".");
         $("apiBridgeState").textContent = "WhatsApp: " + (result.returned || 0);
-        appendMessage("Codex", summary + "\n\n" + JSON.stringify(result, null, 2).slice(0, 2200), "codex", false);
+        finishToolProgress("twilio", "whatsapp_report", result, {message: summary});
         if (callId) sendRealtimeToolOutput(callId, result);
         return result;
       } catch (error) {
         const failure = {error: error.message, tool: "kim_whatsapp_threads"};
-        appendMessage("Codex", "No pude leer hilos de WhatsApp: " + error.message, "codex", false);
+        finishToolProgress("twilio", "whatsapp_report", failure, {message: "No pude leer hilos de WhatsApp: " + error.message});
         if (callId) sendRealtimeToolOutput(callId, failure);
         return failure;
+      } finally {
+        stopToolProgressTimer();
       }
     }
 
@@ -5107,7 +5240,7 @@
     $("confirmApiAction").onclick = async () => {
       if (!pendingApiAction || !pendingApiAction.id) return;
       $("confirmApiAction").disabled = true;
-      setStatus("Confirmando accion API...", "working");
+      startToolProgress(pendingApiAction.provider || "api", pendingApiAction.action || "confirm_prepared", "Confirmando accion con seguridad...");
       startApiTone();
       try {
         const data = await post("/api/api-bridge", {
@@ -5125,12 +5258,16 @@
         });
         const result = data.result;
         if (result && result.requires_security_phrase) {
-          appendMessage("Codex", "Falta autorizacion de seguridad. Di la frase o escribe el PIN y vuelve a confirmar.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+          finishToolProgress(pendingApiAction.provider || "api", pendingApiAction.action || "confirm_prepared", result, {
+            message: "Falta autorizacion de seguridad. Escribe PIN/frase y vuelve a confirmar."
+          });
           $("apiBridgeState").textContent = "Falta frase/PIN";
           $("confirmApiAction").disabled = false;
           return;
         }
-        appendMessage("Codex", "Accion confirmada.\n" + JSON.stringify(result, null, 2).slice(0, 1800), "codex", false);
+        finishToolProgress(pendingApiAction.provider || "api", pendingApiAction.action || "confirm_prepared", result || {}, {
+          message: "Accion confirmada." + compactToolEvidence(result || {})
+        });
         $("apiBridgeState").textContent = "Cambio confirmado";
         $("confirmSecurityPin").value = "";
         $("confirmSecurityPhrase").value = "";
@@ -5138,10 +5275,13 @@
         refreshMemoryState();
       } catch (error) {
         $("apiBridgeState").textContent = "Error al confirmar";
-        appendMessage("Codex", "No pude confirmar la accion: " + error.message, "codex", false);
+        finishToolProgress(pendingApiAction.provider || "api", pendingApiAction.action || "confirm_prepared", {error: error.message}, {
+          message: "No pude confirmar la accion: " + error.message
+        });
         $("confirmApiAction").disabled = false;
       } finally {
         stopApiTone();
+        stopToolProgressTimer();
         setStatus(conversationActive ? "Escuchando..." : "Listo.", conversationActive ? "listening" : "idle");
       }
     };

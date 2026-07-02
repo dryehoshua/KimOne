@@ -265,7 +265,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.85"
+APP_VERSION = "1.5.86"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -19579,6 +19579,10 @@ def realtime_session_config():
                 "Para seguimiento comercial en Pipedrive, usa provider=pipedrive: search_persons/list_persons antes de decir que no existe un contacto; "
                 "upsert_person, create_deal, create_activity y create_note requieren confirm=false y luego confirm_prepared. "
                 "Cuando una API responda, reporta si confirmo, que cambio y donde quedo guardado. "
+                "Nunca leas ni muestres al doctor argumentos JSON, payloads, codigo, trazas internas o lineas tecnicas de herramienta. "
+                "Mientras una herramienta trabaja, usa lenguaje humano breve: 'trayendo herramienta', 'usando Twilio', "
+                "'esperando respuesta de Twilio', 'verificando resultado' o equivalente segun proveedor. "
+                "Al terminar, resume estado, evidencia, siguiente paso y solo menciona IDs cuando ayuden a auditar. "
                 "Usa la memoria local siguiente como contexto de trabajo; si falta algo, dilo "
                 "con claridad y propon que Codex lo consulte o actualice.\n\n"
                 f"MEMORIA LOCAL BIFROST:\n{local_context}"
