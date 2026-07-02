@@ -1,0 +1,53 @@
+{
+  "id": "ignis_financials.portfolio",
+  "name": "IGNIS FINANCIALS Portfolio Tool",
+  "version": "KIM-0141",
+  "owner": "Dr. Yehoshua / AI People",
+  "runtime": {
+    "type": "python",
+    "entrypoint": "kimtools/ignis_financials/ignis_portfolio_tool.py",
+    "canonical_engine": "/Users/dryehoshuapython/.kim_live/server.py",
+    "canonical_function": "server.portfolio_cli"
+  },
+  "source_of_truth": [
+    "/Users/dryehoshuapython/.kim_live/context/portfolio_report_overrides.json",
+    "/Users/dryehoshuapython/.kim_live/portfolio_ledger.sqlite"
+  ],
+  "memory_roots": [
+    "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS",
+    "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/portfolios/ignis_stock_financials"
+  ],
+  "actions": {
+    "read": [
+      "status",
+      "summary",
+      "client_report",
+      "whatsapp_preview",
+      "fundamental_report",
+      "fundamental_history"
+    ],
+    "write": [
+      "record_funding",
+      "execute_pending_order",
+      "sell_position",
+      "aggregate_order",
+      "set_position"
+    ],
+    "send": [
+      "send_whatsapp_report"
+    ]
+  },
+  "success_contract": {
+    "writes": "ok=true and a concrete ledger/change/event id exists",
+    "whatsapp": "ok=true, execution_state=delivered, delivered_count equals message_count and errors is empty",
+    "partial_delivery": "Kim must report accepted/partial, never delivered"
+  },
+  "hard_rules": [
+    "Do not reconstruct Sr. Eli portfolio from old conversations.",
+    "Use structured override/ledger only.",
+    "LAB is closed accounting-only after KIM-0139.",
+    "Pending credit orders are covered only when executed.",
+    "Full reports append structured Balance de Credito.",
+    "Long WhatsApp balance messages must be split and delivery-verified."
+  ]
+}
