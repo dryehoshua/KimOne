@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0126",
-  "updated_at": "2026-06-29T19:14:38-06:00",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0114 conserva 23 ordenes vivas; ICP A18 y SUI A24 pasan a mercado, FTT A26 queda pendiente a credito por 1800 USD @ 0.18, sin cambio en monto en firme.",
+  "standard_version": "KIM-0139",
+  "updated_at": "2026-07-01T20:55:27",
+  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0139 conserva 25 ordenes vivas. LAB/USDT se ejecuto a 10.044 y se cerro por stop loss en 8.54; queda fuera de activas/pendientes y registrada en cerradas con P/L neto -291.13 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -1173,26 +1173,6 @@
       "updated_at": "2026-06-23T23:11:26+00:00"
     },
     {
-      "id": "paper-kpb-20260625161632-d05ad5",
-      "paper_order_id": "KPB-20260625161632-D05AD5",
-      "order": 30,
-      "symbol": "LABUSDT",
-      "label": "LAB/USDT",
-      "state": "pending",
-      "side": "BUY",
-      "invested_usd": 1800.0,
-      "entry_price": 10.8,
-      "quantity": 166.6666666667,
-      "credit": true,
-      "credit_usd": 1800.0,
-      "source": "doctor_whatsapp_lab_update_2026_06_29",
-      "notes": "LAB A25 pendiente actualizada por el doctor via WhatsApp 2026-06-29: entrada 10.8, precio actual manual 18.6. Reemplaza entrada previa 12.6.",
-      "updated_at": "2026-06-29T18:16:18-06:00",
-      "current_price": 18.6,
-      "current_price_status": "manual_doctor_validated",
-      "current_price_source": "doctor_whatsapp_reference_2026_06_29"
-    },
-    {
       "id": "kim0126-aaveusdt-pending",
       "symbol": "AAVEUSDT",
       "state": "pending",
@@ -1268,13 +1248,35 @@
       "sold_at": "2026-06-22",
       "credit": true,
       "notes": "AVAX se compro en 6.03 y se vendio en 5.85 por 1800 USD. El doctor pidio sumar comision de compra y venta 2.4%; perdida neta aproximada -96.93 USD. No debe reaparecer viva ni pendiente."
+    },
+    {
+      "symbol": "LABUSDT",
+      "identifier": "A30",
+      "label": "LAB/USDT",
+      "state": "sold",
+      "invested_usd": 1800.0,
+      "entry_price": 10.044,
+      "quantity": 179.21146953,
+      "sell_price": 8.54,
+      "gross_sale_usd": 1530.47,
+      "gross_pnl_usd": -269.53,
+      "fee_rate": 0.012,
+      "fee_base_usd": 1800.0,
+      "fee_usd": 21.6,
+      "net_pnl_usd": -291.13,
+      "source": "doctor_confirmed_lab_stop_loss_2026_07_01",
+      "sold_at": "2026-07-01",
+      "notes": "KIM-0139: LAB/USDT se ejecuto a 10.044 y se cerro por stop loss en 8.54 por instruccion del doctor. Registrar perdida y retirar LAB de ordenes vivas; el portafolio queda con 25 ordenes vivas. Venta final confirmada: entrada 10.044, salida 8.54; venta bruta 1530.47 USD; P/L bruto -269.53 USD; fee 21.6 USD; P/L neto -291.13 USD.",
+      "order": 30,
+      "credit": true
     }
   ],
   "suppress_symbols": [
-    "BINANCE:GOATUSDT",
-    "GOATUSDT"
+    "AVAXUSDT",
+    "GOATUSDT",
+    "LABUSDT"
   ],
-  "provider_note": "KIM-0114: reporte cliente con 23 ordenes vivas; ICP A18 y SUI A24 en mercado; FTT A26 pendiente @ 0.18; precios frescos obligatorios antes de WhatsApp.",
+  "provider_note": "KIM-0139: reporte cliente con 25 ordenes vivas; LAB cerrada por stop loss y fuera de activas/pendientes; precios frescos obligatorios antes de WhatsApp.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -1344,7 +1346,8 @@
     "KIM-0113: el panel Paper Broker permite editar manualmente ordenes del Portafolio A; A1-A12 son mercado/ejecutadas y A13+ son pendientes salvo instruccion explicita.",
     "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa.",
     "KIM-0126: Sr. Eli nueva orden pendiente AAVE/USDT 1800 USD @ 63, a credito completo; debe aparecer despues de LAB como A26 en vista cliente.",
-    "KIM-0126: ZECUSDT no debe estar suprimida; ZEC 296 sigue pendiente activa en el reporte Sr. Eli, y AAVE/USDT 1800 USD @ 63 entra despues de LAB como A26 en vista cliente."
+    "KIM-0126: ZECUSDT no debe estar suprimida; ZEC 296 sigue pendiente activa en el reporte Sr. Eli, y AAVE/USDT 1800 USD @ 63 entra despues de LAB como A26 en vista cliente.",
+    "KIM-0113: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -1521,6 +1524,29 @@
     "LUNCUSDT": "KIM-0113: usar A4 activa y A16 pendiente separadas; no consolidar hasta ejecucion confirmada.",
     "DOTUSDT": "KIM-0113: usar A5 activa 1.26 y A25 pendiente 0.72; memoria previa DOT 0.7002 queda reemplazada."
   },
+  "module": {
+    "id": "ignis_financials.sr_eli.portfolio",
+    "source_of_truth": "portfolio_report_overrides.json + portfolio_ledger.sqlite",
+    "views": [
+      "client",
+      "technical",
+      "accounting",
+      "health"
+    ],
+    "rules": [
+      "client_display_id is generated A1...An without gaps from the report; internal order is technical only",
+      "closed_positions do not appear in active/pending reports but count in realized P/L",
+      "pending reinforcements stay separate until explicitly consolidated or executed",
+      "cashflows/funding/withdrawals are accounting events, not portfolio positions"
+    ],
+    "last_structural_update": "KIM-0119",
+    "last_structural_update_note": "Se agregaron ZEC, WIF y XLM como pendientes a credito y se registro segundo fondeo de efectivo por 50,000 MXN."
+  },
+  "rules": [
+    "KIM-0130: Recibo oficial 2026-06-23 Sr. Eli confirma 50,000 MXN por cobertura de credito 2,844 USD. Usar 2,844 USD para ese fondeo; la cifra verbal previa de 2,846 USD queda superseded salvo instruccion contraria.",
+    "KIM-0131: PDF/recibo Fondeos en Efectivo al 4 Jun confirma cuarto fondeo 02-jun-2026 por 50,000 MXN, concepto NEAR Orden 2700; total recibo historico 218,000 MXN = 12,513.99 USD segun tasas conversadas. No eliminar el 02-jun.",
+    "KIM-0132: Estado de cuenta Sr. Eli usa protocolo final WhatsApp: 6 fondeos al inicio, Balance de Crédito, tres listas; fechas cliente 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD; profit actual generado 935.09 USD; total neto considerado 19,170.08 USD; firme asignado 17,854; saldo disponible 1,316.08; crédito por cubrir 16,200; crédito pendiente por ejecutar 16,200."
+  ],
   "superseded_facts": [
     {
       "at": "2026-06-25T14:47:43",
@@ -1602,23 +1628,5 @@
         "available_after": 577.24
       }
     }
-  ],
-  "module": {
-    "id": "ignis_financials.sr_eli.portfolio",
-    "source_of_truth": "portfolio_report_overrides.json + portfolio_ledger.sqlite",
-    "views": [
-      "client",
-      "technical",
-      "accounting",
-      "health"
-    ],
-    "rules": [
-      "client_display_id is generated A1...An without gaps from the report; internal order is technical only",
-      "closed_positions do not appear in active/pending reports but count in realized P/L",
-      "pending reinforcements stay separate until explicitly consolidated or executed",
-      "cashflows/funding/withdrawals are accounting events, not portfolio positions"
-    ],
-    "last_structural_update": "KIM-0119",
-    "last_structural_update_note": "Se agregaron ZEC, WIF y XLM como pendientes a credito y se registro segundo fondeo de efectivo por 50,000 MXN."
-  }
+  ]
 }
