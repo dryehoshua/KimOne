@@ -22517,8 +22517,10 @@ def portfolio_client_report(summary, parameters=None):
         "portfolio_summary": summary,
     }
     credit_balance_message = portfolio_credit_balance_statement_message(result)
+    credit_balance_messages = portfolio_split_whatsapp_message(credit_balance_message)
     result["credit_balance_message"] = credit_balance_message
-    result["whatsapp_messages"] = [*message_lines, credit_balance_message]
+    result["credit_balance_messages"] = credit_balance_messages
+    result["whatsapp_messages"] = [*message_lines, *credit_balance_messages]
     if boolish(first_value(parameters, "save_standard", "guardar_estandar", default=True)):
         result["portfolio_standard"] = portfolio_save_current_standard(summary, result)
     return result
@@ -22962,7 +22964,7 @@ def portfolio_accounting_whatsapp_messages(report, parameters=None):
             f"P/L neto {signed_usd_text(balance.get('realized_net_pnl_usd'))}."
         )
     else:
-        messages.append(str(report.get("balance_line") or "Balance Ignis no disponible.").strip())
+        messages.extend(portfolio_split_whatsapp_message(portfolio_credit_balance_statement_message(report)))
     preview = {
         "scope": "accounting",
         "accounting_section": section,
@@ -23079,6 +23081,48 @@ def portfolio_credit_balance_statement_message(report):
     return "\n".join(lines).strip()
 
 
+def portfolio_split_whatsapp_message(text, max_chars=1200):
+    text = str(text or "").strip()
+    if not text:
+        return []
+    if len(text) <= max_chars:
+        return [text]
+    chunks = []
+    current = ""
+    for block in re.split(r"\n\s*\n", text):
+        block = block.strip()
+        if not block:
+            continue
+        candidate = f"{current}\n\n{block}".strip() if current else block
+        if len(candidate) <= max_chars:
+            current = candidate
+            continue
+        if current:
+            chunks.append(current)
+            current = ""
+        if len(block) <= max_chars:
+            current = block
+            continue
+        lines = block.splitlines()
+        line_buffer = ""
+        for line in lines:
+            candidate = f"{line_buffer}\n{line}".strip() if line_buffer else line
+            if len(candidate) <= max_chars:
+                line_buffer = candidate
+            else:
+                if line_buffer:
+                    chunks.append(line_buffer)
+                line_buffer = line
+        if line_buffer:
+            current = line_buffer
+    if current:
+        chunks.append(current)
+    if len(chunks) > 1:
+        total = len(chunks)
+        chunks = [f"{chunk}\n\n({index}/{total})" for index, chunk in enumerate(chunks, start=1)]
+    return chunks
+
+
 def portfolio_compose_whatsapp_messages(report, parameters=None):
     parameters = parameters or {}
     if portfolio_whatsapp_scope_from_parameters(parameters) == "accounting":
@@ -23105,7 +23149,7 @@ def portfolio_compose_whatsapp_messages(report, parameters=None):
     include_balance = boolish(include_balance_param) if include_balance_param is not None else scope == "all"
     messages = [str(line.get("message") or "").strip() for line in selected if str(line.get("message") or "").strip()]
     if include_balance:
-        messages.append(portfolio_credit_balance_statement_message(report))
+        messages.extend(portfolio_split_whatsapp_message(portfolio_credit_balance_statement_message(report)))
     preview = {
         "scope": scope,
         "selected_ids": selected_ids,
