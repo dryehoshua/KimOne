@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0140",
-  "updated_at": "2026-07-02T00:00:00-06:00",
-  "standard_note": "KIM-0140: recibo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada. Portafolio conserva 25 ordenes vivas: 15 cubiertas, 0 compradas a credito, 10 pendientes a credito.",
+  "standard_version": "KIM-0141",
+  "updated_at": "2026-07-02T14:10:00-06:00",
+  "standard_note": "KIM-0141: todo reporte completo del Portafolio Sr. Eli debe cerrar con Balance de Crédito estructurado: fondeos, profit, total neto, en firme, saldo, compradas cubiertas, compradas a crédito, pendientes a crédito y resumen.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0140",
-      "updated_at": "2026-07-02T00:00:00-06:00",
+      "version": "KIM-0141",
+      "updated_at": "2026-07-02T14:10:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -521,7 +521,9 @@
         "KIM-0138: APT y DOT activas estan cubiertas; APT refuerzo y DOT refuerzo siguen pendientes a credito.",
         "KIM-0140: las órdenes pendientes por comprar a crédito NO se cubren con fondeo hasta que se ejecuten.",
         "KIM-0140: LAB está cerrada; reportarla solo en resumen de pérdida realizada, nunca como viva o pendiente.",
-        "Antes de enviar balance, validar que 15 + 0 + 10 = 25 órdenes vivas; si no cuadra, bloquear envío y corregir."
+        "Antes de enviar balance, validar que 15 + 0 + 10 = 25 órdenes vivas; si no cuadra, bloquear envío y corregir.",
+        "KIM-0141: El Balance de Crédito completo se anexa siempre al final del portafolio completo y del reporte diario.",
+        "KIM-0141: No sustituir el Balance de Crédito por una sola línea compacta; usar secciones y listas."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -540,7 +542,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0140: balance actualizado con 25 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 10 pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
+      "latest_format_note": "KIM-0141: balance actualizado con 25 órdenes vivas y debe ir al final de cada reporte completo/diario: 15 cubiertas, 0 compradas a crédito, 10 pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
       "visible_order_count": 25,
       "section_count_validation": {
         "covered_orders": 15,
@@ -548,7 +550,10 @@
         "pending_on_credit": 10,
         "total_visible_orders": 25,
         "rule": "Balance Sr. Eli must contain all 25 live orders across the three sections; closed LAB is accounting-only."
-      }
+      },
+      "daily_report_required": true,
+      "append_to_full_portfolio_report": true,
+      "daily_report_time_local": "09:00 America/Mexico_City"
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-02T00:00:00-06:00",
@@ -1424,7 +1429,7 @@
     "GOATUSDT",
     "LABUSDT"
   ],
-  "provider_note": "KIM-0140: LAB cerrada por stop loss; fondeo 01-jul cubre activas a credito. Pendientes por comprar siguen pendientes a credito hasta ejecucion.",
+  "provider_note": "KIM-0141: reporte completo Sr. Eli incluye Balance de Crédito estructurado al final; pendientes por comprar siguen a crédito hasta ejecución.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -1495,7 +1500,8 @@
     "KIM-0125: Sr. Eli precios pendientes canonicos desde 2026-06-25 14:44 CST: ZEC 296, DOT refuerzo 0.675, LAB 12.6. Estos valores sustituyen ZEC 333, DOT 0.72 y LAB 11.7 en cualquier memoria, snapshot, WhatsApp o conversacion previa.",
     "KIM-0126: Sr. Eli nueva orden pendiente AAVE/USDT 1800 USD @ 63, a credito completo; debe aparecer despues de LAB como A26 en vista cliente.",
     "KIM-0126: ZECUSDT no debe estar suprimida; ZEC 296 sigue pendiente activa en el reporte Sr. Eli, y AAVE/USDT 1800 USD @ 63 entra despues de LAB como A26 en vista cliente.",
-    "KIM-0113: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado."
+    "KIM-0113: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado.",
+    "KIM-0141: siempre que el doctor pida portafolio completo, actualización diaria 09:00 o envío completo por WhatsApp, anexar al final el Balance de Crédito en formato estructurado aprobado, no solo balance_line compacto."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -1694,7 +1700,8 @@
     "KIM-0130: Recibo oficial 2026-06-23 Sr. Eli confirma 50,000 MXN por cobertura de credito 2,844 USD. Usar 2,844 USD para ese fondeo; la cifra verbal previa de 2,846 USD queda superseded salvo instruccion contraria.",
     "KIM-0131: PDF/recibo Fondeos en Efectivo al 4 Jun confirma cuarto fondeo 02-jun-2026 por 50,000 MXN, concepto NEAR Orden 2700; total recibo historico 218,000 MXN = 12,513.99 USD segun tasas conversadas. No eliminar el 02-jun.",
     "KIM-0132: Estado de cuenta Sr. Eli usa protocolo final WhatsApp: 6 fondeos al inicio, Balance de Crédito, tres listas; fechas cliente 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD; profit actual generado 935.09 USD; total neto considerado 19,170.08 USD; firme asignado 17,854; saldo disponible 1,316.08; crédito por cubrir 16,200; crédito pendiente por ejecutar 16,200.",
-    "KIM-0140: Fondeo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada; las ordenes pendientes a credito se cubren solo cuando se ejecuten."
+    "KIM-0140: Fondeo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada; las ordenes pendientes a credito se cubren solo cuando se ejecuten.",
+    "KIM-0141: siempre que el doctor pida portafolio completo, actualización diaria 09:00 o envío completo por WhatsApp, anexar al final el Balance de Crédito en formato estructurado aprobado, no solo balance_line compacto."
   ],
   "superseded_facts": [
     {

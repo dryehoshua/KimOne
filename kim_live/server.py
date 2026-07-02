@@ -22516,6 +22516,9 @@ def portfolio_client_report(summary, parameters=None):
         "summary": "\n".join(lines),
         "portfolio_summary": summary,
     }
+    credit_balance_message = portfolio_credit_balance_statement_message(result)
+    result["credit_balance_message"] = credit_balance_message
+    result["whatsapp_messages"] = [*message_lines, credit_balance_message]
     if boolish(first_value(parameters, "save_standard", "guardar_estandar", default=True)):
         result["portfolio_standard"] = portfolio_save_current_standard(summary, result)
     return result
@@ -22983,6 +22986,99 @@ def portfolio_accounting_whatsapp_messages(report, parameters=None):
     }
 
 
+def portfolio_credit_balance_statement_message(report):
+    report = report or {}
+    balance = report.get("balance") if isinstance(report.get("balance"), dict) else {}
+    overrides = report.get("report_overrides") if isinstance(report.get("report_overrides"), dict) else {}
+    accounting = overrides.get("accounting") if isinstance(overrides.get("accounting"), dict) else {}
+    protocol = accounting.get("report_protocol") if isinstance(accounting.get("report_protocol"), dict) else {}
+    if not protocol:
+        return str(report.get("balance_line") or "Balance de Crédito no disponible.").strip()
+
+    def statement_amount(value):
+        numeric = portfolio_float(value)
+        if numeric is None:
+            return "0"
+        if abs(numeric - round(numeric)) < 0.005:
+            return f"{round(numeric):,.0f}"
+        return f"{numeric:,.2f}"
+
+    def money_usd(value):
+        return f"`{statement_amount(value)} USD`"
+
+    def money_mxn(value):
+        return f"`{statement_amount(value)} MXN`"
+
+    def subtotal(rows):
+        return sum(float(row[1] or 0) for row in rows or [] if len(row) > 1)
+
+    def order_rows(rows):
+        if not rows:
+            return "_Sin órdenes en esta sección._"
+        lines = []
+        for index, row in enumerate(rows, start=1):
+            symbol = str(row[0] if row else "").strip()
+            amount = row[1] if len(row) > 1 else 0
+            lines.append(f"{index}. `{symbol}` - {money_usd(amount)}")
+        return "\n".join(lines)
+
+    fundings_mxn = protocol.get("client_funding_total_mxn")
+    fundings_usd = protocol.get("client_funding_total_usd")
+    profit = protocol.get("realized_profit_for_statement_usd")
+    total_net = protocol.get("client_total_net_considered_usd")
+    firm = protocol.get("firm_assigned_usd")
+    available = protocol.get("available_balance_usd")
+    bought_credit = protocol.get("credit_bought_pending_payment_usd")
+    pending_credit = protocol.get("credit_pending_execution_usd")
+    credit_total = protocol.get("credit_total_usd")
+    covered = protocol.get("covered_orders") if isinstance(protocol.get("covered_orders"), list) else []
+    bought = protocol.get("bought_on_credit_pending_payment") if isinstance(protocol.get("bought_on_credit_pending_payment"), list) else []
+    pending = protocol.get("pending_to_buy_on_credit") if isinstance(protocol.get("pending_to_buy_on_credit"), list) else []
+    sections = protocol.get("client_balance_section_titles") if isinstance(protocol.get("client_balance_section_titles"), dict) else {}
+
+    lines = [
+        "Balance de Crédito",
+        "",
+        f"Fondeos totales: {money_usd(fundings_usd)} / {money_mxn(fundings_mxn)}",
+        f"Profit actual generado: `{signed_usd_text(profit)}`",
+        f"Total neto considerado: {money_usd(total_net)}",
+        f"Total en firme asignado: {money_usd(firm)}",
+        f"Saldo disponible: {money_usd(available)}",
+        "",
+        "Resumen de cuenta de crédito",
+        "",
+        f"**1. {sections.get('covered_orders') or 'Órdenes Compradas Cubiertas Completas'}**",
+        "",
+        order_rows(covered),
+        "",
+        f"Subtotal en firme asignado: {money_usd(subtotal(covered))}",
+        "",
+        f"**2. {sections.get('bought_on_credit') or 'Órdenes Compradas A Crédito'}**",
+        "",
+        order_rows(bought),
+        "",
+        f"Subtotal comprado a crédito: {money_usd(subtotal(bought))}",
+        "",
+        f"**3. {sections.get('pending_on_credit') or 'Órdenes Pendientes A Crédito'}**",
+        "",
+        order_rows(pending),
+        "",
+        f"Subtotal pendiente a crédito: {money_usd(subtotal(pending))}",
+        "",
+        "**Resumen**",
+        "",
+        f"Monto en firme asignado: {money_usd(firm)}",
+        f"Saldo disponible: {money_usd(available)}",
+        f"Crédito por cubrir: {money_usd(bought_credit)}",
+        f"Crédito pendiente por ejecutar: {money_usd(pending_credit)}",
+        f"Crédito total actual: {money_usd(credit_total)}",
+    ]
+    note = str(protocol.get("latest_format_note") or "").strip()
+    if note:
+        lines.extend(["", f"Nota operativa: {note}"])
+    return "\n".join(lines).strip()
+
+
 def portfolio_compose_whatsapp_messages(report, parameters=None):
     parameters = parameters or {}
     if portfolio_whatsapp_scope_from_parameters(parameters) == "accounting":
@@ -23008,8 +23104,8 @@ def portfolio_compose_whatsapp_messages(report, parameters=None):
     include_balance_param = first_value(parameters, "include_balance", "balance", "include_totals", default=None)
     include_balance = boolish(include_balance_param) if include_balance_param is not None else scope == "all"
     messages = [str(line.get("message") or "").strip() for line in selected if str(line.get("message") or "").strip()]
-    if include_balance and report.get("balance_line"):
-        messages.append(str(report.get("balance_line")))
+    if include_balance:
+        messages.append(portfolio_credit_balance_statement_message(report))
     preview = {
         "scope": scope,
         "selected_ids": selected_ids,
@@ -23019,6 +23115,7 @@ def portfolio_compose_whatsapp_messages(report, parameters=None):
         "blocked_lines": blocked_lines,
         "first_message": messages[0] if messages else "",
         "balance_line": report.get("balance_line", "") if include_balance else "",
+        "credit_balance_message": portfolio_credit_balance_statement_message(report) if include_balance else "",
     }
     return {
         "messages": messages,
