@@ -265,7 +265,7 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.86"
+APP_VERSION = "1.5.87"
 VERSION_MEMORY_BASELINE_NOTES = [
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
@@ -23028,8 +23028,26 @@ def portfolio_credit_balance_statement_message(report):
             lines.append(f"{index}. `{symbol}` - {money_usd(amount)}")
         return "\n".join(lines)
 
+    def funding_rows(rows):
+        if not rows:
+            return "_Sin fondeos registrados._"
+        lines = []
+        for index, row in enumerate(rows, start=1):
+            if not isinstance(row, dict):
+                continue
+            date = str(row.get("date") or row.get("occurred_at") or "").strip()
+            mxn = row.get("mxn", row.get("amount_mxn"))
+            usd = row.get("usd", row.get("amount_usd"))
+            concept = str(row.get("concept") or "").strip()
+            line = f"{index}. `{date}` - {money_mxn(mxn)} / {money_usd(usd)}"
+            if concept:
+                line += f" - {concept}"
+            lines.append(line)
+        return "\n".join(lines) if lines else "_Sin fondeos registrados._"
+
     fundings_mxn = protocol.get("client_funding_total_mxn")
     fundings_usd = protocol.get("client_funding_total_usd")
+    fundings = protocol.get("client_facing_fundings") if isinstance(protocol.get("client_facing_fundings"), list) else []
     profit = protocol.get("realized_profit_for_statement_usd")
     total_net = protocol.get("client_total_net_considered_usd")
     firm = protocol.get("firm_assigned_usd")
@@ -23050,6 +23068,9 @@ def portfolio_credit_balance_statement_message(report):
         f"Total neto considerado: {money_usd(total_net)}",
         f"Total en firme asignado: {money_usd(firm)}",
         f"Saldo disponible: {money_usd(available)}",
+        "",
+        "Fondeos:",
+        funding_rows(fundings),
         "",
         "Resumen de cuenta de crédito",
         "",
