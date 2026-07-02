@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0139",
-  "updated_at": "2026-07-01T20:55:27",
-  "standard_note": "Estandar operativo vigente del Portafolio A Sr. Eli: KIM-0139 conserva 25 ordenes vivas. LAB/USDT se ejecuto a 10.044 y se cerro por stop loss en 8.54; queda fuera de activas/pendientes y registrada en cerradas con P/L neto -291.13 USD.",
+  "standard_version": "KIM-0140",
+  "updated_at": "2026-07-02T00:00:00-06:00",
+  "standard_note": "KIM-0140: recibo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada. Portafolio conserva 25 ordenes vivas: 15 cubiertas, 0 compradas a credito, 10 pendientes a credito.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -43,17 +43,20 @@
         "updated_at": "2026-06-29T18:45:35-06:00"
       },
       {
-        "id": "funding_2026_06_23_cash_50000_mxn_2846_usd_second",
+        "id": "funding_2026_06_24_cash_50000_mxn_2844_usd_receipt_confirmed",
         "type": "funding",
         "status": "confirmed",
-        "amount_usd": 2846.0,
+        "amount_usd": 2844.0,
         "amount_mxn": 50000.0,
-        "exchange_rate_mxn_per_usd": 17.568517,
+        "exchange_rate_mxn_per_usd": 17.580872,
         "payment_method": "cash",
         "occurred_at": "2026-06-23T16:58:00-06:00",
-        "source": "kim_0119_doctor_second_cash_funding_corrected",
-        "notes": "Segundo fondeo de efectivo confirmado por el doctor el 2026-06-23: 50,000 MXN equivalentes a 2,846 USD. Esta correccion reemplaza la estimacion previa de 2,877 USD para el segundo fondeo; el primer fondeo de 2,877 USD permanece separado.",
-        "corrected_at": "2026-06-23T23:11:46+00:00"
+        "source": "receipt_ignis_sf_sr_eli_2026_06_23_50000_mxn_2844_usd",
+        "notes": "Recibo confirmado: 50,000 MXN, cobertura de credito 2,844 USD. Reemplaza estimacion verbal previa de 2,846 USD.",
+        "corrected_at": "2026-06-23T23:11:46+00:00",
+        "previous_verbal_estimate_usd": 2846.0,
+        "concept": "Cobertura de crédito",
+        "updated_at": "2026-07-02T00:00:00-06:00"
       },
       {
         "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
@@ -72,13 +75,32 @@
         "notes": "Nuevo fondeo confirmado por el doctor: 50,000 MXN tomado al tipo de cambio externo 2026-06-29 USD/MXN 17.4754 = 2,861.16 USD. No reasignar a ordenes cubiertas sin instruccion expresa. Concepto corregido por el doctor: Cobertura de crédito.",
         "concept": "Cobertura de crédito",
         "updated_at": "2026-06-29T18:45:35-06:00"
+      },
+      {
+        "id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+        "type": "funding",
+        "status": "receipt_confirmed",
+        "amount_usd": 14424.0,
+        "amount_mxn": 252000.0,
+        "exchange_rate_mxn_per_usd": 17.470882,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-01",
+        "client_display_date": "01-jul-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 173.09,
+        "fee_mxn_equivalent": 3024.0,
+        "source": "receipt_image_kim0140_2026_07_01",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0140_fondeo_sr_eli_recibo_2026_07_01_252000_mxn_14424_usd.jpg",
+        "concept": "Cobertura 8 órdenes 1800",
+        "notes": "Recibo confirmado: Sr. Eli fondeo 252,000 MXN, enlistado por 14,424 USD, para cubrir 8 ordenes de 1,800 USD. Operativamente cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; las ordenes pendientes por comprar siguen pendientes a credito hasta ejecucion.",
+        "updated_at": "2026-07-02T00:00:00-06:00"
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
     "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged.",
-    "confirmed_cash_funding_total_usd": 8584.16,
-    "confirmed_cash_funding_total_mxn": 150000.0,
-    "last_funding_note": "KIM-0134: nuevo fondeo 29-jun-2026 confirmado por el doctor: 50,000 MXN al tipo de cambio 17.4754 = 2,861.16 USD. Aumenta saldo disponible; no cubre ordenes automaticamente.",
+    "confirmed_cash_funding_total_usd": 23006.16,
+    "confirmed_cash_funding_total_mxn": 402000.0,
+    "last_funding_note": "KIM-0140: recibo 01-jul-2026 confirma 252,000 MXN / 14,424 USD para cobertura 8 ordenes 1800; cubre activas a credito y LAB cerrada, no pendientes por comprar.",
     "credit_coverage_events": [
       {
         "id": "credit_coverage_2026_06_23_pepe_lunc_active",
@@ -170,9 +192,88 @@
         "available_balance_after_usd": 577.24,
         "occurred_at": "2026-06-29T19:14:38-06:00",
         "notes": "El doctor instruye usar el balance disponible para cubrir APT activa y DOT activa. No cubre APT refuerzo ni DOT refuerzo pendientes."
+      },
+      {
+        "id": "credit_coverage_2026_07_01_active_credit_plus_lab_closed",
+        "type": "credit_coverage",
+        "status": "receipt_confirmed_by_doctor",
+        "amount_usd": 12600.0,
+        "funding_id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+        "covered_positions": [
+          {
+            "symbol": "TRUMPUSDT",
+            "label": "TRUMP/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 6
+          },
+          {
+            "symbol": "XRPUSDT",
+            "label": "XRP/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 7
+          },
+          {
+            "symbol": "HBARUSDT",
+            "label": "HBAR/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 9
+          },
+          {
+            "symbol": "SOLUSDT",
+            "label": "SOL/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 12
+          },
+          {
+            "symbol": "ICPUSDT",
+            "label": "ICP/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 18
+          },
+          {
+            "symbol": "WLDUSDT",
+            "label": "WLD/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 19
+          },
+          {
+            "symbol": "SUIUSDT",
+            "label": "SUI/USDT",
+            "covered_usd": 1800.0,
+            "remaining_credit_usd": 0,
+            "state": "active",
+            "order": 24
+          }
+        ],
+        "lab_closed_settlement": {
+          "symbol": "LABUSDT",
+          "entry_price": 10.044,
+          "sell_price": 8.54,
+          "invested_usd": 1800.0,
+          "net_pnl_usd": -291.13,
+          "settlement_loss_usd": 291.13,
+          "rule": "LAB esta cerrada; no vuelve a activas ni pendientes. El fondeo cubre la perdida neta de cierre, no crea nueva orden."
+        },
+        "funding_amount_usd": 14424.0,
+        "settlement_total_usd": 12891.13,
+        "surplus_from_this_funding_usd": 1532.87,
+        "occurred_at": "2026-07-01",
+        "notes": "KIM-0140: el doctor aclaro que las pendientes a credito se cubren solo hasta que se ejecuten. Este evento cubre solo compradas activas a credito y LAB cerrada."
       }
     ],
-    "last_credit_coverage_note": "KIM-0138: cubiertas APT activa 1,800 USD y DOT activa 1,800 USD con saldo disponible; refuerzos APT/DOT siguen pendientes a credito.",
+    "last_credit_coverage_note": "KIM-0140: fondeo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; pendientes por comprar siguen a credito hasta ejecucion.",
     "available_credit_coverage_pool_after_kim0121_usd": 4058.09,
     "available_credit_coverage_pool_after_kim0121_with_remnants_usd": 4765.14,
     "available_credit_coverage_pool_after_kim0122_usd": 458.09,
@@ -238,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0138",
-      "updated_at": "2026-06-29T19:14:38-06:00",
+      "version": "KIM-0140",
+      "updated_at": "2026-07-02T00:00:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -283,22 +384,34 @@
           "usd": 2861.16,
           "exchange_rate_mxn_per_usd": 17.4754,
           "concept": "Cobertura de crédito"
+        },
+        {
+          "id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+          "date": "01-jul-2026",
+          "mxn": 252000,
+          "usd": 14424.0,
+          "exchange_rate_mxn_per_usd": 17.470882,
+          "concept": "Cobertura 8 órdenes 1800"
         }
       ],
-      "client_funding_total_mxn": 368000,
-      "client_funding_total_usd": 21096.15,
-      "realized_profit_for_statement_usd": 935.09,
-      "realized_profit_note": "Profit actual generado conservador: FTT neto +1032.57, menos ZEC -0.55 y AVAX -96.93 = 935.09 USD.",
-      "client_total_net_considered_usd": 22031.24,
-      "firm_assigned_usd": 21454,
-      "available_balance_usd": 577.24,
-      "credit_bought_pending_payment_usd": 12600,
-      "credit_pending_execution_usd": 19800,
-      "credit_total_usd": 32400,
+      "client_funding_total_mxn": 620000,
+      "client_funding_total_usd": 35520.15,
+      "realized_profit_for_statement_usd": 643.96,
+      "realized_profit_note": "Profit actual generado despues de LAB: FTT +1032.57, ZEC -0.55, AVAX -96.93 y LAB -291.13 = 643.96 USD.",
+      "client_total_net_considered_usd": 36164.11,
+      "firm_assigned_usd": 34054,
+      "available_balance_usd": 2110.11,
+      "credit_bought_pending_payment_usd": 0,
+      "credit_pending_execution_usd": 18000,
+      "credit_total_usd": 18000,
       "covered_orders": [
         [
           "ADA",
           3600
+        ],
+        [
+          "APT",
+          1800
         ],
         [
           "DOGE",
@@ -309,27 +422,9 @@
           1800
         ],
         [
-          "PEPE",
-          2700
-        ],
-        [
-          "NEAR",
-          3600
-        ],
-        [
-          "FTT",
-          1800
-        ],
-        [
-          "APT",
-          1800
-        ],
-        [
           "DOT",
           1800
-        ]
-      ],
-      "bought_on_credit_pending_payment": [
+        ],
         [
           "TRUMP",
           1800
@@ -339,7 +434,19 @@
           1800
         ],
         [
+          "PEPE",
+          2700
+        ],
+        [
           "HBAR",
+          1800
+        ],
+        [
+          "NEAR",
+          3600
+        ],
+        [
+          "FTT",
           1800
         ],
         [
@@ -359,6 +466,7 @@
           1800
         ]
       ],
+      "bought_on_credit_pending_payment": [],
       "pending_to_buy_on_credit": [
         [
           "APT refuerzo",
@@ -397,10 +505,6 @@
           1800
         ],
         [
-          "LAB",
-          1800
-        ],
-        [
           "AAVE",
           1800
         ]
@@ -414,10 +518,12 @@
         "Usar Órdenes Compradas A Crédito para posiciones ya compradas pero cubiertas con crédito.",
         "Usar Órdenes Pendientes A Crédito para órdenes todavía no ejecutadas.",
         "Si se separa WhatsApp, separar por secciones inteligentes: Fondeos, Compradas/Cubiertas, Pendientes/Resumen.",
-        "Antes de enviar balance, validar que 6 + 9 + 11 = 26 ordenes vivas; si no cuadra, bloquear envio y corregir.",
-        "KIM-0138: APT y DOT activas estan cubiertas; APT refuerzo y DOT refuerzo siguen pendientes a credito."
+        "KIM-0138: APT y DOT activas estan cubiertas; APT refuerzo y DOT refuerzo siguen pendientes a credito.",
+        "KIM-0140: las órdenes pendientes por comprar a crédito NO se cubren con fondeo hasta que se ejecuten.",
+        "KIM-0140: LAB está cerrada; reportarla solo en resumen de pérdida realizada, nunca como viva o pendiente.",
+        "Antes de enviar balance, validar que 15 + 0 + 10 = 25 órdenes vivas; si no cuadra, bloquear envío y corregir."
       ],
-      "latest_funding_note": "KIM-0135: los tres ultimos fondeos son Cobertura de credito: 22-jun-2026 50,000 MXN / 2,877 USD; 23-jun-2026 50,000 MXN / 2,844 USD; 29-jun-2026 50,000 MXN / 2,861.16 USD.",
+      "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
         "fundings": "Fondeos",
         "covered_orders": "Órdenes Compradas Cubiertas Completas",
@@ -434,19 +540,19 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0138: con saldo disponible se cubren APT y DOT activas. Balance: 8 cubiertas, 7 compradas a credito, 11 pendientes a credito = 26.",
-      "visible_order_count": 26,
+      "latest_format_note": "KIM-0140: balance actualizado con 25 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 10 pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
+      "visible_order_count": 25,
       "section_count_validation": {
-        "covered_orders": 8,
-        "bought_on_credit": 7,
-        "pending_on_credit": 11,
-        "total_visible_orders": 26,
-        "rule": "Balance Sr. Eli must contain all 26 live orders across the three sections."
+        "covered_orders": 15,
+        "bought_on_credit": 0,
+        "pending_on_credit": 10,
+        "total_visible_orders": 25,
+        "rule": "Balance Sr. Eli must contain all 25 live orders across the three sections; closed LAB is accounting-only."
       }
     },
     "funding_reconciliation": {
-      "updated_at": "2026-06-29T18:42:01-06:00",
-      "status": "receipt_confirmed_historical_plus_recent",
+      "updated_at": "2026-07-02T00:00:00-06:00",
+      "status": "receipt_confirmed_historical_recent_and_2026_07_01_credit_coverage",
       "historical_base_funding": [
         {
           "id": "firm_capital_canonical_2026_06_05",
@@ -507,23 +613,38 @@
           "client_display_date": "29-jun-2026",
           "concept": "Cobertura de crédito",
           "updated_at": "2026-06-29T18:45:35-06:00"
+        },
+        {
+          "id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+          "status": "receipt_confirmed",
+          "occurred_at": "2026-07-01",
+          "amount_mxn": 252000.0,
+          "amount_usd": 14424.0,
+          "exchange_rate_mxn_per_usd": 17.470882,
+          "fee_rate": 0.012,
+          "fee_usd": 173.09,
+          "fee_mxn_equivalent": 3024.0,
+          "notes": "Recibo confirmado: Sr. Eli fondeo 252,000 MXN, enlistado por 14,424 USD, para cubrir 8 ordenes de 1,800 USD. Operativamente cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; las ordenes pendientes por comprar siguen pendientes a credito hasta ejecucion.",
+          "client_display_date": "01-jul-2026",
+          "concept": "Cobertura 8 órdenes 1800",
+          "updated_at": "2026-07-02T00:00:00-06:00"
         }
       ],
-      "known_recent_total_usd": 8582.16,
-      "known_recent_total_mxn": 150000.0,
+      "known_recent_total_usd": 23006.16,
+      "known_recent_total_mxn": 402000.0,
       "historical_base_total_usd": 12513.99,
-      "total_funding_usd_including_historical_base": 21096.15,
-      "known_recent_funding_fee_usd": 102.98,
+      "total_funding_usd_including_historical_base": 35520.15,
+      "known_recent_funding_fee_usd": 276.07,
       "historical_base_fee_usd_if_conversion_applies": 150.17,
       "policy": "No convertir recibos MXN a USD sin tasa/comprobante de conversion. Guardar recibo, fecha, MXN y estado pending_usd_conversion.",
       "confirmed_historical_receipt_total_mxn": 218000.0,
       "confirmed_historical_receipt_total_usd": 12513.99,
-      "total_mxn_confirmed_by_receipts_and_recent_funding": 368000.0,
-      "total_usd_confirmed_excluding_mxn_only_receipt": 21096.15,
-      "june_funding_policy": "Fondeo 02-jun-2026 confirmado por PDF/recibo; fondeos recientes: 22-jun 2,877 USD, 23-jun 2,844 USD, 29-jun 50,000 MXN = 2,861.16 USD al tipo de cambio 17.4754.",
+      "total_mxn_confirmed_by_receipts_and_recent_funding": 620000.0,
+      "total_usd_confirmed_excluding_mxn_only_receipt": 35520.15,
+      "june_funding_policy": "Fondeos historicos + recientes confirmados; nuevo 01-jul-2026 252,000 MXN / 14,424 USD cubre activas a credito y LAB cerrada. Pendientes por comprar se cubren solo al ejecutarse.",
       "historical_base_total_mxn": 218000.0,
-      "client_statement_protocol_version": "KIM-0134",
-      "client_statement_date_policy": "Para reporte cliente usar fechas finales: 22-jun-2026, 23-jun-2026 y 29-jun-2026 para el nuevo fondeo."
+      "client_statement_protocol_version": "KIM-0140",
+      "client_statement_date_policy": "Para reporte cliente usar fechas finales y recibos: incluir 01-jul-2026 como Cobertura 8 órdenes 1800."
     },
     "funding_receipts_mxn": [
       {
@@ -766,12 +887,32 @@
         "notes": "Nuevo fondeo confirmado por el doctor: 50,000 MXN tomado al tipo de cambio externo 2026-06-29 USD/MXN 17.4754 = 2,861.16 USD. No reasignar a ordenes cubiertas sin instruccion expresa. Concepto corregido por el doctor: Cobertura de crédito.",
         "concept": "Cobertura de crédito",
         "updated_at": "2026-06-29T18:45:35-06:00"
+      },
+      {
+        "id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+        "type": "funding",
+        "status": "receipt_confirmed",
+        "amount_usd": 14424.0,
+        "amount_mxn": 252000.0,
+        "exchange_rate_mxn_per_usd": 17.470882,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-01",
+        "client_display_date": "01-jul-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 173.09,
+        "fee_mxn_equivalent": 3024.0,
+        "source": "receipt_image_kim0140_2026_07_01",
+        "receipt_path": "/Users/dryehoshuapython/.kim_live/MEMORY/portfolios/sr_eli/receipts/kim0140_fondeo_sr_eli_recibo_2026_07_01_252000_mxn_14424_usd.jpg",
+        "concept": "Cobertura 8 órdenes 1800",
+        "notes": "Recibo confirmado: Sr. Eli fondeo 252,000 MXN, enlistado por 14,424 USD, para cubrir 8 ordenes de 1,800 USD. Operativamente cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; las ordenes pendientes por comprar siguen pendientes a credito hasta ejecucion.",
+        "updated_at": "2026-07-02T00:00:00-06:00"
       }
     ],
     "canonical_total_funded_usd": 21096.15,
     "canonical_total_funded_mxn": 368000.0,
     "historical_receipt_converted_usd": 12513.99,
-    "available_credit_coverage_pool_after_kim0138_usd": 577.24
+    "available_credit_coverage_pool_after_kim0138_usd": 577.24,
+    "available_credit_coverage_pool_after_kim0140_usd": 1532.87
   },
   "manual_entries": [
     {
@@ -889,10 +1030,11 @@
       "invested_usd": 1800,
       "entry_price": 2.16,
       "quantity": 833.3333333333333,
-      "credit_usd": 1800.0,
-      "source": "kim_0123_credit_coverage_reallocation",
-      "notes": "A6 TRUMP activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
-      "updated_at": "2026-06-23T23:37:48+00:00"
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A6 TRUMP activa canonica a credito. KIM-0122: credito de 1800 USD cubierto con fondos disponibles/fondeos/ganancia realizada por instruccion del doctor. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
+      "updated_at": "2026-06-23T23:37:48+00:00",
+      "credit": false
     },
     {
       "symbol": "XRPUSDT",
@@ -902,10 +1044,11 @@
       "invested_usd": 1800,
       "entry_price": 1.386,
       "quantity": 1298.7012987012988,
-      "credit_usd": 1800.0,
-      "source": "kim_0123_credit_coverage_reallocation",
-      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra.",
-      "updated_at": "2026-06-23T23:37:48+00:00"
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
+      "updated_at": "2026-06-23T23:37:48+00:00",
+      "credit": false
     },
     {
       "symbol": "PEPEUSDT",
@@ -928,9 +1071,10 @@
       "invested_usd": 1800,
       "entry_price": 0.09009,
       "quantity": 19980.01998001998,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A9 HBAR activa canonica a credito."
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A9 HBAR activa canonica a credito. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
+      "credit": false
     },
     {
       "id": "kim0118-nearusdt-consolidated",
@@ -984,9 +1128,10 @@
       "invested_usd": 1800,
       "entry_price": 63,
       "quantity": 28.571428571428573,
-      "credit_usd": 1800,
-      "source": "kim_0101_manual_standard",
-      "notes": "A12 SOL activa canonica a credito."
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A12 SOL activa canonica a credito. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
+      "credit": false
     },
     {
       "symbol": "APTUSDT",
@@ -1026,13 +1171,14 @@
       "invested_usd": 1800,
       "entry_price": 2.205,
       "quantity": 816.3265306122448,
-      "credit_usd": 1800,
-      "source": "kim_0114_doctor_market_update",
-      "notes": "A18 ICP orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. KIM-0114: el doctor confirma que ICP A18 ya esta en mercado; mantener a credito y sacarla de pendientes.",
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A18 ICP orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. KIM-0114: el doctor confirma que ICP A18 ya esta en mercado; mantener a credito y sacarla de pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
       "side": "BUY",
       "id": "kim0101-a18-icpusdt",
       "updated_at": "2026-06-19T01:35:06+00:00",
-      "executed_at": "2026-06-19T01:35:06+00:00"
+      "executed_at": "2026-06-19T01:35:06+00:00",
+      "credit": false
     },
     {
       "symbol": "WLDUSDT",
@@ -1042,13 +1188,14 @@
       "invested_usd": 1800,
       "entry_price": 0.54,
       "quantity": 3333.333333333333,
-      "credit_usd": 1800,
-      "source": "KIM-0116-canonical-fix",
-      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes.",
+      "credit_usd": 0,
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
       "side": "BUY",
       "id": "kim0101-a19-wldusdt",
       "updated_at": "2026-06-17T21:02:25",
-      "executed_at": "2026-06-23T13:20:43"
+      "executed_at": "2026-06-23T13:20:43",
+      "credit": false
     },
     {
       "order": 22,
@@ -1089,12 +1236,13 @@
       "label": "SUI/USDT",
       "invested_usd": 1800,
       "entry_price": 0.72,
-      "credit_usd": 1800,
-      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo. KIM-0114: el doctor confirma que SUI A24 ya esta en mercado; mantener a credito y sacarla de pendientes.",
+      "credit_usd": 0,
+      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo. KIM-0114: el doctor confirma que SUI A24 ya esta en mercado; mantener a credito y sacarla de pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
       "quantity": 2500.0,
       "executed_at": "2026-06-19T01:35:06+00:00",
-      "source": "kim_0114_doctor_market_update",
-      "updated_at": "2026-06-19T01:35:06+00:00"
+      "source": "kim_0140_credit_coverage_2026_07_01",
+      "updated_at": "2026-06-19T01:35:06+00:00",
+      "credit": false
     },
     {
       "id": "kim0113-a25-dotusdt-refuerzo",
@@ -1276,7 +1424,7 @@
     "GOATUSDT",
     "LABUSDT"
   ],
-  "provider_note": "KIM-0139: reporte cliente con 25 ordenes vivas; LAB cerrada por stop loss y fuera de activas/pendientes; precios frescos obligatorios antes de WhatsApp.",
+  "provider_note": "KIM-0140: LAB cerrada por stop loss; fondeo 01-jul cubre activas a credito. Pendientes por comprar siguen pendientes a credito hasta ejecucion.",
   "doctor_rules": [
     "Respetar identificadores de orden; no renumerar por moneda.",
     "Usar portafolio A y prefijos A1, A2, A3...",
@@ -1545,7 +1693,8 @@
   "rules": [
     "KIM-0130: Recibo oficial 2026-06-23 Sr. Eli confirma 50,000 MXN por cobertura de credito 2,844 USD. Usar 2,844 USD para ese fondeo; la cifra verbal previa de 2,846 USD queda superseded salvo instruccion contraria.",
     "KIM-0131: PDF/recibo Fondeos en Efectivo al 4 Jun confirma cuarto fondeo 02-jun-2026 por 50,000 MXN, concepto NEAR Orden 2700; total recibo historico 218,000 MXN = 12,513.99 USD segun tasas conversadas. No eliminar el 02-jun.",
-    "KIM-0132: Estado de cuenta Sr. Eli usa protocolo final WhatsApp: 6 fondeos al inicio, Balance de Crédito, tres listas; fechas cliente 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD; profit actual generado 935.09 USD; total neto considerado 19,170.08 USD; firme asignado 17,854; saldo disponible 1,316.08; crédito por cubrir 16,200; crédito pendiente por ejecutar 16,200."
+    "KIM-0132: Estado de cuenta Sr. Eli usa protocolo final WhatsApp: 6 fondeos al inicio, Balance de Crédito, tres listas; fechas cliente 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD; profit actual generado 935.09 USD; total neto considerado 19,170.08 USD; firme asignado 17,854; saldo disponible 1,316.08; crédito por cubrir 16,200; crédito pendiente por ejecutar 16,200.",
+    "KIM-0140: Fondeo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada; las ordenes pendientes a credito se cubren solo cuando se ejecuten."
   ],
   "superseded_facts": [
     {
@@ -1627,6 +1776,12 @@
         "total": 3600,
         "available_after": 577.24
       }
+    },
+    {
+      "at": "2026-07-02T00:00:00-06:00",
+      "reason": "kim0140_lab_closed_and_2026_07_01_funding_coverage",
+      "supersedes": "Any balance/report rule that expects 26 live orders, LAB pending/live, or bought-on-credit active positions after the 2026-07-01 funding.",
+      "rule": "Canonical state is 25 live orders: 15 covered active, 0 bought-on-credit active, 10 pending-on-credit; LAB closed accounting-only."
     }
   ]
 }

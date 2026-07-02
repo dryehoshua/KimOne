@@ -21427,16 +21427,17 @@ def portfolio_fee_summary(active_items, summary, override_config):
     fee_rate = float(accounting.get("operation_fee_rate") or 0)
     confirmed_volume = sum(float(item.get("invested_usd") or 0) for item in active_items)
     funding_conversions = accounting.get("funding_conversions") if isinstance(accounting.get("funding_conversions"), list) else []
-    funding_volume = sum(
-        float(item.get("amount_usd") or 0)
-        for item in funding_conversions
-        if str((item or {}).get("status") or "confirmed").lower() == "confirmed"
-    )
-    funding_confirmed = [
-        item
-        for item in funding_conversions
-        if isinstance(item, dict) and str(item.get("status") or "confirmed").lower() == "confirmed"
-    ]
+
+    def confirmed_funding_event(item):
+        if not isinstance(item, dict):
+            return False
+        status = str(item.get("status") or "confirmed").strip().lower()
+        if status in {"void", "cancelled", "canceled", "rejected", "draft", "pending"}:
+            return False
+        return status == "confirmed" or "confirmed" in status
+
+    funding_confirmed = [item for item in funding_conversions if confirmed_funding_event(item)]
+    funding_volume = sum(float(item.get("amount_usd") or 0) for item in funding_confirmed)
     cash_in_usd = sum(float(item.get("amount_usd") or 0) for item in funding_confirmed if str(item.get("type") or "funding").lower() in {"funding", "deposit", "deposito", "cash_in"})
     cash_out_usd = sum(float(item.get("amount_usd") or 0) for item in funding_confirmed if str(item.get("type") or "").lower() in {"withdrawal", "withdraw", "retiro", "cash_out"})
     excluded_event_types = [
@@ -22361,6 +22362,10 @@ def portfolio_client_report(summary, parameters=None):
     realized_fee_usd = sum(float(item.get("fee_usd") or 0) for item in closed_positions)
     realized_net_pnl_usd = sum(float(item.get("net_pnl_usd") or 0) for item in closed_positions)
     available_balance_usd = operating_remnants_usd + max(0.0, realized_net_pnl_usd)
+    report_protocol = accounting_config.get("report_protocol") if isinstance(accounting_config.get("report_protocol"), dict) else {}
+    statement_available_balance = portfolio_float(report_protocol.get("available_balance_usd"))
+    if statement_available_balance is not None:
+        available_balance_usd = statement_available_balance
     position_credit_total_usd = sum(float(item.get("credit_usd") or 0) for item in [*active_items, *pending_items])
     configured_firm_capital = accounting_config.get("firm_capital_usd")
     if configured_firm_capital not in (None, ""):
