@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0144",
-  "updated_at": "2026-07-03T20:07:26+00:00",
-  "standard_note": "KIM-0144: las nuevas ordenes/refuerzos de CALL-20260703-194007 quedan pendientes a credito y requieren confirmacion real de ejecucion; HBAR base activa permanece separada del refuerzo HBAR pendiente.",
+  "standard_version": "KIM-0145",
+  "updated_at": "2026-07-03T20:12:13+00:00",
+  "standard_note": "KIM-0145: corrige HBAR refuerzo pendiente a 0.0657; faltaba un cero en 0.657. Resto KIM-0144 se conserva.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -1377,13 +1377,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.657,
-      "quantity": 2739.7260273973,
+      "entry_price": 0.0657,
+      "quantity": 27397.2602739726,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para HBAR a 0.657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:07:26+00:00",
+      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657.",
+      "updated_at": "2026-07-03T20:12:13+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1955,6 +1955,13 @@
       "actor": "codex",
       "source": "doctor_correction_chat_2026-07-03",
       "summary": "Aclaracion definitiva: HBAR tiene una orden base ya ejecutada y un refuerzo nuevo pendiente. Todos los nuevos refuerzos quedan pending+credit+no_auto_fill hasta ejecucion confirmada."
+    },
+    {
+      "id": "KIM-0145",
+      "at": "2026-07-03T20:12:13+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-03",
+      "summary": "Correccion HBAR refuerzo: precio correcto 0.0657, no 0.657. Sigue pendiente a credito y no auto-fill."
     }
   ]
 }
