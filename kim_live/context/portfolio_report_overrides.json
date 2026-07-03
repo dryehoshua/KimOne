@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0145",
-  "updated_at": "2026-07-03T20:12:13+00:00",
-  "standard_note": "KIM-0145: corrige HBAR refuerzo pendiente a 0.0657; faltaba un cero en 0.657. Resto KIM-0144 se conserva.",
+  "standard_version": "KIM-0146",
+  "updated_at": "2026-07-03T20:26:48+00:00",
+  "standard_note": "KIM-0146: corrige Balance de Crédito para incluir 15 pendientes a crédito, incluyendo nuevos refuerzos XRP/HBAR/TRUMP/AVAX/WLD; crédito pendiente por ejecutar 27,000 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0141",
-      "updated_at": "2026-07-02T14:10:00-06:00",
+      "version": "KIM-0146",
+      "updated_at": "2026-07-03T20:26:48+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -402,8 +402,8 @@
       "firm_assigned_usd": 34054,
       "available_balance_usd": 2110.11,
       "credit_bought_pending_payment_usd": 0,
-      "credit_pending_execution_usd": 18000,
-      "credit_total_usd": 18000,
+      "credit_pending_execution_usd": 27000,
+      "credit_total_usd": 27000,
       "covered_orders": [
         [
           "ADA",
@@ -507,6 +507,26 @@
         [
           "AAVE",
           1800
+        ],
+        [
+          "XRP refuerzo",
+          1800
+        ],
+        [
+          "HBAR refuerzo",
+          1800
+        ],
+        [
+          "TRUMP refuerzo",
+          1800
+        ],
+        [
+          "AVAX",
+          1800
+        ],
+        [
+          "WLD refuerzo",
+          1800
         ]
       ],
       "language_rules": [
@@ -523,7 +543,8 @@
         "KIM-0140: LAB está cerrada; reportarla solo en resumen de pérdida realizada, nunca como viva o pendiente.",
         "Antes de enviar balance, validar que 15 + 0 + 10 = 25 órdenes vivas; si no cuadra, bloquear envío y corregir.",
         "KIM-0141: El Balance de Crédito completo se anexa siempre al final del portafolio completo y del reporte diario.",
-        "KIM-0141: No sustituir el Balance de Crédito por una sola línea compacta; usar secciones y listas."
+        "KIM-0141: No sustituir el Balance de Crédito por una sola línea compacta; usar secciones y listas.",
+        "KIM-0146: las nuevas órdenes/refuerzos XRP, HBAR, TRUMP, AVAX y WLD cuentan dentro de Órdenes Pendientes A Crédito hasta ejecución real."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -542,14 +563,14 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0141: balance actualizado con 25 órdenes vivas y debe ir al final de cada reporte completo/diario: 15 cubiertas, 0 compradas a crédito, 10 pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
-      "visible_order_count": 25,
+      "latest_format_note": "KIM-0146: balance actualizado con 30 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 15 pendientes a crédito. Nuevos refuerzos XRP/HBAR/TRUMP/AVAX/WLD incluidos en pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
+      "visible_order_count": 30,
       "section_count_validation": {
         "covered_orders": 15,
         "bought_on_credit": 0,
-        "pending_on_credit": 10,
-        "total_visible_orders": 25,
-        "rule": "Balance Sr. Eli must contain all 25 live orders across the three sections; closed LAB is accounting-only."
+        "pending_on_credit": 15,
+        "total_visible_orders": 30,
+        "rule": "Balance Sr. Eli must contain all 30 live orders across the three sections; closed LAB is accounting-only."
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -1962,6 +1983,13 @@
       "actor": "codex",
       "source": "doctor_chat_2026-07-03",
       "summary": "Correccion HBAR refuerzo: precio correcto 0.0657, no 0.657. Sigue pendiente a credito y no auto-fill."
+    },
+    {
+      "id": "KIM-0146",
+      "at": "2026-07-03T20:26:48+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-03",
+      "summary": "Balance de crédito corregido: pendientes a crédito ahora son 15 órdenes / 27,000 USD, incluyendo XRP, HBAR, TRUMP, AVAX y WLD."
     }
   ]
 }
