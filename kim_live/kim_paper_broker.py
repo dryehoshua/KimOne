@@ -316,6 +316,7 @@ def evaluate_orders(args: dict) -> dict:
         approved = bool(price_payload.get("approved", True))
         if isinstance(validation, dict) and "approved_for_client_report" in validation:
             approved = bool(validation.get("approved_for_client_report"))
+        auto_fill_blocked = bool(order.get("no_auto_fill") or order.get("requires_manual_fill_confirmation"))
         crossed = approved and order_crossed(order.get("side"), market_price, order.get("limit_price"))
         evaluated.append(
             {
@@ -326,8 +327,11 @@ def evaluate_orders(args: dict) -> dict:
                 "market_price": market_price,
                 "approved": approved,
                 "crossed": crossed,
+                "auto_fill_blocked": auto_fill_blocked,
             }
         )
+        if crossed and auto_fill_blocked:
+            continue
         if not crossed:
             continue
         fill_price = float(order.get("limit_price"))
