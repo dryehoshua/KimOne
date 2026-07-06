@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0146",
-  "updated_at": "2026-07-03T20:26:48+00:00",
-  "standard_note": "KIM-0146: corrige Balance de Crédito para incluir 15 pendientes a crédito, incluyendo nuevos refuerzos XRP/HBAR/TRUMP/AVAX/WLD; crédito pendiente por ejecutar 27,000 USD.",
+  "standard_version": "KIM-0147",
+  "updated_at": "2026-07-06T18:32:33+00:00",
+  "standard_note": "KIM-0147: ajustes de precios pendientes/refuerzos con raíz digital 9: baja TRUMP/AVAX/HBAR/LUNC/APT; sube HYPE/ZEC/WIF/AAVE.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -1199,14 +1199,17 @@
       "symbol": "HYPEUSDT",
       "state": "pending",
       "side": "BUY",
-      "label": "HYPE/USDT",
+      "label": "HYPE/USDT pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 45.0,
+      "entry_price": 49.5,
       "credit_usd": 1800.0,
-      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45.",
-      "quantity": 28.571428571428573,
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 45.0, precio nuevo 49.5, raíz digital 9.",
+      "quantity": 36.363636363636,
       "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
-      "updated_at": "2026-06-25T13:06:47"
+      "updated_at": "2026-07-06T18:32:33+00:00",
+      "credit": true,
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "order": 23,
@@ -1277,13 +1280,16 @@
       "order": 27,
       "label": "ZEC/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 296.0,
-      "quantity": 5.405405405405405,
+      "entry_price": 324.0,
+      "quantity": 5.555555555556,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_confirmed_sr_eli_pending_updates_2026_06_25",
-      "notes": "ZEC pendiente actualizada por el doctor 2026-06-25: 296. Sustituye 333.",
-      "updated_at": "2026-06-25T14:44:06"
+      "notes": "ZEC pendiente actualizada por el doctor 2026-06-25: 296. Sustituye 333. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 296.0, precio nuevo 324.0, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
+      "credit": true,
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "id": "kim0119-a28-wifusdt-pending",
@@ -1292,14 +1298,17 @@
       "order": 28,
       "label": "WIF/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 0.1008,
-      "quantity": 14285.714285714286,
+      "entry_price": 0.109872,
+      "quantity": 16382.699868938402,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_corrected_wif_pending_price_2026_06_25",
-      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada.",
-      "updated_at": "2026-06-25T13:33:22",
-      "executed_at": "2026-06-25T13:30:26"
+      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 0.1008, precio nuevo 0.109872, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
+      "executed_at": "2026-06-25T13:30:26",
+      "credit": true,
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "id": "kim0119-a29-xlmusdt-pending",
@@ -1323,14 +1332,16 @@
       "order": 31,
       "label": "AAVE/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 63.0,
-      "quantity": 28.571428571428573,
+      "entry_price": 68.67,
+      "quantity": 26.212319790301,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_requested_aave_pending_order_2026_06_26",
-      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas.",
-      "updated_at": "2026-06-26T16:14:23"
+      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 63.0, precio nuevo 68.67, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "id": "paper-kpb-20260703194457-269a57",
@@ -1341,13 +1352,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.558,
-      "quantity": 3225.8064516129,
+      "entry_price": 0.50778,
+      "quantity": 3544.842254519674,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Reajuste de orden pendiente para APT a 0.558 Sincronizada desde Kim Paper Broker KPB-20260703194457-269A57 (place_order) el 2026-07-03T13:44:57. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior APT @0.45. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:04:47+00:00",
+      "notes": "Reajuste de orden pendiente para APT a 0.558 Sincronizada desde Kim Paper Broker KPB-20260703194457-269A57 (place_order) el 2026-07-03T13:44:57. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior APT @0.45. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.558, precio nuevo 0.50778, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1360,13 +1371,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 5.77e-05,
-      "quantity": 31195840.55459272,
+      "entry_price": 5.22e-05,
+      "quantity": 34482758.62068965,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:04:47+00:00",
+      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 5.77e-05, precio nuevo 5.22e-05, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1398,13 +1409,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.0657,
-      "quantity": 27397.2602739726,
+      "entry_price": 0.059787,
+      "quantity": 30106.879421947917,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657.",
-      "updated_at": "2026-07-03T20:12:13+00:00",
+      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1417,13 +1428,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 1.62,
-      "quantity": 1111.1111111111,
+      "entry_price": 1.4742,
+      "quantity": 1221.001221001221,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:04:47+00:00",
+      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 1.62, precio nuevo 1.4742, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1436,13 +1447,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 6.03,
-      "quantity": 298.5074626866,
+      "entry_price": 5.4873,
+      "quantity": 328.030178776447,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:04:47+00:00",
+      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 6.03, precio nuevo 5.4873, raíz digital 9.",
+      "updated_at": "2026-07-06T18:32:33+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1990,6 +2001,78 @@
       "actor": "codex",
       "source": "doctor_chat_2026-07-03",
       "summary": "Balance de crédito corregido: pendientes a crédito ahora son 15 órdenes / 27,000 USD, incluyendo XRP, HBAR, TRUMP, AVAX y WLD."
+    },
+    {
+      "id": "KIM-0147",
+      "at": "2026-07-06T18:32:33+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-06",
+      "summary": "Aplicados ajustes de segula/raíz digital 9: TRUMP 1.4742, AVAX 5.4873, HBAR 0.059787, LUNC 0.0000522, APT 0.50778, HYPE 49.5, ZEC 324, WIF 0.109872, AAVE 68.67.",
+      "changes": [
+        {
+          "id": "kim0108-a22-hypeusdt",
+          "label": "HYPE/USDT pendiente",
+          "old": 45.0,
+          "new": 49.5,
+          "root": 9
+        },
+        {
+          "id": "kim0119-a27-zecusdt-pending",
+          "label": "ZEC/USDT nueva orden pendiente",
+          "old": 296.0,
+          "new": 324.0,
+          "root": 9
+        },
+        {
+          "id": "kim0119-a28-wifusdt-pending",
+          "label": "WIF/USDT nueva orden pendiente",
+          "old": 0.1008,
+          "new": 0.109872,
+          "root": 9
+        },
+        {
+          "id": "kim0126-aaveusdt-pending",
+          "label": "AAVE/USDT nueva orden pendiente",
+          "old": 63.0,
+          "new": 68.67,
+          "root": 9
+        },
+        {
+          "id": "paper-kpb-20260703194457-269a57",
+          "label": "APT/USDT refuerzo pendiente",
+          "old": 0.558,
+          "new": 0.50778,
+          "root": 9
+        },
+        {
+          "id": "paper-kpb-20260703194500-379e4d",
+          "label": "LUNC/USDT refuerzo pendiente",
+          "old": 5.77e-05,
+          "new": 5.22e-05,
+          "root": 9
+        },
+        {
+          "id": "paper-kpb-20260703194503-9559de",
+          "label": "HBAR/USDT refuerzo pendiente",
+          "old": 0.0657,
+          "new": 0.059787,
+          "root": 9
+        },
+        {
+          "id": "paper-kpb-20260703194505-5a4ee7",
+          "label": "TRUMP/USDT refuerzo pendiente",
+          "old": 1.62,
+          "new": 1.4742,
+          "root": 9
+        },
+        {
+          "id": "paper-kpb-20260703194506-687d17",
+          "label": "AVAX/USDT nueva orden pendiente",
+          "old": 6.03,
+          "new": 5.4873,
+          "root": 9
+        }
+      ]
     }
   ]
 }
