@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0148",
-  "updated_at": "2026-07-06T19:01:13+00:00",
-  "standard_note": "KIM-0148: aplica precios finales enviados por WhatsApp para ajustes pendientes Sr. Eli; cualquier cambio posterior requiere nueva instruccion.",
+  "standard_version": "KIM-0149",
+  "updated_at": "2026-07-07T17:31:14+00:00",
+  "standard_note": "KIM-0149: LAB/USDT pendiente a 4.5 por corrección explícita del doctor; 31 órdenes vivas, 16 pendientes a crédito.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -340,7 +340,7 @@
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
       "version": "KIM-0146",
-      "updated_at": "2026-07-03T20:26:48+00:00",
+      "updated_at": "2026-07-07T17:31:14+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -402,8 +402,8 @@
       "firm_assigned_usd": 34054,
       "available_balance_usd": 2110.11,
       "credit_bought_pending_payment_usd": 0,
-      "credit_pending_execution_usd": 27000,
-      "credit_total_usd": 27000,
+      "credit_pending_execution_usd": 28800,
+      "credit_total_usd": 28800,
       "covered_orders": [
         [
           "ADA",
@@ -505,6 +505,10 @@
           1800
         ],
         [
+          "LAB",
+          1800
+        ],
+        [
           "AAVE",
           1800
         ],
@@ -540,11 +544,12 @@
         "Si se separa WhatsApp, separar por secciones inteligentes: Fondeos, Compradas/Cubiertas, Pendientes/Resumen.",
         "KIM-0138: APT y DOT activas estan cubiertas; APT refuerzo y DOT refuerzo siguen pendientes a credito.",
         "KIM-0140: las órdenes pendientes por comprar a crédito NO se cubren con fondeo hasta que se ejecuten.",
-        "KIM-0140: LAB está cerrada; reportarla solo en resumen de pérdida realizada, nunca como viva o pendiente.",
-        "Antes de enviar balance, validar que 15 + 0 + 10 = 25 órdenes vivas; si no cuadra, bloquear envío y corregir.",
         "KIM-0141: El Balance de Crédito completo se anexa siempre al final del portafolio completo y del reporte diario.",
         "KIM-0141: No sustituir el Balance de Crédito por una sola línea compacta; usar secciones y listas.",
-        "KIM-0146: las nuevas órdenes/refuerzos XRP, HBAR, TRUMP, AVAX y WLD cuentan dentro de Órdenes Pendientes A Crédito hasta ejecución real."
+        "KIM-0146: las nuevas órdenes/refuerzos XRP, HBAR, TRUMP, AVAX y WLD cuentan dentro de Órdenes Pendientes A Crédito hasta ejecución real.",
+        "KIM-0149: LAB/USDT vuelve como orden pendiente a 4.5 por corrección explícita del doctor; no ejecutarla sin confirmación real.",
+        "KIM-0149: el cierre histórico LAB KIM-0139 permanece solo para P/L realizado y no cancela la nueva orden pendiente LAB.",
+        "Antes de enviar balance, validar que 15 + 0 + 16 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -563,14 +568,16 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0146: balance actualizado con 30 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 15 pendientes a crédito. Nuevos refuerzos XRP/HBAR/TRUMP/AVAX/WLD incluidos en pendientes a crédito. LAB queda cerrada con pérdida neta -291.13 USD.",
-      "visible_order_count": 30,
+      "latest_format_note": "KIM-0149: LAB/USDT se reinserta como orden pendiente a 4.5 por instrucción/corrección del doctor; balance queda 31 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 16 pendientes a crédito; LAB cerrada KIM-0139 permanece solo para P/L realizado.",
+      "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 15,
         "bought_on_credit": 0,
-        "pending_on_credit": 15,
-        "total_visible_orders": 30,
-        "rule": "Balance Sr. Eli must contain all 30 live orders across the three sections; closed LAB is accounting-only."
+        "pending_on_credit": 16,
+        "total_visible_orders": 31,
+        "rule": "KIM-0149: reporte completo debe cuadrar 15 cubiertas + 0 compradas a crédito + 16 pendientes a crédito = 31 órdenes vivas; LAB pendiente 4.5 incluida, LAB cerrada KIM-0139 solo contabilidad realizada.",
+        "covered_active": 15,
+        "bought_on_credit_pending_payment": 0
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -1475,6 +1482,24 @@
       "updated_at": "2026-07-03T20:04:47+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
+    },
+    {
+      "id": "kim0149-labusdt-pending-45",
+      "symbol": "LABUSDT",
+      "state": "pending",
+      "order": 30,
+      "label": "LAB/USDT orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 4.5,
+      "quantity": 400.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_pending_lab_correction_2026_07_07",
+      "notes": "KIM-0149: Dr. Yehoshua confirma que LAB 4.5 es corrección de orden pendiente; conservar cierre histórico KIM-0139 como contabilidad realizada, pero reinsertar LAB como pendiente a crédito. No ejecutar ni auto-llenar sin confirmación real del doctor.",
+      "updated_at": "2026-07-07T17:31:14+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     }
   ],
   "closed_positions": [
@@ -1561,8 +1586,7 @@
   ],
   "suppress_symbols": [
     "AVAXUSDT",
-    "GOATUSDT",
-    "LABUSDT"
+    "GOATUSDT"
   ],
   "provider_note": "KIM-0141: reporte completo Sr. Eli incluye Balance de Crédito estructurado al final; pendientes por comprar siguen a crédito hasta ejecución.",
   "doctor_rules": [
@@ -1721,6 +1745,14 @@
       "entries_total": 23,
       "active_count": 14,
       "pending_count": 9
+    },
+    {
+      "at": "2026-07-07T17:31:14+00:00",
+      "action": "kim_0149_lab_pending_correction",
+      "summary": "Corrección de orden pendiente LAB: se agrega LAB/USDT pendiente a 4.5 por 1,800 USD a crédito; total visible 31, pendientes a crédito 16, crédito pendiente 28,800 USD.",
+      "entries_total": 31,
+      "active_count": 15,
+      "pending_count": 16
     }
   ],
   "consumed_orders": [
@@ -2143,6 +2175,24 @@
           "old": 5.4873,
           "new": 5.481,
           "root": 9
+        }
+      ]
+    },
+    {
+      "id": "KIM-0149",
+      "at": "2026-07-07T17:31:14+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-07",
+      "summary": "LAB/USDT se reinserta como orden pendiente a 4.5 por corrección explícita del doctor; LAB cerrada KIM-0139 permanece solo en contabilidad realizada.",
+      "changes": [
+        {
+          "id": "kim0149-labusdt-pending-45",
+          "label": "LAB/USDT orden pendiente",
+          "state": "pending",
+          "entry_price": 4.5,
+          "invested_usd": 1800.0,
+          "quantity": 400.0,
+          "credit_usd": 1800.0
         }
       ]
     }
