@@ -17,6 +17,19 @@
     "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS",
     "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/portfolios/ignis_stock_financials"
   ],
+  "client_memory": {
+    "model": "/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/CLIENT_MEMORY_MODEL.md",
+    "registry": "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/client_registry.json",
+    "active_clients": [
+      {
+        "client_id": "sr_eli",
+        "display_name": "Sr. Eli Sacal",
+        "portfolio_id": "sr_eli_2026",
+        "manifest": "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/client_manifest.json"
+      }
+    ],
+    "rule": "Resolve client_id and read client_manifest before any portfolio read, write, send or report."
+  },
   "skill_entrypoints": [
     "/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/skills/SKILL.md",
     "/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kimtools/ignis_financials/skills/SKILL.md"
@@ -47,6 +60,8 @@
     "partial_delivery": "Kim must report accepted/partial, never delivered"
   },
   "hard_rules": [
+    "Resolve client_id before touching any portfolio.",
+    "Never mix client ledgers or use Sr. Eli as fallback for another client.",
     "Do not reconstruct Sr. Eli portfolio from old conversations.",
     "Use structured override/ledger only.",
     "LAB is closed accounting-only after KIM-0139.",

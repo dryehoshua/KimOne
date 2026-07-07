@@ -26,6 +26,15 @@ Memory roots:
 - `/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS`
 - `/Users/dryehoshuapython/Documents/BIFROST/MEMORY/portfolios/ignis_stock_financials`
 
+Client registry:
+
+- `/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/client_registry.json`
+
+Client memory contract:
+
+- `/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/CLIENT_MEMORY_MODEL.md`
+- `/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kimtools/ignis_financials/CLIENT_MEMORY_MODEL.md`
+
 ## Tool Entry Point
 
 Use:
@@ -73,6 +82,32 @@ Repository mirror:
 ```
 
 This skill is the operating contract for the tool. It separates Ignis financial state from Kim's general memory and prevents agents from rebuilding the portfolio from old conversation text.
+
+## Client-Scoped Memory
+
+IGNIS is now treated as a multi-client financial domain. Every portfolio must
+belong to a resolved `client_id` before any read, write, send or report action.
+
+Current active client:
+
+- `sr_eli`: Sr. Eli Sacal, portfolio `sr_eli_2026`.
+
+Open this sequence before portfolio work:
+
+1. `CLIENT_MEMORY_MODEL.md`
+2. `/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/client_registry.json`
+3. The selected client's `client_manifest.json`
+4. Runtime override/ledger
+5. IGNIS tool action
+
+For Sr. Eli, the portable manifest is:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/client_manifest.json
+```
+
+Do not mix client memory. If a future client is added, create its own manifest
+and ledger files before taking portfolio instructions.
 
 ## Actions
 

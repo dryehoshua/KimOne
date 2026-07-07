@@ -86,7 +86,14 @@ All Sr. Eli portfolio, ledger, credit balance, funding, price-adjustment and dai
 ```text
 KimOne/kimtools/ignis_financials/skills/SKILL.md
 BIFROST/kimtools/IGNIS_FINANCIALS/skills/SKILL.md
+BIFROST/kimtools/IGNIS_FINANCIALS/CLIENT_MEMORY_MODEL.md
+BIFROST/MEMORY/IGNIS_FINANCIALS/clients/client_registry.json
+BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/client_manifest.json
 ```
+
+IGNIS is client-scoped. Resolve `client_id` before reading or writing any
+portfolio. Current active portfolio client is `sr_eli` / `sr_eli_2026`; future
+clients must get their own manifest and ledger path before work begins.
 
 Current standard documented there: `KIM-0148`.
 

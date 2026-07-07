@@ -6,12 +6,17 @@ Use this skill whenever an agent works with Ignis Financials, Sr. Eli's portfoli
 
 Financial truth is structured, not conversational.
 
+Every portfolio action must resolve a `client_id` before touching state. IGNIS
+currently has one active client, `sr_eli`, but the tool is multi-client by
+contract.
+
 Use this hierarchy:
 
-1. Current runtime override and ledger.
-2. IGNIS tool execution result.
-3. Current-day operational memory.
-4. Older chats, transcripts and WhatsApp as evidence only.
+1. Client registry and selected client manifest.
+2. Current runtime override and ledger.
+3. IGNIS tool execution result.
+4. Current-day client-scoped operational memory.
+5. Older chats, transcripts and WhatsApp as evidence only.
 
 Never reconstruct the Sr. Eli portfolio from old chat text, memory summaries or WhatsApp snippets. Convert instructions into structured tool actions first.
 
@@ -38,6 +43,17 @@ BIFROST memory:
 /Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS
 /Users/dryehoshuapython/Documents/BIFROST/MEMORY/portfolios
 ```
+
+Client memory:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/CLIENT_MEMORY_MODEL.md
+/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/client_registry.json
+/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/client_manifest.json
+```
+
+If a request names a client that is not registered, stop and create/confirm the
+client manifest first. Never use Sr. Eli as a fallback for another person.
 
 ## Tool Entry Point
 
@@ -158,14 +174,16 @@ When applying such prices:
 
 ## Before Any Write
 
-1. Read current override/ledger.
-2. Make a backup.
-3. Apply only the requested structured changes.
-4. Mirror runtime and repo override.
-5. Validate with `whatsapp_preview`.
-6. Commit repo changes.
-7. Push if credentials work.
-8. Leave a memory note under `MEMORY/IGNIS_FINANCIALS`.
+1. Resolve `client_id` in the client registry.
+2. Read the selected client's manifest.
+3. Read current override/ledger.
+4. Make a backup.
+5. Apply only the requested structured changes.
+6. Mirror runtime and repo override.
+7. Validate with `whatsapp_preview`.
+8. Commit repo changes.
+9. Push if credentials work.
+10. Leave a client-scoped memory/audit note under `MEMORY/IGNIS_FINANCIALS`.
 
 ## Red Flags
 
