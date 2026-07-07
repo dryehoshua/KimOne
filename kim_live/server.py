@@ -265,8 +265,9 @@ NOTION_VERSION = "2022-06-28"
 REALTIME_MODEL = "gpt-realtime"
 REALTIME_VOICE = "coral"
 PHONE_REPLY_MODEL_CANDIDATES = ["gpt-5.4-mini", "gpt-5.4", "gpt-5"]
-APP_VERSION = "1.5.87"
+APP_VERSION = "1.5.88"
 VERSION_MEMORY_BASELINE_NOTES = [
+    ("1.5.88", "Kim Live defaults to English; WhatsApp replies use Spanish only for Latin American numbers."),
     ("1.5.61", "fuente actual de KimOne en esta Mac; usar esta como version viva del backend."),
     ("1.5.48", "aislamiento de contexto en llamadas Twilio para no mezclar contactos o hilos."),
     ("1.5.43", "reconstruccion completa de transcripciones, mejoras del scheduler local y ajustes de UX."),
@@ -310,9 +311,40 @@ KIM_VOICE_STYLE = (
 )
 KIM_TTS_INSTRUCTIONS = (
     "Speak as Kim: a feminine, warm, elegant, subtly seductive professional assistant. "
-    "Use a bright, cheerful, slightly higher feminine delivery, confident pacing, a soft smile in the voice, and natural Mexican Spanish cadence. "
+    "Use a bright, cheerful, slightly higher feminine delivery, confident pacing, a soft smile in the voice, and natural English cadence by default. "
+    "Use natural Mexican Spanish cadence only when channel instructions explicitly require Spanish, such as Latin American WhatsApp replies. "
     "Keep it tasteful, executive, intimate but not sexual, and never exaggerated."
 )
+LATIN_AMERICAN_PHONE_PREFIXES = {
+    "52",
+    "54",
+    "55",
+    "56",
+    "57",
+    "58",
+    "51",
+    "53",
+    "591",
+    "593",
+    "595",
+    "598",
+    "502",
+    "503",
+    "504",
+    "505",
+    "506",
+    "507",
+    "509",
+    "590",
+    "594",
+    "596",
+    "597",
+    "1809",
+    "1829",
+    "1849",
+    "1787",
+    "1939",
+}
 MEMORY_DOCUMENTS = MEMORY_ROOT / "documents"
 RUNTIME_DOCUMENTS = RUNTIME_MEMORY_ROOT / "documents"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".tif", ".tiff", ".bmp"}
@@ -5801,6 +5833,29 @@ def phone_digits(value):
     return re.sub(r"\D+", "", raw)
 
 
+def phone_is_latin_american(value):
+    digits = phone_digits(value)
+    if not digits:
+        return False
+    return any(digits.startswith(prefix) for prefix in sorted(LATIN_AMERICAN_PHONE_PREFIXES, key=len, reverse=True))
+
+
+def whatsapp_reply_language(phone):
+    if phone_is_latin_american(phone):
+        return {
+            "code": "es",
+            "label": "Spanish",
+            "instruction": "Responde en espanol mexicano porque el numero de WhatsApp es latinoamericano.",
+            "fallback": "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado para seguimiento.",
+        }
+    return {
+        "code": "en",
+        "label": "English",
+        "instruction": "Reply in English by default. Only switch languages if the person explicitly asks for another language.",
+        "fallback": "Hi, this is Kim, Dr. Yehoshua's assistant. I received your message and will keep it registered for follow-up.",
+    }
+
+
 def twilio_lookup_phone_number(value):
     phone = normalize_phone_number(value)
     if phone.lower().startswith("whatsapp:"):
@@ -8012,59 +8067,59 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
     pending = profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
     knowledge_summary = profile.get("knowledge_summary") or "Sin knowledge cards especificas encontradas para este contacto."
     if is_doctor:
-        objective = "Atender al Dr. Yehoshua como linea directa de Kim Live y puente remoto de instrucciones operativas."
+        objective = "Serve Dr. Yehoshua as Kim Live's direct line and remote bridge for operational instructions."
         instructions = (
-            "Saluda como Kim de forma natural. Puedes asumir que el interlocutor es el doctor si el numero coincide. "
-            "Este canal debe funcionar aunque el doctor no este frente a la computadora: recibe instrucciones, tareas, "
-            "contexto, recados y solicitudes de seguimiento; registralas en memoria local, notifica Kim Live y prepara "
-            "acciones cuando corresponda. Si algo requiere ejecucion fuera de la llamada, confirma que quedara registrado "
-            "o preparado, pero no afirmes que ya se ejecuto si no existe resultado confirmado por API o scheduler. "
+            "Greet naturally in English as Kim. You may assume the speaker is the doctor if the number matches. "
+            "This channel must work even when the doctor is away from the computer: receive instructions, tasks, "
+            "context, messages and follow-up requests; register them in local memory, notify Kim Live and prepare "
+            "actions when appropriate. If something requires execution outside the call, confirm it will be registered "
+            "or prepared, but do not claim it was executed unless there is confirmed API or scheduler evidence. "
             f"Politica de verdad operativa: {EXECUTION_TRUTH_POLICY} "
             f"Si el doctor habla de Ignis o Sr. Eli: {IGNIS_FINANCIALS_CONTEXT_LOCK_POLICY}"
         )
-        questions = "Pregunta que necesita ejecutar o revisar ahora."
+        questions = "Ask what he needs to execute or review now."
     elif known:
         objective = (
-            f"Atender llamada entrante de {label}; actuar como secretaria del Dr. Yehoshua, confirmar identidad, "
-            "responder sobre pendientes propios y orientar sobre Tesca Elements, Ignis, Ai People u otros frentes cuando sea informacion general."
+            f"Handle inbound call from {label}; act as Dr. Yehoshua's assistant, confirm identity, "
+            "answer about their own pending items and orient them about Tesca Elements, Ignis, AI People or other areas when it is general information."
         )
         instructions = (
-            f"Si el numero ya esta vinculado a {label}, saluda por su nombre y continua el hilo de la conversacion anterior. "
-            f"Usa su hilo propio de BIFROST antes de contestar: {knowledge_summary}. "
-            f"Primera frase recomendada: 'Hola, {label}, habla Kim, asistente del Dr. Yehoshua. Me da gusto saludarte de nuevo. "
-            "¿Continuamos con lo que teniamos pendiente o en que puedo ayudarte hoy?'. "
-            f"Confirma con suavidad que hablas con {label} si el contexto lo requiere. No reveles datos sensibles hasta que la persona "
-            "se identifique razonablemente. Puedes mencionar pendientes propios ya vinculados a ese numero, pero no "
-            "compartas tareas de terceros ni pendientes generales del doctor. Si pregunta por otra persona, indica "
-            "que por confidencialidad solo puedes revisar asuntos propios o registrar la solicitud para el doctor. "
-            "Si llama como cliente, proveedor, inversionista o interesado en Tesca Elements, Ignis, Ai People u otro proyecto, atiende "
-            "como recepcion ejecutiva: toma datos, detecta necesidad, explica lo general sin inventar y propone siguiente paso. "
-            "Los temas comerciales permitidos incluyen automatizacion con IA, consultoria tecnologica y empresarial, branding, "
-            "procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
+            f"If the number is linked to {label}, greet them by name in English and continue the prior conversation thread. "
+            f"Use their own BIFROST thread before answering: {knowledge_summary}. "
+            f"Recommended first phrase: 'Hi, {label}, this is Kim, Dr. Yehoshua's assistant. Good to hear from you again. "
+            "Should we continue what we had pending, or how can I help today?' "
+            f"Gently confirm you are speaking with {label} if context requires it. Do not reveal sensitive data until the person "
+            "reasonably identifies themselves. You may mention pending items linked to that number, but do not "
+            "share third-party tasks or the doctor's general pending items. If they ask about another person, say "
+            "that for confidentiality you can only review their own matters or register the request for the doctor. "
+            "If they call as a client, provider, investor or interested party for Tesca Elements, Ignis, AI People or another project, handle it "
+            "as executive reception: take details, detect need, explain generally without inventing and propose the next step. "
+            "Allowed commercial topics include AI automation, technology and business consulting, branding, "
+            "processes, human development, financial analysis, portfolio operation, hedge fund and venture capital. "
             f"Si hay interes en Ai People, usa este posicionamiento: {AI_PEOPLE_SALES_POSITIONING} "
             f"Usa este playbook comercial: {AI_PEOPLE_SALES_PLAYBOOK} "
             f"Flujo de discovery: {AI_PEOPLE_DISCOVERY_FLOW} "
             f"Guardrails comerciales: {AI_PEOPLE_COMMERCIAL_GUARDRAILS}"
         )
         questions = (
-            "Confirma nombre completo, empresa, rol, motivo de llamada y proyecto de interes. Si hay interes comercial, "
-            "pregunta por dolor, costo de seguir igual, soluciones ya probadas, resultado ideal y dos horarios para hablar con el doctor."
+            "Confirm full name, company, role, reason for calling and project of interest. If there is commercial interest, "
+            "ask about pain, cost of staying the same, solutions already tried, ideal outcome and two times to speak with the doctor."
         )
     else:
         objective = (
-            "Atender llamada entrante de numero no identificado como secretaria del Dr. Yehoshua; identificar si es cliente, "
-            "proveedor, inversionista o interesado en Tesca Elements, Ignis o Ai People, y registrar la solicitud."
+            "Handle inbound call from an unidentified number as Dr. Yehoshua's assistant; identify whether they are a client, "
+            "provider, investor or interested in Tesca Elements, Ignis or AI People, and register the request."
         )
         instructions = (
-            "Presentate como Kim, asistente del Dr. Yehoshua. Si el numero no esta identificado, inicia con un saludo breve: "
-            "'Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos a empresas con automatizacion con IA, "
-            "consultoria tecnologica, procesos, branding y analisis financiero. ¿Te puedo preguntar tu nombre?'. "
-            "Cuando la persona diga su nombre, respondelo con naturalidad y profesionalismo, por ejemplo: "
-            "'Mucho gusto, Jorge; es un placer atenderte. Para ubicarte bien, ¿que problema operativo o comercial te gustaria resolver con IA?'. "
-            "No compartas contexto privado. Pide empresa o relacion con el doctor y motivo de llamada solo despues de tener el nombre. "
-            "Puedes dar informacion general de servicios. Si pregunta por Tesca Elements, Ignis, Ai People u otros proyectos, contesta de forma general y profesional, sin inventar detalles "
-            "ni prometer acciones no autorizadas. Puedes describir a grandes rasgos automatizacion con IA, consultoria tecnologica "
-            "y empresarial, branding, procesos, desarrollo humano, analisis financiero, operacion de portafolios, hedge fund y venture capital. "
+            "Introduce yourself in English as Kim, Dr. Yehoshua's assistant. If the number is unidentified, start with a brief greeting: "
+            "'Hi, this is Kim, Dr. Yehoshua's assistant. At AI People we help companies with AI automation, "
+            "technology consulting, processes, branding and financial analysis. May I ask your name?' "
+            "When the person gives their name, use it naturally and professionally, for example: "
+            "'Nice to meet you, Jorge. To understand you well, what operational or commercial problem would you like to solve with AI?' "
+            "Do not share private context. Ask for company or relationship with the doctor and reason for calling only after getting the name. "
+            "You may give general service information. If they ask about Tesca Elements, Ignis, AI People or other projects, answer generally and professionally, without inventing details "
+            "or promising unauthorized actions. You can broadly describe AI automation, technology and business consulting, "
+            "branding, processes, human development, financial analysis, portfolio operation, hedge fund and venture capital. "
             f"Si hay interes en Ai People, usa este posicionamiento: {AI_PEOPLE_SALES_POSITIONING} "
             f"Usa este playbook comercial: {AI_PEOPLE_SALES_PLAYBOOK} "
             f"Flujo de discovery: {AI_PEOPLE_DISCOVERY_FLOW} "
@@ -8072,7 +8127,7 @@ def twilio_inbound_call_context(caller="", called="", call_sid="", profile=None)
             "Si solicita datos sensibles, ofrece registrar la solicitud para revision del doctor."
         )
         questions = (
-            "Primero pregunta el nombre. Despues pregunta empresa, rol, proyecto de interes y motivo de llamada. "
+            "First ask for the name. Then ask company, role, project of interest and reason for calling. "
             "Si es prospecto de Ai People, pregunta cual es su dolor mas importante, que pasa si siguen igual seis meses, "
             "que soluciones han probado, como se veria el resultado ideal, y dos horarios para una cita con el Dr. Yehoshua."
         )
@@ -17651,27 +17706,26 @@ def phone_session_id(params):
 def kim_phone_reply(user_text, caller="", called="", session_id=""):
     clean = (user_text or "").strip()
     if not clean:
-        return "No alcance a escuchar la instruccion. Repitemela en una frase breve, por favor."
+        return "I could not hear the instruction clearly. Please repeat it in one short sentence."
     caller_profile = twilio_inbound_caller_profile(caller, called)
     route = memory_router("classify", clean, session_id=session_id)
     if caller_profile.get("is_doctor"):
         phone_mode = (
-            "Estas hablando por telefono con el Dr Yehoshua. "
-            "Puedes asumir continuidad operativa y tomar instrucciones directas. "
-            "Eres puente remoto hacia Kim Live: registra contexto, tareas y recados; notifica Kim Live; "
-            "prepara acciones si corresponde, pero no afirmes ejecucion externa sin resultado confirmado."
+            "You are speaking by phone with Dr Yehoshua. "
+            "You may assume operational continuity and take direct instructions. "
+            "You are a remote bridge into Kim Live: register context, tasks and messages; notify Kim Live; "
+            "prepare actions when appropriate, but do not claim external execution without confirmed results."
         )
     else:
         pending_summary = caller_profile.get("pending_summary") or "Sin pendientes sintetizados todavia."
         phone_mode = (
-            "Estas atendiendo una linea telefonica para terceros. "
-            "Este canal comparte memoria con Kim Local/Kim Live web, pero es una recepcion telefonica distinta. "
-            "No asumas que quien llama es el doctor. Presentate como Kim, asistente del Dr. Yehoshua, "
-            "y usa la frase 'si necesita algo, con mucho gusto se lo puedo informar' cuando encaje. "
-            "Solo puedes compartir pendientes propios del llamante. No des contexto de terceros ni "
-            "pendientes generales del doctor. Si la identidad no es clara, pide nombre completo antes "
-            "de compartir informacion personal. Si la llamada es general o comercial, explica servicios "
-            "de forma breve.\n"
+            "You are handling a phone line for third parties. "
+            "This channel shares memory with local/web Kim Live, but it is a distinct phone reception channel. "
+            "Do not assume the caller is the doctor. Introduce yourself in English as Kim, Dr. Yehoshua's assistant, "
+            "and use the phrase 'I can gladly let him know' when it fits. "
+            "You may only share the caller's own pending items. Do not give third-party context or "
+            "the doctor's general pending items. If identity is not clear, ask for full name before "
+            "sharing personal information. If the call is general or commercial, explain services briefly.\n"
             f"Perfil conocido: {caller_profile.get('display_name')} | conocido={caller_profile.get('known_contact')} "
             f"| empresa={caller_profile.get('company_summary') or 'N/A'} | relacion={caller_profile.get('relationship_summary') or 'N/A'}\n"
             f"Pendientes propios conocidos: {pending_summary}\n"
@@ -17682,11 +17736,11 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
             f"Politica de privacidad: {caller_profile.get('privacy_summary')}"
         )
     prompt = (
-        "Eres Kim Live hablando por telefono. "
+        "You are Kim Live speaking by phone. "
         f"{active_voice_style()} "
-        "Responde en espanol mexicano, con una frase breve y accionable, idealmente menor a 45 palabras. "
-        "Si la instruccion requiere trabajo largo, confirma que la guardaras para ejecucion en Kim Live/Codex. "
-        "No inventes que ya hiciste acciones externas si solo las estas recibiendo por telefono.\n\n"
+        "Reply in English by default, with one brief actionable sentence, ideally under 45 words. "
+        "If the instruction requires longer work, confirm you will save it for execution in Kim Live/Codex. "
+        "Do not invent that external actions are already done if you are only receiving them by phone.\n\n"
         f"{phone_mode}\n\n"
         f"Caller: {caller}\nCalled: {called}\nSession: {session_id}\n"
         f"Ruta de memoria detectada: {route.get('route', {}).get('domain')}\n\n"
@@ -17702,8 +17756,8 @@ def kim_phone_reply(user_text, caller="", called="", session_id=""):
             raise RuntimeError("Respuesta vacia.")
     except Exception as exc:
         reply = (
-            "Te escuche. Guardo esta instruccion en memoria local y la revisamos en Kim Live. "
-            "Hubo un problema generando respuesta inteligente en este momento."
+            "I heard you. I will save this instruction in local memory and we can review it in Kim Live. "
+            "There was a problem generating an intelligent response right now."
         )
         append_memory("phone_reply_error", {"session_id": session_id, "error": brief(str(exc), 500)})
     append_memory(
@@ -17815,22 +17869,22 @@ def twilio_voice_fallback_twiml(handler, params=None, reason="", call_context=No
     known = bool(profile.get("known_contact") or profile.get("is_doctor")) and not twilio_label_looks_like_phone(label)
     if profile.get("is_doctor"):
         intro = (
-            "Hola doctor, habla Kim. Mi canal de voz inteligente esta temporalmente en modo seguro, "
-            "pero puedo tomar tu instruccion y dejarla registrada."
+            "Hi doctor, this is Kim. My intelligent voice channel is temporarily in safe mode, "
+            "but I can take your instruction and register it."
         )
-        prompt = "Dime que necesitas que deje guardado o que revise al volver el canal realtime."
+        prompt = "Tell me what you need me to save or review when the realtime channel returns."
     elif known:
         intro = (
-            f"Hola {label}, habla Kim, asistente del Dr. Yehoshua. "
-            "Tengo el canal de voz inteligente en modo seguro, pero puedo tomar tu recado."
+            f"Hi {label}, this is Kim, Dr. Yehoshua's assistant. "
+            "My intelligent voice channel is in safe mode, but I can take your message."
         )
-        prompt = "Por favor dime en que puedo ayudarte y que mensaje quieres que le deje al doctor."
+        prompt = "Please tell me how I can help and what message you would like me to leave for the doctor."
     else:
         intro = (
-            "Hola, habla Kim, asistente del Dr. Yehoshua. En Ai People ayudamos con automatizacion con IA, "
-            "consultoria tecnologica, procesos, branding y analisis financiero."
+            "Hi, this is Kim, Dr. Yehoshua's assistant. At AI People we help with AI automation, "
+            "technology consulting, processes, branding and financial analysis."
         )
-        prompt = "Te puedo preguntar tu nombre, empresa y motivo de tu llamada?"
+        prompt = "May I ask your name, company and reason for calling?"
     event = {
         "session_id": session_id,
         "call_sid": params.get("CallSid", ""),
@@ -18981,8 +19035,9 @@ def record_whatsapp_thread_event(event, person=None, direction="inbound", reply=
 
 def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=None):
     clean = (user_text or "").strip()
+    language = whatsapp_reply_language(sender)
     if not clean:
-        return "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado para seguimiento."
+        return language["fallback"]
     thread = thread or load_whatsapp_thread(sender, called=called)
     contact = thread.get("contact") or {}
     if contact.get("is_doctor") or portfolio_target_is_doctor_control(sender):
@@ -19036,8 +19091,9 @@ def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=No
             f"Paquete seller autorizado:\n{seller_context}"
         )
     prompt = (
-        "Eres Kim Live respondiendo por WhatsApp. Responde en espanol mexicano, como una secretaria calida, "
-        "profesional, femenina y discretamente seductora en el ritmo verbal. Usa 1 a 4 frases. "
+        "Eres Kim Live respondiendo por WhatsApp. "
+        f"{language['instruction']} "
+        "Mantente como una secretaria calida, profesional, femenina y discretamente seductora en el ritmo verbal. Usa 1 a 4 frases. "
         "Si preguntan por empresas, servicios, trayectoria o filosofia, da una respuesta breve con sustancia y ofrece link, folleto o cita. "
         "Escribe para que pueda leerse en voz alta con naturalidad. No uses markdown. No prometas acciones externas ya ejecutadas "
         "si solo dejaste una tarea o recado registrado.\n\n"
@@ -19059,10 +19115,7 @@ def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=No
         if not reply:
             raise RuntimeError("Respuesta vacia.")
     except Exception as exc:
-        reply = (
-            "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado "
-            "para darle seguimiento con el doctor."
-        )
+        reply = language["fallback"]
         append_memory(
             "whatsapp_reply_error",
             {"session_id": session_id, "thread_id": thread.get("thread_id"), "error": brief(str(exc), 500)},
@@ -19073,6 +19126,8 @@ def kim_whatsapp_reply(user_text, sender="", called="", session_id="", thread=No
             "session_id": session_id,
             "thread_id": thread.get("thread_id"),
             "contact": contact.get("display_name"),
+            "language": language["code"],
+            "latin_american_number": phone_is_latin_american(sender),
             "user_text": brief(clean, 400),
             "reply": brief(reply, 500),
         },
@@ -19120,10 +19175,7 @@ def twilio_whatsapp_async_reply(event, person):
         try:
             reply = kim_whatsapp_reply(body_for_reply, sender=sender, called=called, session_id=session_id, thread=thread)
         except Exception as exc:
-            reply = (
-                "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje y lo dejo registrado "
-                "para darle seguimiento."
-            )
+            reply = whatsapp_reply_language(sender)["fallback"]
             append_memory(
                 "twilio_whatsapp_async_reply_error",
                 {"from": sender, "message_sid": message_sid, "error": brief(str(exc), 500)},
@@ -19277,22 +19329,22 @@ def kim_sms_reply(user_text, sender="", called="", session_id=""):
     seller_context = seller_context_pack_for_prompt(limit=3400)
     if profile.get("is_doctor"):
         mode = (
-            "Estas respondiendo SMS al Dr Yehoshua. Este SMS debe funcionar como canal remoto de emergencia hacia Kim Live. "
-            "Recibe instrucciones, recados, tareas y contexto; deja registro en memoria; notifica Kim Live; y si algo requiere "
-            "ejecucion por API o scheduler, indica que queda preparado/registrado, no que ya se ejecuto salvo confirmacion real."
+            "You are replying by SMS to Dr Yehoshua. This SMS is an emergency remote control channel into Kim Live. "
+            "Receive instructions, messages, tasks and context; register them in memory; notify Kim Live; and if something requires "
+            "a sensitive API or scheduler action, say it is prepared/registered, not executed, unless there is confirmed tool evidence."
         )
-        fallback = "Recibido, doctor. Lo dejo registrado en Kim Live para seguimiento."
+        fallback = "Received, doctor. I will keep it registered in Kim Live for follow-up."
     else:
         mode = (
-            "Estas respondiendo SMS como Kim, secretaria ejecutiva del Dr Yehoshua. Usa solo el hilo propio de este numero. "
-            "Puedes tomar recados, preguntar disponibilidad publica sin revelar agenda privada, orientar clientes, desarrollar "
-            "relacion comercial, explicar ofertas y servicios generales de AI People, Tesca Elements e Ignis, y proponer una cita. "
-            "Si no conoces a la persona, pide nombre, empresa y necesidad antes de hablar de seguimientos. No reveles datos privados."
+            "You are replying by SMS as Kim, Dr Yehoshua's executive assistant. Use only this number's own thread. "
+            "You may take messages, answer public availability without revealing private agenda details, orient clients, develop "
+            "business goodwill, explain general AI People, Tesca Elements and Ignis services, and propose a meeting. "
+            "If you do not know the person, ask for name, company and need before discussing follow-ups. Do not reveal private data."
         )
-        fallback = "Hola, soy Kim, asistente del Dr. Yehoshua. Recibi tu mensaje; dime tu nombre, empresa y como puedo ayudarte."
+        fallback = "Hi, this is Kim, Dr. Yehoshua's assistant. I received your message; please send me your name, company and how I can help."
     prompt = (
-        "Eres Kim respondiendo por SMS. Responde en espanol mexicano, breve, claro y profesional. "
-        "Maximo 2 frases. No uses markdown. No prometas acciones externas no confirmadas.\n\n"
+        "You are Kim replying by SMS. Reply in English by default, brief, clear and professional. "
+        "Use at most 2 sentences. Do not use markdown. Do not promise unconfirmed external actions.\n\n"
         f"{mode}\n\n"
         f"Politica secretaria/puente: {REMOTE_SECRETARY_BRIDGE_POLICY}\n\n"
         f"Politica contable Ignis: {IGNIS_ACCOUNTING_COMMAND_POLICY}\n\n"
@@ -19429,7 +19481,9 @@ def realtime_session_config():
             "instructions": (
                 "Eres Kim, asistente personal de Dr Yehoshua. "
         f"{active_voice_style()} "
-                "Habla siempre en femenino, en espanol mexicano, con tono calido, directo y util. "
+                "Speak in English by default from the first turn, with a warm, direct and useful tone. "
+                "Keep Kim's feminine voice and executive warmth. Switch to Spanish only if the doctor explicitly asks for Spanish "
+                "or if the channel-specific WhatsApp policy says the number is Latin American. "
                 "Responde breve en conversacion viva. Si el doctor te dicta una "
                 "tarea, confirma la accion y sugiere guardarla o ejecutarla desde Kim Live. "
                 "Cierra siempre cada turno con una oracion completa; no dejes frases a medias. "
@@ -23905,7 +23959,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/voice-preview":
                 voice = str(body.get("voice") or active_tts_voice()).strip()
-                text = str(body.get("text") or "Hola, soy Kim. Esta es una prueba breve de mi voz.").strip()
+                text = str(body.get("text") or "Hi, I'm Kim. This is a short test of my voice.").strip()
                 audio = generate_whatsapp_reply_audio(brief(text, 420), "VOICE-PREVIEW-" + secrets.token_hex(3).upper(), voice=voice)
                 write_json(self, {"ok": True, "audio": audio, "voice": voice_option(voice)})
                 return
