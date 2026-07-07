@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0149",
-  "updated_at": "2026-07-07T17:31:14+00:00",
-  "standard_note": "KIM-0149: LAB/USDT pendiente a 4.5 por corrección explícita del doctor; 31 órdenes vivas, 16 pendientes a crédito.",
+  "standard_version": "KIM-0150",
+  "updated_at": "2026-07-07T20:09:04+00:00",
+  "standard_note": "KIM-0150: LAB/USDT comprada en 4.5 usando balance disponible; precio actual 5.16; no crédito. 31 órdenes vivas: 16 cubiertas, 0 a crédito, 15 pendientes.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0146",
-      "updated_at": "2026-07-07T17:31:14+00:00",
+      "version": "KIM-0150",
+      "updated_at": "2026-07-07T20:09:04+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -399,11 +399,11 @@
       "realized_profit_for_statement_usd": 643.96,
       "realized_profit_note": "Profit actual generado despues de LAB: FTT +1032.57, ZEC -0.55, AVAX -96.93 y LAB -291.13 = 643.96 USD.",
       "client_total_net_considered_usd": 36164.11,
-      "firm_assigned_usd": 34054,
-      "available_balance_usd": 2110.11,
+      "firm_assigned_usd": 35854,
+      "available_balance_usd": 310.11,
       "credit_bought_pending_payment_usd": 0,
-      "credit_pending_execution_usd": 28800,
-      "credit_total_usd": 28800,
+      "credit_pending_execution_usd": 27000,
+      "credit_total_usd": 27000,
       "covered_orders": [
         [
           "ADA",
@@ -464,6 +464,10 @@
         [
           "SUI",
           1800
+        ],
+        [
+          "LAB",
+          1800
         ]
       ],
       "bought_on_credit_pending_payment": [],
@@ -505,10 +509,6 @@
           1800
         ],
         [
-          "LAB",
-          1800
-        ],
-        [
           "AAVE",
           1800
         ],
@@ -547,9 +547,10 @@
         "KIM-0141: El Balance de Crédito completo se anexa siempre al final del portafolio completo y del reporte diario.",
         "KIM-0141: No sustituir el Balance de Crédito por una sola línea compacta; usar secciones y listas.",
         "KIM-0146: las nuevas órdenes/refuerzos XRP, HBAR, TRUMP, AVAX y WLD cuentan dentro de Órdenes Pendientes A Crédito hasta ejecución real.",
-        "KIM-0149: LAB/USDT vuelve como orden pendiente a 4.5 por corrección explícita del doctor; no ejecutarla sin confirmación real.",
         "KIM-0149: el cierre histórico LAB KIM-0139 permanece solo para P/L realizado y no cancela la nueva orden pendiente LAB.",
-        "Antes de enviar balance, validar que 15 + 0 + 16 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir."
+        "KIM-0150: LAB/USDT está comprada en 4.5 con balance disponible, no crédito; precio actual manual validado 5.16.",
+        "KIM-0150: el Balance de Crédito debe mostrar LAB dentro de Órdenes Compradas Cubiertas Completas y no dentro de pendientes ni crédito.",
+        "Antes de enviar balance, validar que 16 + 0 + 15 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -568,15 +569,15 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0149: LAB/USDT se reinserta como orden pendiente a 4.5 por instrucción/corrección del doctor; balance queda 31 órdenes vivas: 15 cubiertas, 0 compradas a crédito, 16 pendientes a crédito; LAB cerrada KIM-0139 permanece solo para P/L realizado.",
+      "latest_format_note": "KIM-0150: LAB/USDT ya fue comprada en 4.5 usando balance disponible de 2,000 USD, no crédito; precio actual informado 5.16. Balance queda 31 órdenes vivas: 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito; saldo disponible estimado 310.11 USD; crédito pendiente por ejecutar 27,000 USD.",
       "visible_order_count": 31,
       "section_count_validation": {
-        "covered_orders": 15,
+        "covered_orders": 16,
         "bought_on_credit": 0,
-        "pending_on_credit": 16,
+        "pending_on_credit": 15,
         "total_visible_orders": 31,
-        "rule": "KIM-0149: reporte completo debe cuadrar 15 cubiertas + 0 compradas a crédito + 16 pendientes a crédito = 31 órdenes vivas; LAB pendiente 4.5 incluida, LAB cerrada KIM-0139 solo contabilidad realizada.",
-        "covered_active": 15,
+        "rule": "KIM-0150: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; LAB comprada 4.5 con balance disponible, no crédito.",
+        "covered_active": 16,
         "bought_on_credit_pending_payment": 0
       },
       "daily_report_required": true,
@@ -1486,20 +1487,23 @@
     {
       "id": "kim0149-labusdt-pending-45",
       "symbol": "LABUSDT",
-      "state": "pending",
+      "state": "active",
       "order": 30,
-      "label": "LAB/USDT orden pendiente",
+      "label": "LAB/USDT",
       "invested_usd": 1800.0,
       "entry_price": 4.5,
       "quantity": 400.0,
-      "credit": true,
-      "credit_usd": 1800.0,
+      "credit": false,
+      "credit_usd": 0.0,
       "side": "BUY",
-      "source": "doctor_pending_lab_correction_2026_07_07",
-      "notes": "KIM-0149: Dr. Yehoshua confirma que LAB 4.5 es corrección de orden pendiente; conservar cierre histórico KIM-0139 como contabilidad realizada, pero reinsertar LAB como pendiente a crédito. No ejecutar ni auto-llenar sin confirmación real del doctor.",
-      "updated_at": "2026-07-07T17:31:14+00:00",
-      "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico.",
+      "updated_at": "2026-07-07T20:09:04+00:00",
+      "executed_at": "2026-07-07T14:08:09",
+      "execution_ref": "tx_4ca1fe072644",
+      "current_price": 5.16,
+      "current_price_status": "doctor_validated_current_price",
+      "current_price_source": "doctor_chat_2026_07_07"
     }
   ],
   "closed_positions": [
@@ -1753,6 +1757,14 @@
       "entries_total": 31,
       "active_count": 15,
       "pending_count": 16
+    },
+    {
+      "at": "2026-07-07T20:09:04+00:00",
+      "action": "kim_0150_lab_executed_cash_balance",
+      "summary": "LAB/USDT ejecutada/comprada en 4.5 por 1,800 USD usando balance disponible de 2,000 USD; no crédito. Precio actual manual 5.16. Balance: 16 cubiertas, 0 a crédito, 15 pendientes; crédito pendiente 27,000 USD.",
+      "entries_total": 31,
+      "active_count": 16,
+      "pending_count": 15
     }
   ],
   "consumed_orders": [
@@ -2193,6 +2205,28 @@
           "invested_usd": 1800.0,
           "quantity": 400.0,
           "credit_usd": 1800.0
+        }
+      ]
+    },
+    {
+      "id": "KIM-0150",
+      "at": "2026-07-07T20:09:04+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-07",
+      "summary": "LAB/USDT se marca como comprada en 4.5 usando balance disponible, no crédito; precio actual informado por el doctor 5.16.",
+      "changes": [
+        {
+          "id": "kim0149-labusdt-pending-45",
+          "execution_ref": "tx_4ca1fe072644",
+          "label": "LAB/USDT",
+          "old_state": "pending",
+          "new_state": "active",
+          "entry_price": 4.5,
+          "current_price": 5.16,
+          "invested_usd": 1800.0,
+          "quantity": 400.0,
+          "credit_usd": 0.0,
+          "funding_source": "available_usd_balance"
         }
       ]
     }
