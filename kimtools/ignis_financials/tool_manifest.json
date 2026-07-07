@@ -1,7 +1,7 @@
 {
   "id": "ignis_financials.portfolio",
   "name": "IGNIS FINANCIALS Portfolio Tool",
-  "version": "KIM-0141",
+  "version": "KIM-0148",
   "owner": "Dr. Yehoshua / AI People",
   "runtime": {
     "type": "python",
@@ -16,6 +16,10 @@
   "memory_roots": [
     "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS",
     "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/portfolios/ignis_stock_financials"
+  ],
+  "skill_entrypoints": [
+    "/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/skills/SKILL.md",
+    "/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kimtools/ignis_financials/skills/SKILL.md"
   ],
   "actions": {
     "read": [
@@ -49,5 +53,14 @@
     "Pending credit orders are covered only when executed.",
     "Full reports append structured Balance de Credito.",
     "Long WhatsApp balance messages must be split and delivery-verified."
-  ]
+  ],
+  "current_standard": {
+    "id": "KIM-0148",
+    "visible_live_orders": 30,
+    "covered_active_positions": 15,
+    "bought_on_credit_pending_coverage": 0,
+    "pending_on_credit_orders": 15,
+    "pending_on_credit_total_usd": 27000,
+    "lab_state": "closed_accounting_only"
+  }
 }

@@ -49,6 +49,8 @@ The Balance de Crédito must include:
 - Pending orders remain pending on credit until execution.
 - Closed positions affect realized P/L and accounting, not live order count.
 - LAB is closed after KIM-0139 and must not appear as live or pending.
+- Current live standard is KIM-0148: 30 visible live orders, 15 covered active, 0 bought-on-credit pending coverage, 15 pending-on-credit.
+- Final WhatsApp prices from KIM-0148 are canonical until Dr. Yehoshua issues a new structured change.
 
 ## Daily Automation Standard
 
@@ -59,8 +61,7 @@ Before sending:
 1. Refresh prices.
 2. Validate all prices.
 3. Block if any active or pending price is unvalidated.
-4. Compose 25 live order lines.
+4. Compose 30 live order lines.
 5. Append Balance de Crédito.
 6. Send by WhatsApp to the doctor.
 7. Store delivery proof.
-

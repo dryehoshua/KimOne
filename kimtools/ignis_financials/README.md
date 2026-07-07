@@ -44,16 +44,35 @@ Do not copy portfolio calculations into a second script. The wrapper is a stable
 
 ## Current Standard
 
-Current live standard: `KIM-0141`.
+Current live standard: `KIM-0148`.
 
 Rules:
 
-- Sr. Eli reports contain `25` live orders after LAB closed.
+- Sr. Eli reports contain `30` visible live orders after LAB closed:
+  - `15` covered active positions.
+  - `0` bought-on-credit positions pending coverage.
+  - `15` pending-on-credit orders.
 - LAB is closed accounting-only: entry `10.044`, stop loss `8.54`, net P/L `-291.13 USD`.
 - Active bought-on-credit positions are now covered after the `2026-07-01` funding.
 - Pending orders remain pending on credit until execution.
 - Full portfolio reports must append the structured `Balance de Crédito` at the end.
 - Long WhatsApp balance messages must be split into safe chunks and each chunk must be confirmed delivered.
+
+## Skill Entry Point
+
+Every agent that touches Ignis ledger, Sr. Eli portfolio, credit balance, funding, reports, WhatsApp portfolio delivery or market/fundamental reporting must first read:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/kimtools/IGNIS_FINANCIALS/skills/SKILL.md
+```
+
+Repository mirror:
+
+```text
+/Users/dryehoshuapython/Documents/BIFROST/repos/KimOne/kimtools/ignis_financials/skills/SKILL.md
+```
+
+This skill is the operating contract for the tool. It separates Ignis financial state from Kim's general memory and prevents agents from rebuilding the portfolio from old conversation text.
 
 ## Actions
 
@@ -141,7 +160,7 @@ Current canonical values are read from `accounting.report_protocol` in `portfoli
 - Never reconstruct the portfolio from old conversations, backups or memory summaries.
 - Never report LAB as live or pending after `KIM-0139`.
 - Never cover pending orders with funding until they execute.
-- Never send all 25 lines again when the doctor asks only for a balance, correction, range or selection.
+- Never send all 30 lines again when the doctor asks only for a balance, correction, range or selection.
 - Never say Twilio delivered a message unless Twilio confirms `delivered` or `read`.
 - Never mutate accounting without an explicit doctor instruction or a confirmed tool action.
 - Do not use Codex automation as the operating clock for this module. Kim Live local scheduler is responsible for daily runs.
@@ -196,4 +215,3 @@ Future Cosmos module boundaries:
 - `paper_broker`: simulated orders and alert integration.
 - `scheduler_local_clock`: daily and timed jobs independent of Codex.
 - `provider_connectors`: Twilio, WhatsApp, TradingView, CoinGecko/CoinMarketCap.
-

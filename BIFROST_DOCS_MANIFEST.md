@@ -1,6 +1,6 @@
 # BIFROST Docs Manifest
 
-Last updated: 2026-07-02
+Last updated: 2026-07-06
 
 This Git repo contains the Kim Live source, not the entire BIFROST operating
 folder. The full portable memory/docs folder lives outside this repo:
@@ -34,6 +34,7 @@ If moving to another machine or reconstructing from backup, copy the whole
 
 - `BIFROST/README.md`
 - `BIFROST/AGENT_HANDOFF.md`
+- `BIFROST/MEMORY/context/codex_chat_handoff_2026-07-06_kim_bifrost_setup.md`
 - `BIFROST/docs/CURRENT_STATE_SUMMARY_FOR_NEW_CODEX.md`
 - `BIFROST/docs/MIGRATION_RUNBOOK.md`
 - `BIFROST/docs/DOCUMENTATION_INDEX_2026-06-07.md`
@@ -46,6 +47,7 @@ If moving to another machine or reconstructing from backup, copy the whole
 - `KimOne/kim_os/README.md`
 - `KimOne/intelligences/miu/README.md`
 - `KimOne/kimtools/ignis_financials/README.md`
+- `KimOne/kimtools/ignis_financials/skills/SKILL.md`
 
 ## Modular Architecture
 
@@ -74,6 +76,19 @@ As of 2026-06-07, GitHub SSH access is configured and
 ```text
 3e6f184 Update BIFROST documentation handoff
 ```
+
+More recent local work has advanced KimOne beyond this older note. Check `git log --oneline -5` for the current commit before editing.
+
+## Current IGNIS Rule
+
+All Sr. Eli portfolio, ledger, credit balance, funding, price-adjustment and daily financial-report work must route through the IGNIS tool:
+
+```text
+KimOne/kimtools/ignis_financials/skills/SKILL.md
+BIFROST/kimtools/IGNIS_FINANCIALS/skills/SKILL.md
+```
+
+Current standard documented there: `KIM-0148`.
 
 Remote:
 
