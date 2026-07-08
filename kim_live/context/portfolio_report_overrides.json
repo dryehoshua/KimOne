@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0150",
-  "updated_at": "2026-07-07T20:09:04+00:00",
-  "standard_note": "KIM-0150: LAB/USDT comprada en 4.5 usando balance disponible; precio actual 5.16; no crédito. 31 órdenes vivas: 16 cubiertas, 0 a crédito, 15 pendientes.",
+  "standard_version": "KIM-0151",
+  "updated_at": "2026-07-08T17:44:34+00:00",
+  "standard_note": "KIM-0151: se descuentan dos refuerzos LAB cerrados por stop loss 5%; pérdida neta total -111.60 USD incluyendo comisiones; portafolio vivo sin cambios.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0150",
-      "updated_at": "2026-07-07T20:09:04+00:00",
+      "version": "KIM-0151",
+      "updated_at": "2026-07-08T17:44:34+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -396,11 +396,11 @@
       ],
       "client_funding_total_mxn": 620000,
       "client_funding_total_usd": 35520.15,
-      "realized_profit_for_statement_usd": 643.96,
-      "realized_profit_note": "Profit actual generado despues de LAB: FTT +1032.57, ZEC -0.55, AVAX -96.93 y LAB -291.13 = 643.96 USD.",
-      "client_total_net_considered_usd": 36164.11,
+      "realized_profit_for_statement_usd": 532.36,
+      "realized_profit_note": "KIM-0151: Profit realizado ajustado: KIM-0150 643.96 USD menos refuerzos LAB cerrados por stop (-90.00 USD bruto) y comisiones 21.60 USD = 532.36 USD.",
+      "client_total_net_considered_usd": 36052.51,
       "firm_assigned_usd": 35854,
-      "available_balance_usd": 310.11,
+      "available_balance_usd": 198.51,
       "credit_bought_pending_payment_usd": 0,
       "credit_pending_execution_usd": 27000,
       "credit_total_usd": 27000,
@@ -550,7 +550,9 @@
         "KIM-0149: el cierre histórico LAB KIM-0139 permanece solo para P/L realizado y no cancela la nueva orden pendiente LAB.",
         "KIM-0150: LAB/USDT está comprada en 4.5 con balance disponible, no crédito; precio actual manual validado 5.16.",
         "KIM-0150: el Balance de Crédito debe mostrar LAB dentro de Órdenes Compradas Cubiertas Completas y no dentro de pendientes ni crédito.",
-        "Antes de enviar balance, validar que 16 + 0 + 15 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir."
+        "Antes de enviar balance, validar que 16 + 0 + 15 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir.",
+        "KIM-0151: los dos refuerzos LAB de 900 USD a 1.8 y 2.16 están cerrados por stop loss y no deben aparecer vivos ni pendientes.",
+        "KIM-0151: descontar pérdida neta total -111.60 USD de los refuerzos LAB cerrados, incluyendo 21.60 USD de comisiones."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -569,14 +571,14 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0150: LAB/USDT ya fue comprada en 4.5 usando balance disponible de 2,000 USD, no crédito; precio actual informado 5.16. Balance queda 31 órdenes vivas: 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito; saldo disponible estimado 310.11 USD; crédito pendiente por ejecutar 27,000 USD.",
+      "latest_format_note": "KIM-0151: dos refuerzos LAB a crédito de 900 USD cada uno fueron cerrados por stop loss 5%: entrada 1.8 salida 1.71 y entrada 2.16 salida 2.052. Pérdida neta total -111.60 USD incluyendo comisiones; saldo disponible ajustado a 198.51 USD; no cambia el portafolio vivo: 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
         "bought_on_credit": 0,
         "pending_on_credit": 15,
         "total_visible_orders": 31,
-        "rule": "KIM-0150: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; LAB comprada 4.5 con balance disponible, no crédito.",
+        "rule": "KIM-0151: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; los dos refuerzos LAB cerrados solo afectan P/L realizado.",
         "covered_active": 16,
         "bought_on_credit_pending_payment": 0
       },
@@ -1586,6 +1588,50 @@
       "notes": "KIM-0139: LAB/USDT se ejecuto a 10.044 y se cerro por stop loss en 8.54 por instruccion del doctor. Registrar perdida y retirar LAB de ordenes vivas; el portafolio queda con 25 ordenes vivas. Venta final confirmada: entrada 10.044, salida 8.54; venta bruta 1530.47 USD; P/L bruto -269.53 USD; fee 21.6 USD; P/L neto -291.13 USD.",
       "order": 30,
       "credit": true
+    },
+    {
+      "id": "kim0151-lab-refuerzo-900-180-stop",
+      "symbol": "LABUSDT",
+      "identifier": "LAB-R1",
+      "label": "LAB/USDT refuerzo cerrado por stop loss",
+      "state": "sold",
+      "invested_usd": 900.0,
+      "entry_price": 1.8,
+      "quantity": 500.0,
+      "sell_price": 1.71,
+      "stop_loss_pct": 5.0,
+      "gross_sale_usd": 855.0,
+      "gross_pnl_usd": -45.0,
+      "fee_rate": 0.012,
+      "fee_base_usd": 900.0,
+      "fee_usd": 10.8,
+      "net_pnl_usd": -55.8,
+      "source": "doctor_confirmed_lab_refuerzo_stop_loss_2026_07_08",
+      "sold_at": "2026-07-07",
+      "credit": true,
+      "notes": "KIM-0151: refuerzo LAB de 900 USD a 1.8 colocado a crédito el 2026-07-07; stop loss 5% ejecutado en 1.71. P/L bruto -45.00 USD; fee 1.2% 10.80 USD; P/L neto -55.80 USD. Cerrada; no debe aparecer viva ni pendiente."
+    },
+    {
+      "id": "kim0151-lab-refuerzo-900-216-stop",
+      "symbol": "LABUSDT",
+      "identifier": "LAB-R2",
+      "label": "LAB/USDT refuerzo cerrado por stop loss",
+      "state": "sold",
+      "invested_usd": 900.0,
+      "entry_price": 2.16,
+      "quantity": 416.6666666667,
+      "sell_price": 2.052,
+      "stop_loss_pct": 5.0,
+      "gross_sale_usd": 855.0,
+      "gross_pnl_usd": -45.0,
+      "fee_rate": 0.012,
+      "fee_base_usd": 900.0,
+      "fee_usd": 10.8,
+      "net_pnl_usd": -55.8,
+      "source": "doctor_confirmed_lab_refuerzo_stop_loss_2026_07_08",
+      "sold_at": "2026-07-07",
+      "credit": true,
+      "notes": "KIM-0151: refuerzo LAB de 900 USD a 2.16 colocado a crédito el 2026-07-07; stop loss 5% ejecutado en 2.052. P/L bruto -45.00 USD; fee 1.2% 10.80 USD; P/L neto -55.80 USD. Cerrada; no debe aparecer viva ni pendiente."
     }
   ],
   "suppress_symbols": [
@@ -1762,6 +1808,14 @@
       "at": "2026-07-07T20:09:04+00:00",
       "action": "kim_0150_lab_executed_cash_balance",
       "summary": "LAB/USDT ejecutada/comprada en 4.5 por 1,800 USD usando balance disponible de 2,000 USD; no crédito. Precio actual manual 5.16. Balance: 16 cubiertas, 0 a crédito, 15 pendientes; crédito pendiente 27,000 USD.",
+      "entries_total": 31,
+      "active_count": 16,
+      "pending_count": 15
+    },
+    {
+      "at": "2026-07-08T17:44:34+00:00",
+      "action": "kim_0151_lab_refuerzo_stop_losses",
+      "summary": "Dos refuerzos LAB de 900 USD a crédito cerrados por stop loss 5%; pérdida bruta -90.00 USD, comisiones 21.60 USD, pérdida neta -111.60 USD. No cambia conteo vivo.",
       "entries_total": 31,
       "active_count": 16,
       "pending_count": 15
@@ -2229,6 +2283,64 @@
           "funding_source": "available_usd_balance"
         }
       ]
+    },
+    {
+      "id": "KIM-0151",
+      "at": "2026-07-08T17:44:34+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-08",
+      "summary": "Se descuentan dos refuerzos LAB cerrados por stop loss 5%: 900 USD a 1.8 y 900 USD a 2.16, ambos a crédito, con pérdida neta total -111.60 USD incluyendo comisiones.",
+      "changes": [
+        {
+          "id": "kim0151-lab-refuerzo-900-180-stop",
+          "symbol": "LABUSDT",
+          "identifier": "LAB-R1",
+          "label": "LAB/USDT refuerzo cerrado por stop loss",
+          "state": "sold",
+          "invested_usd": 900.0,
+          "entry_price": 1.8,
+          "quantity": 500.0,
+          "sell_price": 1.71,
+          "stop_loss_pct": 5.0,
+          "gross_sale_usd": 855.0,
+          "gross_pnl_usd": -45.0,
+          "fee_rate": 0.012,
+          "fee_base_usd": 900.0,
+          "fee_usd": 10.8,
+          "net_pnl_usd": -55.8,
+          "source": "doctor_confirmed_lab_refuerzo_stop_loss_2026_07_08",
+          "sold_at": "2026-07-07",
+          "credit": true,
+          "notes": "KIM-0151: refuerzo LAB de 900 USD a 1.8 colocado a crédito el 2026-07-07; stop loss 5% ejecutado en 1.71. P/L bruto -45.00 USD; fee 1.2% 10.80 USD; P/L neto -55.80 USD. Cerrada; no debe aparecer viva ni pendiente."
+        },
+        {
+          "id": "kim0151-lab-refuerzo-900-216-stop",
+          "symbol": "LABUSDT",
+          "identifier": "LAB-R2",
+          "label": "LAB/USDT refuerzo cerrado por stop loss",
+          "state": "sold",
+          "invested_usd": 900.0,
+          "entry_price": 2.16,
+          "quantity": 416.6666666667,
+          "sell_price": 2.052,
+          "stop_loss_pct": 5.0,
+          "gross_sale_usd": 855.0,
+          "gross_pnl_usd": -45.0,
+          "fee_rate": 0.012,
+          "fee_base_usd": 900.0,
+          "fee_usd": 10.8,
+          "net_pnl_usd": -55.8,
+          "source": "doctor_confirmed_lab_refuerzo_stop_loss_2026_07_08",
+          "sold_at": "2026-07-07",
+          "credit": true,
+          "notes": "KIM-0151: refuerzo LAB de 900 USD a 2.16 colocado a crédito el 2026-07-07; stop loss 5% ejecutado en 2.052. P/L bruto -45.00 USD; fee 1.2% 10.80 USD; P/L neto -55.80 USD. Cerrada; no debe aparecer viva ni pendiente."
+        }
+      ],
+      "totals": {
+        "gross_pnl_usd": -90.0,
+        "fee_usd": 21.6,
+        "net_pnl_usd": -111.6
+      }
     }
   ]
 }
