@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0152",
-  "updated_at": "2026-07-08T18:18:25+00:00",
-  "standard_note": "KIM-0152: precio actual manual LAB/USDT actualizado a 1.18 para reporte WhatsApp; portafolio vivo y balance de crédito sin cambio estructural.",
+  "standard_version": "KIM-0153",
+  "updated_at": "2026-07-08T18:55:45+00:00",
+  "standard_note": "KIM-0153: TRUMP/USDT refuerzo pendiente actualizado a 1.323; no ejecutado; balance estructural sin cambio.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0152",
-      "updated_at": "2026-07-08T18:18:25+00:00",
+      "version": "KIM-0153",
+      "updated_at": "2026-07-08T18:55:45+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -553,7 +553,8 @@
         "Antes de enviar balance, validar que 16 + 0 + 15 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir.",
         "KIM-0151: los dos refuerzos LAB de 900 USD a 1.8 y 2.16 están cerrados por stop loss y no deben aparecer vivos ni pendientes.",
         "KIM-0151: descontar pérdida neta total -111.60 USD de los refuerzos LAB cerrados, incluyendo 21.60 USD de comisiones.",
-        "KIM-0152: usar precio actual manual validado LAB/USDT 1.18 hasta nueva instrucción o validación de mercado."
+        "KIM-0152: usar precio actual manual validado LAB/USDT 1.18 hasta nueva instrucción o validación de mercado.",
+        "KIM-0153: usar TRUMP/USDT refuerzo pendiente a 1.323; no ejecutar ni auto-llenar sin confirmación real del doctor."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -572,14 +573,14 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0152: precio actual LAB/USDT actualizado a 1.18 para el reporte; LAB sigue activa comprada en 4.5 con balance disponible, no crédito. Los cierres KIM-0151 siguen solo como P/L realizado; balance estructural permanece 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
+      "latest_format_note": "KIM-0153: TRUMP/USDT refuerzo pendiente actualizado a 1.323 por instrucción del doctor. La orden sigue pendiente a crédito por 1,800 USD y no está ejecutada; balance estructural permanece 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
         "bought_on_credit": 0,
         "pending_on_credit": 15,
         "total_visible_orders": 31,
-        "rule": "KIM-0152: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; LAB actualizada a precio actual manual 1.18.",
+        "rule": "KIM-0153: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; TRUMP refuerzo pendiente a 1.323.",
         "covered_active": 16,
         "bought_on_credit_pending_payment": 0
       },
@@ -1439,13 +1440,13 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 1.4742,
-      "quantity": 1221.001221001221,
+      "entry_price": 1.323,
+      "quantity": 1360.544217687075,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 1.62, precio nuevo 1.4742, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 1.4742, precio final 1.4742. Cualquier ajuste posterior queda sujeto a nueva instruccion.",
-      "updated_at": "2026-07-06T19:01:13+00:00",
+      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 1.62, precio nuevo 1.4742, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 1.4742, precio final 1.4742. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0153: precio actualizado por instrucción del doctor; precio anterior 1.4742, precio nuevo 1.323. Orden sigue pendiente a crédito; no ejecutar sin confirmación real.",
+      "updated_at": "2026-07-08T18:55:45+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
     },
@@ -1825,6 +1826,14 @@
       "at": "2026-07-08T18:18:25+00:00",
       "action": "kim_0152_lab_current_price_118",
       "summary": "LAB/USDT precio actual manual actualizado de 5.16 a 1.18; posición sigue activa, comprada a 4.5 con balance disponible; Balance de Crédito sin cambio estructural.",
+      "entries_total": 31,
+      "active_count": 16,
+      "pending_count": 15
+    },
+    {
+      "at": "2026-07-08T18:55:45+00:00",
+      "action": "kim_0153_trump_refuerzo_price_1323",
+      "summary": "TRUMP/USDT refuerzo pendiente actualizado de 1.4742 a 1.323; sigue pendiente a crédito por 1,800 USD. No cambia balance estructural.",
       "entries_total": 31,
       "active_count": 16,
       "pending_count": 15
@@ -2367,6 +2376,27 @@
           "new_current_price": 1.18,
           "variation_pct": -73.78,
           "source": "doctor_chat_2026_07_08"
+        }
+      ]
+    },
+    {
+      "id": "KIM-0153",
+      "at": "2026-07-08T18:55:45+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-08",
+      "summary": "TRUMP/USDT refuerzo pendiente se baja a 1.323 por instrucción del doctor; monto 1,800 USD a crédito, sin ejecución.",
+      "changes": [
+        {
+          "id": "paper-kpb-20260703194505-5a4ee7",
+          "symbol": "TRUMPUSDT",
+          "label": "TRUMP/USDT refuerzo pendiente",
+          "state": "pending",
+          "old_entry_price": 1.4742,
+          "new_entry_price": 1.323,
+          "invested_usd": 1800.0,
+          "old_quantity": 1221.001221001221,
+          "new_quantity": 1360.544217687075,
+          "credit_usd": 1800.0
         }
       ]
     }
