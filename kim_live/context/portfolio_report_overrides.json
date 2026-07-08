@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0151",
-  "updated_at": "2026-07-08T17:44:34+00:00",
-  "standard_note": "KIM-0151: se descuentan dos refuerzos LAB cerrados por stop loss 5%; pérdida neta total -111.60 USD incluyendo comisiones; portafolio vivo sin cambios.",
+  "standard_version": "KIM-0152",
+  "updated_at": "2026-07-08T18:18:25+00:00",
+  "standard_note": "KIM-0152: precio actual manual LAB/USDT actualizado a 1.18 para reporte WhatsApp; portafolio vivo y balance de crédito sin cambio estructural.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0151",
-      "updated_at": "2026-07-08T17:44:34+00:00",
+      "version": "KIM-0152",
+      "updated_at": "2026-07-08T18:18:25+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -552,7 +552,8 @@
         "KIM-0150: el Balance de Crédito debe mostrar LAB dentro de Órdenes Compradas Cubiertas Completas y no dentro de pendientes ni crédito.",
         "Antes de enviar balance, validar que 16 + 0 + 15 = 31 órdenes vivas; si no cuadra, bloquear envío y corregir.",
         "KIM-0151: los dos refuerzos LAB de 900 USD a 1.8 y 2.16 están cerrados por stop loss y no deben aparecer vivos ni pendientes.",
-        "KIM-0151: descontar pérdida neta total -111.60 USD de los refuerzos LAB cerrados, incluyendo 21.60 USD de comisiones."
+        "KIM-0151: descontar pérdida neta total -111.60 USD de los refuerzos LAB cerrados, incluyendo 21.60 USD de comisiones.",
+        "KIM-0152: usar precio actual manual validado LAB/USDT 1.18 hasta nueva instrucción o validación de mercado."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -571,14 +572,14 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0151: dos refuerzos LAB a crédito de 900 USD cada uno fueron cerrados por stop loss 5%: entrada 1.8 salida 1.71 y entrada 2.16 salida 2.052. Pérdida neta total -111.60 USD incluyendo comisiones; saldo disponible ajustado a 198.51 USD; no cambia el portafolio vivo: 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
+      "latest_format_note": "KIM-0152: precio actual LAB/USDT actualizado a 1.18 para el reporte; LAB sigue activa comprada en 4.5 con balance disponible, no crédito. Los cierres KIM-0151 siguen solo como P/L realizado; balance estructural permanece 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
         "bought_on_credit": 0,
         "pending_on_credit": 15,
         "total_visible_orders": 31,
-        "rule": "KIM-0151: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; los dos refuerzos LAB cerrados solo afectan P/L realizado.",
+        "rule": "KIM-0152: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; LAB actualizada a precio actual manual 1.18.",
         "covered_active": 16,
         "bought_on_credit_pending_payment": 0
       },
@@ -1499,13 +1500,13 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico.",
-      "updated_at": "2026-07-07T20:09:04+00:00",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación.",
+      "updated_at": "2026-07-08T18:18:25+00:00",
       "executed_at": "2026-07-07T14:08:09",
       "execution_ref": "tx_4ca1fe072644",
-      "current_price": 5.16,
+      "current_price": 1.18,
       "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_07"
+      "current_price_source": "doctor_chat_2026_07_08"
     }
   ],
   "closed_positions": [
@@ -1816,6 +1817,14 @@
       "at": "2026-07-08T17:44:34+00:00",
       "action": "kim_0151_lab_refuerzo_stop_losses",
       "summary": "Dos refuerzos LAB de 900 USD a crédito cerrados por stop loss 5%; pérdida bruta -90.00 USD, comisiones 21.60 USD, pérdida neta -111.60 USD. No cambia conteo vivo.",
+      "entries_total": 31,
+      "active_count": 16,
+      "pending_count": 15
+    },
+    {
+      "at": "2026-07-08T18:18:25+00:00",
+      "action": "kim_0152_lab_current_price_118",
+      "summary": "LAB/USDT precio actual manual actualizado de 5.16 a 1.18; posición sigue activa, comprada a 4.5 con balance disponible; Balance de Crédito sin cambio estructural.",
       "entries_total": 31,
       "active_count": 16,
       "pending_count": 15
@@ -2341,6 +2350,25 @@
         "fee_usd": 21.6,
         "net_pnl_usd": -111.6
       }
+    },
+    {
+      "id": "KIM-0152",
+      "at": "2026-07-08T18:18:25+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-08",
+      "summary": "Precio actual manual de LAB/USDT actualizado a 1.18 para enviar portafolio actualizado por WhatsApp; no cambia compra, crédito ni P/L realizado.",
+      "changes": [
+        {
+          "id": "kim0149-labusdt-pending-45",
+          "symbol": "LABUSDT",
+          "state": "active",
+          "entry_price": 4.5,
+          "old_current_price": 5.16,
+          "new_current_price": 1.18,
+          "variation_pct": -73.78,
+          "source": "doctor_chat_2026_07_08"
+        }
+      ]
     }
   ]
 }
