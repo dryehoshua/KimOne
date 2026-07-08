@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0153",
-  "updated_at": "2026-07-08T18:55:45+00:00",
-  "standard_note": "KIM-0153: TRUMP/USDT refuerzo pendiente actualizado a 1.323; no ejecutado; balance estructural sin cambio.",
+  "standard_version": "KIM-0154",
+  "updated_at": "2026-07-08T22:26:43+00:00",
+  "standard_note": "KIM-0154: SUI vendida en 0.7097 con fee 1.2%; nueva orden LAB pendiente a 1.35 por 1,800 USD fondeada; diferencia de pérdida descontada del saldo disponible.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0153",
-      "updated_at": "2026-07-08T18:55:45+00:00",
+      "version": "KIM-0154",
+      "updated_at": "2026-07-08T22:26:43+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -396,11 +396,11 @@
       ],
       "client_funding_total_mxn": 620000,
       "client_funding_total_usd": 35520.15,
-      "realized_profit_for_statement_usd": 532.36,
-      "realized_profit_note": "KIM-0151: Profit realizado ajustado: KIM-0150 643.96 USD menos refuerzos LAB cerrados por stop (-90.00 USD bruto) y comisiones 21.60 USD = 532.36 USD.",
-      "client_total_net_considered_usd": 36052.51,
+      "realized_profit_for_statement_usd": 485.01,
+      "realized_profit_note": "KIM-0154: Profit realizado ajustado: KIM-0153 532.36 USD menos venta SUI neta -47.35 USD (P/L bruto -25.75, fee venta 21.60) = 485.01 USD.",
+      "client_total_net_considered_usd": 36005.16,
       "firm_assigned_usd": 35854,
-      "available_balance_usd": 198.51,
+      "available_balance_usd": 151.16,
       "credit_bought_pending_payment_usd": 0,
       "credit_pending_execution_usd": 27000,
       "credit_total_usd": 27000,
@@ -462,11 +462,11 @@
           1800
         ],
         [
-          "SUI",
+          "LAB",
           1800
         ],
         [
-          "LAB",
+          "LAB orden 1.35",
           1800
         ]
       ],
@@ -554,7 +554,9 @@
         "KIM-0151: los dos refuerzos LAB de 900 USD a 1.8 y 2.16 están cerrados por stop loss y no deben aparecer vivos ni pendientes.",
         "KIM-0151: descontar pérdida neta total -111.60 USD de los refuerzos LAB cerrados, incluyendo 21.60 USD de comisiones.",
         "KIM-0152: usar precio actual manual validado LAB/USDT 1.18 hasta nueva instrucción o validación de mercado.",
-        "KIM-0153: usar TRUMP/USDT refuerzo pendiente a 1.323; no ejecutar ni auto-llenar sin confirmación real del doctor."
+        "KIM-0153: usar TRUMP/USDT refuerzo pendiente a 1.323; no ejecutar ni auto-llenar sin confirmación real del doctor.",
+        "KIM-0154: SUI está vendida en 0.7097 y no debe aparecer viva; P/L neto -47.35 USD incluye fee venta 1.2%.",
+        "KIM-0154: LAB orden pendiente 1.35 por 1,800 USD está fondeada, no a crédito; no ejecutar sin confirmación real del doctor."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -573,16 +575,17 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0153: TRUMP/USDT refuerzo pendiente actualizado a 1.323 por instrucción del doctor. La orden sigue pendiente a crédito por 1,800 USD y no está ejecutada; balance estructural permanece 16 cubiertas, 0 compradas a crédito, 15 pendientes a crédito.",
+      "latest_format_note": "KIM-0154: SUI/USDT vendida en 0.7097 con P/L neto -47.35 USD incluyendo fee de venta 1.2%. Nueva orden LAB/USDT pendiente a 1.35 por 1,800 USD queda fondeada con capital liberado de SUI; la diferencia de pérdida se descuenta del saldo disponible, que queda en 151.16 USD. Balance vivo: 15 activas cubiertas, 1 orden pendiente fondeada, 0 compradas a crédito, 15 pendientes a crédito.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
         "bought_on_credit": 0,
         "pending_on_credit": 15,
         "total_visible_orders": 31,
-        "rule": "KIM-0153: reporte completo debe cuadrar 16 cubiertas + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; TRUMP refuerzo pendiente a 1.323.",
-        "covered_active": 16,
-        "bought_on_credit_pending_payment": 0
+        "rule": "KIM-0154: reporte completo debe cuadrar 15 activas cubiertas + 1 pendiente fondeada + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; SUI cerrada solo P/L realizado.",
+        "covered_active": 15,
+        "bought_on_credit_pending_payment": 0,
+        "cash_funded_pending": 1
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -1239,23 +1242,6 @@
       "source": "doctor_explicit_pending_price_adjustment_2026_06_25"
     },
     {
-      "order": 24,
-      "id": "kim0108-a24-suiusdt",
-      "symbol": "SUIUSDT",
-      "state": "active",
-      "side": "BUY",
-      "label": "SUI/USDT",
-      "invested_usd": 1800,
-      "entry_price": 0.72,
-      "credit_usd": 0,
-      "notes": "A24 SUI nueva orden pendiente indicada en llamada del 2026-06-18, a credito completo. KIM-0114: el doctor confirma que SUI A24 ya esta en mercado; mantener a credito y sacarla de pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
-      "quantity": 2500.0,
-      "executed_at": "2026-06-19T01:35:06+00:00",
-      "source": "kim_0140_credit_coverage_2026_07_01",
-      "updated_at": "2026-06-19T01:35:06+00:00",
-      "credit": false
-    },
-    {
       "id": "kim0113-a25-dotusdt-refuerzo",
       "symbol": "DOTUSDT",
       "state": "pending",
@@ -1508,6 +1494,27 @@
       "current_price": 1.18,
       "current_price_status": "doctor_validated_current_price",
       "current_price_source": "doctor_chat_2026_07_08"
+    },
+    {
+      "id": "kim0154-labusdt-pending-135-from-sui",
+      "symbol": "LABUSDT",
+      "state": "pending",
+      "order": 39,
+      "label": "LAB/USDT orden pendiente fondeada",
+      "invested_usd": 1800.0,
+      "entry_price": 1.35,
+      "quantity": 1333.3333333333333,
+      "credit": false,
+      "credit_usd": 0.0,
+      "side": "BUY",
+      "source": "doctor_sui_sale_reallocation_lab_2026_07_08",
+      "notes": "KIM-0154: nueva orden LAB/USDT a 1.35 por 1,800 USD, fondeada con capital liberado de venta SUI y diferencia de pérdida tomada del saldo disponible. No es orden a crédito; no ejecutar ni auto-llenar sin confirmación real del doctor. Precio actual LAB 1.18 heredado de KIM-0152 para validación de reporte; no cambia entrada ni estado pendiente.",
+      "updated_at": "2026-07-08T22:26:43+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "current_price": 1.18,
+      "current_price_status": "doctor_validated_current_price",
+      "current_price_source": "doctor_chat_2026_07_08_kim0152"
     }
   ],
   "closed_positions": [
@@ -1634,6 +1641,30 @@
       "sold_at": "2026-07-07",
       "credit": true,
       "notes": "KIM-0151: refuerzo LAB de 900 USD a 2.16 colocado a crédito el 2026-07-07; stop loss 5% ejecutado en 2.052. P/L bruto -45.00 USD; fee 1.2% 10.80 USD; P/L neto -55.80 USD. Cerrada; no debe aparecer viva ni pendiente."
+    },
+    {
+      "id": "kim0154-suiusdt-sale-07097",
+      "symbol": "SUIUSDT",
+      "identifier": "A24",
+      "label": "SUI/USDT",
+      "state": "sold",
+      "invested_usd": 1800.0,
+      "entry_price": 0.72,
+      "quantity": 2500.0,
+      "sell_price": 0.7097,
+      "gross_sale_usd": 1774.25,
+      "gross_pnl_usd": -25.75,
+      "fee_rate": 0.012,
+      "fee_base_usd": 1800.0,
+      "fee_usd": 21.6,
+      "net_pnl_usd": -47.35,
+      "source": "doctor_confirmed_sui_sale_2026_07_08",
+      "sold_at": "2026-07-08T16:24:34",
+      "execution_ref": "tx_d441da7890c6",
+      "final_change_ref": "change_9e56da30f430",
+      "notes": "KIM-0154: SUI/USDT vendida en 0.7097 por instrucción del doctor. Entrada 0.72, venta bruta 1,774.25 USD, P/L bruto -25.75 USD, fee de venta 1.2% sobre 1,800 USD = 21.60 USD, P/L neto -47.35 USD. Capital liberado se usa para nueva orden LAB 1.35 por 1,800 USD; diferencia de pérdida tomada del saldo disponible.",
+      "order": 24,
+      "credit": false
     }
   ],
   "suppress_symbols": [
@@ -1837,6 +1868,14 @@
       "entries_total": 31,
       "active_count": 16,
       "pending_count": 15
+    },
+    {
+      "at": "2026-07-08T22:25:44+00:00",
+      "action": "kim_0154_sui_sale_lab_135_reallocation",
+      "summary": "SUI vendida a 0.7097: P/L neto -47.35 USD incluyendo fee 1.2%; nueva orden LAB 1.35 por 1,800 USD fondeada, diferencia descontada de saldo disponible. Visible 31: 15 activas cubiertas, 1 pendiente fondeada, 15 pendientes a crédito.",
+      "entries_total": 31,
+      "active_count": 15,
+      "pending_count": 16
     }
   ],
   "consumed_orders": [
@@ -2399,6 +2438,62 @@
           "credit_usd": 1800.0
         }
       ]
+    },
+    {
+      "id": "KIM-0154",
+      "at": "2026-07-08T22:25:44+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-08",
+      "summary": "SUI vendida en 0.7097 con fee 1.2%; nueva orden LAB pendiente a 1.35 por 1,800 USD, fondeada con capital liberado y diferencia de pérdida tomada del saldo disponible.",
+      "changes": [
+        {
+          "id": "kim0154-suiusdt-sale-07097",
+          "symbol": "SUIUSDT",
+          "identifier": "A24",
+          "label": "SUI/USDT",
+          "state": "sold",
+          "invested_usd": 1800.0,
+          "entry_price": 0.72,
+          "quantity": 2500.0,
+          "sell_price": 0.7097,
+          "gross_sale_usd": 1774.25,
+          "gross_pnl_usd": -25.75,
+          "fee_rate": 0.012,
+          "fee_base_usd": 1800.0,
+          "fee_usd": 21.6,
+          "net_pnl_usd": -47.35,
+          "source": "doctor_confirmed_sui_sale_2026_07_08",
+          "sold_at": "2026-07-08T16:24:34",
+          "execution_ref": "tx_d441da7890c6",
+          "final_change_ref": "change_9e56da30f430",
+          "notes": "KIM-0154: SUI/USDT vendida en 0.7097 por instrucción del doctor. Entrada 0.72, venta bruta 1,774.25 USD, P/L bruto -25.75 USD, fee de venta 1.2% sobre 1,800 USD = 21.60 USD, P/L neto -47.35 USD. Capital liberado se usa para nueva orden LAB 1.35 por 1,800 USD; diferencia de pérdida tomada del saldo disponible.",
+          "order": 24,
+          "credit": false
+        },
+        {
+          "id": "kim0154-labusdt-pending-135-from-sui",
+          "symbol": "LABUSDT",
+          "state": "pending",
+          "order": 39,
+          "label": "LAB/USDT orden pendiente fondeada",
+          "invested_usd": 1800.0,
+          "entry_price": 1.35,
+          "quantity": 1333.3333333333333,
+          "credit": false,
+          "credit_usd": 0.0,
+          "side": "BUY",
+          "source": "doctor_sui_sale_reallocation_lab_2026_07_08",
+          "notes": "KIM-0154: nueva orden LAB/USDT a 1.35 por 1,800 USD, fondeada con capital liberado de venta SUI y diferencia de pérdida tomada del saldo disponible. No es orden a crédito; no ejecutar ni auto-llenar sin confirmación real del doctor.",
+          "updated_at": "2026-07-08T22:25:44+00:00",
+          "no_auto_fill": true,
+          "requires_manual_fill_confirmation": true
+        }
+      ],
+      "totals": {
+        "sui_net_pnl_usd": -47.35,
+        "available_balance_delta_usd": -47.35,
+        "new_available_balance_usd": 151.16
+      }
     }
   ]
 }
