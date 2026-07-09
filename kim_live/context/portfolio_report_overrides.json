@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0154",
-  "updated_at": "2026-07-08T22:26:43+00:00",
-  "standard_note": "KIM-0154: SUI vendida en 0.7097 con fee 1.2%; nueva orden LAB pendiente a 1.35 por 1,800 USD fondeada; diferencia de pérdida descontada del saldo disponible.",
+  "standard_version": "KIM-0155",
+  "updated_at": "2026-07-09T12:31:55+00:00",
+  "standard_note": "KIM-0155: LAB orden fondeada de 1,800 USD confirmada como comprada oficialmente a 1.017; se consolida con LAB 4.5 como 3,600 USD a promedio ponderado 1.679; precio actual LAB informado 0.93.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0154",
-      "updated_at": "2026-07-08T22:26:43+00:00",
+      "version": "KIM-0155",
+      "updated_at": "2026-07-09T12:29:55+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -466,7 +466,7 @@
           1800
         ],
         [
-          "LAB orden 1.35",
+          "LAB orden 1.017",
           1800
         ]
       ],
@@ -556,7 +556,8 @@
         "KIM-0152: usar precio actual manual validado LAB/USDT 1.18 hasta nueva instrucción o validación de mercado.",
         "KIM-0153: usar TRUMP/USDT refuerzo pendiente a 1.323; no ejecutar ni auto-llenar sin confirmación real del doctor.",
         "KIM-0154: SUI está vendida en 0.7097 y no debe aparecer viva; P/L neto -47.35 USD incluye fee venta 1.2%.",
-        "KIM-0154: LAB orden pendiente 1.35 por 1,800 USD está fondeada, no a crédito; no ejecutar sin confirmación real del doctor."
+        "KIM-0154: LAB orden pendiente 1.35 por 1,800 USD está fondeada, no a crédito; no ejecutar sin confirmación real del doctor.",
+        "KIM-0155: LAB orden fondeada de 1,800 USD esta comprada oficialmente a 1.017, cantidad 1,769.9115 LAB; no mostrar como pendiente ni a credito."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -575,17 +576,19 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0154: SUI/USDT vendida en 0.7097 con P/L neto -47.35 USD incluyendo fee de venta 1.2%. Nueva orden LAB/USDT pendiente a 1.35 por 1,800 USD queda fondeada con capital liberado de SUI; la diferencia de pérdida se descuenta del saldo disponible, que queda en 151.16 USD. Balance vivo: 15 activas cubiertas, 1 orden pendiente fondeada, 0 compradas a crédito, 15 pendientes a crédito.",
-      "visible_order_count": 31,
+      "latest_format_note": "KIM-0155: LAB/USDT orden fondeada de 1,800 USD confirmada como comprada oficialmente a 1.017; se promedia con LAB 4.5. Reporte cliente muestra LAB consolidado: total 3,600 USD a promedio ponderado 1.679, cantidad total 2,169.9115 LAB. Precio actual LAB informado: 0.93. Balance contable: 16 ordenes cubiertas/fondeadas subyacentes, 0 pendientes fondeadas, 0 compradas a credito, 15 pendientes a credito.",
+      "visible_order_count": 30,
       "section_count_validation": {
         "covered_orders": 16,
+        "covered_active": 16,
+        "cash_funded_pending": 0,
         "bought_on_credit": 0,
-        "pending_on_credit": 15,
-        "total_visible_orders": 31,
-        "rule": "KIM-0154: reporte completo debe cuadrar 15 activas cubiertas + 1 pendiente fondeada + 0 compradas a crédito + 15 pendientes a crédito = 31 órdenes vivas; SUI cerrada solo P/L realizado.",
-        "covered_active": 15,
         "bought_on_credit_pending_payment": 0,
-        "cash_funded_pending": 1
+        "pending_on_credit": 15,
+        "total_visible_orders": 30,
+        "rule": "KIM-0155: el reporte cliente muestra 30 lineas A porque las dos compras LAB activas se consolidan en una linea; el balance contable subyacente cuadra 16 cubiertas/fondeadas + 0 pendientes fondeadas + 0 compradas a credito + 15 pendientes a credito = 31 ordenes subyacentes.",
+        "client_visible_lines": 30,
+        "accounting_underlying_orders": 31
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -1487,34 +1490,35 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación.",
-      "updated_at": "2026-07-08T18:18:25+00:00",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09.",
+      "updated_at": "2026-07-09T12:29:55+00:00",
       "executed_at": "2026-07-07T14:08:09",
       "execution_ref": "tx_4ca1fe072644",
-      "current_price": 1.18,
+      "current_price": 0.93,
       "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_08"
+      "current_price_source": "doctor_chat_2026_07_09_lab_093"
     },
     {
       "id": "kim0154-labusdt-pending-135-from-sui",
       "symbol": "LABUSDT",
-      "state": "pending",
+      "state": "active",
       "order": 39,
-      "label": "LAB/USDT orden pendiente fondeada",
+      "label": "LAB/USDT orden 1.017 fondeada",
       "invested_usd": 1800.0,
-      "entry_price": 1.35,
-      "quantity": 1333.3333333333333,
+      "entry_price": 1.017,
+      "quantity": 1769.911504424779,
       "credit": false,
       "credit_usd": 0.0,
       "side": "BUY",
-      "source": "doctor_sui_sale_reallocation_lab_2026_07_08",
-      "notes": "KIM-0154: nueva orden LAB/USDT a 1.35 por 1,800 USD, fondeada con capital liberado de venta SUI y diferencia de pérdida tomada del saldo disponible. No es orden a crédito; no ejecutar ni auto-llenar sin confirmación real del doctor. Precio actual LAB 1.18 heredado de KIM-0152 para validación de reporte; no cambia entrada ni estado pendiente.",
-      "updated_at": "2026-07-08T22:26:43+00:00",
-      "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true,
-      "current_price": 1.18,
+      "source": "doctor_confirmed_lab_execution_funded_2026_07_09",
+      "notes": "KIM-0155: Dr. Yehoshua confirma ejecucion oficial de la orden LAB fondeada a 1.017 por 1,800 USD. Cantidad recalculada: 1,800 / 1.017 = 1,769.9115 LAB. Precio actual LAB informado por el doctor: 0.93. No es credito; queda como posicion activa cubierta/fondeada.",
+      "updated_at": "2026-07-09T12:29:55+00:00",
+      "current_price": 0.93,
       "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_08_kim0152"
+      "current_price_source": "doctor_chat_2026_07_09_lab_093",
+      "executed_at": "2026-07-09T06:28:09",
+      "execution_ref": "tx_171dad69a4fe",
+      "final_change_ref": "change_f1ab1344ba02"
     }
   ],
   "closed_positions": [
@@ -2493,6 +2497,41 @@
         "sui_net_pnl_usd": -47.35,
         "available_balance_delta_usd": -47.35,
         "new_available_balance_usd": 151.16
+      }
+    },
+    {
+      "id": "KIM-0155",
+      "at": "2026-07-09T12:29:55+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-09",
+      "summary": "LAB orden fondeada de 1,800 USD confirmada como comprada oficialmente a 1.017; se consolida con LAB 4.5 en reporte cliente como 3,600 USD a promedio ponderado 1.679; precio actual LAB 0.93.",
+      "changes": [
+        {
+          "id": "kim0154-labusdt-pending-135-from-sui",
+          "symbol": "LABUSDT",
+          "state": "active",
+          "order": 39,
+          "label": "LAB/USDT orden 1.017 fondeada",
+          "invested_usd": 1800.0,
+          "entry_price": 1.017,
+          "quantity": 1769.911504424779,
+          "credit": false,
+          "credit_usd": 0.0,
+          "execution_ref": "tx_171dad69a4fe",
+          "final_change_ref": "change_f1ab1344ba02",
+          "current_price": 0.93,
+          "source": "doctor_confirmed_lab_execution_funded_2026_07_09",
+          "notes": "KIM-0155: Dr. Yehoshua confirma ejecucion oficial de la orden LAB fondeada a 1.017 por 1,800 USD. Cantidad recalculada: 1,800 / 1.017 = 1,769.9115 LAB. Precio actual LAB informado por el doctor: 0.93."
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 151.16,
+        "credit_pending_execution_usd": 27000,
+        "visible_order_count": 31,
+        "client_visible_lines": 30,
+        "accounting_underlying_orders": 31,
+        "lab_consolidated_amount_usd": 3600.0,
+        "lab_consolidated_weighted_entry": 1.679
       }
     }
   ]
