@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0157",
-  "updated_at": "2026-07-13T15:35:59+00:00",
-  "standard_note": "KIM-0157: LAB 2 comprada a 1.017 se vendio por stop loss en 0.90; se registran ordenes Shabbat LAB 0.45 y 0.27 canceladas; queda nueva orden LAB 0.18 por 1,800 USD con saldo disponible sujeto a conciliacion.",
+  "standard_version": "KIM-0158",
+  "updated_at": "2026-07-13T16:08:01+00:00",
+  "standard_note": "KIM-0158: ultima orden LAB pendiente baja de 0.18 a 0.1305 por instruccion del doctor; monto 1,800 USD, no ejecutada.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0157",
-      "updated_at": "2026-07-13T15:35:59+00:00",
+      "version": "KIM-0158",
+      "updated_at": "2026-07-13T16:08:01+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -466,7 +466,7 @@
           1800
         ],
         [
-          "LAB orden 0.18",
+          "LAB orden 0.1305",
           1800
         ]
       ],
@@ -562,7 +562,8 @@
         "KIM-0156: LAB 2 orden 1.017 tiene stop loss autorizado por Sr. Eli en 0.90; no ejecutar ni cerrar salvo confirmacion de ejecucion/trigger.",
         "KIM-0157: LAB 2 comprada a 1.017 esta cerrada/vendida por stop loss en 0.90; no mostrar viva.",
         "KIM-0157: ordenes LAB Shabbat 0.45 y 0.27 estan canceladas y no deben aparecer vivas; 0.27 fue a credito pero cancelada sin efecto.",
-        "KIM-0157: mostrar LAB orden 0.18 como pendiente fondeada/conciliacion, no como ejecutada hasta confirmacion real."
+        "KIM-0157: mostrar LAB orden 0.18 como pendiente fondeada/conciliacion, no como ejecutada hasta confirmacion real.",
+        "KIM-0158: usar LAB orden pendiente 0.1305 por 1,800 USD; reemplaza LAB 0.18, sin ejecucion automatica."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -581,7 +582,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0157: LAB 2 orden 1.017 vendida/cerrada por stop loss en 0.90; P/L neto -228.68 USD. Se registran como canceladas las ordenes Shabbat LAB 0.45 y LAB 0.27 por 1,800 USD cada una; la 0.27 fue a credito y queda cancelada sin efecto. Queda nueva orden LAB pendiente a 0.18 por 1,800 USD; saldo disponible oficial queda -77.52 USD por conciliacion si no hubo USDT adicional.",
+      "latest_format_note": "KIM-0158: ultima orden LAB pendiente baja de 0.18 a 0.1305 por instruccion del doctor. Monto 1,800 USD, cantidad 13,793.1034 LAB, pendiente/no ejecutada. Se conserva conciliacion de saldo disponible KIM-0157 porque el monto no cambia.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
@@ -1509,16 +1510,16 @@
       "symbol": "LABUSDT",
       "state": "pending",
       "order": 39,
-      "label": "LAB/USDT orden 0.18 pendiente fondeada",
+      "label": "LAB/USDT orden 0.1305 pendiente fondeada",
       "invested_usd": 1800.0,
-      "entry_price": 0.18,
-      "quantity": 10000.0,
+      "entry_price": 0.1305,
+      "quantity": 13793.103448275862,
       "credit": false,
       "credit_usd": 0.0,
       "side": "BUY",
-      "source": "doctor_motzaei_shabbat_lab_replacement_2026_07_13",
-      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional.",
-      "updated_at": "2026-07-13T15:35:59+00:00",
+      "source": "doctor_lowered_lab_pending_01305_2026_07_13",
+      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional. KIM-0158: el doctor informa que la ultima orden LAB pendiente baja de 0.18 a 0.1305; monto se mantiene en 1,800 USD, cantidad recalculada 13793.1034482759 LAB. No ejecutar sin confirmacion real.",
+      "updated_at": "2026-07-13T16:08:01+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "current_price": 0.93,
@@ -1526,7 +1527,10 @@
       "current_price_source": "doctor_chat_2026_07_09_lab_093",
       "funding_status": "cash_funded_pending_reconciliation",
       "available_cash_applied_usd": 1722.48,
-      "coverage_shortfall_usd": 77.52
+      "coverage_shortfall_usd": 77.52,
+      "price_adjusted_from": 0.18,
+      "price_adjusted_to": 0.1305,
+      "price_adjusted_at": "2026-07-13T16:08:01+00:00"
     }
   ],
   "closed_positions": [
@@ -2663,6 +2667,26 @@
         "cash_reconciliation_shortfall_usd": 77.52,
         "credit_pending_execution_usd": 27000
       }
+    },
+    {
+      "id": "KIM-0158",
+      "at": "2026-07-13T16:08:01+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026-07-13",
+      "summary": "Ultima orden LAB pendiente baja de 0.18 a 0.1305; monto 1,800 USD, cantidad recalculada, sin ejecucion.",
+      "changes": [
+        {
+          "id": "kim0157-labusdt-pending-018-available",
+          "symbol": "LABUSDT",
+          "action": "price_update_pending_order",
+          "old_entry_price": 0.18,
+          "new_entry_price": 0.1305,
+          "invested_usd": 1800.0,
+          "old_quantity": 10000.0,
+          "new_quantity": 13793.103448275862,
+          "state": "pending"
+        }
+      ]
     }
   ],
   "cancelled_orders": [
