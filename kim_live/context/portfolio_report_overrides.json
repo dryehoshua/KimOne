@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0159",
-  "updated_at": "2026-07-13T16:24:26+00:00",
-  "standard_note": "KIM-0159: precio actual LAB actualizado a 0.28 por instruccion del doctor; LAB 1 sigue activa y orden LAB 0.1305 sigue pendiente/no ejecutada.",
+  "standard_version": "KIM-0160",
+  "updated_at": "2026-07-14T18:58:12+00:00",
+  "standard_note": "KIM-0160: precio actual LAB actualizado a 0.3180 USD (31.80 centavos) por instruccion del doctor; LAB 1 sigue activa y orden LAB 0.1305 sigue pendiente/no ejecutada.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0159",
-      "updated_at": "2026-07-13T16:24:26+00:00",
+      "version": "KIM-0160",
+      "updated_at": "2026-07-14T18:58:12+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -564,7 +564,8 @@
         "KIM-0157: ordenes LAB Shabbat 0.45 y 0.27 estan canceladas y no deben aparecer vivas; 0.27 fue a credito pero cancelada sin efecto.",
         "KIM-0157: mostrar LAB orden 0.18 como pendiente fondeada/conciliacion, no como ejecutada hasta confirmacion real.",
         "KIM-0158: usar LAB orden pendiente 0.1305 por 1,800 USD; reemplaza LAB 0.18, sin ejecucion automatica.",
-        "KIM-0159: usar precio actual LAB 0.28 hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real aunque el mercado se acerque o cruce."
+        "KIM-0159: usar precio actual LAB 0.28 hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real aunque el mercado se acerque o cruce.",
+        "KIM-0160: usar precio actual LAB 0.3180 USD (31.80 centavos) hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -583,7 +584,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0159: precio actual LAB actualizado a 0.28. LAB 1 a 4.5 sigue activa; LAB orden 0.1305 por 1,800 USD sigue pendiente/no ejecutada porque el mercado actual esta arriba de la orden limite. Sin cambio a balances realizados.",
+      "latest_format_note": "KIM-0160: precio actual LAB actualizado a 0.3180 USD (31.80 centavos). LAB 1 a 4.5 sigue activa; LAB orden 0.1305 por 1,800 USD sigue pendiente/no ejecutada porque el mercado actual esta arriba de la orden limite. Sin cambio a balances realizados.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
@@ -1498,14 +1499,14 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo.",
-      "updated_at": "2026-07-13T16:24:26+00:00",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo.",
+      "updated_at": "2026-07-14T18:58:12+00:00",
       "executed_at": "2026-07-07T14:08:09",
       "execution_ref": "tx_4ca1fe072644",
-      "current_price": 0.28,
+      "current_price": 0.318,
       "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_13_lab_028",
-      "doctor_validated_at": "2026-07-13T16:24:26+00:00"
+      "current_price_source": "doctor_chat_2026_07_14_lab_0318",
+      "doctor_validated_at": "2026-07-14T18:58:12+00:00"
     },
     {
       "id": "kim0157-labusdt-pending-018-available",
@@ -1520,20 +1521,20 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_lowered_lab_pending_01305_2026_07_13",
-      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional. KIM-0158: el doctor informa que la ultima orden LAB pendiente baja de 0.18 a 0.1305; monto se mantiene en 1,800 USD, cantidad recalculada 13793.1034482759 LAB. No ejecutar sin confirmacion real. KIM-0159: precio actual LAB informado a 0.28; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual.",
-      "updated_at": "2026-07-13T16:24:26+00:00",
+      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional. KIM-0158: el doctor informa que la ultima orden LAB pendiente baja de 0.18 a 0.1305; monto se mantiene en 1,800 USD, cantidad recalculada 13793.1034482759 LAB. No ejecutar sin confirmacion real. KIM-0159: precio actual LAB informado a 0.28; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual. KIM-0160: precio actual LAB 0.3180 USD; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual.",
+      "updated_at": "2026-07-14T18:58:12+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "current_price": 0.28,
+      "current_price": 0.318,
       "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_13_lab_028",
+      "current_price_source": "doctor_chat_2026_07_14_lab_0318",
       "funding_status": "cash_funded_pending_reconciliation",
       "available_cash_applied_usd": 1722.48,
       "coverage_shortfall_usd": 77.52,
       "price_adjusted_from": 0.18,
       "price_adjusted_to": 0.1305,
       "price_adjusted_at": "2026-07-13T16:08:01+00:00",
-      "doctor_validated_at": "2026-07-13T16:24:26+00:00"
+      "doctor_validated_at": "2026-07-14T18:58:12+00:00"
     }
   ],
   "closed_positions": [
@@ -1786,7 +1787,8 @@
     "KIM-0113: cuando una orden manual se vende, quitarla de manual_entries activos/pendientes, moverla a closed_positions y sumar su P/L neto realizado.",
     "KIM-0141: siempre que el doctor pida portafolio completo, actualización diaria 09:00 o envío completo por WhatsApp, anexar al final el Balance de Crédito en formato estructurado aprobado, no solo balance_line compacto.",
     "KIM-0156: no aglomerar las dos posiciones LAB; mostrar LAB 1 y LAB 2 separadas en reporte cliente. ADA/DOGE/NEAR siguen consolidadas por sus entradas manuales canonicas.",
-    "KIM-0159: LAB precio actual manual 0.28; LAB 1 activa a 4.5 y LAB orden 0.1305 pendiente fondeada/conciliacion, no ejecutada."
+    "KIM-0159: LAB precio actual manual 0.28; LAB 1 activa a 4.5 y LAB orden 0.1305 pendiente fondeada/conciliacion, no ejecutada.",
+    "KIM-0160: LAB precio actual manual 0.3180 USD; LAB 1 activa a 4.5 y LAB orden 0.1305 pendiente fondeada/conciliacion, no ejecutada."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -1929,6 +1931,14 @@
       "id": "kim0159_lab_current_028",
       "at": "2026-07-13T16:24:26+00:00",
       "summary": "LAB current price updated to 0.28; LAB 1 remains active and LAB 0.1305 remains pending/not executed.",
+      "entries_total": 31,
+      "active_count": 15,
+      "pending_count": 16
+    },
+    {
+      "id": "kim0160_lab_current_0318",
+      "at": "2026-07-14T18:58:12+00:00",
+      "summary": "LAB current price updated to 0.3180 USD (31.80 cents); LAB 1 remains active and LAB 0.1305 remains pending/not executed.",
       "entries_total": 31,
       "active_count": 15,
       "pending_count": 16
@@ -2726,6 +2736,45 @@
           "old_current_price": 0.93,
           "new_current_price": 0.28,
           "pending_price_vs_current_pct": -53.39,
+          "execution_status": "pending_not_executed_limit_below_market"
+        }
+      ],
+      "totals": {
+        "visible_order_count": 31,
+        "covered_active_positions": 15,
+        "cash_funded_pending_orders": 1,
+        "pending_on_credit_orders": 15,
+        "credit_pending_execution_usd": 27000,
+        "available_balance_usd": -77.52,
+        "realized_profit_for_statement_usd": 256.33
+      }
+    },
+    {
+      "id": "KIM-0160",
+      "at": "2026-07-14T18:58:12+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_14_lab_0318",
+      "summary": "Precio actual LAB actualizado a 0.3180 USD (31.80 centavos); sin ejecucion nueva. LAB 1 sigue activa a 4.5 y la orden LAB 0.1305 sigue pendiente.",
+      "changes": [
+        {
+          "id": "kim0149-labusdt-pending-45",
+          "symbol": "LABUSDT",
+          "action": "current_price_update",
+          "state": "active",
+          "entry_price": 4.5,
+          "old_current_price": 0.28,
+          "new_current_price": 0.318,
+          "variation_pct": -92.93
+        },
+        {
+          "id": "kim0157-labusdt-pending-018-available",
+          "symbol": "LABUSDT",
+          "action": "pending_order_reference_price_update",
+          "state": "pending",
+          "entry_price": 0.1305,
+          "old_current_price": 0.28,
+          "new_current_price": 0.318,
+          "pending_price_vs_current_pct": -58.96,
           "execution_status": "pending_not_executed_limit_below_market"
         }
       ],
