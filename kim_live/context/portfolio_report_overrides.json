@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0161",
-  "updated_at": "2026-07-15T20:57:09+00:00",
-  "standard_note": "KIM-0161: Sr. Eli pide usar el dinero neto del cierre LAB 2 1.017 para nueva orden LAB a 0.2025; neto cierre despues de comision 1,571.32 USD. Orden cliente se mantiene por 1,800 USD con conciliacion vigente.",
+  "standard_version": "KIM-0162",
+  "updated_at": "2026-07-15T21:13:36+00:00",
+  "standard_note": "KIM-0162: correccion de comisiones LAB 2; cierre 1.017->0.90 descuenta 1.2% compra y 1.2% venta. Neto despues de ambas comisiones 1,549.72 USD; P/L neto -250.28 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -339,8 +339,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0161",
-      "updated_at": "2026-07-15T20:57:09+00:00",
+      "version": "KIM-0162",
+      "updated_at": "2026-07-15T21:13:36+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -396,11 +396,11 @@
       ],
       "client_funding_total_mxn": 620000,
       "client_funding_total_usd": 35520.15,
-      "realized_profit_for_statement_usd": 256.33,
-      "realized_profit_note": "KIM-0157: Profit realizado ajustado: KIM-0156 485.01 USD menos venta LAB 2 stop loss neta -228.68 USD = 256.33 USD.",
-      "client_total_net_considered_usd": 35776.48,
+      "realized_profit_for_statement_usd": 234.73,
+      "realized_profit_note": "KIM-0162: Profit realizado ajustado por doble comision LAB 2: KIM-0161 256.33 USD menos comision de compra adicional 21.60 USD = 234.73 USD. LAB 2: perdida bruta -207.08 USD, fee compra 21.60 USD, fee venta 21.60 USD, P/L neto -250.28 USD.",
+      "client_total_net_considered_usd": 35754.88,
       "firm_assigned_usd": 35854.0,
-      "available_balance_usd": -77.52,
+      "available_balance_usd": -99.12,
       "credit_bought_pending_payment_usd": 0,
       "credit_pending_execution_usd": 27000,
       "credit_total_usd": 27000,
@@ -566,7 +566,8 @@
         "KIM-0158: usar LAB orden pendiente 0.1305 por 1,800 USD; reemplaza LAB 0.18, sin ejecucion automatica.",
         "KIM-0159: usar precio actual LAB 0.28 hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real aunque el mercado se acerque o cruce.",
         "KIM-0160: usar precio actual LAB 0.3180 USD (31.80 centavos) hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real.",
-        "KIM-0161: usar LAB orden pendiente 0.2025 por 1,800 USD; neto del cierre LAB 2 1.017 despues de comision fue 1,571.32 USD; no ejecutar sin confirmacion real."
+        "KIM-0161: usar LAB orden pendiente 0.2025 por 1,800 USD; neto del cierre LAB 2 1.017 despues de comision fue 1,571.32 USD; no ejecutar sin confirmacion real.",
+        "KIM-0162: para LAB 2 1.017 cerrada en 0.90 usar doble comision: 21.60 compra + 21.60 venta = 43.20 USD; neto despues de ambas 1,549.72 USD."
       ],
       "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
       "client_balance_section_titles": {
@@ -585,7 +586,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0161: LAB orden pendiente reemplazada a 0.2025 por instruccion del Sr. Eli. Neto del cierre LAB 2 despues de comision: 1,571.32 USD; orden cliente mantiene 1,800 USD con conciliacion vigente y faltante tecnico 77.52 USD. Sin ejecucion real confirmada.",
+      "latest_format_note": "KIM-0162: LAB 2 cierre 1.017->0.90 corregido con 1.2% de compra y 1.2% de venta. Venta bruta 1,592.92 USD; fees 43.20 USD; neto despues de ambas comisiones 1,549.72 USD; P/L neto -250.28 USD. Orden LAB 0.2025 sigue pendiente por 1,800 USD con faltante tecnico 99.12 USD.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
@@ -1522,25 +1523,30 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_chat_2026_07_15_lab_02025_from_lab2_net_sale",
-      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional. KIM-0158: el doctor informa que la ultima orden LAB pendiente baja de 0.18 a 0.1305; monto se mantiene en 1,800 USD, cantidad recalculada 13793.1034482759 LAB. No ejecutar sin confirmacion real. KIM-0159: precio actual LAB informado a 0.28; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual. KIM-0160: precio actual LAB 0.3180 USD; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual. KIM-0161: Sr. Eli pide comprar LAB en 0.2025 usando el dinero neto del cierre de LAB 2 comprada a 1.017. Cierre LAB 2: venta bruta 1,592.92 USD menos fee 21.60 USD = neto 1,571.32 USD. La orden cliente se mantiene por 1,800 USD; conciliacion vigente: neto LAB 2 1,571.32 + saldo previo 151.16 = 1,722.48 USD, faltante tecnico 77.52 USD. Cantidad recalculada por 1,800 / 0.2025 = 8,888.8888888889 LAB. No ejecutar sin confirmacion real de fill.",
-      "updated_at": "2026-07-15T20:57:09+00:00",
+      "notes": "KIM-0157: despues de cancelar las ordenes Shabbat LAB 0.45 y 0.27, se coloca nueva orden LAB a 0.18 por 1,800 USD con dinero disponible segun instruccion del doctor. Conciliacion oficial: venta LAB 2 neta despues de fee 1571.32 USD + saldo previo 151.16 USD = 1722.48 USD; faltante tecnico 77.52 USD contra 1,800, pendiente de confirmar si hubo USDT adicional. KIM-0158: el doctor informa que la ultima orden LAB pendiente baja de 0.18 a 0.1305; monto se mantiene en 1,800 USD, cantidad recalculada 13793.1034482759 LAB. No ejecutar sin confirmacion real. KIM-0159: precio actual LAB informado a 0.28; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual. KIM-0160: precio actual LAB 0.3180 USD; orden limite 0.1305 sigue pendiente/no ejecutada porque esta por debajo del mercado actual. KIM-0161: Sr. Eli pide comprar LAB en 0.2025 usando el dinero neto del cierre de LAB 2 comprada a 1.017. Cierre LAB 2: venta bruta 1,592.92 USD menos fee 21.60 USD = neto 1,571.32 USD. La orden cliente se mantiene por 1,800 USD; conciliacion vigente: neto LAB 2 1,571.32 + saldo previo 151.16 = 1,722.48 USD, faltante tecnico 77.52 USD. Cantidad recalculada por 1,800 / 0.2025 = 8,888.8888888889 LAB. No ejecutar sin confirmacion real de fill. KIM-0162: correccion de comisiones LAB 2: neto despues de compra+venta = 1,549.72 USD, no 1,571.32 USD. Conciliacion orden 0.2025: 1,549.72 + saldo previo 151.16 = 1,700.88 USD; faltante tecnico contra 1,800 = 99.12 USD. Si se usara solo el neto 1,549.72 a 0.2025, compraria 7,652.9382716049 LAB.",
+      "updated_at": "2026-07-15T21:13:36+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "current_price": 0.318,
       "current_price_status": "doctor_validated_current_price",
       "current_price_source": "doctor_chat_2026_07_14_lab_0318",
       "funding_status": "cash_funded_pending_reconciliation",
-      "available_cash_applied_usd": 1722.48,
-      "coverage_shortfall_usd": 77.52,
+      "available_cash_applied_usd": 1700.88,
+      "coverage_shortfall_usd": 99.12,
       "price_adjusted_from": 0.1305,
       "price_adjusted_to": 0.2025,
       "price_adjusted_at": "2026-07-15T20:57:09+00:00",
       "doctor_validated_at": "2026-07-14T18:58:12+00:00",
-      "lab2_net_sale_after_fee_usd": 1571.32,
+      "lab2_net_sale_after_fee_usd": 1549.72,
       "lab2_gross_sale_usd": 1592.92,
       "lab2_sale_fee_usd": 21.6,
       "prior_available_balance_used_usd": 151.16,
-      "credit_gap_from_lab2_net_sale_usd": 228.68
+      "credit_gap_from_lab2_net_sale_usd": 250.28,
+      "lab2_net_sale_after_sell_fee_only_usd": 1571.32,
+      "lab2_buy_fee_usd": 21.6,
+      "lab2_sell_fee_usd": 21.6,
+      "lab2_total_fees_usd": 43.2,
+      "quantity_if_only_lab2_net_after_both_fees": 7652.938271604938
     }
   ],
   "closed_positions": [
@@ -1705,13 +1711,17 @@
       "gross_pnl_usd": -207.08,
       "fee_rate": 0.012,
       "fee_base_usd": 1800.0,
-      "fee_usd": 21.6,
-      "net_pnl_usd": -228.68,
+      "fee_usd": 43.2,
+      "net_pnl_usd": -250.28,
       "source": "kim_live_sale",
       "sold_at": "2026-07-13T09:33:08",
-      "notes": "KIM-0157: LAB 2 orden 1.017 cerrada/vendida por stop loss en 0.90. Venta final confirmada: entrada 1.017, salida 0.9; venta bruta 1592.92 USD; P/L bruto -207.08 USD; fee 21.6 USD; P/L neto -228.68 USD.",
+      "notes": "KIM-0157: LAB 2 orden 1.017 cerrada/vendida por stop loss en 0.90. Venta final confirmada: entrada 1.017, salida 0.9; venta bruta 1592.92 USD; P/L bruto -207.08 USD; fee 21.6 USD; P/L neto -228.68 USD. KIM-0162: correccion del doctor: aplicar 1.2% de compra y 1.2% de venta. Fee compra 21.60 USD + fee venta 21.60 USD = 43.20 USD; neto despues de ambas comisiones 1,549.72 USD; P/L neto -250.28 USD.",
       "order": 39,
-      "credit": false
+      "credit": false,
+      "buy_fee_usd": 21.6,
+      "sell_fee_usd": 21.6,
+      "net_cash_after_buy_and_sell_fees_usd": 1549.72,
+      "updated_at": "2026-07-15T21:13:36+00:00"
     }
   ],
   "suppress_symbols": [
@@ -1795,7 +1805,8 @@
     "KIM-0156: no aglomerar las dos posiciones LAB; mostrar LAB 1 y LAB 2 separadas en reporte cliente. ADA/DOGE/NEAR siguen consolidadas por sus entradas manuales canonicas.",
     "KIM-0159: LAB precio actual manual 0.28; LAB 1 activa a 4.5 y LAB orden 0.1305 pendiente fondeada/conciliacion, no ejecutada.",
     "KIM-0160: LAB precio actual manual 0.3180 USD; LAB 1 activa a 4.5 y LAB orden 0.1305 pendiente fondeada/conciliacion, no ejecutada.",
-    "KIM-0161: LAB orden pendiente 0.2025 reemplaza 0.1305; neto cierre LAB 2 fue 1,571.32 USD despues de comision."
+    "KIM-0161: LAB orden pendiente 0.2025 reemplaza 0.1305; neto cierre LAB 2 fue 1,571.32 USD despues de comision.",
+    "KIM-0162: LAB 2 cierre 1.017 corrige comisiones a 1.2% compra y 1.2% venta; P/L neto -250.28 USD; profit actual 234.73 USD."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -1954,6 +1965,14 @@
       "id": "kim0161_lab_pending_02025_from_lab2_net",
       "at": "2026-07-15T20:57:09+00:00",
       "summary": "LAB pending order updated from 0.1305 to 0.2025; LAB 2 net sale after fee confirmed at 1,571.32 USD.",
+      "entries_total": 31,
+      "active_count": 15,
+      "pending_count": 16
+    },
+    {
+      "id": "kim0162_lab2_dual_fee_correction",
+      "at": "2026-07-15T21:13:36+00:00",
+      "summary": "LAB 2 fee correction: apply 1.2% buy fee and 1.2% sell fee; net after both fees 1,549.72 USD; realized profit now 234.73 USD.",
       "entries_total": 31,
       "active_count": 15,
       "pending_count": 16
@@ -2835,6 +2854,47 @@
         "realized_profit_for_statement_usd": 256.33,
         "lab2_net_sale_after_fee_usd": 1571.32,
         "lab_order_02025_quantity": 8888.888888888889
+      }
+    },
+    {
+      "id": "KIM-0162",
+      "at": "2026-07-15T21:13:36+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_15_lab2_dual_commission_correction",
+      "summary": "Correccion de comisiones LAB 2: 1.2% compra y 1.2% venta; neto despues de ambas comisiones 1,549.72 USD.",
+      "changes": [
+        {
+          "symbol": "LABUSDT",
+          "action": "closed_position_fee_correction",
+          "entry_price": 1.017,
+          "sell_price": 0.9,
+          "gross_sale_usd": 1592.92,
+          "gross_pnl_usd": -207.08,
+          "buy_fee_usd": 21.6,
+          "sell_fee_usd": 21.6,
+          "total_fee_usd": 43.2,
+          "old_net_pnl_usd": -228.68,
+          "new_net_pnl_usd": -250.28,
+          "old_net_after_fee_usd": 1571.32,
+          "new_net_after_both_fees_usd": 1549.72
+        },
+        {
+          "symbol": "LABUSDT",
+          "action": "pending_order_reconciliation_update",
+          "entry_price": 0.2025,
+          "invested_usd": 1800,
+          "available_cash_applied_usd": 1700.88,
+          "coverage_shortfall_usd": 99.12,
+          "quantity_at_1800_usd": 8888.888888888889,
+          "quantity_if_only_net_after_both_fees": 7652.938271604938
+        }
+      ],
+      "totals": {
+        "realized_profit_for_statement_usd": 234.73,
+        "client_total_net_considered_usd": 35754.88,
+        "available_balance_usd": -99.12,
+        "cash_reconciliation_shortfall_usd": 99.12,
+        "credit_pending_execution_usd": 27000
       }
     }
   ],
