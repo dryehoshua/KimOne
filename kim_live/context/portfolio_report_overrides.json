@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0163",
-  "updated_at": "2026-07-16T16:16:06+00:00",
-  "standard_note": "KIM-0163: ejecuciones confirmadas por el doctor; LAB orden 0.2025 comprada por 1,800 USD, cantidad 8,888.8888888889 LAB, precio actual LAB 0.214; LUNC refuerzo comprado a credito en 0.00005931 por 1,800 USD, cantidad 30,349,013.6570561 LUNC. Balance: 16 cubiertas, 1 comprada a credito, 14 pendientes a credito.",
+  "standard_version": "KIM-0164",
+  "updated_at": "2026-07-16T16:20:15+00:00",
+  "standard_note": "KIM-0164: fondeo Sr. Eli 2026-07-15 registrado por 100,000 MXN a tipo de cambio 17.42 = 5,740.53 USD. Fondeos totales cliente 720,000 MXN / 41,260.68 USD; total neto considerado 41,495.41 USD; saldo disponible 5,641.41 USD. No se aplica automaticamente a credito sin instruccion.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -94,13 +94,31 @@
         "concept": "Cobertura 8 órdenes 1800",
         "notes": "Recibo confirmado: Sr. Eli fondeo 252,000 MXN, enlistado por 14,424 USD, para cubrir 8 ordenes de 1,800 USD. Operativamente cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; las ordenes pendientes por comprar siguen pendientes a credito hasta ejecucion.",
         "updated_at": "2026-07-02T00:00:00-06:00"
+      },
+      {
+        "id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+        "type": "funding",
+        "status": "doctor_confirmed_exchange_rate",
+        "amount_usd": 5740.53,
+        "amount_mxn": 100000.0,
+        "exchange_rate_mxn_per_usd": 17.42,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-15",
+        "client_display_date": "15-jul-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 68.89,
+        "fee_mxn_equivalent": 1200.0,
+        "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
+        "concept": "Fondeo confirmado",
+        "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
+        "updated_at": "2026-07-16T16:20:15+00:00"
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
     "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged.",
-    "confirmed_cash_funding_total_usd": 23006.16,
-    "confirmed_cash_funding_total_mxn": 402000.0,
-    "last_funding_note": "KIM-0140: recibo 01-jul-2026 confirma 252,000 MXN / 14,424 USD para cobertura 8 ordenes 1800; cubre activas a credito y LAB cerrada, no pendientes por comprar.",
+    "confirmed_cash_funding_total_usd": 28746.69,
+    "confirmed_cash_funding_total_mxn": 502000.0,
+    "last_funding_note": "KIM-0164: Sr. Eli fondeo 100,000 MXN el 15-jul-2026 a 17.42 MXN/USD = 5,740.53 USD; registrado como fondeo sin reasignacion automatica a credito.",
     "credit_coverage_events": [
       {
         "id": "credit_coverage_2026_06_23_pepe_lunc_active",
@@ -339,8 +357,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0162",
-      "updated_at": "2026-07-15T21:13:36+00:00",
+      "version": "KIM-0164",
+      "updated_at": "2026-07-16T16:20:15+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -392,15 +410,23 @@
           "usd": 14424.0,
           "exchange_rate_mxn_per_usd": 17.470882,
           "concept": "Cobertura 8 órdenes 1800"
+        },
+        {
+          "id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+          "date": "15-jul-2026",
+          "mxn": 100000,
+          "usd": 5740.53,
+          "exchange_rate_mxn_per_usd": 17.42,
+          "concept": "Fondeo confirmado"
         }
       ],
-      "client_funding_total_mxn": 620000,
-      "client_funding_total_usd": 35520.15,
+      "client_funding_total_mxn": 720000,
+      "client_funding_total_usd": 41260.68,
       "realized_profit_for_statement_usd": 234.73,
       "realized_profit_note": "KIM-0162: Profit realizado ajustado por doble comision LAB 2: KIM-0161 256.33 USD menos comision de compra adicional 21.60 USD = 234.73 USD. LAB 2: perdida bruta -207.08 USD, fee compra 21.60 USD, fee venta 21.60 USD, P/L neto -250.28 USD.",
-      "client_total_net_considered_usd": 35754.88,
+      "client_total_net_considered_usd": 41495.41,
       "firm_assigned_usd": 35854.0,
-      "available_balance_usd": -99.12,
+      "available_balance_usd": 5641.41,
       "credit_bought_pending_payment_usd": 1800,
       "credit_pending_execution_usd": 25200,
       "credit_total_usd": 27000,
@@ -569,9 +595,10 @@
         "KIM-0160: usar precio actual LAB 0.3180 USD (31.80 centavos) hasta nueva instruccion; no ejecutar la orden LAB 0.1305 sin confirmacion real.",
         "KIM-0161: usar LAB orden pendiente 0.2025 por 1,800 USD; neto del cierre LAB 2 1.017 despues de comision fue 1,571.32 USD; no ejecutar sin confirmacion real.",
         "KIM-0162: para LAB 2 1.017 cerrada en 0.90 usar doble comision: 21.60 compra + 21.60 venta = 43.20 USD; neto despues de ambas 1,549.72 USD.",
-        "KIM-0163: LAB 0.2025 esta comprada/fondeada y LUNC refuerzo 0.00005931 esta comprado a credito; balance debe cuadrar 16 + 1 + 14 = 31."
+        "KIM-0163: LAB 0.2025 esta comprada/fondeada y LUNC refuerzo 0.00005931 esta comprado a credito; balance debe cuadrar 16 + 1 + 14 = 31.",
+        "KIM-0164: incluir fondeo 15-jul-2026 de 100,000 MXN / 5,740.53 USD a TC 17.42; no aplicar a credito sin instruccion expresa."
       ],
-      "latest_funding_note": "KIM-0140: fondeo 01-jul-2026 252,000 MXN / 14,424 USD, concepto Cobertura 8 órdenes 1800; cubre 7 activas a crédito y LAB cerrada; pendientes por comprar siguen a crédito hasta ejecución.",
+      "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
         "fundings": "Fondeos",
         "covered_orders": "Órdenes Compradas Cubiertas Completas",
@@ -588,7 +615,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0163: ejecuciones confirmadas por el doctor; LAB orden 0.2025 comprada por 1,800 USD, cantidad 8,888.8888888889 LAB, precio actual LAB 0.214; LUNC refuerzo comprado a credito en 0.00005931 por 1,800 USD, cantidad 30,349,013.6570561 LUNC. Balance: 16 cubiertas, 1 comprada a credito, 14 pendientes a credito.",
+      "latest_format_note": "KIM-0164: fondeo Sr. Eli 2026-07-15 registrado por 100,000 MXN a tipo de cambio 17.42 = 5,740.53 USD. Fondeos totales cliente 720,000 MXN / 41,260.68 USD; total neto considerado 41,495.41 USD; saldo disponible 5,641.41 USD. No se aplica automaticamente a credito sin instruccion.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
@@ -608,8 +635,8 @@
       "cash_reconciliation_shortfall_usd": 99.12
     },
     "funding_reconciliation": {
-      "updated_at": "2026-07-02T00:00:00-06:00",
-      "status": "receipt_confirmed_historical_recent_and_2026_07_01_credit_coverage",
+      "updated_at": "2026-07-16T16:20:15+00:00",
+      "status": "receipt_confirmed_historical_recent_and_2026_07_15_funding_registered",
       "historical_base_funding": [
         {
           "id": "firm_capital_canonical_2026_06_05",
@@ -685,23 +712,41 @@
           "client_display_date": "01-jul-2026",
           "concept": "Cobertura 8 órdenes 1800",
           "updated_at": "2026-07-02T00:00:00-06:00"
+        },
+        {
+          "id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+          "type": "funding",
+          "status": "doctor_confirmed_exchange_rate",
+          "amount_usd": 5740.53,
+          "amount_mxn": 100000.0,
+          "exchange_rate_mxn_per_usd": 17.42,
+          "payment_method": "cash",
+          "occurred_at": "2026-07-15",
+          "client_display_date": "15-jul-2026",
+          "fee_rate": 0.012,
+          "fee_usd": 68.89,
+          "fee_mxn_equivalent": 1200.0,
+          "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
+          "concept": "Fondeo confirmado",
+          "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
+          "updated_at": "2026-07-16T16:20:15+00:00"
         }
       ],
-      "known_recent_total_usd": 23006.16,
-      "known_recent_total_mxn": 402000.0,
+      "known_recent_total_usd": 28746.69,
+      "known_recent_total_mxn": 502000.0,
       "historical_base_total_usd": 12513.99,
-      "total_funding_usd_including_historical_base": 35520.15,
-      "known_recent_funding_fee_usd": 276.07,
+      "total_funding_usd_including_historical_base": 41260.68,
+      "known_recent_funding_fee_usd": 344.96,
       "historical_base_fee_usd_if_conversion_applies": 150.17,
       "policy": "No convertir recibos MXN a USD sin tasa/comprobante de conversion. Guardar recibo, fecha, MXN y estado pending_usd_conversion.",
       "confirmed_historical_receipt_total_mxn": 218000.0,
       "confirmed_historical_receipt_total_usd": 12513.99,
-      "total_mxn_confirmed_by_receipts_and_recent_funding": 620000.0,
-      "total_usd_confirmed_excluding_mxn_only_receipt": 35520.15,
-      "june_funding_policy": "Fondeos historicos + recientes confirmados; nuevo 01-jul-2026 252,000 MXN / 14,424 USD cubre activas a credito y LAB cerrada. Pendientes por comprar se cubren solo al ejecutarse.",
+      "total_mxn_confirmed_by_receipts_and_recent_funding": 720000.0,
+      "total_usd_confirmed_excluding_mxn_only_receipt": 41260.68,
+      "june_funding_policy": "Fondeos historicos + recientes confirmados; KIM-0164 agrega 15-jul-2026 100,000 MXN / 5,740.53 USD como fondeo sin reasignacion automatica a credito.",
       "historical_base_total_mxn": 218000.0,
-      "client_statement_protocol_version": "KIM-0140",
-      "client_statement_date_policy": "Para reporte cliente usar fechas finales y recibos: incluir 01-jul-2026 como Cobertura 8 órdenes 1800."
+      "client_statement_protocol_version": "KIM-0164",
+      "client_statement_date_policy": "Para reporte cliente incluir 15-jul-2026 como Fondeo confirmado."
     },
     "funding_receipts_mxn": [
       {
@@ -963,10 +1008,28 @@
         "concept": "Cobertura 8 órdenes 1800",
         "notes": "Recibo confirmado: Sr. Eli fondeo 252,000 MXN, enlistado por 14,424 USD, para cubrir 8 ordenes de 1,800 USD. Operativamente cubre 7 ordenes activas que seguian a credito y liquida LAB cerrada; las ordenes pendientes por comprar siguen pendientes a credito hasta ejecucion.",
         "updated_at": "2026-07-02T00:00:00-06:00"
+      },
+      {
+        "id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+        "type": "funding",
+        "status": "doctor_confirmed_exchange_rate",
+        "amount_usd": 5740.53,
+        "amount_mxn": 100000.0,
+        "exchange_rate_mxn_per_usd": 17.42,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-15",
+        "client_display_date": "15-jul-2026",
+        "fee_rate": 0.012,
+        "fee_usd": 68.89,
+        "fee_mxn_equivalent": 1200.0,
+        "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
+        "concept": "Fondeo confirmado",
+        "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
+        "updated_at": "2026-07-16T16:20:15+00:00"
       }
     ],
-    "canonical_total_funded_usd": 21096.15,
-    "canonical_total_funded_mxn": 368000.0,
+    "canonical_total_funded_usd": 41260.68,
+    "canonical_total_funded_mxn": 720000.0,
     "historical_receipt_converted_usd": 12513.99,
     "available_credit_coverage_pool_after_kim0138_usd": 577.24,
     "available_credit_coverage_pool_after_kim0140_usd": 1532.87
@@ -1989,6 +2052,14 @@
       "entries_total": 31,
       "active_count": 17,
       "pending_count": 14
+    },
+    {
+      "id": "kim0164_funding_100000_mxn_5740_53_usd",
+      "at": "2026-07-16T16:20:15+00:00",
+      "summary": "Registered Sr. Eli funding: 100,000 MXN at 17.42 MXN/USD = 5,740.53 USD; funding totals and available balance updated.",
+      "client_funding_total_mxn": 720000,
+      "client_funding_total_usd": 41260.68,
+      "available_balance_usd": 5641.41
     }
   ],
   "consumed_orders": [
@@ -2145,7 +2216,8 @@
     "KIM-0132: Estado de cuenta Sr. Eli usa protocolo final WhatsApp: 6 fondeos al inicio, Balance de Crédito, tres listas; fechas cliente 22-jun-2026 para 2,877 USD y 23-jun-2026 para 2,844 USD; profit actual generado 935.09 USD; total neto considerado 19,170.08 USD; firme asignado 17,854; saldo disponible 1,316.08; crédito por cubrir 16,200; crédito pendiente por ejecutar 16,200.",
     "KIM-0140: Fondeo 01-jul-2026 por 252,000 MXN / 14,424 USD cubre 7 ordenes activas a credito y LAB cerrada; las ordenes pendientes a credito se cubren solo cuando se ejecuten.",
     "KIM-0141: siempre que el doctor pida portafolio completo, actualización diaria 09:00 o envío completo por WhatsApp, anexar al final el Balance de Crédito en formato estructurado aprobado, no solo balance_line compacto.",
-    "KIM-0163: LAB orden 0.2025 comprada; LUNC refuerzo comprado a credito en 0.00005931. No aglomerar LAB ni LUNC; separar base/refuerzo."
+    "KIM-0163: LAB orden 0.2025 comprada; LUNC refuerzo comprado a credito en 0.00005931. No aglomerar LAB ni LUNC; separar base/refuerzo.",
+    "KIM-0164: fondeo Sr. Eli 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42 registrado solo como fondeo."
   ],
   "superseded_facts": [
     {
@@ -2960,6 +3032,38 @@
         "lab_order_02025_quantity": 8888.888888888889,
         "lunc_refuerzo_entry_price": 5.931e-05,
         "lunc_refuerzo_quantity": 30349013.657056145
+      }
+    },
+    {
+      "id": "KIM-0164",
+      "at": "2026-07-16T16:20:15+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
+      "summary": "Se registra fondeo de Sr. Eli del 2026-07-15 por 100,000 MXN a TC 17.42 = 5,740.53 USD.",
+      "changes": [
+        {
+          "action": "register_funding",
+          "funding_id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+          "occurred_at": "2026-07-15",
+          "amount_mxn": 100000.0,
+          "exchange_rate_mxn_per_usd": 17.42,
+          "amount_usd": 5740.53,
+          "fee_rate": 0.012,
+          "fee_usd": 68.89,
+          "fee_mxn_equivalent": 1200.0,
+          "assignment_policy": "not_auto_applied_to_credit_without_explicit_instruction"
+        }
+      ],
+      "totals": {
+        "client_funding_total_mxn": 720000,
+        "client_funding_total_usd": 41260.68,
+        "realized_profit_for_statement_usd": 234.73,
+        "client_total_net_considered_usd": 41495.41,
+        "firm_assigned_usd": 35854.0,
+        "available_balance_usd": 5641.41,
+        "credit_bought_pending_payment_usd": 1800,
+        "credit_pending_execution_usd": 25200,
+        "credit_total_usd": 27000
       }
     }
   ],
