@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0166",
-  "updated_at": "2026-07-16T20:35:49+00:00",
-  "standard_note": "KIM-0166: LUNC base y LUNC refuerzo aglomerados en una sola posicion consolidada. Total 3,600 USD; cantidad 49,555,436.28478286 LUNC; promedio ponderado 0.0000726459147551782. El refuerzo de 1,800 USD permanece como comprado a credito pendiente de cobertura.",
+  "standard_version": "KIM-0167",
+  "updated_at": "2026-07-16T20:40:45+00:00",
+  "standard_note": "KIM-0167: ajustes de refuerzos pendientes; FTT refuerzo baja de 0.18 a 0.1620 por 1,800 USD (cantidad 11111.1111111111); HBAR refuerzo baja de 0.0603 a 0.054 por 1,800 USD (cantidad 33333.3333333333). Ambas siguen pendientes a credito, no ejecutadas.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -357,8 +357,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0166",
-      "updated_at": "2026-07-16T20:35:49+00:00",
+      "version": "KIM-0167",
+      "updated_at": "2026-07-16T20:40:45+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -598,7 +598,8 @@
         "KIM-0163: LAB 0.2025 esta comprada/fondeada y LUNC refuerzo 0.00005931 esta comprado a credito; balance debe cuadrar 16 + 1 + 14 = 31.",
         "KIM-0164: incluir fondeo 15-jul-2026 de 100,000 MXN / 5,740.53 USD a TC 17.42; no aplicar a credito sin instruccion expresa.",
         "KIM-0165: LAB orden 0.2025 fue ejecutada por 1,549.72 USD, no 1,800 USD; cantidad 7,652.938271604938 LAB.",
-        "KIM-0166: reportar LUNC como posicion consolidada de 3,600 USD con promedio 0.0000726459147551782; no mostrar LUNC refuerzo como linea viva separada."
+        "KIM-0166: reportar LUNC como posicion consolidada de 3,600 USD con promedio 0.0000726459147551782; no mostrar LUNC refuerzo como linea viva separada.",
+        "KIM-0167: FTT refuerzo pendiente 0.1620 y HBAR refuerzo pendiente 0.054; ambos por 1,800 USD a credito, no ejecutados."
       ],
       "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
@@ -617,7 +618,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0166: LUNC base y LUNC refuerzo aglomerados en una sola posicion consolidada. Total 3,600 USD; cantidad 49,555,436.28478286 LUNC; promedio ponderado 0.0000726459147551782. El refuerzo de 1,800 USD permanece como comprado a credito pendiente de cobertura.",
+      "latest_format_note": "KIM-0167: ajustes de refuerzos pendientes; FTT refuerzo baja de 0.18 a 0.1620 por 1,800 USD (cantidad 11111.1111111111); HBAR refuerzo baja de 0.0603 a 0.054 por 1,800 USD (cantidad 33333.3333333333). Ambas siguen pendientes a credito, no ejecutadas.",
       "visible_order_count": 31,
       "section_count_validation": {
         "covered_orders": 16,
@@ -629,7 +630,7 @@
         "total_visible_orders": 30,
         "client_visible_lines": 30,
         "accounting_underlying_orders": 31,
-        "rule": "KIM-0166: LUNC base + refuerzo se reportan como una posicion consolidada; balance mantiene 16 cubiertas + 1 comprada a credito + 14 pendientes = 31 subordenes contables."
+        "rule": "KIM-0167: LUNC aglomerada mantiene 30 lineas visibles; FTT/HBAR refuerzos siguen pendientes a credito con nuevos precios."
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -1367,13 +1368,19 @@
       "order": 26,
       "label": "FTT/USDT refuerzo",
       "invested_usd": 1800,
-      "entry_price": 0.18,
-      "quantity": 10000.0,
-      "credit_usd": 1800,
+      "entry_price": 0.162,
+      "quantity": 11111.111111111111,
+      "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "kim_0114_doctor_confirmed_pending_refuerzo",
-      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito.",
-      "updated_at": "2026-06-19T01:35:06+00:00"
+      "source": "doctor_chat_2026_07_16_ftt_refuerzo_01620",
+      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito. KIM-0167: el doctor baja FTT refuerzo pendiente de 0.18 a 0.1620 por 1,800 USD. Cantidad recalculada 11111.1111111111 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real.",
+      "updated_at": "2026-07-16T20:40:45+00:00",
+      "price_adjusted_from": 0.18,
+      "price_adjusted_to": 0.162,
+      "price_adjusted_at": "2026-07-16T20:40:45+00:00",
+      "credit": true,
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "id": "kim0119-a27-zecusdt-pending",
@@ -1517,15 +1524,18 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.0603,
-      "quantity": 29850.746268656716,
+      "entry_price": 0.054,
+      "quantity": 33333.333333333336,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion.",
-      "updated_at": "2026-07-06T19:01:13+00:00",
+      "source": "doctor_chat_2026_07_16_hbar_refuerzo_0054",
+      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0167: el doctor baja HBAR refuerzo pendiente de 0.0603 a 0.054 por 1,800 USD. Cantidad recalculada 33333.3333333333 HBAR. Sigue pendiente a credito; no ejecutar sin confirmacion real.",
+      "updated_at": "2026-07-16T20:40:45+00:00",
       "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "requires_manual_fill_confirmation": true,
+      "price_adjusted_from": 0.0603,
+      "price_adjusted_to": 0.054,
+      "price_adjusted_at": "2026-07-16T20:40:45+00:00"
     },
     {
       "id": "paper-kpb-20260703194505-5a4ee7",
@@ -2111,6 +2121,17 @@
       "lunc_total_quantity": 49555436.28478286,
       "lunc_weighted_average_price": 7.26459147551782e-05,
       "lunc_credit_usd": 1800.0
+    },
+    {
+      "id": "kim0167_ftt_hbar_refuerzo_prices",
+      "at": "2026-07-16T20:40:45+00:00",
+      "summary": "FTT refuerzo pending lowered to 0.1620 and HBAR refuerzo pending lowered to 0.054; both remain pending on credit.",
+      "ftt_refuerzo_price": 0.162,
+      "ftt_refuerzo_quantity": 11111.111111111111,
+      "hbar_refuerzo_price": 0.054,
+      "hbar_refuerzo_quantity": 33333.333333333336,
+      "visible_order_count": 30,
+      "pending_on_credit_orders": 14
     }
   ],
   "consumed_orders": [
@@ -2294,7 +2315,8 @@
     "KIM-0163: LAB orden 0.2025 comprada; LUNC refuerzo comprado a credito en 0.00005931. No aglomerar LAB ni LUNC; separar base/refuerzo.",
     "KIM-0164: fondeo Sr. Eli 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42 registrado solo como fondeo.",
     "KIM-0165: corregir LAB 0.2025 a monto ejecutado 1,549.72 USD; no mostrar 1,800 USD.",
-    "KIM-0166: LUNC base y refuerzo aglomerados; conservar credito de 1,800 USD del refuerzo en balance."
+    "KIM-0166: LUNC base y refuerzo aglomerados; conservar credito de 1,800 USD del refuerzo en balance.",
+    "KIM-0167: usar FTT refuerzo pendiente 0.1620 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion."
   ],
   "superseded_facts": [
     {
@@ -3216,6 +3238,48 @@
         "bought_on_credit_pending_coverage": 1,
         "pending_on_credit_orders": 14,
         "credit_bought_pending_payment_usd": 1800,
+        "credit_pending_execution_usd": 25200,
+        "credit_total_usd": 27000,
+        "firm_assigned_usd": 35603.72,
+        "available_balance_usd": 5891.69
+      }
+    },
+    {
+      "id": "KIM-0167",
+      "at": "2026-07-16T20:40:45+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_16_ftt_hbar_refuerzo_price_adjustment",
+      "summary": "Ajustes de precios pendientes: FTT refuerzo a 0.1620 y HBAR refuerzo a 0.054.",
+      "changes": [
+        {
+          "id": "kim0114-a26-fttusdt-refuerzo",
+          "symbol": "FTTUSDT",
+          "action": "price_update_pending_refuerzo",
+          "old_entry_price": 0.18,
+          "new_entry_price": 0.162,
+          "invested_usd": 1800.0,
+          "old_quantity": 10000.0,
+          "new_quantity": 11111.111111111111,
+          "state": "pending",
+          "credit_usd": 1800.0
+        },
+        {
+          "id": "paper-kpb-20260703194503-9559de",
+          "symbol": "HBARUSDT",
+          "action": "price_update_pending_refuerzo",
+          "old_entry_price": 0.0603,
+          "new_entry_price": 0.054,
+          "invested_usd": 1800.0,
+          "old_quantity": 29850.746268656716,
+          "new_quantity": 33333.333333333336,
+          "state": "pending",
+          "credit_usd": 1800.0
+        }
+      ],
+      "totals": {
+        "visible_order_count": 30,
+        "accounting_underlying_orders": 31,
+        "pending_on_credit_orders": 14,
         "credit_pending_execution_usd": 25200,
         "credit_total_usd": 27000,
         "firm_assigned_usd": 35603.72,
