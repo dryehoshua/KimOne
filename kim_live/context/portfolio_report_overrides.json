@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0170",
-  "updated_at": "2026-07-17T22:04:53+00:00",
-  "standard_note": "KIM-0170: correccion de promedio; APTOS/APT refuerzo realmente se ejecuto a 0.5940 por 1,800 USD y se promedia con APT base: total 3,600 USD, cantidad 4848.484848484849, promedio 0.7425. LUNC refuerzo realmente se ejecuto a 0.0000594 por 1,800 USD y se mantiene promediado con LUNC base: cantidad total 49509452.930757, promedio 0.00007271338677555. Sin cambio de saldo disponible ni credito.",
+  "standard_version": "KIM-0171",
+  "updated_at": "2026-07-17T22:32:39+00:00",
+  "standard_note": "KIM-0171: formato de reporte; separar siempre las ordenes pendientes bajo el encabezado exacto \"Órdenes pendientes 📋✅\". Sin cambios contables.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -357,8 +357,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0170",
-      "updated_at": "2026-07-17T22:04:53+00:00",
+      "version": "KIM-0171",
+      "updated_at": "2026-07-17T22:32:39+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -588,26 +588,27 @@
         "KIM-0168: LAB orden 0.2025 esta cerrada por stop loss 10%; no incluirla en Ordenes Compradas Cubiertas Completas ni como linea viva.",
         "KIM-0169: LUNC refuerzo y APT refuerzo estan cubiertos; no listarlos en Ordenes Compradas A Credito.",
         "KIM-0170: APT debe reportarse como posicion consolidada de 3,600 USD a promedio 0.7425; no mostrar APT refuerzo como linea separada.",
-        "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo."
+        "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo.",
+        "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\"."
       ],
       "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
         "fundings": "Fondeos",
         "covered_orders": "Órdenes Compradas Cubiertas Completas",
         "bought_on_credit": "Órdenes Compradas A Crédito",
-        "pending_on_credit": "Órdenes Pendientes A Crédito",
+        "pending_on_credit": "Órdenes pendientes 📋✅",
         "summary": "Resumen"
       },
       "message_split_policy": [
         "Si WhatsApp requiere separar, dividir por secciones inteligentes, no por corte automático de caracteres.",
         "Mensaje 1: Balance de Crédito + Fondeos.",
         "Mensaje 2: Órdenes Compradas Cubiertas Completas + Órdenes Compradas A Crédito.",
-        "Mensaje 3: Órdenes Pendientes A Crédito + Resumen."
+        "Mensaje 3: Órdenes pendientes 📋✅ + Resumen."
       ],
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0170: correccion de promedio; APTOS/APT refuerzo realmente se ejecuto a 0.5940 por 1,800 USD y se promedia con APT base: total 3,600 USD, cantidad 4848.484848484849, promedio 0.7425. LUNC refuerzo realmente se ejecuto a 0.0000594 por 1,800 USD y se mantiene promediado con LUNC base: cantidad total 49509452.930757, promedio 0.00007271338677555. Sin cambio de saldo disponible ni credito.",
+      "latest_format_note": "KIM-0171: formato de reporte; separar siempre las ordenes pendientes bajo el encabezado exacto \"Órdenes pendientes 📋✅\". Sin cambios contables.",
       "visible_order_count": 28,
       "section_count_validation": {
         "covered_orders": 15,
@@ -628,11 +629,15 @@
       "reporting_notes": [
         "KIM-0168: APT refuerzo comprado a credito; LUNC no se duplica porque ya estaba aglomerado; LAB 0.2025 cerrada por stop 10%.",
         "KIM-0169: cobertura de 3,600 USD aplicada a LUNC refuerzo y APT refuerzo; credito por cubrir queda 0.",
-        "KIM-0170: APTOS/APT refuerzo precio corregido a 0.5940 y aglomerado con APT base; LUNC refuerzo corregido a 0.0000594 y aglomerado con LUNC base."
+        "KIM-0170: APTOS/APT refuerzo precio corregido a 0.5940 y aglomerado con APT base; LUNC refuerzo corregido a 0.0000594 y aglomerado con LUNC base.",
+        "KIM-0171: encabezado requerido para pendientes: \"Órdenes pendientes 📋✅\"."
       ],
       "covered_orders_subtotal_usd": 37654.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
-      "pending_to_buy_on_credit_subtotal_usd": 23400
+      "pending_to_buy_on_credit_subtotal_usd": 23400,
+      "pending_orders_heading": "Órdenes pendientes 📋✅",
+      "pending_orders_heading_required": true,
+      "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output."
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1981,7 +1986,8 @@
     "KIM-0162: LAB 2 cierre 1.017 corrige comisiones a 1.2% compra y 1.2% venta; P/L neto -250.28 USD; profit actual 234.73 USD.",
     "KIM-0168: APT refuerzo esta comprado a credito; LUNC no duplicar porque ya esta en LUNC consolidada; LAB 0.2025 esta vendida/cerrada por stop 10%.",
     "KIM-0169: LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD; saldo disponible queda 3,669.70 USD; no quedan compradas a credito por cubrir.",
-    "KIM-0170: APTOS/APT refuerzo 0.5940 se promedia con APT base; LUNC refuerzo 0.0000594 se promedia con LUNC base; no mostrar refuerzos separados."
+    "KIM-0170: APTOS/APT refuerzo 0.5940 se promedia con APT base; LUNC refuerzo 0.0000594 se promedia con LUNC base; no mostrar refuerzos separados.",
+    "KIM-0171: en reportes WhatsApp, separar pendientes con \"Órdenes pendientes 📋✅\"."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2223,6 +2229,14 @@
       "visible_order_count": 28,
       "available_balance_usd": 3669.7,
       "firm_assigned_usd": 37654.0,
+      "credit_total_usd": 23400
+    },
+    {
+      "id": "kim0171_pending_orders_heading",
+      "at": "2026-07-17T22:32:39+00:00",
+      "summary": "Pending orders section heading changed to exact text: Órdenes pendientes 📋✅.",
+      "visible_order_count": 28,
+      "available_balance_usd": 3669.7,
       "credit_total_usd": 23400
     }
   ],
@@ -3515,6 +3529,24 @@
         "firm_assigned_usd": 37654.0,
         "available_balance_usd": 3669.7,
         "credit_total_usd": 23400
+      }
+    },
+    {
+      "id": "KIM-0171",
+      "at": "2026-07-17T22:32:39+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_17_pending_heading",
+      "summary": "Formato: separar ordenes pendientes con encabezado exacto Órdenes pendientes 📋✅.",
+      "changes": [
+        {
+          "action": "set_pending_orders_heading",
+          "heading": "Órdenes pendientes 📋✅"
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 3669.7,
+        "credit_total_usd": 23400,
+        "visible_order_count": 28
       }
     }
   ],
