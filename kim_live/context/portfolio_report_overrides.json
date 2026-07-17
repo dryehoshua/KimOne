@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0169",
-  "updated_at": "2026-07-17T19:04:41+00:00",
-  "standard_note": "KIM-0169: el doctor aclara que LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD. Ya no quedan en compradas a credito por cubrir; saldo disponible actualizado 3,669.70 USD; credito pendiente solo por ejecutar 23,400 USD.",
+  "standard_version": "KIM-0170",
+  "updated_at": "2026-07-17T22:04:53+00:00",
+  "standard_note": "KIM-0170: correccion de promedio; APTOS/APT refuerzo realmente se ejecuto a 0.5940 por 1,800 USD y se promedia con APT base: total 3,600 USD, cantidad 4848.484848484849, promedio 0.7425. LUNC refuerzo realmente se ejecuto a 0.0000594 por 1,800 USD y se mantiene promediado con LUNC base: cantidad total 49509452.930757, promedio 0.00007271338677555. Sin cambio de saldo disponible ni credito.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -357,8 +357,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0169",
-      "updated_at": "2026-07-17T19:04:41+00:00",
+      "version": "KIM-0170",
+      "updated_at": "2026-07-17T22:04:53+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -437,11 +437,7 @@
         ],
         [
           "APT",
-          1800
-        ],
-        [
-          "APT refuerzo",
-          1800
+          3600
         ],
         [
           "DOGE",
@@ -590,7 +586,9 @@
         "KIM-0166: reportar LUNC como posicion consolidada de 3,600 USD con promedio 0.0000726459147551782; no mostrar LUNC refuerzo como linea viva separada.",
         "KIM-0167: FTT refuerzo pendiente 0.1620 y HBAR refuerzo pendiente 0.054; ambos por 1,800 USD a credito, no ejecutados.",
         "KIM-0168: LAB orden 0.2025 esta cerrada por stop loss 10%; no incluirla en Ordenes Compradas Cubiertas Completas ni como linea viva.",
-        "KIM-0169: LUNC refuerzo y APT refuerzo estan cubiertos; no listarlos en Ordenes Compradas A Credito."
+        "KIM-0169: LUNC refuerzo y APT refuerzo estan cubiertos; no listarlos en Ordenes Compradas A Credito.",
+        "KIM-0170: APT debe reportarse como posicion consolidada de 3,600 USD a promedio 0.7425; no mostrar APT refuerzo como linea separada.",
+        "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo."
       ],
       "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
@@ -609,19 +607,19 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0169: el doctor aclara que LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD. Ya no quedan en compradas a credito por cubrir; saldo disponible actualizado 3,669.70 USD; credito pendiente solo por ejecutar 23,400 USD.",
-      "visible_order_count": 29,
+      "latest_format_note": "KIM-0170: correccion de promedio; APTOS/APT refuerzo realmente se ejecuto a 0.5940 por 1,800 USD y se promedia con APT base: total 3,600 USD, cantidad 4848.484848484849, promedio 0.7425. LUNC refuerzo realmente se ejecuto a 0.0000594 por 1,800 USD y se mantiene promediado con LUNC base: cantidad total 49509452.930757, promedio 0.00007271338677555. Sin cambio de saldo disponible ni credito.",
+      "visible_order_count": 28,
       "section_count_validation": {
-        "covered_orders": 17,
-        "covered_active": 17,
+        "covered_orders": 15,
+        "covered_active": 15,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
         "pending_on_credit": 13,
-        "total_visible_orders": 29,
-        "client_visible_lines": 29,
+        "total_visible_orders": 28,
+        "client_visible_lines": 28,
         "accounting_underlying_orders": 30,
-        "rule": "KIM-0169: LUNC refuerzo y APT refuerzo cubiertos con 3,600 USD; no hay compradas a credito por cubrir."
+        "rule": "KIM-0170: APT base + refuerzo promediados en una linea; LUNC base + refuerzo promediados en una linea; LAB 0.2025 cerrada."
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -629,7 +627,8 @@
       "cash_reconciliation_shortfall_usd": 0.0,
       "reporting_notes": [
         "KIM-0168: APT refuerzo comprado a credito; LUNC no se duplica porque ya estaba aglomerado; LAB 0.2025 cerrada por stop 10%.",
-        "KIM-0169: cobertura de 3,600 USD aplicada a LUNC refuerzo y APT refuerzo; credito por cubrir queda 0."
+        "KIM-0169: cobertura de 3,600 USD aplicada a LUNC refuerzo y APT refuerzo; credito por cubrir queda 0.",
+        "KIM-0170: APTOS/APT refuerzo precio corregido a 0.5940 y aglomerado con APT base; LUNC refuerzo corregido a 0.0000594 y aglomerado con LUNC base."
       ],
       "covered_orders_subtotal_usd": 37654.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
@@ -1074,14 +1073,26 @@
       "symbol": "APTUSDT",
       "state": "active",
       "order": 2,
-      "label": "APT/USDT",
-      "invested_usd": 1800,
-      "entry_price": 0.99,
-      "quantity": 1818.1818181818182,
+      "label": "APT/USDT consolidada",
+      "invested_usd": 3600.0,
+      "entry_price": 0.7425,
+      "quantity": 4848.484848484849,
       "credit_usd": 0,
-      "source": "kim_0138_credit_coverage_apt_dot",
-      "notes": "A2 Aptos/APT activa canonica a 0.99; conservar separada de A14 pendiente. KIM-0138: credito activo de 1800 USD cubierto con saldo disponible por instruccion del doctor; no tocar refuerzos pendientes.",
-      "updated_at": "2026-06-29T19:14:38-06:00"
+      "source": "doctor_chat_2026_07_17_apt_average_correction",
+      "notes": "A2 Aptos/APT activa canonica a 0.99; conservar separada de A14 pendiente. KIM-0138: credito activo de 1800 USD cubierto con saldo disponible por instruccion del doctor; no tocar refuerzos pendientes. KIM-0170: el doctor corrige que APTOS refuerzo se ejecuto a 0.5940, no 0.504; se promedia con APT base. Total 3,600 USD, cantidad 4,848.484848484849 APT, promedio 0.7425. No reportar refuerzo separado.",
+      "updated_at": "2026-07-17T22:04:53+00:00",
+      "funding_status": "fully_covered_base_plus_refuerzo_kim0170",
+      "aggregation": {
+        "base_amount_usd": 1800.0,
+        "base_entry_price": 0.99,
+        "base_quantity": 1818.1818181818182,
+        "refuerzo_amount_usd": 1800.0,
+        "refuerzo_entry_price": 0.594,
+        "refuerzo_quantity": 3030.3030303030305,
+        "weighted_average_price": 0.7425,
+        "total_quantity": 4848.484848484849,
+        "total_amount_usd": 3600.0
+      }
     },
     {
       "symbol": "DOGEUSDT",
@@ -1123,12 +1134,12 @@
       "order": 4,
       "label": "LUNC/USDT consolidada",
       "invested_usd": 3600.0,
-      "entry_price": 7.26459147551782e-05,
-      "quantity": 49555436.28478286,
+      "entry_price": 7.271338677554956e-05,
+      "quantity": 49509452.930757016,
       "credit_usd": 0.0,
-      "source": "kim_0121_credit_coverage",
-      "notes": "KIM-0166: LUNC consolidada por instruccion del doctor. Base 1,800 USD @ 0.00009371865 + refuerzo 1,800 USD @ 0.00005931 = 3,600 USD; cantidad total 49555436.28478286 LUNC; promedio ponderado 0.0000726459147551782. El refuerzo sigue como 1,800 USD comprado a credito pendiente de cobertura; no reportar refuerzo separado. KIM-0169: LUNC refuerzo quedo cubierto con saldo disponible dentro de los 3,600 USD junto con APTOS; la posicion consolidada ya no es credito parcial.",
-      "updated_at": "2026-07-17T19:04:41+00:00",
+      "source": "doctor_chat_2026_07_17_lunc_average_correction",
+      "notes": "KIM-0166: LUNC consolidada por instruccion del doctor. Base 1,800 USD @ 0.00009371865 + refuerzo 1,800 USD @ 0.00005931 = 3,600 USD; cantidad total 49555436.28478286 LUNC; promedio ponderado 0.0000726459147551782. El refuerzo sigue como 1,800 USD comprado a credito pendiente de cobertura; no reportar refuerzo separado. KIM-0169: LUNC refuerzo quedo cubierto con saldo disponible dentro de los 3,600 USD junto con APTOS; la posicion consolidada ya no es credito parcial. KIM-0170: el doctor corrige LUNC refuerzo ejecutado a 0.0000594; se promedia con LUNC base. Total 3,600 USD, cantidad 49,509,452.930757 LUNC, promedio 0.00007271338677555.",
+      "updated_at": "2026-07-17T22:04:53+00:00",
       "credit": false,
       "funding_status": "fully_covered_base_plus_refuerzo_kim0169",
       "agglomerated": true,
@@ -1152,7 +1163,18 @@
       "consumed_orders": [
         "paper-kpb-20260703194500-379e4d"
       ],
-      "covered_at": "2026-07-17"
+      "covered_at": "2026-07-17",
+      "aggregation": {
+        "base_amount_usd": 1800.0,
+        "base_entry_price": 9.371865e-05,
+        "base_quantity": 19206422.62772671,
+        "refuerzo_amount_usd": 1800.0,
+        "refuerzo_entry_price": 5.94e-05,
+        "refuerzo_quantity": 30303030.303030305,
+        "weighted_average_price": 7.271338677554956e-05,
+        "total_quantity": 49509452.930757016,
+        "total_amount_usd": 3600.0
+      }
     },
     {
       "symbol": "DOTUSDT",
@@ -1456,23 +1478,25 @@
       "paper_order_id": "KPB-20260703194457-269A57",
       "order": 14,
       "symbol": "APTUSDT",
-      "label": "APT/USDT refuerzo comprado",
-      "state": "active",
+      "label": "APT/USDT refuerzo consumido en consolidada",
+      "state": "cancelled",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.504,
-      "quantity": 3571.428571428572,
+      "entry_price": 0.594,
+      "quantity": 3030.3030303030305,
       "credit": false,
       "credit_usd": 0.0,
-      "source": "doctor_chat_2026_07_17_apt_refuerzo_executed",
-      "notes": "Reajuste de orden pendiente para APT a 0.558 Sincronizada desde Kim Paper Broker KPB-20260703194457-269A57 (place_order) el 2026-07-03T13:44:57. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior APT @0.45. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.558, precio nuevo 0.50778, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.50778, precio final 0.504. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0168: el doctor confirma que APTOS/APT refuerzo se compro ayer a 0.504 por 1,800 USD. Clasificar como comprado a credito pendiente de cobertura; ya no pendiente. KIM-0169: el doctor aclara que este APTOS/APT refuerzo quedo cubierto con saldo disponible dentro de los 3,600 USD junto con LUNC; ya no queda a credito por cubrir.",
-      "updated_at": "2026-07-17T19:04:41+00:00",
+      "source": "doctor_chat_2026_07_17_apt_average_correction",
+      "notes": "Reajuste de orden pendiente para APT a 0.558 Sincronizada desde Kim Paper Broker KPB-20260703194457-269A57 (place_order) el 2026-07-03T13:44:57. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior APT @0.45. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.558, precio nuevo 0.50778, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.50778, precio final 0.504. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0168: el doctor confirma que APTOS/APT refuerzo se compro ayer a 0.504 por 1,800 USD. Clasificar como comprado a credito pendiente de cobertura; ya no pendiente. KIM-0169: el doctor aclara que este APTOS/APT refuerzo quedo cubierto con saldo disponible dentro de los 3,600 USD junto con LUNC; ya no queda a credito por cubrir. KIM-0170: precio corregido de ejecucion APTOS/APT refuerzo a 0.5940 por 1,800 USD; cantidad 3,030.303030303030 APT. Consumido en APT/USDT consolidada; no reportar como linea separada.",
+      "updated_at": "2026-07-17T22:04:53+00:00",
       "no_auto_fill": false,
       "requires_manual_fill_confirmation": false,
       "filled_at": "2026-07-16",
       "execution_status": "filled_confirmed_by_doctor",
-      "funding_status": "covered_with_available_balance_kim0169",
-      "covered_at": "2026-07-17"
+      "funding_status": "covered_consumed_into_apt_consolidated_kim0170",
+      "covered_at": "2026-07-17",
+      "status": "consumed_into_consolidated_position",
+      "consumed_into": "APT/USDT consolidada"
     },
     {
       "id": "paper-kpb-20260703194500-379e4d",
@@ -1483,13 +1507,13 @@
       "state": "cancelled",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 5.931e-05,
-      "quantity": 30349013.657056145,
+      "entry_price": 5.94e-05,
+      "quantity": 30303030.303030305,
       "credit": false,
       "credit_usd": 0.0,
-      "source": "doctor_chat_2026_07_16_lunc_refuerzo_executed",
-      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 5.77e-05, precio nuevo 5.22e-05, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.22e-05, precio final 5.22e-05. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0163: el doctor confirma que el refuerzo LUNC pendiente se compro oficialmente a 0.00005931 por 1,800 USD. Cantidad recalculada 30349013.6570561 LUNC. Clasificar como Orden Comprada A Credito pendiente de cobertura; no aglomerar con LUNC base. KIM-0166: aglomerada en LUNC/USDT consolidada; no reportar como linea separada. Mantener solo para auditoria del tramo de credito. KIM-0169: tramo LUNC refuerzo cubierto con saldo disponible; mantener consumido en LUNC consolidada, sin duplicar linea.",
-      "updated_at": "2026-07-17T19:04:41+00:00",
+      "source": "doctor_chat_2026_07_17_lunc_average_correction",
+      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 5.77e-05, precio nuevo 5.22e-05, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.22e-05, precio final 5.22e-05. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0163: el doctor confirma que el refuerzo LUNC pendiente se compro oficialmente a 0.00005931 por 1,800 USD. Cantidad recalculada 30349013.6570561 LUNC. Clasificar como Orden Comprada A Credito pendiente de cobertura; no aglomerar con LUNC base. KIM-0166: aglomerada en LUNC/USDT consolidada; no reportar como linea separada. Mantener solo para auditoria del tramo de credito. KIM-0169: tramo LUNC refuerzo cubierto con saldo disponible; mantener consumido en LUNC consolidada, sin duplicar linea. KIM-0170: precio corregido de ejecucion LUNC refuerzo a 0.0000594; cantidad 30,303,030.303030 LUNC. Mantener consumido en LUNC consolidada.",
+      "updated_at": "2026-07-17T22:04:53+00:00",
       "filled_at": "2026-07-16T16:16:06+00:00",
       "execution_price": 5.931e-05,
       "execution_status": "filled_confirmed_by_doctor",
@@ -1956,7 +1980,8 @@
     "KIM-0161: LAB orden pendiente 0.2025 reemplaza 0.1305; neto cierre LAB 2 fue 1,571.32 USD despues de comision.",
     "KIM-0162: LAB 2 cierre 1.017 corrige comisiones a 1.2% compra y 1.2% venta; P/L neto -250.28 USD; profit actual 234.73 USD.",
     "KIM-0168: APT refuerzo esta comprado a credito; LUNC no duplicar porque ya esta en LUNC consolidada; LAB 0.2025 esta vendida/cerrada por stop 10%.",
-    "KIM-0169: LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD; saldo disponible queda 3,669.70 USD; no quedan compradas a credito por cubrir."
+    "KIM-0169: LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD; saldo disponible queda 3,669.70 USD; no quedan compradas a credito por cubrir.",
+    "KIM-0170: APTOS/APT refuerzo 0.5940 se promedia con APT base; LUNC refuerzo 0.0000594 se promedia con LUNC base; no mostrar refuerzos separados."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2190,6 +2215,15 @@
       "available_balance_usd": 3669.7,
       "firm_assigned_usd": 37654.0,
       "credit_total_usd": 23400
+    },
+    {
+      "id": "kim0170_apt_lunc_average_corrections",
+      "at": "2026-07-17T22:04:53+00:00",
+      "summary": "APT refuerzo corrected to 0.5940 and consolidated; LUNC refuerzo corrected to 0.0000594 and consolidated.",
+      "visible_order_count": 28,
+      "available_balance_usd": 3669.7,
+      "firm_assigned_usd": 37654.0,
+      "credit_total_usd": 23400
     }
   ],
   "consumed_orders": [
@@ -2240,12 +2274,12 @@
       "state": "active",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 5.931e-05,
-      "quantity": 30349013.657056145,
+      "entry_price": 5.94e-05,
+      "quantity": 30303030.303030305,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "doctor_chat_2026_07_16_lunc_refuerzo_executed",
-      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 5.77e-05, precio nuevo 5.22e-05, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.22e-05, precio final 5.22e-05. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0163: el doctor confirma que el refuerzo LUNC pendiente se compro oficialmente a 0.00005931 por 1,800 USD. Cantidad recalculada 30349013.6570561 LUNC. Clasificar como Orden Comprada A Credito pendiente de cobertura; no aglomerar con LUNC base. KIM-0166: consumida en LUNC consolidada; no reportar como linea viva separada.",
+      "source": "doctor_chat_2026_07_17_lunc_average_correction",
+      "notes": "Reajuste de orden pendiente para LUNC a 0.0000577 Sincronizada desde Kim Paper Broker KPB-20260703194500-379E4D (place_order) el 2026-07-03T13:45:00. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. Reemplaza la orden pendiente anterior LUNC @0.0000486. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 5.77e-05, precio nuevo 5.22e-05, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.22e-05, precio final 5.22e-05. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0163: el doctor confirma que el refuerzo LUNC pendiente se compro oficialmente a 0.00005931 por 1,800 USD. Cantidad recalculada 30349013.6570561 LUNC. Clasificar como Orden Comprada A Credito pendiente de cobertura; no aglomerar con LUNC base. KIM-0166: consumida en LUNC consolidada; no reportar como linea viva separada. KIM-0170: precio corregido a 0.0000594.",
       "updated_at": "2026-07-16T16:16:06+00:00",
       "filled_at": "2026-07-16T16:16:06+00:00",
       "execution_price": 5.931e-05,
@@ -2254,6 +2288,22 @@
       "consumed_at": "2026-07-16T20:35:49+00:00",
       "consumed_into": "LUNC/USDT consolidada",
       "status": "consumed_into_consolidated_position"
+    },
+    {
+      "id": "paper-kpb-20260703194457-269a57",
+      "symbol": "APTUSDT",
+      "label": "APT/USDT refuerzo",
+      "state": "active",
+      "status": "consumed_into_consolidated_position",
+      "order": 14,
+      "invested_usd": 1800.0,
+      "entry_price": 0.594,
+      "quantity": 3030.3030303030305,
+      "credit": false,
+      "credit_usd": 0.0,
+      "source": "doctor_chat_2026_07_17_apt_average_correction",
+      "consumed_into": "APT/USDT consolidada",
+      "notes": "KIM-0170: APT refuerzo ejecutado a 0.5940 y consumido en APT consolidada."
     }
   ],
   "removed_orders": [
@@ -3431,6 +3481,40 @@
         "available_balance_usd": 3669.7,
         "visible_order_count": 29,
         "accounting_underlying_orders": 30
+      }
+    },
+    {
+      "id": "KIM-0170",
+      "at": "2026-07-17T22:04:53+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_17_apt_lunc_average_correction",
+      "summary": "Correccion de precios ejecutados y promedios ponderados para APT y LUNC.",
+      "changes": [
+        {
+          "symbol": "APTUSDT",
+          "action": "consolidate_base_plus_refuerzo",
+          "base_entry_price": 0.99,
+          "refuerzo_entry_price": 0.594,
+          "total_amount_usd": 3600.0,
+          "total_quantity": 4848.484848484849,
+          "weighted_average_price": 0.7425
+        },
+        {
+          "symbol": "LUNCUSDT",
+          "action": "correct_consolidated_average",
+          "base_entry_price": 9.371865e-05,
+          "refuerzo_entry_price": 5.94e-05,
+          "total_amount_usd": 3600.0,
+          "total_quantity": 49509452.930757016,
+          "weighted_average_price": 7.271338677554956e-05
+        }
+      ],
+      "totals": {
+        "visible_order_count": 28,
+        "accounting_underlying_orders": 30,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 3669.7,
+        "credit_total_usd": 23400
       }
     }
   ],
