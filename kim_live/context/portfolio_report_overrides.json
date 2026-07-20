@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0173",
-  "updated_at": "2026-07-20T15:01:29+00:00",
-  "standard_note": "KIM-0173: precio actual LAB/USDT investigado externamente y actualizado a 0.1499 USDT usando Gate spot LAB_USDT, contrastado con CoinGecko 0.149415. Sin cambios a saldo disponible, crédito, órdenes pendientes ni P/L realizado.",
+  "standard_version": "KIM-0174",
+  "updated_at": "2026-07-20T15:29:54+00:00",
+  "standard_note": "KIM-0174: precio actual FTT/USDT confirmado por el doctor en 0.2088; se corrige el validador de precios para usar consenso ampliado y excluir outliers. Sin cambios a saldo disponible, crédito, órdenes pendientes ni P/L realizado.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -1308,9 +1308,13 @@
       "invested_usd": 1800,
       "entry_price": 0.333,
       "quantity": 5405.405405405405,
+      "current_price": 0.2088,
+      "current_price_status": "doctor_validated_current_price",
+      "current_price_source": "doctor_chat_2026_07_20_ftt_current_02088",
+      "doctor_validated_at": "2026-07-20T15:29:54+00:00",
       "credit_usd": 0,
       "source": "kim_0101_manual_standard",
-      "notes": "A11 FTT original activa; el refuerzo FTT A13 anterior ya fue vendido/cerrado y no debe reaparecer."
+      "notes": "A11 FTT original activa; el refuerzo FTT A13 anterior ya fue vendido/cerrado y no debe reaparecer. KIM-0174: precio actual FTT informado por el doctor a 0.2088 el 2026-07-20; no es cierre ni nueva operación."
     },
     {
       "symbol": "SOLUSDT",
@@ -1422,10 +1426,14 @@
       "invested_usd": 1800,
       "entry_price": 0.162,
       "quantity": 11111.111111111111,
+      "current_price": 0.2088,
+      "current_price_status": "doctor_validated_current_price",
+      "current_price_source": "doctor_chat_2026_07_20_ftt_current_02088",
+      "doctor_validated_at": "2026-07-20T15:29:54+00:00",
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_chat_2026_07_16_ftt_refuerzo_01620",
-      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito. KIM-0167: el doctor baja FTT refuerzo pendiente de 0.18 a 0.1620 por 1,800 USD. Cantidad recalculada 11111.1111111111 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real.",
+      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito. KIM-0167: el doctor baja FTT refuerzo pendiente de 0.18 a 0.1620 por 1,800 USD. Cantidad recalculada 11111.1111111111 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0174: precio actual FTT informado por el doctor a 0.2088; refuerzo sigue pendiente, no ejecutado.",
       "updated_at": "2026-07-16T20:40:45+00:00",
       "price_adjusted_from": 0.18,
       "price_adjusted_to": 0.162,
@@ -3745,6 +3753,35 @@
           "quantity": 400.0,
           "current_value_usd": 59.96,
           "variation_pct": -96.67
+        }
+      ],
+      "totals": {
+        "visible_order_count": 32,
+        "covered_active_positions": 17,
+        "pending_on_credit_orders": 17,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 3669.7
+      }
+    },
+    {
+      "id": "KIM-0174",
+      "at": "2026-07-20T15:29:54+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_20_ftt_current_price_and_price_validator_root_cause",
+      "summary": "Actualiza precio actual FTT/USDT a 0.2088 y documenta corrección del validador por outlier de Bybit.",
+      "changes": [
+        {
+          "symbol": "FTTUSDT",
+          "action": "update_current_price_doctor_validated",
+          "old_validated_reference_price": 0.206267,
+          "new_current_price": 0.2088,
+          "active_entry_price": 0.333,
+          "active_variation_pct": -37.3,
+          "pending_refuerzo_entry_price": 0.162,
+          "pending_distance_to_market_pct": -22.41,
+          "root_cause": "Bybit devolvia 0.2048 mientras Binance/MEXC/KuCoin/Gate/CoinGecko estaban alrededor de 0.2083-0.2094; el spread bruto superaba 2% y el validador invalidaba el precio completo.",
+          "prevention": "Validador actualizado para usar proveedores ampliados y consenso con exclusion de outliers cuando 2+ fuentes frescas coinciden dentro del spread permitido."
         }
       ],
       "totals": {

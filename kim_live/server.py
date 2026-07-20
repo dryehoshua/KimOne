@@ -494,6 +494,7 @@ HOSTINGER_SMTP_PORT = 465
 MARKET_PRICE_MAX_AGE_SECONDS = 15 * 60
 MARKET_PRICE_SPREAD_LIMIT_PCT = 2.0
 MARKET_PRICE_BATCH_CACHE_TTL_SECONDS = 90
+MARKET_PRICE_DEFAULT_PROVIDERS = ["binance", "mexc", "bybit", "kucoin", "gate", "coingecko"]
 COINGECKO_IDS_BY_SYMBOL = {
     "ADA": "cardano",
     "APT": "aptos",
@@ -13101,13 +13102,13 @@ def api_bridge_templates():
                 "optional": ["include_units", "providers", "force_refresh_prices"],
                 "rule": (
                     "Genera reporte deterministico Sr. Eli: monto invertido, entrada, precio actual validado, variacion y balance. "
-                    "No envia mensajes. Por defecto usa Binance, MEXC y Bybit; CoinGecko/CoinMarketCap pueden sumarse si estan disponibles."
+                    "No envia mensajes. Por defecto usa consenso Binance, MEXC, Bybit, KuCoin, Gate y CoinGecko; CoinMarketCap puede sumarse si esta disponible."
                 ),
             },
             "fundamental_report": {
                 "optional": ["query", "providers", "max_queries", "dry_run"],
                 "defaults": {
-                    "providers": ["binance", "mexc", "bybit"],
+                    "providers": MARKET_PRICE_DEFAULT_PROVIDERS,
                     "max_queries": 3,
                     "dry_run": False,
                 },
@@ -13125,7 +13126,7 @@ def api_bridge_templates():
                 "optional": ["to", "providers", "dry_run", "force_refresh_prices"],
                 "defaults": {
                     "to": DOCTOR_DUBAI_WHATSAPP_TO,
-                    "providers": ["binance", "mexc", "bybit"],
+                    "providers": MARKET_PRICE_DEFAULT_PROVIDERS,
                     "force_refresh_prices": True,
                 },
                 "rule": (
@@ -14462,7 +14463,7 @@ def paper_broker_status_with_webhook():
 
 
 def paper_broker_price_validations(symbols, providers=None):
-    providers = providers or ["binance", "mexc", "bybit"]
+    providers = providers or MARKET_PRICE_DEFAULT_PROVIDERS
     providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
     warnings = []
     if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
@@ -14502,7 +14503,7 @@ def paper_broker_bootstrap_portfolio_pending(module, status_payload):
         if isinstance(order, dict)
     }
     try:
-        report = portfolio_cli("client_report", {"save_standard": False, "providers": ["binance", "mexc", "bybit"]})
+        report = portfolio_cli("client_report", {"save_standard": False, "providers": MARKET_PRICE_DEFAULT_PROVIDERS})
     except Exception as exc:
         return {"ok": False, "created_count": 0, "error": brief(str(exc), 700)}
     created = []
@@ -14965,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0173"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0174"
 
 
 def portfolio_float(value, default=None):
@@ -15434,7 +15435,7 @@ def portfolio_doctor_text_command(text, last_number=None):
     if not wants_report:
         return None
     parameters = {
-        "providers": ["binance", "mexc", "bybit"],
+        "providers": MARKET_PRICE_DEFAULT_PROVIDERS,
         "force_refresh_prices": True,
         "context_id": "PORTFOLIO-SR-ELI-DOCTOR-COMMAND-" + today(),
         "source": "doctor_text_command",
@@ -15466,7 +15467,7 @@ def portfolio_doctor_text_command(text, last_number=None):
 
 def portfolio_canonical_report_parameters(parameters=None, mode="report"):
     data = dict(parameters or {})
-    data.setdefault("providers", ["binance", "mexc", "bybit"])
+    data.setdefault("providers", MARKET_PRICE_DEFAULT_PROVIDERS)
     data.setdefault("portfolio_id", "sr_eli_2026")
     data.setdefault("context_id", "PORTFOLIO-SR-ELI-" + today())
     if mode in {"send", "preview", "doctor_command"}:
@@ -16421,7 +16422,7 @@ def portfolio_cli(action, parameters=None):
             result = module.init_db()
     elif action in {"refresh_prices", "clear_price_cache", "clear_market_cache", "actualizar_precios", "borrar_cache_precios"}:
         clear_result = clear_market_price_caches(reason=action)
-        providers = parameters.get("providers") or ["binance", "mexc", "bybit"]
+        providers = parameters.get("providers") or MARKET_PRICE_DEFAULT_PROVIDERS
         symbols = [
             str(entry.get("symbol") or "").upper()
             for entry in portfolio_report_override_config(module.portfolio_summary_json()).get("manual_entries", [])
@@ -20266,6 +20267,23 @@ def fetch_kucoin_spot_price(ticker):
         raise RuntimeError(f"KuCoin no devolvio precio spot para {pair}.")
     return provider_price("kucoin_spot", price, extra={"symbol": normalized_ticker, "pair": pair})
 
+def fetch_gate_spot_price(ticker):
+    _, normalized_ticker, base, quote = normalize_crypto_ticker(ticker)
+    pair = f"{base}_{quote if quote != 'USD' else 'USDT'}"
+    payload = api_json_request(
+        "https://api.gateio.ws",
+        "/api/v4/spot/tickers",
+        {},
+        params={"currency_pair": pair},
+        timeout=20,
+    )
+    rows = payload if isinstance(payload, list) else []
+    row = rows[0] if rows else {}
+    price = row.get("last")
+    if price is None:
+        raise RuntimeError(f"Gate no devolvio precio spot para {pair}.")
+    return provider_price("gate_spot", price, extra={"symbol": normalized_ticker, "pair": pair})
+
 
 def fetch_coingecko_price(base):
     coin_id = COINGECKO_IDS_BY_SYMBOL.get(base)
@@ -20289,15 +20307,78 @@ def fetch_coinmarketcap_price(base):
         raise RuntimeError(f"CoinMarketCap no devolvio precio USD para {base}.")
     return fetched
 
+def market_price_consensus(fresh_prices):
+    fresh = [item for item in fresh_prices if item.get("fresh") and item.get("price") is not None]
+    values = [float(item["price"]) for item in fresh]
+    if not values:
+        return {
+            "prices": [],
+            "excluded": [],
+            "reference": None,
+            "min_price": None,
+            "max_price": None,
+            "spread_pct": None,
+            "raw_reference": None,
+            "raw_min_price": None,
+            "raw_max_price": None,
+            "raw_spread_pct": None,
+            "outlier_excluded": False,
+        }
+    raw_min = min(values)
+    raw_max = max(values)
+    raw_reference = sum(values) / len(values)
+    raw_spread = ((raw_max - raw_min) / raw_reference * 100) if raw_reference else None
+    selected = list(fresh)
+    excluded = []
+    outlier_excluded = False
+    if len(fresh) >= 3 and raw_spread is not None and raw_spread > MARKET_PRICE_SPREAD_LIMIT_PCT:
+        sorted_prices = sorted(fresh, key=lambda item: float(item["price"]))
+        best = None
+        for start in range(len(sorted_prices)):
+            for end in range(start + 1, len(sorted_prices)):
+                subset = sorted_prices[start : end + 1]
+                subset_values = [float(item["price"]) for item in subset]
+                reference = sum(subset_values) / len(subset_values)
+                spread = ((max(subset_values) - min(subset_values)) / reference * 100) if reference else None
+                if spread is None or spread > MARKET_PRICE_SPREAD_LIMIT_PCT:
+                    continue
+                candidate = (len(subset), -spread, start, end, subset, spread)
+                if best is None or candidate > best:
+                    best = candidate
+        if best is not None:
+            selected = list(best[4])
+            selected_ids = {id(item) for item in selected}
+            excluded = [item for item in fresh if id(item) not in selected_ids]
+            outlier_excluded = bool(excluded)
+    selected_values = [float(item["price"]) for item in selected]
+    reference = sum(selected_values) / len(selected_values) if selected_values else None
+    min_price = min(selected_values) if selected_values else None
+    max_price = max(selected_values) if selected_values else None
+    spread = ((max_price - min_price) / reference * 100) if reference and min_price is not None else None
+    return {
+        "prices": selected,
+        "excluded": excluded,
+        "reference": reference,
+        "min_price": min_price,
+        "max_price": max_price,
+        "spread_pct": spread,
+        "raw_reference": raw_reference,
+        "raw_min_price": raw_min,
+        "raw_max_price": raw_max,
+        "raw_spread_pct": raw_spread,
+        "outlier_excluded": outlier_excluded,
+    }
+
 
 def validate_market_prices(symbol, providers=None):
     exchange, ticker, base, quote = normalize_crypto_ticker(symbol)
-    requested = providers or ["binance", "mexc", "bybit"]
+    requested = providers or MARKET_PRICE_DEFAULT_PROVIDERS
     provider_calls = {
         "binance": lambda: fetch_binance_spot_price(ticker),
         "mexc": lambda: fetch_mexc_spot_price(ticker),
         "bybit": lambda: fetch_bybit_spot_price(ticker),
         "kucoin": lambda: fetch_kucoin_spot_price(ticker),
+        "gate": lambda: fetch_gate_spot_price(ticker),
         "coinmarketcap": lambda: fetch_coinmarketcap_price(base),
         "coingecko": lambda: fetch_coingecko_price(base),
     }
@@ -20314,17 +20395,20 @@ def validate_market_prices(symbol, providers=None):
         except Exception as exc:
             failures.append({"provider": key, "error": brief(str(exc), 260)})
     fresh_prices = [item for item in prices if item.get("fresh") and item.get("price") is not None]
-    values = [float(item["price"]) for item in fresh_prices]
-    min_price = min(values) if values else None
-    max_price = max(values) if values else None
-    reference = sum(values) / len(values) if values else None
-    spread_pct = ((max_price - min_price) / reference * 100) if reference and min_price is not None else None
+    consensus = market_price_consensus(fresh_prices)
+    consensus_prices = consensus["prices"]
+    min_price = consensus["min_price"]
+    max_price = consensus["max_price"]
+    reference = consensus["reference"]
+    spread_pct = consensus["spread_pct"]
     approved = len(fresh_prices) >= 2 and (spread_pct is not None and spread_pct <= MARKET_PRICE_SPREAD_LIMIT_PCT)
     status = "validated" if approved else "needs_review"
     if len(fresh_prices) < 2:
         status = "insufficient_fresh_sources"
     elif spread_pct is not None and spread_pct > MARKET_PRICE_SPREAD_LIMIT_PCT:
         status = "provider_spread_too_wide"
+    elif approved and consensus["outlier_excluded"]:
+        status = "validated_with_outlier_excluded"
     validation = {
         "ok": bool(prices),
         "symbol": f"{exchange}:{ticker}",
@@ -20336,6 +20420,8 @@ def validate_market_prices(symbol, providers=None):
         "providers": prices,
         "failures": failures,
         "fresh_provider_count": len(fresh_prices),
+        "consensus_provider_count": len(consensus_prices),
+        "excluded_providers": consensus["excluded"],
         "reference_price": round_opt(reference, 12),
         "reference_price_display": format_price(reference),
         "min_price": round_opt(min_price, 12),
@@ -20343,6 +20429,10 @@ def validate_market_prices(symbol, providers=None):
         "max_price": round_opt(max_price, 12),
         "max_price_display": format_price(max_price),
         "spread_pct": round_opt(spread_pct, 4),
+        "raw_reference_price": round_opt(consensus["raw_reference"], 12),
+        "raw_min_price": round_opt(consensus["raw_min_price"], 12),
+        "raw_max_price": round_opt(consensus["raw_max_price"], 12),
+        "raw_spread_pct": round_opt(consensus["raw_spread_pct"], 4),
         "status": status,
         "approved_for_client_report": approved,
         "client_report_rule": (
@@ -22023,7 +22113,7 @@ def portfolio_client_report(summary, parameters=None):
     parameters = parameters or {}
     include_units = bool(parameters.get("include_units"))
     provider_warnings = []
-    providers = parameters.get("providers") or ["binance", "mexc", "bybit"]
+    providers = parameters.get("providers") or MARKET_PRICE_DEFAULT_PROVIDERS
     providers = [str(provider or "").strip().lower() for provider in providers if str(provider or "").strip()]
     if "coinmarketcap" in providers and not load_keychain_secret(COINMARKETCAP_KEYCHAIN_SERVICE, required=False):
         providers = [provider for provider in providers if provider != "coinmarketcap"]
