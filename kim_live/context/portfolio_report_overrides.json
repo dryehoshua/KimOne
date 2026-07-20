@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0171",
-  "updated_at": "2026-07-17T22:32:39+00:00",
-  "standard_note": "KIM-0171: formato de reporte; separar siempre las ordenes pendientes bajo el encabezado exacto \"Órdenes pendientes 📋✅\". Sin cambios contables.",
+  "standard_version": "KIM-0172",
+  "updated_at": "2026-07-20T14:06:45+00:00",
+  "standard_note": "KIM-0172: ajustes de refuerzos pendientes existentes TRUMP a 1.44 y DOT a 0.783 por 1,800 USD cada una; se agregan PENGU, BONK, FLOKI y SHIB como nuevas órdenes pendientes a crédito por 1,800 USD cada una. Sin cambios a saldo disponible ni posiciones ejecutadas.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -357,8 +357,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0171",
-      "updated_at": "2026-07-17T22:32:39+00:00",
+      "version": "KIM-0172",
+      "updated_at": "2026-07-20T14:06:45+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -428,8 +428,8 @@
       "firm_assigned_usd": 37654.0,
       "available_balance_usd": 3669.7,
       "credit_bought_pending_payment_usd": 0,
-      "credit_pending_execution_usd": 23400,
-      "credit_total_usd": 23400,
+      "credit_pending_execution_usd": 30600,
+      "credit_total_usd": 30600,
       "covered_orders": [
         [
           "ADA",
@@ -545,6 +545,22 @@
         [
           "WLD refuerzo",
           1800
+        ],
+        [
+          "PENGU",
+          1800
+        ],
+        [
+          "BONK",
+          1800
+        ],
+        [
+          "FLOKI",
+          1800
+        ],
+        [
+          "SHIB",
+          1800
         ]
       ],
       "language_rules": [
@@ -589,7 +605,8 @@
         "KIM-0169: LUNC refuerzo y APT refuerzo estan cubiertos; no listarlos en Ordenes Compradas A Credito.",
         "KIM-0170: APT debe reportarse como posicion consolidada de 3,600 USD a promedio 0.7425; no mostrar APT refuerzo como linea separada.",
         "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo.",
-        "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\"."
+        "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\".",
+        "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat."
       ],
       "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
@@ -608,19 +625,19 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0171: formato de reporte; separar siempre las ordenes pendientes bajo el encabezado exacto \"Órdenes pendientes 📋✅\". Sin cambios contables.",
-      "visible_order_count": 28,
+      "latest_format_note": "KIM-0172: ajustes de refuerzos pendientes existentes TRUMP a 1.44 y DOT a 0.783 por 1,800 USD cada una; se agregan PENGU, BONK, FLOKI y SHIB como nuevas órdenes pendientes a crédito por 1,800 USD cada una. Sin cambios a saldo disponible ni posiciones ejecutadas.",
+      "visible_order_count": 32,
       "section_count_validation": {
         "covered_orders": 15,
         "covered_active": 15,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
-        "pending_on_credit": 13,
-        "total_visible_orders": 28,
-        "client_visible_lines": 28,
-        "accounting_underlying_orders": 30,
-        "rule": "KIM-0170: APT base + refuerzo promediados en una linea; LUNC base + refuerzo promediados en una linea; LAB 0.2025 cerrada."
+        "pending_on_credit": 17,
+        "total_visible_orders": 32,
+        "client_visible_lines": 32,
+        "accounting_underlying_orders": 34,
+        "rule": "KIM-0172: TRUMP/DOT refuerzos ajustados; PENGU/BONK/FLOKI/SHIB agregadas como pendientes a credito."
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -630,11 +647,12 @@
         "KIM-0168: APT refuerzo comprado a credito; LUNC no se duplica porque ya estaba aglomerado; LAB 0.2025 cerrada por stop 10%.",
         "KIM-0169: cobertura de 3,600 USD aplicada a LUNC refuerzo y APT refuerzo; credito por cubrir queda 0.",
         "KIM-0170: APTOS/APT refuerzo precio corregido a 0.5940 y aglomerado con APT base; LUNC refuerzo corregido a 0.0000594 y aglomerado con LUNC base.",
-        "KIM-0171: encabezado requerido para pendientes: \"Órdenes pendientes 📋✅\"."
+        "KIM-0171: encabezado requerido para pendientes: \"Órdenes pendientes 📋✅\".",
+        "KIM-0172: TRUMP refuerzo pendiente 1.44; DOT refuerzo pendiente 0.783; nuevas pendientes PENGU/BONK/FLOKI/SHIB por 1,800 USD cada una."
       ],
       "covered_orders_subtotal_usd": 37654.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
-      "pending_to_buy_on_credit_subtotal_usd": 23400,
+      "pending_to_buy_on_credit_subtotal_usd": 30600,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output."
@@ -1379,13 +1397,19 @@
       "order": 25,
       "label": "DOT/USDT refuerzo",
       "invested_usd": 1800.0,
-      "entry_price": 0.675,
-      "quantity": 2500.0,
+      "entry_price": 0.783,
+      "quantity": 2298.8505747126437,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_confirmed_sr_eli_pending_updates_2026_06_25",
-      "notes": "DOT refuerzo pendiente actualizado por el doctor 2026-06-25: 0.675. Sustituye 0.72.",
-      "updated_at": "2026-06-25T14:44:06"
+      "source": "doctor_chat_2026_07_20_dot_refuerzo_0783",
+      "notes": "DOT refuerzo pendiente actualizado por el doctor 2026-06-25: 0.675. Sustituye 0.72. KIM-0172: el doctor actualiza DOT refuerzo pendiente existente a 0.783 por 1,800 USD. Cantidad recalculada 2,298.850574712644 DOT. Sigue pendiente a crédito; no ejecutada.",
+      "updated_at": "2026-07-20T14:06:45+00:00",
+      "credit": true,
+      "price_adjusted_from": 0.675,
+      "price_adjusted_to": 0.783,
+      "price_adjusted_at": "2026-07-20T14:06:45+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true
     },
     {
       "id": "kim0114-a26-fttusdt-refuerzo",
@@ -1579,15 +1603,18 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 1.323,
-      "quantity": 1360.544217687075,
+      "entry_price": 1.44,
+      "quantity": 1250.0,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 1.62, precio nuevo 1.4742, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 1.4742, precio final 1.4742. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0153: precio actualizado por instrucción del doctor; precio anterior 1.4742, precio nuevo 1.323. Orden sigue pendiente a crédito; no ejecutar sin confirmación real.",
-      "updated_at": "2026-07-08T18:55:45+00:00",
+      "source": "doctor_chat_2026_07_20_trump_refuerzo_144",
+      "notes": "Nueva orden de refuerzo para TRUMP a 1.62 Sincronizada desde Kim Paper Broker KPB-20260703194505-5A4EE7 (place_order) el 2026-07-03T13:45:05. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 1.62, precio nuevo 1.4742, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 1.4742, precio final 1.4742. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0153: precio actualizado por instrucción del doctor; precio anterior 1.4742, precio nuevo 1.323. Orden sigue pendiente a crédito; no ejecutar sin confirmación real. KIM-0172: el doctor actualiza TRUMP refuerzo pendiente existente a 1.44 por 1,800 USD. Cantidad recalculada 1,250 TRUMP. Sigue pendiente a crédito; no ejecutada.",
+      "updated_at": "2026-07-20T14:06:45+00:00",
       "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "requires_manual_fill_confirmation": true,
+      "price_adjusted_from": 1.323,
+      "price_adjusted_to": 1.44,
+      "price_adjusted_at": "2026-07-20T14:06:45+00:00"
     },
     {
       "id": "paper-kpb-20260703194506-687d17",
@@ -1699,6 +1726,78 @@
       "net_sale_usd": 1378.01,
       "gross_pnl_usd": -154.97,
       "net_pnl_usd": -171.71
+    },
+    {
+      "id": "kim0172-penguusdt-pending",
+      "symbol": "PENGUUSDT",
+      "state": "pending",
+      "order": 40,
+      "label": "PENGU/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 0.00414,
+      "quantity": 434782.6086956522,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_chat_2026_07_20_new_credit_orders",
+      "updated_at": "2026-07-20T14:06:45+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. PENGU/USDT nueva orden pendiente por 1,800 USD a 0.00414; cantidad calculada 434782.6086956522. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real."
+    },
+    {
+      "id": "kim0172-bonkusdt-pending",
+      "symbol": "BONKUSDT",
+      "state": "pending",
+      "order": 41,
+      "label": "BONK/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 2.25e-06,
+      "quantity": 800000000.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_chat_2026_07_20_new_credit_orders",
+      "updated_at": "2026-07-20T14:06:45+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. BONK/USDT nueva orden pendiente por 1,800 USD a 2.25e-06; cantidad calculada 800000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real."
+    },
+    {
+      "id": "kim0172-flokiusdt-pending",
+      "symbol": "FLOKIUSDT",
+      "state": "pending",
+      "order": 42,
+      "label": "FLOKI/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 1.53e-05,
+      "quantity": 117647058.8235294,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_chat_2026_07_20_new_credit_orders",
+      "updated_at": "2026-07-20T14:06:45+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. FLOKI/USDT nueva orden pendiente por 1,800 USD a 1.53e-05; cantidad calculada 117647058.8235294. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real."
+    },
+    {
+      "id": "kim0172-shibusdt-pending",
+      "symbol": "SHIBUSDT",
+      "state": "pending",
+      "order": 43,
+      "label": "SHIB/USDT nueva orden pendiente",
+      "invested_usd": 1800.0,
+      "entry_price": 2.88e-06,
+      "quantity": 625000000.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "side": "BUY",
+      "source": "doctor_chat_2026_07_20_new_credit_orders",
+      "updated_at": "2026-07-20T14:06:45+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real."
     }
   ],
   "closed_positions": [
@@ -1987,7 +2086,8 @@
     "KIM-0168: APT refuerzo esta comprado a credito; LUNC no duplicar porque ya esta en LUNC consolidada; LAB 0.2025 esta vendida/cerrada por stop 10%.",
     "KIM-0169: LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD; saldo disponible queda 3,669.70 USD; no quedan compradas a credito por cubrir.",
     "KIM-0170: APTOS/APT refuerzo 0.5940 se promedia con APT base; LUNC refuerzo 0.0000594 se promedia con LUNC base; no mostrar refuerzos separados.",
-    "KIM-0171: en reportes WhatsApp, separar pendientes con \"Órdenes pendientes 📋✅\"."
+    "KIM-0171: en reportes WhatsApp, separar pendientes con \"Órdenes pendientes 📋✅\".",
+    "KIM-0172: TRUMP refuerzo pendiente 1.44, DOT refuerzo pendiente 0.783; agregar PENGU/BONK/FLOKI/SHIB como pendientes a crédito por 1,800 USD cada una."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2238,6 +2338,16 @@
       "visible_order_count": 28,
       "available_balance_usd": 3669.7,
       "credit_total_usd": 23400
+    },
+    {
+      "id": "kim0172_trump_dot_meme_pending_credit_orders",
+      "at": "2026-07-20T14:06:45+00:00",
+      "summary": "TRUMP and DOT pending reinforcement prices updated; PENGU/BONK/FLOKI/SHIB pending credit orders added.",
+      "visible_order_count": 32,
+      "pending_on_credit_orders": 17,
+      "credit_pending_execution_usd": 30600,
+      "credit_total_usd": 30600,
+      "available_balance_usd": 3669.7
     }
   ],
   "consumed_orders": [
@@ -3547,6 +3657,68 @@
         "available_balance_usd": 3669.7,
         "credit_total_usd": 23400,
         "visible_order_count": 28
+      }
+    },
+    {
+      "id": "KIM-0172",
+      "at": "2026-07-20T14:06:45+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_20_trump_dot_meme_pending_orders",
+      "summary": "Ajusta TRUMP/DOT refuerzos pendientes y agrega cuatro pendientes a crédito.",
+      "changes": [
+        {
+          "symbol": "TRUMPUSDT",
+          "action": "update_pending_refuerzo_price",
+          "old_entry_price": 1.323,
+          "new_entry_price": 1.44,
+          "invested_usd": 1800.0,
+          "quantity": 1250.0
+        },
+        {
+          "symbol": "DOTUSDT",
+          "action": "update_pending_refuerzo_price",
+          "old_entry_price": 0.675,
+          "new_entry_price": 0.783,
+          "invested_usd": 1800.0,
+          "quantity": 2298.8505747126437
+        },
+        {
+          "symbol": "PENGUUSDT",
+          "action": "add_pending_credit_order",
+          "entry_price": 0.00414,
+          "invested_usd": 1800.0,
+          "quantity": 434782.6086956522
+        },
+        {
+          "symbol": "BONKUSDT",
+          "action": "add_pending_credit_order",
+          "entry_price": 2.25e-06,
+          "invested_usd": 1800.0,
+          "quantity": 800000000.0
+        },
+        {
+          "symbol": "FLOKIUSDT",
+          "action": "add_pending_credit_order",
+          "entry_price": 1.53e-05,
+          "invested_usd": 1800.0,
+          "quantity": 117647058.8235294
+        },
+        {
+          "symbol": "SHIBUSDT",
+          "action": "add_pending_credit_order",
+          "entry_price": 2.88e-06,
+          "invested_usd": 1800.0,
+          "quantity": 625000000.0
+        }
+      ],
+      "totals": {
+        "visible_order_count": 32,
+        "accounting_underlying_orders": 34,
+        "pending_on_credit_orders": 17,
+        "credit_pending_execution_usd": 30600,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 3669.7
       }
     }
   ],
