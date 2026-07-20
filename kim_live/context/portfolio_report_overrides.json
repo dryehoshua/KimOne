@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0172",
-  "updated_at": "2026-07-20T14:06:45+00:00",
-  "standard_note": "KIM-0172: ajustes de refuerzos pendientes existentes TRUMP a 1.44 y DOT a 0.783 por 1,800 USD cada una; se agregan PENGU, BONK, FLOKI y SHIB como nuevas órdenes pendientes a crédito por 1,800 USD cada una. Sin cambios a saldo disponible ni posiciones ejecutadas.",
+  "standard_version": "KIM-0173",
+  "updated_at": "2026-07-20T15:01:29+00:00",
+  "standard_note": "KIM-0173: precio actual LAB/USDT investigado externamente y actualizado a 0.1499 USDT usando Gate spot LAB_USDT, contrastado con CoinGecko 0.149415. Sin cambios a saldo disponible, crédito, órdenes pendientes ni P/L realizado.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -606,7 +606,8 @@
         "KIM-0170: APT debe reportarse como posicion consolidada de 3,600 USD a promedio 0.7425; no mostrar APT refuerzo como linea separada.",
         "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo.",
         "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\".",
-        "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat."
+        "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat.",
+        "KIM-0173: LAB/USDT precio actual externo 0.1499 USDT; fuente primaria Gate spot LAB_USDT, contraste CoinGecko 0.149415; LAB 1 sigue activa en spot a 4.5."
       ],
       "latest_funding_note": "KIM-0164: fondeo 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42; registrado en fondeos, sin aplicacion automatica a credito.",
       "client_balance_section_titles": {
@@ -625,7 +626,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0172: ajustes de refuerzos pendientes existentes TRUMP a 1.44 y DOT a 0.783 por 1,800 USD cada una; se agregan PENGU, BONK, FLOKI y SHIB como nuevas órdenes pendientes a crédito por 1,800 USD cada una. Sin cambios a saldo disponible ni posiciones ejecutadas.",
+      "latest_format_note": "KIM-0173: precio actual LAB/USDT actualizado a 0.1499 USDT por verificación externa; no cambia saldos ni órdenes.",
       "visible_order_count": 32,
       "section_count_validation": {
         "covered_orders": 15,
@@ -648,7 +649,8 @@
         "KIM-0169: cobertura de 3,600 USD aplicada a LUNC refuerzo y APT refuerzo; credito por cubrir queda 0.",
         "KIM-0170: APTOS/APT refuerzo precio corregido a 0.5940 y aglomerado con APT base; LUNC refuerzo corregido a 0.0000594 y aglomerado con LUNC base.",
         "KIM-0171: encabezado requerido para pendientes: \"Órdenes pendientes 📋✅\".",
-        "KIM-0172: TRUMP refuerzo pendiente 1.44; DOT refuerzo pendiente 0.783; nuevas pendientes PENGU/BONK/FLOKI/SHIB por 1,800 USD cada una."
+        "KIM-0172: TRUMP refuerzo pendiente 1.44; DOT refuerzo pendiente 0.783; nuevas pendientes PENGU/BONK/FLOKI/SHIB por 1,800 USD cada una.",
+        "KIM-0173: LAB/USDT precio actual investigado 0.1499 USDT; variación LAB 1 contra 4.5 = -96.67%."
       ],
       "covered_orders_subtotal_usd": 37654.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
@@ -1667,14 +1669,19 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre.",
-      "updated_at": "2026-07-16T16:16:06+00:00",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre. KIM-0173: precio actual LAB/USDT investigado externamente el 2026-07-20: Gate spot LAB_USDT 0.1499, CoinGecko 0.149415; LAB 1 sigue activa, sin cierre.",
+      "updated_at": "2026-07-20T15:01:29+00:00",
       "executed_at": "2026-07-07T14:08:09",
       "execution_ref": "tx_4ca1fe072644",
-      "current_price": 0.214,
-      "current_price_status": "doctor_validated_current_price",
-      "current_price_source": "doctor_chat_2026_07_16_lab_current_0214",
-      "doctor_validated_at": "2026-07-16T16:16:06+00:00"
+      "current_price": 0.1499,
+      "current_price_status": "external_market_checked_current_price",
+      "current_price_source": "gate_spot_lab_usdt_2026_07_20_cross_checked_coingecko",
+      "doctor_validated_at": "2026-07-16T16:16:06+00:00",
+      "market_checked_at": "2026-07-20T15:01:29+00:00",
+      "market_price_sources": {
+        "gate_spot_lab_usdt": 0.1499,
+        "coingecko_lab_usd": 0.149415
+      }
     },
     {
       "id": "kim0157-labusdt-pending-018-available",
@@ -3716,6 +3723,34 @@
         "accounting_underlying_orders": 34,
         "pending_on_credit_orders": 17,
         "credit_pending_execution_usd": 30600,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 3669.7
+      }
+    },
+    {
+      "id": "KIM-0173",
+      "at": "2026-07-20T15:01:29+00:00",
+      "actor": "codex",
+      "source": "external_market_check_gate_spot_lab_usdt_cross_checked_coingecko",
+      "summary": "Actualiza precio actual LAB/USDT investigado externamente; LAB 1 sigue activa, sin cambio contable.",
+      "changes": [
+        {
+          "symbol": "LABUSDT",
+          "action": "update_current_price_external_market_check",
+          "old_current_price": 0.214,
+          "new_current_price": 0.1499,
+          "coingecko_cross_check_price": 0.149415,
+          "entry_price": 4.5,
+          "quantity": 400.0,
+          "current_value_usd": 59.96,
+          "variation_pct": -96.67
+        }
+      ],
+      "totals": {
+        "visible_order_count": 32,
+        "covered_active_positions": 17,
+        "pending_on_credit_orders": 17,
         "credit_total_usd": 30600,
         "firm_assigned_usd": 37654.0,
         "available_balance_usd": 3669.7
