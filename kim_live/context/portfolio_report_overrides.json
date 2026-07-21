@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0178",
-  "updated_at": "2026-07-21T20:55:07+00:00",
-  "standard_note": "KIM-0178: corrige reporte posterior a WhatsApp: ZEC refuerzo pendiente 324 -> 356.4, WIF refuerzo pendiente 0.1107 -> 0.12177, y LAB precio actual validado a 0.141176666667. Sin cambios a saldo, fondeos, P/L ni ejecuciones.",
+  "standard_version": "KIM-0179",
+  "updated_at": "2026-07-21T21:01:45+00:00",
+  "standard_note": "KIM-0179: correccion urgente SOL refuerzo pendiente; precio correcto 63, no 54. Sin ejecuciones ni cambios de saldo.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -1445,12 +1445,12 @@
       "side": "BUY",
       "label": "SOL/USDT refuerzo",
       "invested_usd": 1800.0,
-      "entry_price": 54.0,
+      "entry_price": 63.0,
       "credit_usd": 1800.0,
-      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente SOL refuerzo a 54.",
-      "quantity": 26.666666666666668,
-      "updated_at": "2026-06-25T13:06:47",
-      "source": "doctor_explicit_pending_price_adjustment_2026_06_25"
+      "notes": "KIM-0179: correccion del doctor; SOL refuerzo pendiente debe estar a 63, no 54. Sigue pendiente a credito, no ejecutado.",
+      "quantity": 28.571428571428573,
+      "updated_at": "2026-07-21T21:01:45+00:00",
+      "source": "doctor_chat_2026_07_21_sol_refuerzo_63_correction"
     },
     {
       "id": "kim0113-a25-dotusdt-refuerzo",
@@ -2460,6 +2460,19 @@
       "visible_order_count": 32,
       "pending_on_credit_orders": 17,
       "available_balance_usd": 14005.62
+    },
+    {
+      "id": "kim0179_sol_refuerzo_63_correction",
+      "at": "2026-07-21T21:01:45+00:00",
+      "summary": "Corrected SOL refuerzo pending order from 54 to 63; remains pending on credit, not executed.",
+      "old_entry_price": 54.0,
+      "new_entry_price": 63.0,
+      "amount_usd": 1800.0,
+      "old_quantity": 26.666666666666668,
+      "new_quantity": 28.571428571428573,
+      "visible_order_count": 32,
+      "pending_on_credit_orders": 17,
+      "available_balance_usd": 14005.62
     }
   ],
   "consumed_orders": [
@@ -2661,7 +2674,8 @@
     "KIM-0165: corregir LAB 0.2025 a monto ejecutado 1,549.72 USD; no mostrar 1,800 USD.",
     "KIM-0166: LUNC base y refuerzo aglomerados; conservar credito de 1,800 USD del refuerzo en balance.",
     "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion.",
-    "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion."
+    "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion.",
+    "KIM-0179: SOL refuerzo pendiente queda corregido a 63 por instruccion del doctor; no usar 54 para esa orden."
   ],
   "superseded_facts": [
     {
@@ -4016,6 +4030,34 @@
             "gate_spot 0.141"
           ],
           "status": "validated_market_consensus"
+        }
+      ],
+      "totals": {
+        "visible_order_count": 32,
+        "covered_active_positions": 17,
+        "pending_on_credit_orders": 17,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 14005.62
+      }
+    },
+    {
+      "id": "KIM-0179",
+      "at": "2026-07-21T21:01:45+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_21_sol_refuerzo_63_correction",
+      "summary": "Corrige SOL refuerzo pendiente de 54 a 63; sigue pendiente a crédito, no ejecutado.",
+      "changes": [
+        {
+          "symbol": "SOLUSDT",
+          "label": "SOL/USDT refuerzo",
+          "action": "update_pending_refuerzo_price",
+          "old_entry_price": 54.0,
+          "new_entry_price": 63.0,
+          "amount_usd": 1800.0,
+          "old_quantity": 26.666666666666668,
+          "new_quantity": 28.571428571428573,
+          "status": "pending_on_credit_not_executed"
         }
       ],
       "totals": {
