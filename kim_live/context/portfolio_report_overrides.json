@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0176",
-  "updated_at": "2026-07-21T18:59:13+00:00",
-  "standard_note": "KIM-0176: Sr. Eli fondea otros 90,000 MXN a TC 17.40 = 5,172.41 USD; fee 1.2% 62.07 USD / 1,080 MXN; se registra como fondeo sin reasignacion automatica a credito. Saldo disponible 14,005.62 USD.",
+  "standard_version": "KIM-0177",
+  "updated_at": "2026-07-21T20:37:32+00:00",
+  "standard_note": "KIM-0177: FTT refuerzo pendiente actualizado de 0.1620 a 0.1782 por instruccion del doctor; monto 1,800 USD, cantidad 10,101.0101010101 FTT. Sigue pendiente a credito, no ejecutado. Sin cambios a saldo, fondeos ni P/L.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -394,7 +394,7 @@
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
       "version": "KIM-0172",
-      "updated_at": "2026-07-21T18:59:13+00:00",
+      "updated_at": "2026-07-21T20:37:32+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -678,7 +678,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0176: fondeo 90,000 MXN / 5,172.41 USD agregado al balance; no aplicar a credito sin instruccion expresa.",
+      "latest_format_note": "KIM-0177: FTT refuerzo pendiente actualizado a 0.1782; no es ejecucion ni cambio de saldo.",
       "visible_order_count": 32,
       "section_count_validation": {
         "covered_orders": 15,
@@ -704,7 +704,8 @@
         "KIM-0172: TRUMP refuerzo pendiente 1.44; DOT refuerzo pendiente 0.783; nuevas pendientes PENGU/BONK/FLOKI/SHIB por 1,800 USD cada una.",
         "KIM-0173: LAB/USDT precio actual investigado 0.1499 USDT; variación LAB 1 contra 4.5 = -96.67%.",
         "KIM-0175: incluir fondeo 20-jul-2026 de 90,000 MXN / 5,163.51 USD a TC 17.43; no aplicar a credito sin instruccion expresa.",
-        "KIM-0176: incluir fondeo 21-jul-2026 de 90,000 MXN / 5,172.41 USD a TC 17.40; no aplicar a credito sin instruccion expresa."
+        "KIM-0176: incluir fondeo 21-jul-2026 de 90,000 MXN / 5,172.41 USD a TC 17.40; no aplicar a credito sin instruccion expresa.",
+        "KIM-0177: FTT refuerzo pendiente actualizado a 0.1782 por 1,800 USD; cantidad 10,101.0101010101 FTT; no ejecutar sin confirmacion real."
       ],
       "covered_orders_subtotal_usd": 37654.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
@@ -1478,20 +1479,20 @@
       "order": 26,
       "label": "FTT/USDT refuerzo",
       "invested_usd": 1800,
-      "entry_price": 0.162,
-      "quantity": 11111.111111111111,
+      "entry_price": 0.1782,
+      "quantity": 10101.0101010101,
       "current_price": 0.2088,
       "current_price_status": "doctor_validated_current_price",
       "current_price_source": "doctor_chat_2026_07_20_ftt_current_02088",
       "doctor_validated_at": "2026-07-20T15:29:54+00:00",
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_16_ftt_refuerzo_01620",
-      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito. KIM-0167: el doctor baja FTT refuerzo pendiente de 0.18 a 0.1620 por 1,800 USD. Cantidad recalculada 11111.1111111111 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0174: precio actual FTT informado por el doctor a 0.2088; refuerzo sigue pendiente, no ejecutado.",
-      "updated_at": "2026-07-16T20:40:45+00:00",
-      "price_adjusted_from": 0.18,
-      "price_adjusted_to": 0.162,
-      "price_adjusted_at": "2026-07-16T20:40:45+00:00",
+      "source": "doctor_chat_2026_07_21_ftt_refuerzo_01782",
+      "notes": "A26 FTT refuerzo a credito confirmado por el doctor el 2026-06-18: 1800 USD @ 0.18. Usar esta instruccion fresca sobre memorias antiguas de FTT. KIM-0114: compra pendiente FTT refuerzo confirmada por el doctor: 1800 USD @ 0.18 a credito. KIM-0167: el doctor baja FTT refuerzo pendiente de 0.18 a 0.1620 por 1,800 USD. Cantidad recalculada 11111.1111111111 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0174: precio actual FTT informado por el doctor a 0.2088; refuerzo sigue pendiente, no ejecutado. KIM-0177: el doctor actualiza FTT refuerzo pendiente de 0.1620 a 0.1782 por 1,800 USD; cantidad recalculada 10,101.0101010101 FTT. Sigue pendiente a credito; no ejecutar sin confirmacion real.",
+      "updated_at": "2026-07-21T20:37:32+00:00",
+      "price_adjusted_from": 0.162,
+      "price_adjusted_to": 0.1782,
+      "price_adjusted_at": "2026-07-21T20:37:32+00:00",
       "credit": true,
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true
@@ -2156,7 +2157,8 @@
     "KIM-0169: LUNC refuerzo y APTOS/APT refuerzo se cubrieron con 3,600 USD; saldo disponible queda 3,669.70 USD; no quedan compradas a credito por cubrir.",
     "KIM-0170: APTOS/APT refuerzo 0.5940 se promedia con APT base; LUNC refuerzo 0.0000594 se promedia con LUNC base; no mostrar refuerzos separados.",
     "KIM-0171: en reportes WhatsApp, separar pendientes con \"Órdenes pendientes 📋✅\".",
-    "KIM-0172: TRUMP refuerzo pendiente 1.44, DOT refuerzo pendiente 0.783; agregar PENGU/BONK/FLOKI/SHIB como pendientes a crédito por 1,800 USD cada una."
+    "KIM-0172: TRUMP refuerzo pendiente 1.44, DOT refuerzo pendiente 0.783; agregar PENGU/BONK/FLOKI/SHIB como pendientes a crédito por 1,800 USD cada una.",
+    "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2433,6 +2435,15 @@
       "client_funding_total_mxn": 900000,
       "client_funding_total_usd": 51596.6,
       "available_balance_usd": 14005.62
+    },
+    {
+      "id": "kim0177_ftt_refuerzo_01782",
+      "at": "2026-07-21T20:37:32+00:00",
+      "summary": "FTT refuerzo pending raised from 0.1620 to 0.1782; remains pending on credit, not executed.",
+      "ftt_refuerzo_price": 0.1782,
+      "ftt_refuerzo_quantity": 10101.0101010101,
+      "visible_order_count": 32,
+      "pending_on_credit_orders": 17
     }
   ],
   "consumed_orders": [
@@ -2633,7 +2644,7 @@
     "KIM-0164: fondeo Sr. Eli 15-jul-2026 100,000 MXN / 5,740.53 USD a TC 17.42 registrado solo como fondeo.",
     "KIM-0165: corregir LAB 0.2025 a monto ejecutado 1,549.72 USD; no mostrar 1,800 USD.",
     "KIM-0166: LUNC base y refuerzo aglomerados; conservar credito de 1,800 USD del refuerzo en balance.",
-    "KIM-0167: usar FTT refuerzo pendiente 0.1620 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion."
+    "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion."
   ],
   "superseded_facts": [
     {
@@ -3913,6 +3924,36 @@
         "firm_assigned_usd": 37654.0,
         "available_balance_usd": 14005.62,
         "credit_total_usd": 30600
+      }
+    },
+    {
+      "id": "KIM-0177",
+      "at": "2026-07-21T20:37:32+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_21_ftt_refuerzo_01782",
+      "summary": "Actualiza FTT refuerzo pendiente de 0.1620 a 0.1782; sigue pendiente a crédito, no ejecutado.",
+      "changes": [
+        {
+          "symbol": "FTTUSDT",
+          "label": "FTT/USDT refuerzo",
+          "action": "update_pending_refuerzo_price",
+          "old_entry_price": 0.162,
+          "new_entry_price": 0.1782,
+          "amount_usd": 1800.0,
+          "old_quantity": 11111.111111111111,
+          "new_quantity": 10101.0101010101,
+          "current_price": 0.2088,
+          "distance_to_market_pct": -14.66,
+          "status": "pending_on_credit_not_executed"
+        }
+      ],
+      "totals": {
+        "visible_order_count": 32,
+        "covered_active_positions": 17,
+        "pending_on_credit_orders": 17,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 37654.0,
+        "available_balance_usd": 14005.62
       }
     }
   ],
