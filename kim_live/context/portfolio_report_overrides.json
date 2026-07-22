@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0180",
-  "updated_at": "2026-07-22T20:46:15+00:00",
-  "standard_note": "KIM-0180: nueva orden LAB pendiente fondeada con 1,378.01 USD netos de LAB 0.2025; precio 0.081. Sin credito nuevo ni ejecucion.",
+  "standard_version": "KIM-0181",
+  "updated_at": "2026-07-22T22:11:06+00:00",
+  "standard_note": "KIM-0181: corrige BONK pendiente a 0.000002205, no 0.00000225. Sin ejecucion, sin credito nuevo y sin cambio de saldo.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -393,8 +393,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0180",
-      "updated_at": "2026-07-22T20:46:15+00:00",
+      "version": "KIM-0181",
+      "updated_at": "2026-07-22T22:11:06+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -660,7 +660,8 @@
         "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\".",
         "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat.",
         "KIM-0173: LAB/USDT precio actual externo 0.1499 USDT; fuente primaria Gate spot LAB_USDT, contraste CoinGecko 0.149415; LAB 1 sigue activa en spot a 4.5.",
-        "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada."
+        "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
+        "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -679,7 +680,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0180: LAB 0.081 agregada como orden pendiente fondeada con 1,378.01 USD; no es credito ni ejecucion.",
+      "latest_format_note": "KIM-0181: BONK corregida a 0.000002205 por WhatsApp/Kim; no es ejecucion ni cambio de credito.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -1839,16 +1840,16 @@
       "order": 41,
       "label": "BONK/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 2.25e-06,
-      "quantity": 800000000.0,
+      "entry_price": 2.205e-06,
+      "quantity": 816326530.6122448,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_20_new_credit_orders",
-      "updated_at": "2026-07-20T14:06:45+00:00",
+      "source": "doctor_whatsapp_kim_2026_07_22_bonk_000002205_correction",
+      "updated_at": "2026-07-22T22:11:06+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. BONK/USDT nueva orden pendiente por 1,800 USD a 2.25e-06; cantidad calculada 800000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real."
+      "notes": "KIM-0181: correccion recibida por WhatsApp/Kim; BONK pendiente debe estar a 0.000002205, no 0.00000225. Monto 1,800 USD; sigue pendiente a credito, no ejecutada."
     },
     {
       "id": "kim0172-flokiusdt-pending",
@@ -2197,7 +2198,8 @@
     "KIM-0172: TRUMP refuerzo pendiente 1.44, DOT refuerzo pendiente 0.783; agregar PENGU/BONK/FLOKI/SHIB como pendientes a crédito por 1,800 USD cada una.",
     "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion.",
     "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion.",
-    "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada."
+    "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
+    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2519,6 +2521,20 @@
       "visible_order_count": 33,
       "pending_on_credit_orders": 17,
       "credit_total_usd": 30600
+    },
+    {
+      "id": "kim0181_bonk_000002205_correction",
+      "at": "2026-07-22T22:11:06+00:00",
+      "summary": "Corrected BONK pending credit order from 0.00000225 to 0.000002205; remains pending, not executed.",
+      "old_entry_price": 2.25e-06,
+      "new_entry_price": 2.205e-06,
+      "amount_usd": 1800.0,
+      "old_quantity": 800000000.0,
+      "new_quantity": 816326530.6122448,
+      "visible_order_count": 33,
+      "pending_on_credit_orders": 17,
+      "credit_total_usd": 30600,
+      "available_balance_usd": 12627.61
     }
   ],
   "consumed_orders": [
@@ -2722,7 +2738,8 @@
     "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion.",
     "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion.",
     "KIM-0179: SOL refuerzo pendiente queda corregido a 63 por instruccion del doctor; no usar 54 para esa orden.",
-    "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada."
+    "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
+    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
   ],
   "superseded_facts": [
     {
@@ -4133,6 +4150,36 @@
           "funding_source": "net_sale_lab_02025_stop_10_pct",
           "credit_usd": 0.0,
           "status": "pending_cash_funded_not_executed"
+        }
+      ],
+      "totals": {
+        "visible_order_count": 33,
+        "covered_active_positions": 17,
+        "cash_funded_pending_orders": 1,
+        "pending_on_credit_orders": 17,
+        "credit_total_usd": 30600,
+        "firm_assigned_usd": 39032.01,
+        "available_balance_usd": 12627.61,
+        "client_total_net_considered_usd": 51659.62
+      }
+    },
+    {
+      "id": "KIM-0181",
+      "at": "2026-07-22T22:11:06+00:00",
+      "actor": "codex",
+      "source": "doctor_whatsapp_kim_2026_07_22_bonk_000002205_correction",
+      "summary": "Corrige BONK pendiente a 0.000002205; sigue pendiente a credito, no ejecutada.",
+      "changes": [
+        {
+          "symbol": "BONKUSDT",
+          "label": "BONK/USDT nueva orden pendiente",
+          "action": "update_pending_credit_price",
+          "old_entry_price": 2.25e-06,
+          "new_entry_price": 2.205e-06,
+          "amount_usd": 1800.0,
+          "old_quantity": 800000000.0,
+          "new_quantity": 816326530.6122448,
+          "status": "pending_on_credit_not_executed"
         }
       ],
       "totals": {
