@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0179"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0180"
 
 
 def portfolio_float(value, default=None):
@@ -23201,6 +23201,7 @@ def portfolio_credit_balance_statement_message(report):
     credit_total = protocol.get("credit_total_usd")
     covered = protocol.get("covered_orders") if isinstance(protocol.get("covered_orders"), list) else []
     bought = protocol.get("bought_on_credit_pending_payment") if isinstance(protocol.get("bought_on_credit_pending_payment"), list) else []
+    cash_pending = protocol.get("cash_funded_pending_orders") if isinstance(protocol.get("cash_funded_pending_orders"), list) else []
     pending = protocol.get("pending_to_buy_on_credit") if isinstance(protocol.get("pending_to_buy_on_credit"), list) else []
     sections = protocol.get("client_balance_section_titles") if isinstance(protocol.get("client_balance_section_titles"), dict) else {}
 
@@ -23224,26 +23225,43 @@ def portfolio_credit_balance_statement_message(report):
         "",
         f"Subtotal en firme asignado: {money_usd(subtotal(covered))}",
         "",
-        f"**2. {sections.get('bought_on_credit') or 'Órdenes Compradas A Crédito'}**",
-        "",
-        order_rows(bought),
-        "",
-        f"Subtotal comprado a crédito: {money_usd(subtotal(bought))}",
-        "",
-        f"**3. {sections.get('pending_on_credit') or 'Órdenes Pendientes A Crédito'}**",
-        "",
-        order_rows(pending),
-        "",
-        f"Subtotal pendiente a crédito: {money_usd(subtotal(pending))}",
-        "",
-        "**Resumen**",
-        "",
-        f"Monto en firme asignado: {money_usd(firm)}",
-        f"Saldo disponible: {money_usd(available)}",
-        f"Crédito por cubrir: {money_usd(bought_credit)}",
-        f"Crédito pendiente por ejecutar: {money_usd(pending_credit)}",
-        f"Crédito total actual: {money_usd(credit_total)}",
     ]
+    section_index = 2
+    if cash_pending:
+        lines.extend(
+            [
+                f"**{section_index}. {sections.get('cash_funded_pending') or 'Órdenes pendientes fondeadas'}**",
+                "",
+                order_rows(cash_pending),
+                "",
+                f"Subtotal pendiente fondeado: {money_usd(subtotal(cash_pending))}",
+                "",
+            ]
+        )
+        section_index += 1
+    lines.extend(
+        [
+            f"**{section_index}. {sections.get('bought_on_credit') or 'Órdenes Compradas A Crédito'}**",
+            "",
+            order_rows(bought),
+            "",
+            f"Subtotal comprado a crédito: {money_usd(subtotal(bought))}",
+            "",
+            f"**{section_index + 1}. {sections.get('pending_on_credit') or 'Órdenes Pendientes A Crédito'}**",
+            "",
+            order_rows(pending),
+            "",
+            f"Subtotal pendiente a crédito: {money_usd(subtotal(pending))}",
+            "",
+            "**Resumen**",
+            "",
+            f"Monto en firme asignado: {money_usd(firm)}",
+            f"Saldo disponible: {money_usd(available)}",
+            f"Crédito por cubrir: {money_usd(bought_credit)}",
+            f"Crédito pendiente por ejecutar: {money_usd(pending_credit)}",
+            f"Crédito total actual: {money_usd(credit_total)}",
+        ]
+    )
     note = str(protocol.get("latest_format_note") or "").strip()
     if note:
         lines.extend(["", f"Nota operativa: {note}"])
