@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0181"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0182"
 
 
 def portfolio_float(value, default=None):
@@ -23189,9 +23189,33 @@ def portfolio_credit_balance_statement_message(report):
             lines.append(line)
         return "\n".join(lines) if lines else "_Sin fondeos registrados._"
 
+    def withdrawal_rows(rows):
+        if not rows:
+            return "_Sin retiros registrados._"
+        lines = []
+        for index, row in enumerate(rows, start=1):
+            if not isinstance(row, dict):
+                continue
+            date = str(row.get("date") or row.get("occurred_at") or "").strip()
+            mxn = row.get("mxn", row.get("amount_mxn"))
+            usd = row.get("usd", row.get("amount_usd"))
+            fee_usd = row.get("fee_usd")
+            total_debit_usd = row.get("total_debit_usd")
+            concept = str(row.get("concept") or "").strip()
+            line = f"{index}. `{date}` - {money_mxn(mxn)} / {money_usd(usd)}"
+            if fee_usd not in (None, ""):
+                line += f" + comisión {money_usd(fee_usd)}"
+            if total_debit_usd not in (None, ""):
+                line += f" = débito total {money_usd(total_debit_usd)}"
+            if concept:
+                line += f" - {concept}"
+            lines.append(line)
+        return "\n".join(lines) if lines else "_Sin retiros registrados._"
+
     fundings_mxn = protocol.get("client_funding_total_mxn")
     fundings_usd = protocol.get("client_funding_total_usd")
     fundings = protocol.get("client_facing_fundings") if isinstance(protocol.get("client_facing_fundings"), list) else []
+    withdrawals = protocol.get("client_facing_withdrawals") if isinstance(protocol.get("client_facing_withdrawals"), list) else []
     profit = protocol.get("realized_profit_for_statement_usd")
     total_net = protocol.get("client_total_net_considered_usd")
     firm = protocol.get("firm_assigned_usd")
@@ -23216,6 +23240,9 @@ def portfolio_credit_balance_statement_message(report):
         "",
         "Fondeos:",
         funding_rows(fundings),
+        "",
+        "Retiros:",
+        withdrawal_rows(withdrawals),
         "",
         "Resumen de cuenta de crédito",
         "",

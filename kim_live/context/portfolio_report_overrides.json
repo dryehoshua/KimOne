@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0181",
-  "updated_at": "2026-07-22T22:11:06+00:00",
-  "standard_note": "KIM-0181: corrige BONK pendiente a 0.000002205, no 0.00000225. Sin ejecucion, sin credito nuevo y sin cambio de saldo.",
+  "standard_version": "KIM-0182",
+  "updated_at": "2026-07-24T15:28:30+00:00",
+  "standard_note": "KIM-0182: registra retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + 1.2% comision 61.82 USD; descuento total 5,213.51 USD. Sin cambios a ordenes ni credito.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -148,6 +148,25 @@
         "concept": "Fondeo confirmado",
         "notes": "Sr. Eli fondeo 90,000 MXN el 2026-07-21 con tipo de cambio 17.40 MXN/USD = 5,172.41 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-21T18:59:13+00:00"
+      },
+      {
+        "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
+        "type": "withdrawal",
+        "status": "doctor_confirmed_planned",
+        "amount_usd": 5151.69,
+        "amount_mxn": 90000.0,
+        "exchange_rate_mxn_per_usd": 17.47,
+        "fee_rate": 0.012,
+        "fee_usd": 61.82,
+        "fee_mxn_equivalent": 1080.0,
+        "total_debit_usd": 5213.51,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-24",
+        "client_display_date": "24-jul-2026",
+        "source": "doctor_chat_2026_07_24_sr_eli_withdrawal_90000_mxn_17_47",
+        "concept": "Retiro solicitado",
+        "notes": "Sr. Eli realizara retiro de 90,000 MXN con tipo de cambio 17.47 MXN/USD = 5,151.69 USD; comision conversion/retiro 1.2% = 61.82 USD; descuento total de saldo disponible = 5,213.51 USD. No toca ordenes ni credito.",
+        "updated_at": "2026-07-24T15:28:30+00:00"
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
@@ -393,8 +412,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0181",
-      "updated_at": "2026-07-22T22:11:06+00:00",
+      "version": "KIM-0182",
+      "updated_at": "2026-07-24T15:28:30+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -476,9 +495,9 @@
       "client_funding_total_usd": 51596.6,
       "realized_profit_for_statement_usd": 63.02,
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
-      "client_total_net_considered_usd": 51659.62,
+      "client_total_net_considered_usd": 46446.11,
       "firm_assigned_usd": 39032.01,
-      "available_balance_usd": 12627.61,
+      "available_balance_usd": 7414.1,
       "credit_bought_pending_payment_usd": 0,
       "credit_pending_execution_usd": 30600,
       "credit_total_usd": 30600,
@@ -661,7 +680,8 @@
         "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat.",
         "KIM-0173: LAB/USDT precio actual externo 0.1499 USDT; fuente primaria Gate spot LAB_USDT, contraste CoinGecko 0.149415; LAB 1 sigue activa en spot a 4.5.",
         "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
-        "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
+        "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
+        "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -680,7 +700,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0181: BONK corregida a 0.000002205 por WhatsApp/Kim; no es ejecucion ni cambio de credito.",
+      "latest_format_note": "KIM-0182: retiro de 90,000 MXN registrado a TC 17.47 con comision 1.2%; saldo disponible actualizado. Ordenes y credito sin cambios.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -724,7 +744,23 @@
           1378.01
         ]
       ],
-      "cash_funded_pending_total_usd": 1378.01
+      "cash_funded_pending_total_usd": 1378.01,
+      "client_withdrawal_total_mxn": 90000.0,
+      "client_withdrawal_total_usd": 5151.69,
+      "client_facing_withdrawals": [
+        {
+          "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
+          "date": "24-jul-2026",
+          "mxn": 90000.0,
+          "usd": 5151.69,
+          "fee_usd": 61.82,
+          "total_debit_usd": 5213.51,
+          "exchange_rate_mxn_per_usd": 17.47,
+          "concept": "Retiro solicitado"
+        }
+      ],
+      "client_withdrawal_fee_usd": 61.82,
+      "client_withdrawal_total_debit_usd": 5213.51
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1118,13 +1154,39 @@
         "concept": "Fondeo confirmado",
         "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-16T16:20:15+00:00"
+      },
+      {
+        "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
+        "type": "withdrawal",
+        "status": "doctor_confirmed_planned",
+        "amount_usd": 5151.69,
+        "amount_mxn": 90000.0,
+        "exchange_rate_mxn_per_usd": 17.47,
+        "fee_rate": 0.012,
+        "fee_usd": 61.82,
+        "fee_mxn_equivalent": 1080.0,
+        "total_debit_usd": 5213.51,
+        "payment_method": "cash",
+        "occurred_at": "2026-07-24",
+        "client_display_date": "24-jul-2026",
+        "source": "doctor_chat_2026_07_24_sr_eli_withdrawal_90000_mxn_17_47",
+        "concept": "Retiro solicitado",
+        "notes": "Sr. Eli realizara retiro de 90,000 MXN con tipo de cambio 17.47 MXN/USD = 5,151.69 USD; comision conversion/retiro 1.2% = 61.82 USD; descuento total de saldo disponible = 5,213.51 USD. No toca ordenes ni credito.",
+        "updated_at": "2026-07-24T15:28:30+00:00"
       }
     ],
     "canonical_total_funded_usd": 51596.6,
     "canonical_total_funded_mxn": 900000.0,
     "historical_receipt_converted_usd": 12513.99,
     "available_credit_coverage_pool_after_kim0138_usd": 577.24,
-    "available_credit_coverage_pool_after_kim0140_usd": 1532.87
+    "available_credit_coverage_pool_after_kim0140_usd": 1532.87,
+    "canonical_total_withdrawn_mxn": 90000.0,
+    "canonical_total_withdrawn_usd": 5151.69,
+    "canonical_net_funding_after_withdrawals_mxn": 810000.0,
+    "canonical_net_funding_after_withdrawals_usd": 46383.09,
+    "last_withdrawal_note": "KIM-0182: Sr. Eli retiro/retirara 90,000 MXN a TC 17.47 = 5,151.69 USD + fee 61.82 USD; descuento total 5,213.51 USD.",
+    "canonical_total_withdrawal_fees_usd": 61.82,
+    "canonical_total_withdrawal_debit_usd": 5213.51
   },
   "manual_entries": [
     {
@@ -2199,7 +2261,8 @@
     "KIM-0177: usar FTT refuerzo pendiente 0.1782 y HBAR refuerzo pendiente 0.054 hasta nueva instruccion.",
     "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion.",
     "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
-    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
+    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
+    "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2535,6 +2598,23 @@
       "pending_on_credit_orders": 17,
       "credit_total_usd": 30600,
       "available_balance_usd": 12627.61
+    },
+    {
+      "id": "kim0182_withdrawal_90000_mxn_17_47",
+      "at": "2026-07-24T15:28:30+00:00",
+      "summary": "Registered Sr. Eli withdrawal of 90,000 MXN at 17.47 MXN/USD = 5,151.69 USD plus 1.2% fee 61.82 USD; total debit 5,213.51 USD.",
+      "amount_mxn": 90000.0,
+      "exchange_rate_mxn_per_usd": 17.47,
+      "amount_usd": 5151.69,
+      "fee_rate": 0.012,
+      "fee_usd": 61.82,
+      "total_debit_usd": 5213.51,
+      "old_available_balance_usd": 12627.61,
+      "new_available_balance_usd": 7414.1,
+      "old_client_total_net_considered_usd": 51659.62,
+      "new_client_total_net_considered_usd": 46446.11,
+      "credit_total_usd": 30600,
+      "visible_order_count": 33
     }
   ],
   "consumed_orders": [
@@ -2739,7 +2819,8 @@
     "KIM-0178: usar ZEC pendiente 356.4, WIF pendiente 0.12177 y LAB current price 0.141176666667 hasta nueva instruccion.",
     "KIM-0179: SOL refuerzo pendiente queda corregido a 63 por instruccion del doctor; no usar 54 para esa orden.",
     "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
-    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225."
+    "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
+    "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos."
   ],
   "superseded_facts": [
     {
@@ -4191,6 +4272,39 @@
         "firm_assigned_usd": 39032.01,
         "available_balance_usd": 12627.61,
         "client_total_net_considered_usd": 51659.62
+      }
+    },
+    {
+      "id": "KIM-0182",
+      "at": "2026-07-24T15:28:30+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_24_sr_eli_withdrawal_90000_mxn_17_47",
+      "summary": "Registra retiro Sr. Eli de 90,000 MXN a TC 17.47 = 5,151.69 USD mas comision 1.2% = 61.82 USD; descuento total 5,213.51 USD del saldo disponible. Sin cambios a ordenes ni credito.",
+      "changes": [
+        {
+          "action": "record_withdrawal",
+          "amount_mxn": 90000.0,
+          "exchange_rate_mxn_per_usd": 17.47,
+          "amount_usd": 5151.69,
+          "fee_rate": 0.012,
+          "fee_usd": 61.82,
+          "total_debit_usd": 5213.51,
+          "status": "doctor_confirmed_planned"
+        }
+      ],
+      "totals": {
+        "client_funding_total_mxn": 900000,
+        "client_funding_total_usd": 51596.6,
+        "client_withdrawal_total_mxn": 90000.0,
+        "client_withdrawal_total_usd": 5151.69,
+        "client_withdrawal_fee_usd": 61.82,
+        "client_withdrawal_total_debit_usd": 5213.51,
+        "client_total_net_considered_usd": 46446.11,
+        "firm_assigned_usd": 39032.01,
+        "available_balance_usd": 7414.1,
+        "credit_total_usd": 30600,
+        "visible_order_count": 33,
+        "pending_on_credit_orders": 17
       }
     }
   ],
