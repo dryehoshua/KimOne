@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0183"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0186"
 
 
 def portfolio_float(value, default=None):
@@ -23214,6 +23214,12 @@ def portfolio_credit_balance_statement_message(report):
 
     fundings_mxn = protocol.get("client_funding_total_mxn")
     fundings_usd = protocol.get("client_funding_total_usd")
+    withdrawals_mxn = protocol.get("client_withdrawal_total_mxn")
+    withdrawals_usd = protocol.get("client_withdrawal_total_usd")
+    withdrawal_fee_usd = protocol.get("client_withdrawal_fee_usd")
+    deposit_withdrawal_balance_mxn = protocol.get("client_deposit_withdrawal_balance_mxn")
+    deposit_withdrawal_balance_usd = protocol.get("client_deposit_withdrawal_balance_usd")
+    deposit_withdrawal_balance_after_fees_usd = protocol.get("client_deposit_withdrawal_balance_after_fees_usd")
     fundings = protocol.get("client_facing_fundings") if isinstance(protocol.get("client_facing_fundings"), list) else []
     withdrawals = protocol.get("client_facing_withdrawals") if isinstance(protocol.get("client_facing_withdrawals"), list) else []
     profit = protocol.get("realized_profit_for_statement_usd")
@@ -23232,7 +23238,11 @@ def portfolio_credit_balance_statement_message(report):
     lines = [
         "Balance de Crédito",
         "",
-        f"Fondeos totales: {money_usd(fundings_usd)} / {money_mxn(fundings_mxn)}",
+        f"Fondeos/Depósitos totales: {money_usd(fundings_usd)} / {money_mxn(fundings_mxn)}",
+        f"Retiros totales: {money_usd(withdrawals_usd)} / {money_mxn(withdrawals_mxn)}",
+        f"Balance neto depósitos - retiros: {money_usd(deposit_withdrawal_balance_usd)} / {money_mxn(deposit_withdrawal_balance_mxn)}",
+        f"Comisiones retiro/conversión: {money_usd(withdrawal_fee_usd)}",
+        f"Balance operativo después de comisión: {money_usd(deposit_withdrawal_balance_after_fees_usd)}",
         f"Profit actual generado: `{signed_usd_text(profit)}`",
         f"Total neto considerado: {money_usd(total_net)}",
         f"Total en firme asignado: {money_usd(firm)}",

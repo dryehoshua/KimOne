@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0183",
-  "updated_at": "2026-07-26T05:04:11+00:00",
-  "standard_note": "KIM-0183: DOT/TRUMP refuerzos ejecutados y FTT/LUNC/WLD refuerzos de 900 USD ejecutados; todos cubiertos con saldo disponible por 6,300 USD. SHIB/PENGU/FLOKI pendientes subidas. Disponible: 1,114.10 USD.",
+  "standard_version": "KIM-0186",
+  "updated_at": "2026-07-26T05:21:41+00:00",
+  "standard_note": "KIM-0186: últimas operaciones promediadas registradas aparte con promedio ponderado; sin cambio contable contra KIM-0185. Disponible 1,114.10 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -152,7 +152,7 @@
       {
         "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
         "type": "withdrawal",
-        "status": "doctor_confirmed_planned",
+        "status": "confirmed_with_receipt",
         "amount_usd": 5151.69,
         "amount_mxn": 90000.0,
         "exchange_rate_mxn_per_usd": 17.47,
@@ -160,13 +160,30 @@
         "fee_usd": 61.82,
         "fee_mxn_equivalent": 1080.0,
         "total_debit_usd": 5213.51,
-        "payment_method": "cash",
+        "payment_method": "transferencia_spei",
         "occurred_at": "2026-07-24",
         "client_display_date": "24-jul-2026",
         "source": "doctor_chat_2026_07_24_sr_eli_withdrawal_90000_mxn_17_47",
-        "concept": "Retiro solicitado",
-        "notes": "Sr. Eli realizara retiro de 90,000 MXN con tipo de cambio 17.47 MXN/USD = 5,151.69 USD; comision conversion/retiro 1.2% = 61.82 USD; descuento total de saldo disponible = 5,213.51 USD. No toca ordenes ni credito.",
-        "updated_at": "2026-07-24T15:28:30+00:00"
+        "concept": "Retiro confirmado",
+        "notes": "Retiro de 90,000 MXN confirmado por recibo SPEI fechado 24-jul-2026. Mantiene conversión 17.47 MXN/USD = 5,151.69 USD, comisión 1.2% = 61.82 USD y débito total 5,213.51 USD.",
+        "updated_at": "2026-07-26T05:15:43+00:00",
+        "receipt_confirmed_at": "2026-07-26T05:15:43+00:00",
+        "receipt_source": "doctor_uploaded_receipt_2026_07_25",
+        "receipt": {
+          "receipt_path": "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/audit/receipts/2026-07-24-kim-0182-withdrawal-90000-mxn-spei.jpg",
+          "receipt_date": "2026-07-24",
+          "receipt_place": "Ciudad de México",
+          "receipt_amount_mxn": 90000.0,
+          "receipt_payment_method": "Transferencia SPEI",
+          "receipt_system_reference": "RET-20250724-001",
+          "cep_reference": "971315",
+          "cep_tracking_key": "085909713150320564",
+          "cep_numeric_reference": "5555",
+          "recipient_name": "Gustavo Antonio Pichardo Serrano",
+          "recipient_card_last4": "8760",
+          "recipient_account_last4": "6184",
+          "recipient_clabe_last4": "1848"
+        }
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
@@ -412,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0183",
-      "updated_at": "2026-07-26T05:04:11+00:00",
+      "version": "KIM-0186",
+      "updated_at": "2026-07-26T05:21:41+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -666,7 +683,10 @@
         "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
         "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
         "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos.",
-        "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir."
+        "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
+        "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
+        "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
+        "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -685,7 +705,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0183: compras DOT/TRUMP/FTT/LUNC/WLD cubiertas con saldo disponible por 6,300 USD; disponible 1,114.10 USD; credito pendiente por ejecutar 23,400 USD.",
+      "latest_format_note": "KIM-0186: operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD registradas aparte; todas cubiertas con saldo disponible; saldo disponible 1,114.10 USD.",
       "visible_order_count": 29,
       "section_count_validation": {
         "covered_orders": 15,
@@ -743,7 +763,10 @@
           "fee_usd": 61.82,
           "total_debit_usd": 5213.51,
           "exchange_rate_mxn_per_usd": 17.47,
-          "concept": "Retiro solicitado"
+          "concept": "Retiro confirmado SPEI",
+          "status": "confirmed_with_receipt",
+          "receipt_reference": "RET-20250724-001",
+          "cep_reference": "971315"
         }
       ],
       "client_withdrawal_fee_usd": 61.82,
@@ -755,32 +778,37 @@
           "amount_usd": 3600.0,
           "entry_price": 0.9860869565217392,
           "quantity": 3650.7936507936506,
-          "credit_pending_coverage_usd": 1800.0
+          "covered_from_available_balance_usd": 1800.0,
+          "coverage_status": "covered_with_available_balance"
         },
         "TRUMP": {
           "amount_usd": 3600.0,
           "entry_price": 1.803495145631068,
           "quantity": 1996.124031007752,
-          "credit_pending_coverage_usd": 1800.0
+          "covered_from_available_balance_usd": 1800.0,
+          "coverage_status": "covered_with_available_balance"
         },
         "FTT": {
           "amount_usd": 2700.0,
           "entry_price": 0.27368748303013846,
           "quantity": 9865.266654166555,
-          "credit_pending_coverage_usd": 900.0
+          "covered_from_available_balance_usd": 900.0,
+          "coverage_status": "covered_with_available_balance"
         },
         "LUNC": {
           "amount_usd": 4500.0,
           "entry_price": 6.768201559636118e-05,
           "quantity": 66487381.6234565,
-          "credit_pending_coverage_usd": 900.0,
-          "note": "Ledger previo ya tenía LUNC consolidado en 3,600 USD; con este refuerzo de 900 USD queda 4,500 USD, aunque el chat indicó 2,700 para el grupo."
+          "note": "Ledger previo ya tenía LUNC consolidado en 3,600 USD; con este refuerzo de 900 USD queda 4,500 USD, aunque el chat indicó 2,700 para el grupo.",
+          "covered_from_available_balance_usd": 900.0,
+          "coverage_status": "covered_with_available_balance"
         },
         "WLD": {
           "amount_usd": 2700.0,
           "entry_price": 0.45176904176904176,
           "quantity": 5976.505139500734,
-          "credit_pending_coverage_usd": 900.0
+          "covered_from_available_balance_usd": 900.0,
+          "coverage_status": "covered_with_available_balance"
         }
       },
       "kim0183_available_balance_calculation": {
@@ -794,7 +822,68 @@
           "LUNC 900",
           "WLD 900"
         ]
-      }
+      },
+      "withdrawal_receipt_status": "confirmed_with_receipt",
+      "latest_withdrawal_receipt_reference": "RET-20250724-001",
+      "latest_withdrawal_cep_reference": "971315",
+      "client_deposit_withdrawal_balance_mxn": 810000.0,
+      "client_deposit_withdrawal_balance_usd": 46444.91,
+      "client_deposit_withdrawal_balance_after_fees_usd": 46383.09,
+      "client_deposit_withdrawal_balance_note": "Balance neto depositos - retiros excluye profit y ordenes; balance operativo despues de comision descuenta la comision 1.2% del retiro.",
+      "client_facing_recent_weighted_average_operations": [
+        {
+          "symbol": "DOT",
+          "previous_amount_usd": 1800.0,
+          "new_buy_amount_usd": 1800.0,
+          "new_buy_price": 0.81,
+          "total_amount_usd": 3600.0,
+          "total_quantity": 3650.7936507936506,
+          "weighted_average_price": 0.9860869565217392,
+          "covered_from_available_balance_usd": 1800.0
+        },
+        {
+          "symbol": "TRUMP",
+          "previous_amount_usd": 1800.0,
+          "new_buy_amount_usd": 1800.0,
+          "new_buy_price": 1.548,
+          "total_amount_usd": 3600.0,
+          "total_quantity": 1996.124031007752,
+          "weighted_average_price": 1.803495145631068,
+          "covered_from_available_balance_usd": 1800.0
+        },
+        {
+          "symbol": "FTT",
+          "previous_amount_usd": 1800.0,
+          "new_buy_amount_usd": 900.0,
+          "new_buy_price": 0.2018,
+          "total_amount_usd": 2700.0,
+          "total_quantity": 9865.266654166555,
+          "weighted_average_price": 0.27368748303013846,
+          "covered_from_available_balance_usd": 900.0
+        },
+        {
+          "symbol": "LUNC",
+          "previous_amount_usd": 3600.0,
+          "new_buy_amount_usd": 900.0,
+          "new_buy_price": 5.301e-05,
+          "total_amount_usd": 4500.0,
+          "total_quantity": 66487381.6234565,
+          "weighted_average_price": 6.768201559636118e-05,
+          "covered_from_available_balance_usd": 900.0,
+          "note": "LUNC ya estaba consolidado en 3,600 USD; con el refuerzo de 900 USD queda en 4,500 USD."
+        },
+        {
+          "symbol": "WLD",
+          "previous_amount_usd": 1800.0,
+          "new_buy_amount_usd": 900.0,
+          "new_buy_price": 0.3405,
+          "total_amount_usd": 2700.0,
+          "total_quantity": 5976.505139500734,
+          "weighted_average_price": 0.45176904176904176,
+          "covered_from_available_balance_usd": 900.0
+        }
+      ],
+      "latest_weighted_average_operations_total_covered_usd": 6300.0
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1192,7 +1281,7 @@
       {
         "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
         "type": "withdrawal",
-        "status": "doctor_confirmed_planned",
+        "status": "confirmed_with_receipt",
         "amount_usd": 5151.69,
         "amount_mxn": 90000.0,
         "exchange_rate_mxn_per_usd": 17.47,
@@ -1200,13 +1289,30 @@
         "fee_usd": 61.82,
         "fee_mxn_equivalent": 1080.0,
         "total_debit_usd": 5213.51,
-        "payment_method": "cash",
+        "payment_method": "transferencia_spei",
         "occurred_at": "2026-07-24",
         "client_display_date": "24-jul-2026",
         "source": "doctor_chat_2026_07_24_sr_eli_withdrawal_90000_mxn_17_47",
-        "concept": "Retiro solicitado",
-        "notes": "Sr. Eli realizara retiro de 90,000 MXN con tipo de cambio 17.47 MXN/USD = 5,151.69 USD; comision conversion/retiro 1.2% = 61.82 USD; descuento total de saldo disponible = 5,213.51 USD. No toca ordenes ni credito.",
-        "updated_at": "2026-07-24T15:28:30+00:00"
+        "concept": "Retiro confirmado",
+        "notes": "Retiro de 90,000 MXN confirmado por recibo SPEI fechado 24-jul-2026. Mantiene conversión 17.47 MXN/USD = 5,151.69 USD, comisión 1.2% = 61.82 USD y débito total 5,213.51 USD.",
+        "updated_at": "2026-07-26T05:15:43+00:00",
+        "receipt_confirmed_at": "2026-07-26T05:15:43+00:00",
+        "receipt_source": "doctor_uploaded_receipt_2026_07_25",
+        "receipt": {
+          "receipt_path": "/Users/dryehoshuapython/Documents/BIFROST/MEMORY/IGNIS_FINANCIALS/clients/sr_eli/audit/receipts/2026-07-24-kim-0182-withdrawal-90000-mxn-spei.jpg",
+          "receipt_date": "2026-07-24",
+          "receipt_place": "Ciudad de México",
+          "receipt_amount_mxn": 90000.0,
+          "receipt_payment_method": "Transferencia SPEI",
+          "receipt_system_reference": "RET-20250724-001",
+          "cep_reference": "971315",
+          "cep_tracking_key": "085909713150320564",
+          "cep_numeric_reference": "5555",
+          "recipient_name": "Gustavo Antonio Pichardo Serrano",
+          "recipient_card_last4": "8760",
+          "recipient_account_last4": "6184",
+          "recipient_clabe_last4": "1848"
+        }
       }
     ],
     "canonical_total_funded_usd": 51596.6,
@@ -2420,7 +2526,10 @@
     "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
     "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
     "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos.",
-    "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir."
+    "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
+    "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
+    "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
+    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2979,7 +3088,10 @@
     "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
     "KIM-0181: BONK pendiente queda corregida a 0.000002205; no usar 0.00000225.",
     "KIM-0182: retiro Sr. Eli 90,000 MXN a TC 17.47 = 5,151.69 USD + comision 1.2% 61.82 USD; descontar total 5,213.51 USD del saldo disponible y reportar separado de fondeos.",
-    "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir."
+    "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
+    "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
+    "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
+    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
   ],
   "superseded_facts": [
     {
@@ -4546,6 +4658,129 @@
         "credit_total_usd": 23400,
         "visible_order_count": 29,
         "pending_on_credit_orders": 13
+      }
+    },
+    {
+      "id": "KIM-0184",
+      "at": "2026-07-26T05:15:43+00:00",
+      "actor": "codex",
+      "source": "doctor_uploaded_receipt_2026_07_25_withdrawal_90000_mxn",
+      "summary": "Confirma con recibo SPEI el retiro de 90,000 MXN previamente registrado en KIM-0182; sin cambios contables.",
+      "changes": [
+        {
+          "action": "confirm_withdrawal_receipt",
+          "withdrawal_id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
+          "amount_mxn": 90000.0,
+          "system_reference": "RET-20250724-001",
+          "cep_reference": "971315",
+          "cep_tracking_key": "085909713150320564",
+          "status": "confirmed_with_receipt"
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "firm_assigned_usd": 45332.01,
+        "credit_total_usd": 23400,
+        "accounting_change_usd": 0
+      }
+    },
+    {
+      "id": "KIM-0185",
+      "at": "2026-07-26T05:16:54+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_25_report_deposits_withdrawals_balance",
+      "summary": "Ajusta el formato del balance para mostrar fondeos/depositos, retiros y balance neto de depositos contra retiros antes del resumen de credito; sin cambio contable.",
+      "changes": [
+        {
+          "action": "add_deposit_withdrawal_balance_display",
+          "funding_total_mxn": 900000.0,
+          "funding_total_usd": 51596.6,
+          "withdrawal_total_mxn": 90000.0,
+          "withdrawal_total_usd": 5151.69,
+          "withdrawal_fee_usd": 61.82,
+          "net_balance_mxn": 810000.0,
+          "net_balance_usd_before_fee": 46444.91,
+          "net_balance_usd_after_fee": 46383.09
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "firm_assigned_usd": 45332.01,
+        "credit_total_usd": 23400,
+        "accounting_change_usd": 0
+      }
+    },
+    {
+      "id": "KIM-0186",
+      "at": "2026-07-26T05:21:41+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_25_recent_operations_separate_registration",
+      "summary": "Registra aparte las últimas operaciones promediadas con promedio ponderado; sin cambio contable contra KIM-0185.",
+      "changes": [
+        {
+          "action": "register_recent_weighted_average_operations",
+          "operations": [
+            {
+              "symbol": "DOT",
+              "previous_amount_usd": 1800.0,
+              "new_buy_amount_usd": 1800.0,
+              "new_buy_price": 0.81,
+              "total_amount_usd": 3600.0,
+              "total_quantity": 3650.7936507936506,
+              "weighted_average_price": 0.9860869565217392,
+              "covered_from_available_balance_usd": 1800.0
+            },
+            {
+              "symbol": "TRUMP",
+              "previous_amount_usd": 1800.0,
+              "new_buy_amount_usd": 1800.0,
+              "new_buy_price": 1.548,
+              "total_amount_usd": 3600.0,
+              "total_quantity": 1996.124031007752,
+              "weighted_average_price": 1.803495145631068,
+              "covered_from_available_balance_usd": 1800.0
+            },
+            {
+              "symbol": "FTT",
+              "previous_amount_usd": 1800.0,
+              "new_buy_amount_usd": 900.0,
+              "new_buy_price": 0.2018,
+              "total_amount_usd": 2700.0,
+              "total_quantity": 9865.266654166555,
+              "weighted_average_price": 0.27368748303013846,
+              "covered_from_available_balance_usd": 900.0
+            },
+            {
+              "symbol": "LUNC",
+              "previous_amount_usd": 3600.0,
+              "new_buy_amount_usd": 900.0,
+              "new_buy_price": 5.301e-05,
+              "total_amount_usd": 4500.0,
+              "total_quantity": 66487381.6234565,
+              "weighted_average_price": 6.768201559636118e-05,
+              "covered_from_available_balance_usd": 900.0,
+              "note": "LUNC ya estaba consolidado en 3,600 USD; con el refuerzo de 900 USD queda en 4,500 USD."
+            },
+            {
+              "symbol": "WLD",
+              "previous_amount_usd": 1800.0,
+              "new_buy_amount_usd": 900.0,
+              "new_buy_price": 0.3405,
+              "total_amount_usd": 2700.0,
+              "total_quantity": 5976.505139500734,
+              "weighted_average_price": 0.45176904176904176,
+              "covered_from_available_balance_usd": 900.0
+            }
+          ]
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "firm_assigned_usd": 45332.01,
+        "credit_bought_pending_payment_usd": 0,
+        "credit_pending_execution_usd": 23400,
+        "credit_total_usd": 23400,
+        "accounting_change_usd": 0
       }
     }
   ],
