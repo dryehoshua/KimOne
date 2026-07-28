@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0186",
-  "updated_at": "2026-07-26T05:21:41+00:00",
-  "standard_note": "KIM-0186: últimas operaciones promediadas registradas aparte con promedio ponderado; sin cambio contable contra KIM-0185. Disponible 1,114.10 USD.",
+  "standard_version": "KIM-0187",
+  "updated_at": "2026-07-28T16:47:36+00:00",
+  "standard_note": "KIM-0187: XRP refuerzo pendiente actualizado a 1.008 y SHIB pendiente a 0.000004005. Siguen pendientes a crédito por 1,800 USD cada una; sin cambio de saldo.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0186",
-      "updated_at": "2026-07-26T05:21:41+00:00",
+      "version": "KIM-0187",
+      "updated_at": "2026-07-28T16:47:36+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -686,7 +686,8 @@
         "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
         "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
         "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
-        "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
+        "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
+        "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -705,7 +706,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0186: operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD registradas aparte; todas cubiertas con saldo disponible; saldo disponible 1,114.10 USD.",
+      "latest_format_note": "KIM-0187: XRP refuerzo pendiente 1.008 y SHIB pendiente 0.000004005; no hay ejecución ni cambio de saldo.",
       "visible_order_count": 29,
       "section_count_validation": {
         "covered_orders": 15,
@@ -883,7 +884,11 @@
           "covered_from_available_balance_usd": 900.0
         }
       ],
-      "latest_weighted_average_operations_total_covered_usd": 6300.0
+      "latest_weighted_average_operations_total_covered_usd": 6300.0,
+      "xrp_refuerzo_pending_price": 1.008,
+      "xrp_refuerzo_pending_quantity": 1785.7142857142858,
+      "shib_pending_price": 4.005e-06,
+      "shib_pending_quantity": 449438202.247191
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1947,15 +1952,18 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.882,
-      "quantity": 2040.8163265306,
+      "entry_price": 1.008,
+      "quantity": 1785.7142857142858,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor.",
-      "updated_at": "2026-07-03T20:04:47+00:00",
+      "source": "doctor_chat_2026_07_28_xrp_shib_pending_updates",
+      "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada.",
+      "updated_at": "2026-07-28T16:47:36+00:00",
       "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "requires_manual_fill_confirmation": true,
+      "price_adjusted_from": 0.882,
+      "price_adjusted_to": 1.008,
+      "price_adjusted_at": "2026-07-28T16:47:36+00:00"
     },
     {
       "id": "paper-kpb-20260703194503-9559de",
@@ -2198,19 +2206,19 @@
       "order": 43,
       "label": "SHIB/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 3.24e-06,
-      "quantity": 555555555.5555556,
+      "entry_price": 4.005e-06,
+      "quantity": 449438202.247191,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
-      "updated_at": "2026-07-26T05:02:37+00:00",
+      "source": "doctor_chat_2026_07_28_xrp_shib_pending_updates",
+      "updated_at": "2026-07-28T16:47:36+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real.",
-      "price_adjusted_from": 2.88e-06,
-      "price_adjusted_to": 3.24e-06,
-      "price_adjusted_at": "2026-07-26T05:02:37+00:00"
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0187: precio pendiente ajustado a 4.005e-06; cantidad 449438202.247191; sigue pendiente a crédito, no ejecutada.",
+      "price_adjusted_from": 3.24e-06,
+      "price_adjusted_to": 4.005e-06,
+      "price_adjusted_at": "2026-07-28T16:47:36+00:00"
     },
     {
       "id": "kim0180-labusdt-pending-0081-funded",
@@ -2529,7 +2537,8 @@
     "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
     "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
     "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
-    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
+    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
+    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -3091,7 +3100,8 @@
     "KIM-0183: las compras DOT 0.81, TRUMP 1.548, FTT 900 USD a 0.2018, LUNC 900 USD a 0.00005301 y WLD 900 USD a 0.3405 se cubren con saldo disponible; descontar 6,300 USD del disponible, no dejar como credito comprado por cubrir.",
     "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
     "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
-    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185."
+    "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
+    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
   ],
   "superseded_facts": [
     {
@@ -4780,6 +4790,42 @@
         "credit_bought_pending_payment_usd": 0,
         "credit_pending_execution_usd": 23400,
         "credit_total_usd": 23400,
+        "accounting_change_usd": 0
+      }
+    },
+    {
+      "id": "KIM-0187",
+      "at": "2026-07-28T16:47:36+00:00",
+      "actor": "codex",
+      "source": "doctor_chat_2026_07_28_xrp_shib_pending_updates",
+      "summary": "Actualiza órdenes pendientes a crédito XRP refuerzo y SHIB; no son ejecuciones y no cambian saldos.",
+      "changes": [
+        {
+          "symbol": "XRPUSDT",
+          "action": "update_pending_credit_price",
+          "old_entry_price": 0.882,
+          "new_entry_price": 1.008,
+          "amount_usd": 1800.0,
+          "new_quantity": 1785.7142857142858,
+          "status": "pending_on_credit_not_executed"
+        },
+        {
+          "symbol": "SHIBUSDT",
+          "action": "update_pending_credit_price",
+          "old_entry_price": 3.24e-06,
+          "new_entry_price": 4.005e-06,
+          "amount_usd": 1800.0,
+          "new_quantity": 449438202.247191,
+          "status": "pending_on_credit_not_executed"
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "firm_assigned_usd": 45332.01,
+        "credit_bought_pending_payment_usd": 0,
+        "credit_pending_execution_usd": 23400,
+        "credit_total_usd": 23400,
+        "pending_on_credit_orders": 13,
         "accounting_change_usd": 0
       }
     }
