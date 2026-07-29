@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0187",
-  "updated_at": "2026-07-28T16:47:36+00:00",
-  "standard_note": "KIM-0187: XRP refuerzo pendiente actualizado a 1.008 y SHIB pendiente a 0.000004005. Siguen pendientes a crédito por 1,800 USD cada una; sin cambio de saldo.",
+  "standard_version": "KIM-0188",
+  "updated_at": "2026-07-28T18:05:00+00:00",
+  "standard_note": "KIM-0188: últimos ajustes vistos en WhatsApp/Kim: SHIB pendiente a 0.000004608 y HBAR refuerzo pendiente a 0.06805. Siguen pendientes a crédito por 1,800 USD cada una; sin ejecución y sin cambio de saldo.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0187",
-      "updated_at": "2026-07-28T16:47:36+00:00",
+      "version": "KIM-0188",
+      "updated_at": "2026-07-28T18:05:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -687,7 +687,8 @@
         "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
         "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
         "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
-        "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
+        "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
+        "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -706,7 +707,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0187: XRP refuerzo pendiente 1.008 y SHIB pendiente 0.000004005; no hay ejecución ni cambio de saldo.",
+      "latest_format_note": "KIM-0188: SHIB pendiente 0.000004608 y HBAR refuerzo pendiente 0.06805; no hay ejecución ni cambio de saldo.",
       "visible_order_count": 29,
       "section_count_validation": {
         "covered_orders": 15,
@@ -738,7 +739,8 @@
         "KIM-0175: incluir fondeo 20-jul-2026 de 90,000 MXN / 5,163.51 USD a TC 17.43; no aplicar a credito sin instruccion expresa.",
         "KIM-0176: incluir fondeo 21-jul-2026 de 90,000 MXN / 5,172.41 USD a TC 17.40; no aplicar a credito sin instruccion expresa.",
         "KIM-0177: FTT refuerzo pendiente actualizado a 0.1782 por 1,800 USD; cantidad 10,101.0101010101 FTT; no ejecutar sin confirmacion real.",
-        "KIM-0178: corregir ZEC pendiente a 356.4, WIF pendiente a 0.12177 y LAB precio actual a 0.141176666667; reenviar reporte corregido."
+        "KIM-0178: corregir ZEC pendiente a 356.4, WIF pendiente a 0.12177 y LAB precio actual a 0.141176666667; reenviar reporte corregido.",
+        "KIM-0188: SHIB pendiente 0.000004608 y HBAR refuerzo pendiente 0.06805; no hay ejecución ni cambio de saldo."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 0,
@@ -887,8 +889,10 @@
       "latest_weighted_average_operations_total_covered_usd": 6300.0,
       "xrp_refuerzo_pending_price": 1.008,
       "xrp_refuerzo_pending_quantity": 1785.7142857142858,
-      "shib_pending_price": 4.005e-06,
-      "shib_pending_quantity": 449438202.247191
+      "shib_pending_price": 4.608e-06,
+      "shib_pending_quantity": 390625000.0,
+      "hbar_refuerzo_pending_price": 0.06805,
+      "hbar_refuerzo_pending_quantity": 26451.138868479058
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1974,18 +1978,18 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.054,
-      "quantity": 33333.333333333336,
+      "entry_price": 0.06805,
+      "quantity": 26451.138868479058,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "doctor_chat_2026_07_16_hbar_refuerzo_0054",
-      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0167: el doctor baja HBAR refuerzo pendiente de 0.0603 a 0.054 por 1,800 USD. Cantidad recalculada 33333.3333333333 HBAR. Sigue pendiente a credito; no ejecutar sin confirmacion real.",
-      "updated_at": "2026-07-16T20:40:45+00:00",
+      "source": "doctor_whatsapp_kim_latest_adjustments_2026_07_28_shib_hbar",
+      "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0167: el doctor baja HBAR refuerzo pendiente de 0.0603 a 0.054 por 1,800 USD. Cantidad recalculada 33333.3333333333 HBAR. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0188: último ajuste confirmado en WhatsApp/Kim; HBAR refuerzo pendiente queda en 0.06805; cantidad recalculada 26451.138868479058; sigue pendiente a crédito, no ejecutada.",
+      "updated_at": "2026-07-28T18:05:00+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "price_adjusted_from": 0.0603,
-      "price_adjusted_to": 0.054,
-      "price_adjusted_at": "2026-07-16T20:40:45+00:00"
+      "price_adjusted_from": 0.054,
+      "price_adjusted_to": 0.06805,
+      "price_adjusted_at": "2026-07-28T18:05:00+00:00"
     },
     {
       "id": "paper-kpb-20260703194505-5a4ee7",
@@ -2206,19 +2210,19 @@
       "order": 43,
       "label": "SHIB/USDT nueva orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 4.005e-06,
-      "quantity": 449438202.247191,
+      "entry_price": 4.608e-06,
+      "quantity": 390625000.0,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_28_xrp_shib_pending_updates",
-      "updated_at": "2026-07-28T16:47:36+00:00",
+      "source": "doctor_whatsapp_kim_latest_adjustments_2026_07_28_shib_hbar",
+      "updated_at": "2026-07-28T18:05:00+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0187: precio pendiente ajustado a 4.005e-06; cantidad 449438202.247191; sigue pendiente a crédito, no ejecutada.",
-      "price_adjusted_from": 3.24e-06,
-      "price_adjusted_to": 4.005e-06,
-      "price_adjusted_at": "2026-07-28T16:47:36+00:00"
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0187: precio pendiente ajustado a 4.005e-06; cantidad 449438202.247191; sigue pendiente a crédito, no ejecutada. KIM-0188: último ajuste confirmado en WhatsApp/Kim; SHIB pendiente queda en 4.608e-06; cantidad recalculada 390625000.0; sigue pendiente a crédito, no ejecutada.",
+      "price_adjusted_from": 4.005e-06,
+      "price_adjusted_to": 4.608e-06,
+      "price_adjusted_at": "2026-07-28T18:05:00+00:00"
     },
     {
       "id": "kim0180-labusdt-pending-0081-funded",
@@ -2538,7 +2542,8 @@
     "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
     "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
     "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
-    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
+    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
+    "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2891,6 +2896,18 @@
       "new_client_total_net_considered_usd": 46446.11,
       "credit_total_usd": 30600,
       "visible_order_count": 33
+    },
+    {
+      "id": "kim0188_latest_whatsapp_shib_hbar",
+      "at": "2026-07-28T18:05:00+00:00",
+      "summary": "Latest WhatsApp/Kim pending prices applied: SHIB 0.000004608 and HBAR refuerzo 0.06805; both pending on credit.",
+      "shib_pending_price": 4.608e-06,
+      "shib_pending_quantity": 390625000.0,
+      "hbar_refuerzo_price": 0.06805,
+      "hbar_refuerzo_quantity": 26451.138868479058,
+      "available_balance_usd": 1114.1,
+      "credit_pending_execution_usd": 23400,
+      "credit_total_usd": 23400
     }
   ],
   "consumed_orders": [
@@ -3101,7 +3118,8 @@
     "KIM-0184: retiro KIM-0182 de 90,000 MXN queda confirmado con recibo SPEI fechado 24-jul-2026; referencia sistema RET-20250724-001, CEP 971315, clave de rastreo 085909713150320564. No cambia saldo ni credito.",
     "KIM-0185: en Balance de Credito mostrar primero Fondeos/Depositos, luego Retiros y despues Balance neto depositos - retiros; mostrar por separado comision de retiro/conversion y balance operativo despues de comision. No cambia saldos.",
     "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
-    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo."
+    "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
+    "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real."
   ],
   "superseded_facts": [
     {
@@ -4816,6 +4834,42 @@
           "new_entry_price": 4.005e-06,
           "amount_usd": 1800.0,
           "new_quantity": 449438202.247191,
+          "status": "pending_on_credit_not_executed"
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "firm_assigned_usd": 45332.01,
+        "credit_bought_pending_payment_usd": 0,
+        "credit_pending_execution_usd": 23400,
+        "credit_total_usd": 23400,
+        "pending_on_credit_orders": 13,
+        "accounting_change_usd": 0
+      }
+    },
+    {
+      "id": "KIM-0188",
+      "at": "2026-07-28T18:05:00+00:00",
+      "actor": "codex",
+      "source": "doctor_whatsapp_kim_latest_adjustments_2026_07_28_shib_hbar",
+      "summary": "Actualiza últimos precios WhatsApp/Kim para SHIB pendiente y HBAR refuerzo pendiente; no son ejecuciones y no cambian saldos.",
+      "changes": [
+        {
+          "symbol": "SHIBUSDT",
+          "action": "update_pending_credit_price_from_latest_whatsapp_kim",
+          "old_entry_price": 4.005e-06,
+          "new_entry_price": 4.608e-06,
+          "amount_usd": 1800.0,
+          "new_quantity": 390625000.0,
+          "status": "pending_on_credit_not_executed"
+        },
+        {
+          "symbol": "HBARUSDT",
+          "action": "update_pending_credit_price_from_latest_whatsapp_kim",
+          "old_entry_price": 0.054,
+          "new_entry_price": 0.06805,
+          "amount_usd": 1800.0,
+          "new_quantity": 26451.138868479058,
           "status": "pending_on_credit_not_executed"
         }
       ],
