@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0194",
-  "updated_at": "2026-07-29T16:13:46+00:00",
-  "standard_note": "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+  "standard_version": "KIM-0195",
+  "updated_at": "2026-07-29T16:30:00+00:00",
+  "standard_note": "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0194",
-      "updated_at": "2026-07-29T16:13:46+00:00",
+      "version": "KIM-0195",
+      "updated_at": "2026-07-29T16:30:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -710,8 +710,8 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0194: HBAR se muestra consolidada a promedio ponderado 0.07776082; crédito por cubrir no cambia.",
-      "visible_order_count": 28,
+      "latest_format_note": "KIM-0195: XRP se muestra consolidada a promedio ponderado 1.19908917; crédito por cubrir no cambia.",
+      "visible_order_count": 27,
       "section_count_validation": {
         "covered_orders": 15,
         "covered_active": 15,
@@ -719,14 +719,14 @@
         "bought_on_credit": 3,
         "bought_on_credit_pending_payment": 3,
         "pending_on_credit": 10,
-        "total_visible_orders": 28,
-        "client_visible_lines": 28,
+        "total_visible_orders": 27,
+        "client_visible_lines": 27,
         "accounting_underlying_orders": 34,
-        "rule": "KIM-0194: 15 cubiertas + 1 pendiente fondeada + 3 compradas a crédito + 10 pendientes a crédito; en reporte de precios HBAR refuerzo se consume en HBAR consolidada, por eso salen 28 líneas visibles.",
+        "rule": "KIM-0195: XRP refuerzo y HBAR refuerzo se consumen en posiciones consolidadas en el reporte de precios; por eso salen 27 líneas visibles. Contabilidad de crédito permanece: 3 compradas a crédito y 10 pendientes a crédito.",
         "cash_funded_pending_orders": 1,
-        "visible_live_orders": 28,
+        "visible_live_orders": 27,
         "pending_to_buy_on_credit": 10,
-        "visible_order_count": 28
+        "visible_order_count": 27
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -747,7 +747,8 @@
         "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81.",
         "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable.",
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
-        "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+        "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -916,7 +917,8 @@
       "aave_pending_quantity": 22.22222222222222,
       "rules": [
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
-        "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+        "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
       ]
     },
     "funding_reconciliation": {
@@ -1366,7 +1368,12 @@
       "hbar_consolidated_amount_usd": 3600.0,
       "hbar_consolidated_entry_price": 0.07776081771720614,
       "hbar_consolidated_quantity": 46295.80945370419,
-      "hbar_consolidated_credit_usd": 1800.0
+      "hbar_consolidated_credit_usd": 1800.0,
+      "xrp_state": "consolidated_base_plus_refuerzo_credit_pending_coverage",
+      "xrp_consolidated_amount_usd": 3600.0,
+      "xrp_consolidated_entry_price": 1.1990891672807664,
+      "xrp_consolidated_quantity": 3002.27881147813,
+      "xrp_consolidated_credit_usd": 1800.0
     }
   },
   "manual_entries": [
@@ -1587,20 +1594,6 @@
         "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
         "covered_from_available_balance_usd": 1800.0
       }
-    },
-    {
-      "symbol": "XRPUSDT",
-      "state": "active",
-      "order": 7,
-      "label": "XRP/USDT",
-      "invested_usd": 1800,
-      "entry_price": 1.386,
-      "quantity": 1298.7012987012988,
-      "credit_usd": 0,
-      "source": "kim_0140_credit_coverage_2026_07_01",
-      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
-      "updated_at": "2026-06-23T23:37:48+00:00",
-      "credit": false
     },
     {
       "symbol": "PEPEUSDT",
@@ -1970,30 +1963,6 @@
       "covered_at": "2026-07-17"
     },
     {
-      "id": "paper-kpb-20260703194502-62337a",
-      "paper_order_id": "KPB-20260703194502-62337A",
-      "order": 34,
-      "symbol": "XRPUSDT",
-      "label": "XRP/USDT refuerzo comprada a crédito",
-      "state": "active",
-      "side": "BUY",
-      "invested_usd": 1800.0,
-      "entry_price": 1.0566,
-      "quantity": 1703.5775127768313,
-      "credit": true,
-      "credit_usd": 1800.0,
-      "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito.",
-      "updated_at": "2026-07-28T21:40:00+00:00",
-      "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true,
-      "price_adjusted_from": 1.008,
-      "price_adjusted_to": 1.0566,
-      "price_adjusted_at": "2026-07-28T21:40:00+00:00",
-      "execution_confirmed_at": "2026-07-28T21:40:00+00:00",
-      "execution_source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions"
-    },
-    {
       "id": "paper-kpb-20260703194505-5a4ee7",
       "paper_order_id": "KPB-20260703194505-5A4EE7",
       "order": 36,
@@ -2294,6 +2263,54 @@
           "credit_usd": 1800.0,
           "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
           "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0167: el doctor baja HBAR refuerzo pendiente de 0.0603 a 0.054 por 1,800 USD. Cantidad recalculada 33333.3333333333 HBAR. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0188: último ajuste confirmado en WhatsApp/Kim; HBAR refuerzo pendiente queda en 0.0684; cantidad recalculada 26315.78947368421; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; HBAR refuerzo comprada a crédito a 0.0684 por 1,800 USD; cantidad 26315.78947368421; queda por cubrir con crédito."
+        }
+      ]
+    },
+    {
+      "symbol": "XRPUSDT",
+      "state": "active",
+      "order": 7,
+      "label": "XRP/USDT consolidada",
+      "invested_usd": 3600.0,
+      "entry_price": 1.1990891672807664,
+      "quantity": 3002.27881147813,
+      "credit_usd": 1800.0,
+      "source": "doctor_instruction_2026_07_29_xrp_weighted_average",
+      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+      "updated_at": "2026-07-29T16:30:00+00:00",
+      "credit": true,
+      "id": "kim0195-xrp-consolidated-weighted-average",
+      "firm_usd": 1800.0,
+      "raw_weighted_average_price": 1.1990891672807664,
+      "weighted_average_price": 1.1990891672807664,
+      "consumed_orders": [
+        "A7",
+        "A34"
+      ],
+      "split_members": [
+        {
+          "member_order": "A7",
+          "symbol": "XRPUSDT",
+          "label": "XRP/USDT base",
+          "state": "active",
+          "amount_usd": 1800.0,
+          "price": 1.386,
+          "quantity": 1298.7012987012988,
+          "credit_usd": 0.0,
+          "source": "kim_0140_credit_coverage_2026_07_01",
+          "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar."
+        },
+        {
+          "member_order": "A34",
+          "symbol": "XRPUSDT",
+          "label": "XRP/USDT refuerzo comprado a credito",
+          "state": "active",
+          "amount_usd": 1800.0,
+          "price": 1.0566,
+          "quantity": 1703.5775127768313,
+          "credit_usd": 1800.0,
+          "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
+          "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito."
         }
       ]
     }
@@ -2600,7 +2617,8 @@
     "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
     "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
-    "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+    "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2643,7 +2661,7 @@
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true,
-    "sort_note": "KIM-0194: reporte ordenado de perdida a ganancia; HBAR consolidada con promedio ponderado.",
+    "sort_note": "KIM-0195: reporte ordenado de perdida a ganancia; XRP y HBAR consolidadas con promedio ponderado.",
     "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
@@ -3147,6 +3165,99 @@
         }
       ],
       "summary": "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+    },
+    {
+      "at": "2026-07-29T16:30:00+00:00",
+      "action": "xrp_weighted_average_kim0195",
+      "canonical": {
+        "symbol": "XRPUSDT",
+        "state": "active",
+        "order": 7,
+        "label": "XRP/USDT consolidada",
+        "invested_usd": 3600.0,
+        "entry_price": 1.1990891672807664,
+        "quantity": 3002.27881147813,
+        "credit_usd": 1800.0,
+        "source": "doctor_instruction_2026_07_29_xrp_weighted_average",
+        "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+        "updated_at": "2026-07-29T16:30:00+00:00",
+        "credit": true,
+        "id": "kim0195-xrp-consolidated-weighted-average",
+        "firm_usd": 1800.0,
+        "raw_weighted_average_price": 1.1990891672807664,
+        "weighted_average_price": 1.1990891672807664,
+        "consumed_orders": [
+          "A7",
+          "A34"
+        ],
+        "split_members": [
+          {
+            "member_order": "A7",
+            "symbol": "XRPUSDT",
+            "label": "XRP/USDT base",
+            "state": "active",
+            "amount_usd": 1800.0,
+            "price": 1.386,
+            "quantity": 1298.7012987012988,
+            "credit_usd": 0.0,
+            "source": "kim_0140_credit_coverage_2026_07_01",
+            "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar."
+          },
+          {
+            "member_order": "A34",
+            "symbol": "XRPUSDT",
+            "label": "XRP/USDT refuerzo comprado a credito",
+            "state": "active",
+            "amount_usd": 1800.0,
+            "price": 1.0566,
+            "quantity": 1703.5775127768313,
+            "credit_usd": 1800.0,
+            "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
+            "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito."
+          }
+        ]
+      },
+      "members": [
+        {
+          "symbol": "XRPUSDT",
+          "state": "active",
+          "order": 7,
+          "label": "XRP/USDT",
+          "invested_usd": 1800,
+          "entry_price": 1.386,
+          "quantity": 1298.7012987012988,
+          "credit_usd": 0,
+          "source": "kim_0140_credit_coverage_2026_07_01",
+          "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar.",
+          "updated_at": "2026-06-23T23:37:48+00:00",
+          "credit": false
+        },
+        {
+          "id": "paper-kpb-20260703194502-62337a",
+          "paper_order_id": "KPB-20260703194502-62337A",
+          "order": 34,
+          "symbol": "XRPUSDT",
+          "label": "XRP/USDT refuerzo comprada a crédito",
+          "state": "active",
+          "side": "BUY",
+          "invested_usd": 1800.0,
+          "entry_price": 1.0566,
+          "quantity": 1703.5775127768313,
+          "credit": true,
+          "credit_usd": 1800.0,
+          "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
+          "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito.",
+          "updated_at": "2026-07-28T21:40:00+00:00",
+          "no_auto_fill": true,
+          "requires_manual_fill_confirmation": true,
+          "price_adjusted_from": 1.008,
+          "price_adjusted_to": 1.0566,
+          "price_adjusted_at": "2026-07-28T21:40:00+00:00",
+          "execution_confirmed_at": "2026-07-28T21:40:00+00:00",
+          "execution_source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions"
+        }
+      ],
+      "summary": "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
     }
   ],
   "removed_orders": [
@@ -5215,6 +5326,33 @@
         "credit_total_usd": 23400.0,
         "accounting_change_usd": 0
       }
+    },
+    {
+      "id": "KIM-0195",
+      "at": "2026-07-29T16:30:00+00:00",
+      "actor": "codex",
+      "source": "doctor_instruction_xrp_weighted_average_2026_07_29",
+      "summary": "XRP base y refuerzo comprado a credito se consolidan con promedio ponderado.",
+      "changes": [
+        {
+          "action": "consolidate_xrp_weighted_average",
+          "base_amount_usd": 1800.0,
+          "base_price": 1.386,
+          "refuerzo_amount_usd": 1800.0,
+          "refuerzo_price": 1.0566,
+          "total_amount_usd": 3600.0,
+          "weighted_average_price": 1.1990891672807664,
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "credit_bought_pending_payment_usd": 5400.0,
+        "credit_pending_execution_usd": 18000.0,
+        "credit_total_usd": 23400.0,
+        "accounting_change_usd": 0
+      }
     }
   ],
   "cancelled_orders": [
@@ -5252,6 +5390,7 @@
   "previous_standard_note": "KIM-0189: últimos WhatsApp/Kim revisados. XRP refuerzo, HBAR refuerzo y SHIB pasan de pendientes a compradas a crédito por 1,800 USD cada una. HBAR corregido a 0.0684. ZEC, BONK, PENGU y AAVE quedan ajustadas como pendientes. Crédito comprado por cubrir 5,400 USD; crédito pendiente por ejecutar 18,000 USD; crédito total 23,400 USD.",
   "reporting_notes": [
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
-    "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+    "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
   ]
 }
