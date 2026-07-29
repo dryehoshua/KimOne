@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0195"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0196"
 
 
 def portfolio_float(value, default=None):
@@ -23234,6 +23234,7 @@ def portfolio_credit_balance_statement_message(report):
     firm = protocol.get("firm_assigned_usd")
     available = protocol.get("available_balance_usd")
     bought_credit = protocol.get("credit_bought_pending_payment_usd")
+    available_applied_to_executed = protocol.get("available_balance_applied_to_executed_orders_usd")
     pending_credit = protocol.get("credit_pending_execution_usd")
     credit_total = protocol.get("credit_total_usd")
     covered = protocol.get("covered_orders") if isinstance(protocol.get("covered_orders"), list) else []
@@ -23291,6 +23292,15 @@ def portfolio_credit_balance_statement_message(report):
             "",
             f"Subtotal comprado a crédito: {money_usd(subtotal(bought))}",
             "",
+            *(
+                [
+                    f"Saldo disponible aplicado a ejecutadas: -{money_usd(available_applied_to_executed)}",
+                    f"Crédito neto por cubrir: {money_usd(bought_credit)}",
+                    "",
+                ]
+                if available_applied_to_executed not in (None, "", 0)
+                else []
+            ),
             f"**{section_index + 1}. {sections.get('pending_on_credit') or 'Órdenes Pendientes A Crédito'}**",
             "",
             order_rows(pending),

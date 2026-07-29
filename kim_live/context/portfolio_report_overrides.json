@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0195",
-  "updated_at": "2026-07-29T16:30:00+00:00",
-  "standard_note": "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+  "standard_version": "KIM-0196",
+  "updated_at": "2026-07-29T17:22:44+00:00",
+  "standard_note": "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -187,7 +187,7 @@
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
-    "available_balance_policy": "available_balance_usd = operating_remnants_usd + max(0, realized_net_pnl_usd); visible firm_total_usd includes this available balance, but report also tracks base firm capital unchanged.",
+    "available_balance_policy": "KIM-0196: available_balance_usd se descuenta primero cuando una orden se ejecuta; el credito por cubrir es solo la diferencia no cubierta por saldo disponible.",
     "confirmed_cash_funding_total_usd": 39082.61,
     "confirmed_cash_funding_total_mxn": 682000.0,
     "last_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0195",
-      "updated_at": "2026-07-29T16:30:00+00:00",
+      "version": "KIM-0196",
+      "updated_at": "2026-07-29T17:22:44+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -513,11 +513,11 @@
       "realized_profit_for_statement_usd": 63.02,
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
       "client_total_net_considered_usd": 46446.11,
-      "firm_assigned_usd": 45332.01,
-      "available_balance_usd": 1114.1,
-      "credit_bought_pending_payment_usd": 5400.0,
+      "firm_assigned_usd": 46446.11,
+      "available_balance_usd": 0.0,
+      "credit_bought_pending_payment_usd": 4285.9,
       "credit_pending_execution_usd": 18000.0,
-      "credit_total_usd": 23400.0,
+      "credit_total_usd": 22285.9,
       "covered_orders": [
         [
           "ADA",
@@ -710,7 +710,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0195: XRP se muestra consolidada a promedio ponderado 1.19908917; crédito por cubrir no cambia.",
+      "latest_format_note": "KIM-0196: saldo disponible aplicado a órdenes ejecutadas; saldo disponible 0.00 USD y crédito neto por cubrir 4,285.90 USD.",
       "visible_order_count": 27,
       "section_count_validation": {
         "covered_orders": 15,
@@ -748,7 +748,8 @@
         "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable.",
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -918,8 +919,14 @@
       "rules": [
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
-      ]
+        "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
+      ],
+      "available_balance_before_executed_orders_usd": 1114.1,
+      "executed_bought_orders_gross_usd": 5400.0,
+      "available_balance_applied_to_executed_orders_usd": 1114.1,
+      "credit_bought_pending_payment_gross_usd": 5400.0,
+      "available_balance_rule": "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -1373,7 +1380,17 @@
       "xrp_consolidated_amount_usd": 3600.0,
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
-      "xrp_consolidated_credit_usd": 1800.0
+      "xrp_consolidated_credit_usd": 1800.0,
+      "available_balance_usd": 0.0,
+      "available_balance_before_executed_orders_usd": 1114.1,
+      "available_balance_applied_to_executed_orders_usd": 1114.1,
+      "executed_bought_orders_gross_usd": 5400.0,
+      "credit_bought_pending_payment_gross_usd": 5400.0,
+      "credit_bought_pending_payment_usd": 4285.9,
+      "credit_pending_execution_usd": 18000.0,
+      "credit_total_usd": 22285.9,
+      "firm_assigned_usd": 46446.11,
+      "available_balance_rule": "executed_orders_debit_available_first_then_credit_difference"
     }
   },
   "manual_entries": [
@@ -2618,7 +2635,8 @@
     "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -5353,6 +5371,34 @@
         "credit_total_usd": 23400.0,
         "accounting_change_usd": 0
       }
+    },
+    {
+      "id": "KIM-0196",
+      "at": "2026-07-29T17:22:44+00:00",
+      "actor": "codex",
+      "source": "doctor_instruction_available_balance_debited_on_execution_2026_07_29",
+      "summary": "Establece regla: órdenes ejecutadas se cobran primero del saldo disponible; solo la diferencia queda a crédito.",
+      "changes": [
+        {
+          "action": "apply_available_balance_to_executed_orders_first",
+          "executed_bought_orders_gross_usd": 5400.0,
+          "available_balance_before_usd": 1114.1,
+          "available_balance_after_usd": 0.0,
+          "credit_bought_pending_payment_before_usd": 5400.0,
+          "credit_bought_pending_payment_after_usd": 4285.9,
+          "credit_pending_execution_usd": 18000.0,
+          "credit_total_after_usd": 22285.9,
+          "firm_assigned_after_usd": 46446.11
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 18000.0,
+        "credit_total_usd": 22285.9,
+        "firm_assigned_usd": 46446.11,
+        "accounting_change_usd": 0
+      }
     }
   ],
   "cancelled_orders": [
@@ -5391,6 +5437,7 @@
   "reporting_notes": [
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos."
+    "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
+    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
   ]
 }
