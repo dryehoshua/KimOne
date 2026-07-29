@@ -1,13 +1,13 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0190",
-  "updated_at": "2026-07-29T10:05:00+00:00",
-  "standard_note": "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable.",
+  "standard_version": "KIM-0193",
+  "updated_at": "2026-07-29T16:05:01+00:00",
+  "standard_note": "KIM-0193: reporte completo ordenado de mayor perdida a ganancia con IDs visibles compactos A1-A29. Sin cambio contable.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
-  "preserve_report_order_ids": true,
+  "preserve_report_order_ids": false,
   "credit_mark": "(c)",
   "credit_symbols": [],
   "credit_amounts": {},
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0190",
-      "updated_at": "2026-07-29T10:05:00+00:00",
+      "version": "KIM-0193",
+      "updated_at": "2026-07-29T16:05:01+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -710,7 +710,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81. KIM-0190: LAB se valida con precio fresco; no usar market consensus viejo guardado como override.",
+      "latest_format_note": "KIM-0193: reporte completo ordenado de mayor perdida a ganancia, con IDs visibles A1-A29 compactos. Sin cambio contable.",
       "visible_order_count": 29,
       "section_count_validation": {
         "covered_orders": 15,
@@ -745,7 +745,8 @@
         "KIM-0178: corregir ZEC pendiente a 356.4, WIF pendiente a 0.12177 y LAB precio actual a 0.141176666667; reenviar reporte corregido.",
         "KIM-0188: SHIB pendiente 0.000004608 y HBAR refuerzo pendiente 0.06805; no hay ejecución ni cambio de saldo.",
         "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81.",
-        "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable."
+        "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable.",
+        "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -911,7 +912,10 @@
       "pengu_pending_price": 0.005382,
       "pengu_pending_quantity": 334448.1605351171,
       "aave_pending_price": 81.0,
-      "aave_pending_quantity": 22.22222222222222
+      "aave_pending_quantity": 22.22222222222222,
+      "rules": [
+        "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad."
+      ]
     },
     "funding_reconciliation": {
       "updated_at": "2026-07-16T16:20:15+00:00",
@@ -2574,7 +2578,8 @@
     "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
     "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real.",
     "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
-    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas."
+    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
+    "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2616,7 +2621,9 @@
     "active_phrase_negative": "Estamos por debajo por -X%",
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
-    "pending_after_active": true
+    "pending_after_active": true,
+    "sort_note": "KIM-0193: reporte completo ordenado de mayor perdida a ganancia, con IDs visibles A1-A29 compactos. Sin cambio contable.",
+    "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
   "auto_aggregate_active_manual_entries": false,
@@ -5045,6 +5052,29 @@
         "credit_total_usd": 23400.0,
         "accounting_change_usd": 0
       }
+    },
+    {
+      "id": "KIM-0193",
+      "at": "2026-07-29T16:05:01+00:00",
+      "actor": "codex",
+      "source": "doctor_instruction_loss_to_gain_2026_07_29",
+      "summary": "Cambia presentacion del reporte completo a orden de mayor perdida a ganancia con IDs visibles compactos.",
+      "changes": [
+        {
+          "action": "set_loss_to_gain_compact_client_report",
+          "client_sort_mode": "loss_to_gain",
+          "compact_client_ordering": true,
+          "preserve_report_order_ids": false,
+          "accounting_change_usd": 0
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "credit_bought_pending_payment_usd": 5400.0,
+        "credit_pending_execution_usd": 18000.0,
+        "credit_total_usd": 23400.0,
+        "accounting_change_usd": 0
+      }
     }
   ],
   "cancelled_orders": [
@@ -5079,5 +5109,8 @@
       "notes": "KIM-0157: orden colocada durante Shabbat, evidentemente a credito segun instruccion del doctor, y finalmente cancelada Motzaei Shabbat; no debe aparecer viva ni afectar P/L ni credito pendiente."
     }
   ],
-  "previous_standard_note": "KIM-0189: últimos WhatsApp/Kim revisados. XRP refuerzo, HBAR refuerzo y SHIB pasan de pendientes a compradas a crédito por 1,800 USD cada una. HBAR corregido a 0.0684. ZEC, BONK, PENGU y AAVE quedan ajustadas como pendientes. Crédito comprado por cubrir 5,400 USD; crédito pendiente por ejecutar 18,000 USD; crédito total 23,400 USD."
+  "previous_standard_note": "KIM-0189: últimos WhatsApp/Kim revisados. XRP refuerzo, HBAR refuerzo y SHIB pasan de pendientes a compradas a crédito por 1,800 USD cada una. HBAR corregido a 0.0684. ZEC, BONK, PENGU y AAVE quedan ajustadas como pendientes. Crédito comprado por cubrir 5,400 USD; crédito pendiente por ejecutar 18,000 USD; crédito total 23,400 USD.",
+  "reporting_notes": [
+    "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad."
+  ]
 }
