@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0189"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0190"
 
 
 def portfolio_float(value, default=None):
@@ -22032,7 +22032,13 @@ def portfolio_apply_manual_overrides(summary, active_items, pending_items, inclu
         manual_current_price = portfolio_float(
             first_value(entry, "current_price", "current_price_usd", "doctor_current_price", "manual_current_price")
         )
-        if manual_current_price not in (None, ""):
+        manual_price_status = str(entry.get("current_price_status") or "").strip().lower()
+        manual_price_source = str(entry.get("current_price_source") or "").strip().lower()
+        stale_market_snapshot = (
+            manual_price_status == "validated_market_consensus"
+            or manual_price_source.startswith("market_consensus")
+        )
+        if manual_current_price not in (None, "") and not stale_market_snapshot:
             current_price = manual_current_price
             approved = True
             validation = {
@@ -23021,8 +23027,9 @@ def portfolio_selected_client_lines(report, parameters=None):
                 portfolio_normalize_client_id(line.get("id")),
                 portfolio_normalize_client_id(line.get("display_id")),
                 portfolio_client_id_from_number(line.get("order")),
-                portfolio_client_id_from_number(line.get("internal_order")),
             }
+            if boolish(first_value(parameters, "allow_internal_order_selector", "internal_order_selector", default=False)):
+                selectors.add(portfolio_client_id_from_number(line.get("internal_order")))
             selectors.discard("")
             return selectors
 

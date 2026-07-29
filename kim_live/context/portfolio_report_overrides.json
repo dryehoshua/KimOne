@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0189",
-  "updated_at": "2026-07-28T21:48:00+00:00",
-  "standard_note": "KIM-0189: últimos WhatsApp/Kim revisados. XRP refuerzo, HBAR refuerzo y SHIB pasan de pendientes a compradas a crédito por 1,800 USD cada una. HBAR corregido a 0.0684. ZEC, BONK, PENGU y AAVE quedan ajustadas como pendientes. Crédito comprado por cubrir 5,400 USD; crédito pendiente por ejecutar 18,000 USD; crédito total 23,400 USD.",
+  "standard_version": "KIM-0190",
+  "updated_at": "2026-07-29T10:05:00+00:00",
+  "standard_note": "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0189",
-      "updated_at": "2026-07-28T21:48:00+00:00",
+      "version": "KIM-0190",
+      "updated_at": "2026-07-29T10:05:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -690,7 +690,8 @@
         "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
         "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
         "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real.",
-        "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir."
+        "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
+        "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas."
       ],
       "latest_funding_note": "KIM-0176: Sr. Eli fondeo 90,000 MXN el 21-jul-2026 a 17.40 MXN/USD = 5,172.41 USD; registrado como fondeo sin reasignacion automatica a credito.",
       "client_balance_section_titles": {
@@ -709,7 +710,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81.",
+      "latest_format_note": "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81. KIM-0190: LAB se valida con precio fresco; no usar market consensus viejo guardado como override.",
       "visible_order_count": 29,
       "section_count_validation": {
         "covered_orders": 15,
@@ -743,7 +744,8 @@
         "KIM-0177: FTT refuerzo pendiente actualizado a 0.1782 por 1,800 USD; cantidad 10,101.0101010101 FTT; no ejecutar sin confirmacion real.",
         "KIM-0178: corregir ZEC pendiente a 356.4, WIF pendiente a 0.12177 y LAB precio actual a 0.141176666667; reenviar reporte corregido.",
         "KIM-0188: SHIB pendiente 0.000004608 y HBAR refuerzo pendiente 0.06805; no hay ejecución ni cambio de saldo.",
-        "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81."
+        "KIM-0189: XRP refuerzo, HBAR refuerzo y SHIB ya están compradas a crédito por 5,400 USD; HBAR corregido a 0.0684. Quedan 18,000 USD pendientes por ejecutar. Ajustes pendientes aplicados: ZEC 396, BONK 0.00000263, PENGU 0.005382 y AAVE 81.",
+        "KIM-0190: corrección de flujo LAB. El precio actual guardado como market_consensus viejo ya no puede pisar un refresh fresco; LAB activa y LAB pendiente deben usar la misma validación de mercado al generar reporte. Sin cambio contable."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -2102,19 +2104,17 @@
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre. KIM-0173: precio actual LAB/USDT investigado externamente el 2026-07-20: Gate spot LAB_USDT 0.1499, CoinGecko 0.149415; LAB 1 sigue activa, sin cierre. KIM-0178: precio actual LAB corregido tras verificacion fresca 2026-07-21: MEXC 0.14118, KuCoin 0.14135, Gate 0.141; consenso 0.141176666667. LAB 1 sigue activa, sin cierre.",
-      "updated_at": "2026-07-21T20:55:07+00:00",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre. KIM-0173: precio actual LAB/USDT investigado externamente el 2026-07-20: Gate spot LAB_USDT 0.1499, CoinGecko 0.149415; LAB 1 sigue activa, sin cierre. KIM-0178: precio actual LAB corregido tras verificacion fresca 2026-07-21: MEXC 0.14118, KuCoin 0.14135, Gate 0.141; consenso 0.141176666667. LAB 1 sigue activa, sin cierre. KIM-0190: se elimina precio actual de mercado guardado para evitar stale override; LAB debe validarse fresco en cada reporte.",
+      "updated_at": "2026-07-29T10:05:00+00:00",
       "executed_at": "2026-07-07T14:08:09",
       "execution_ref": "tx_4ca1fe072644",
-      "current_price": 0.141176666667,
-      "current_price_status": "validated_market_consensus",
-      "current_price_source": "market_consensus_2026_07_21_mexc_kucoin_gate_lab",
       "doctor_validated_at": "2026-07-16T16:16:06+00:00",
       "market_checked_at": "2026-07-20T15:01:29+00:00",
       "market_price_sources": {
         "gate_spot_lab_usdt": 0.1499,
         "coingecko_lab_usd": 0.149415
-      }
+      },
+      "current_price_refresh_policy": "always_validate_market_on_report"
     },
     {
       "id": "kim0157-labusdt-pending-018-available",
@@ -2573,7 +2573,8 @@
     "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
     "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
     "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real.",
-    "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir."
+    "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
+    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -3158,7 +3159,8 @@
     "KIM-0186: registrar aparte las ultimas operaciones promediadas DOT/TRUMP/FTT/LUNC/WLD con promedio ponderado; todas fueron cubiertas con saldo disponible por 6,300 USD y no queda credito comprado por cubrir. Sin cambio de saldo frente a KIM-0185.",
     "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
     "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real.",
-    "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir."
+    "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
+    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas."
   ],
   "superseded_facts": [
     {
@@ -5020,6 +5022,29 @@
         "bought_on_credit_pending_payment_orders": 3,
         "accounting_change_usd": 0
       }
+    },
+    {
+      "id": "KIM-0190",
+      "at": "2026-07-29T10:05:00+00:00",
+      "actor": "codex",
+      "source": "doctor_feedback_lab_price_wrong_2026_07_29",
+      "summary": "Corrige flujo de precio actual LAB: no usar market consensus viejo guardado como override; validar fresco cada reporte.",
+      "changes": [
+        {
+          "symbol": "LABUSDT",
+          "action": "remove_stale_market_current_price_override",
+          "old_current_price": 0.141176666667,
+          "new_policy": "always_validate_market_on_report",
+          "accounting_change_usd": 0
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 1114.1,
+        "credit_bought_pending_payment_usd": 5400.0,
+        "credit_pending_execution_usd": 18000.0,
+        "credit_total_usd": 23400.0,
+        "accounting_change_usd": 0
+      }
     }
   ],
   "cancelled_orders": [
@@ -5053,5 +5078,6 @@
       "cancelled_at": "Motzaei Shabbat previo al 2026-07-13",
       "notes": "KIM-0157: orden colocada durante Shabbat, evidentemente a credito segun instruccion del doctor, y finalmente cancelada Motzaei Shabbat; no debe aparecer viva ni afectar P/L ni credito pendiente."
     }
-  ]
+  ],
+  "previous_standard_note": "KIM-0189: últimos WhatsApp/Kim revisados. XRP refuerzo, HBAR refuerzo y SHIB pasan de pendientes a compradas a crédito por 1,800 USD cada una. HBAR corregido a 0.0684. ZEC, BONK, PENGU y AAVE quedan ajustadas como pendientes. Crédito comprado por cubrir 5,400 USD; crédito pendiente por ejecutar 18,000 USD; crédito total 23,400 USD."
 }
