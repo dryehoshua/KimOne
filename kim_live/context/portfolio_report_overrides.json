@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0196",
-  "updated_at": "2026-07-29T17:22:44+00:00",
-  "standard_note": "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
+  "standard_version": "KIM-0197",
+  "updated_at": "2026-07-30T15:07:20+00:00",
+  "standard_note": "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0196",
-      "updated_at": "2026-07-29T17:22:44+00:00",
+      "version": "KIM-0197",
+      "updated_at": "2026-07-30T15:07:20+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -516,8 +516,8 @@
       "firm_assigned_usd": 46446.11,
       "available_balance_usd": 0.0,
       "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 18000.0,
-      "credit_total_usd": 22285.9,
+      "credit_pending_execution_usd": 19800.0,
+      "credit_total_usd": 24085.9,
       "covered_orders": [
         [
           "ADA",
@@ -634,6 +634,10 @@
         [
           "FLOKI",
           1800
+        ],
+        [
+          "ICP refuerzo",
+          1800.0
         ]
       ],
       "language_rules": [
@@ -710,23 +714,23 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0196: saldo disponible aplicado a órdenes ejecutadas; saldo disponible 0.00 USD y crédito neto por cubrir 4,285.90 USD.",
-      "visible_order_count": 27,
+      "latest_format_note": "KIM-0197: ICP refuerzo pendiente agregado a 1.44 por 1,800 USD; saldo disponible 0.00 USD; crédito pendiente por ejecutar 19,800 USD.",
+      "visible_order_count": 28,
       "section_count_validation": {
         "covered_orders": 15,
         "covered_active": 15,
         "cash_funded_pending": 1,
         "bought_on_credit": 3,
         "bought_on_credit_pending_payment": 3,
-        "pending_on_credit": 10,
-        "total_visible_orders": 27,
-        "client_visible_lines": 27,
-        "accounting_underlying_orders": 34,
-        "rule": "KIM-0195: XRP refuerzo y HBAR refuerzo se consumen en posiciones consolidadas en el reporte de precios; por eso salen 27 líneas visibles. Contabilidad de crédito permanece: 3 compradas a crédito y 10 pendientes a crédito.",
+        "pending_on_credit": 11,
+        "total_visible_orders": 28,
+        "client_visible_lines": 28,
+        "accounting_underlying_orders": 35,
+        "rule": "KIM-0197: XRP y HBAR refuerzos se consumen en consolidadas; ICP refuerzo se agrega pendiente. Reporte de precios: 28 líneas visibles. Contabilidad: 3 compradas a crédito y 11 pendientes a crédito.",
         "cash_funded_pending_orders": 1,
-        "visible_live_orders": 27,
-        "pending_to_buy_on_credit": 10,
-        "visible_order_count": 27
+        "visible_live_orders": 28,
+        "pending_to_buy_on_credit": 11,
+        "visible_order_count": 28
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -749,7 +753,8 @@
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
+        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
+        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -920,7 +925,8 @@
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
+        "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
+        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
       ],
       "available_balance_before_executed_orders_usd": 1114.1,
       "executed_bought_orders_gross_usd": 5400.0,
@@ -1387,10 +1393,17 @@
       "executed_bought_orders_gross_usd": 5400.0,
       "credit_bought_pending_payment_gross_usd": 5400.0,
       "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 18000.0,
-      "credit_total_usd": 22285.9,
+      "credit_pending_execution_usd": 19800.0,
+      "credit_total_usd": 24085.9,
       "firm_assigned_usd": 46446.11,
-      "available_balance_rule": "executed_orders_debit_available_first_then_credit_difference"
+      "available_balance_rule": "executed_orders_debit_available_first_then_credit_difference",
+      "pending_on_credit_orders": 11,
+      "visible_live_orders": 28,
+      "accounting_underlying_orders": 35,
+      "icp_refuerzo_pending_price": 1.44,
+      "icp_refuerzo_pending_amount_usd": 1800.0,
+      "icp_refuerzo_pending_quantity": 1250.0,
+      "icp_refuerzo_state": "pending_on_credit_not_executed"
     }
   },
   "manual_entries": [
@@ -2330,6 +2343,25 @@
           "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito."
         }
       ]
+    },
+    {
+      "id": "kim0197-icpusdt-refuerzo-pending-144",
+      "order": 45,
+      "symbol": "ICPUSDT",
+      "label": "ICP/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 1.44,
+      "quantity": 1250.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_07_30_yesterday_ledger_changes",
+      "notes": "KIM-0197: refuerzo de ICP agregado a órdenes pendientes a 1.44 por 1,800 USD. Pendiente a crédito; no ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-07-30T15:07:20+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
     }
   ],
   "closed_positions": [
@@ -2636,7 +2668,8 @@
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
+    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
+    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2679,7 +2712,7 @@
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true,
-    "sort_note": "KIM-0195: reporte ordenado de perdida a ganancia; XRP y HBAR consolidadas con promedio ponderado.",
+    "sort_note": "KIM-0197: reporte ordenado de pérdida a ganancia; ICP refuerzo agregado como pendiente.",
     "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
@@ -5399,6 +5432,34 @@
         "firm_assigned_usd": 46446.11,
         "accounting_change_usd": 0
       }
+    },
+    {
+      "id": "KIM-0197",
+      "at": "2026-07-30T15:07:20+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_07_30_yesterday_ledger_changes",
+      "summary": "Agrega ICP refuerzo pendiente a 1.44 por 1,800 USD; no hay otras novedades.",
+      "changes": [
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "ICPUSDT",
+          "label": "ICP/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 1.44,
+          "quantity": 1250.0,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 19800.0,
+        "credit_total_usd": 24085.9,
+        "visible_live_orders": 28,
+        "pending_on_credit_orders": 11
+      }
     }
   ],
   "cancelled_orders": [
@@ -5438,6 +5499,7 @@
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD."
+    "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
+    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
   ]
 }
