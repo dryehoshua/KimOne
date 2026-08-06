@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0207",
+  "standard_version": "KIM-0208",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
+  "standard_note": "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -218,7 +218,7 @@
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
-    "available_balance_policy": "KIM-0205: el fondeo nuevo queda en saldo disponible; cuando una orden se ejecuta, se descuenta primero del saldo disponible; si no alcanza, solo la diferencia queda como credito por cubrir. No cubrir credito con el fondeo nuevo sin instruccion expresa.",
+    "available_balance_policy": "KIM-0208: depositos/fondeos no pagan comision visible; solo retiro paga 1.2%. El saldo disponible no se reduce por comision de deposito.",
     "confirmed_cash_funding_total_usd": 49541.65,
     "confirmed_cash_funding_total_mxn": 862000.0,
     "last_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0207",
-      "updated_at": "2026-08-06T16:25:00+00:00",
+      "version": "KIM-0208",
+      "updated_at": "2026-08-06T16:45:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -773,7 +773,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0207: usar Deposito/Depósito confirmado en vez de Fondeo en reporte cliente.",
+      "latest_format_note": "KIM-0208: resumen de movimientos cobra comision solo al retiro; depositos/fondeos no llevan comision visible.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -817,7 +817,9 @@
         "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
         "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
         "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
-        "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable."
+        "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
+        "KIM-0208: se corrige resumen de movimientos para incluir comision 1.2% sobre depositos/fondeos: 744.67 USD, ademas de retiro 61.82 USD. Total comisiones depositos + retiro: 806.49 USD.",
+        "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -909,7 +911,7 @@
       "client_deposit_withdrawal_balance_mxn": 990000.0,
       "client_deposit_withdrawal_balance_usd": 56903.95,
       "client_deposit_withdrawal_balance_after_fees_usd": 56842.13,
-      "client_deposit_withdrawal_balance_note": "Balance neto depositos - retiros excluye profit y ordenes; balance operativo despues de comision descuenta la comision 1.2% del retiro. KIM-0205 agrega fondeo de 180,000 MXN y deja saldo disponible sin aplicarlo automaticamente a credito.",
+      "client_deposit_withdrawal_balance_note": "Balance neto depositos - retiros excluye profit y ordenes. Balance operativo despues de comision descuenta solo la comision 1.2% del retiro; no se cobra comision sobre depositos/fondeos para promover depositos.",
       "client_facing_recent_weighted_average_operations": [
         {
           "symbol": "DOT",
@@ -1669,9 +1671,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 20408.16326530612,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0207",
-      "updated_at": "2026-08-06T16:25:00+00:00",
-      "note": "Formato cliente: usar Depósito en vez de Fondeo para movimientos y totales visibles; sin cambio contable.",
+      "id": "KIM-0208",
+      "updated_at": "2026-08-06T16:45:00+00:00",
+      "note": "Politica final: solo cobrar comision al retiro; no cobrar comision sobre depositos/fondeos.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1680,7 +1682,8 @@
       "client_deposit_withdrawal_balance_after_fees_usd": 56842.13,
       "funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_facing_movements_count": 13,
-      "client_facing_movements_note": "Retiro 24-jul-2026 insertado cronologicamente entre 21-jul-2026 y 06-ago-2026."
+      "client_facing_movements_note": "Retiro 24-jul-2026 insertado cronologicamente entre 21-jul-2026 y 06-ago-2026.",
+      "withdrawal_only_fee_policy": true
     }
   },
   "manual_entries": [
@@ -3462,6 +3465,16 @@
       "date": "2026-08-06",
       "summary": "Reemplaza Fondeo por Depósito en conceptos visibles del reporte cliente.",
       "accounting_change": false
+    },
+    {
+      "version": "KIM-0208",
+      "date": "2026-08-06",
+      "summary": "Politica final: cobrar comision solo al retiro; no cobrar comision a depositos/fondeos.",
+      "accounting_change": false,
+      "client_withdrawal_fee_usd": 61.82,
+      "client_deposit_fee_usd": 0.0,
+      "balance_after_withdrawal_fee_usd": 56842.13,
+      "available_balance_usd": 10459.04
     }
   ],
   "consumed_orders": [
@@ -6371,6 +6384,18 @@
       "timestamp": "2026-08-06T16:25:00+00:00",
       "summary": "Formato cliente: Fondeo -> Depósito en resumen de movimientos.",
       "accounting_change": false
+    },
+    {
+      "id": "KIM-0208",
+      "timestamp": "2026-08-06T16:45:00+00:00",
+      "summary": "Se establece politica comercial: solo comision al retiro para promover depositos.",
+      "accounting_after": {
+        "deposit_fee_usd": 0.0,
+        "withdrawal_fee_usd": 61.82,
+        "balance_after_withdrawal_fee_usd": 56842.13,
+        "client_total_net_considered_usd": 56905.15,
+        "available_balance_usd": 10459.04
+      }
     }
   ],
   "cancelled_orders": [
@@ -6423,6 +6448,8 @@
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
     "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
-    "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable."
+    "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
+    "KIM-0208: se corrige resumen de movimientos para incluir comision 1.2% sobre depositos/fondeos: 744.67 USD, ademas de retiro 61.82 USD. Total comisiones depositos + retiro: 806.49 USD.",
+    "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes."
   ]
 }
