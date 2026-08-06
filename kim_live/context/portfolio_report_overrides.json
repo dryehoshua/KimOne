@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0197",
-  "updated_at": "2026-07-30T15:07:20+00:00",
-  "standard_note": "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
+  "standard_version": "KIM-0198",
+  "updated_at": "2026-08-06T03:36:40+00:00",
+  "standard_note": "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0197",
-      "updated_at": "2026-07-30T15:07:20+00:00",
+      "version": "KIM-0198",
+      "updated_at": "2026-08-06T03:36:40+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -516,8 +516,8 @@
       "firm_assigned_usd": 46446.11,
       "available_balance_usd": 0.0,
       "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 19800.0,
-      "credit_total_usd": 24085.9,
+      "credit_pending_execution_usd": 30600.0,
+      "credit_total_usd": 34885.9,
       "covered_orders": [
         [
           "ADA",
@@ -638,6 +638,30 @@
         [
           "ICP refuerzo",
           1800.0
+        ],
+        [
+          "AUDIO refuerzo",
+          1800.0
+        ],
+        [
+          "ONDO refuerzo",
+          1800.0
+        ],
+        [
+          "LDO refuerzo",
+          1800.0
+        ],
+        [
+          "COTI refuerzo",
+          1800.0
+        ],
+        [
+          "LAB refuerzo",
+          1800.0
+        ],
+        [
+          "GOAT refuerzo",
+          1800.0
         ]
       ],
       "language_rules": [
@@ -714,23 +738,23 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0197: ICP refuerzo pendiente agregado a 1.44 por 1,800 USD; saldo disponible 0.00 USD; crédito pendiente por ejecutar 19,800 USD.",
-      "visible_order_count": 28,
+      "latest_format_note": "KIM-0198: seis órdenes pendientes nuevas agregadas por 10,800 USD; saldo disponible 0.00 USD; crédito pendiente por ejecutar 30,600 USD.",
+      "visible_order_count": 34,
       "section_count_validation": {
         "covered_orders": 15,
         "covered_active": 15,
         "cash_funded_pending": 1,
         "bought_on_credit": 3,
         "bought_on_credit_pending_payment": 3,
-        "pending_on_credit": 11,
-        "total_visible_orders": 28,
-        "client_visible_lines": 28,
-        "accounting_underlying_orders": 35,
-        "rule": "KIM-0197: XRP y HBAR refuerzos se consumen en consolidadas; ICP refuerzo se agrega pendiente. Reporte de precios: 28 líneas visibles. Contabilidad: 3 compradas a crédito y 11 pendientes a crédito.",
+        "pending_on_credit": 17,
+        "total_visible_orders": 34,
+        "client_visible_lines": 34,
+        "accounting_underlying_orders": 41,
+        "rule": "KIM-0198: XRP y HBAR refuerzos se consumen en consolidadas; se agregan 6 nuevas pendientes a crédito. Reporte de precios: 34 líneas visibles. Contabilidad: 3 compradas a crédito y 17 pendientes a crédito.",
         "cash_funded_pending_orders": 1,
-        "visible_live_orders": 28,
-        "pending_to_buy_on_credit": 11,
-        "visible_order_count": 28
+        "visible_live_orders": 34,
+        "pending_to_buy_on_credit": 17,
+        "visible_order_count": 34
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -754,7 +778,8 @@
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
-        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
+        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
+        "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -926,7 +951,8 @@
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
         "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
-        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
+        "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
+        "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
       ],
       "available_balance_before_executed_orders_usd": 1114.1,
       "executed_bought_orders_gross_usd": 5400.0,
@@ -1393,17 +1419,41 @@
       "executed_bought_orders_gross_usd": 5400.0,
       "credit_bought_pending_payment_gross_usd": 5400.0,
       "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 19800.0,
-      "credit_total_usd": 24085.9,
+      "credit_pending_execution_usd": 30600.0,
+      "credit_total_usd": 34885.9,
       "firm_assigned_usd": 46446.11,
       "available_balance_rule": "executed_orders_debit_available_first_then_credit_difference",
-      "pending_on_credit_orders": 11,
-      "visible_live_orders": 28,
-      "accounting_underlying_orders": 35,
+      "pending_on_credit_orders": 17,
+      "visible_live_orders": 34,
+      "accounting_underlying_orders": 41,
       "icp_refuerzo_pending_price": 1.44,
       "icp_refuerzo_pending_amount_usd": 1800.0,
       "icp_refuerzo_pending_quantity": 1250.0,
-      "icp_refuerzo_state": "pending_on_credit_not_executed"
+      "icp_refuerzo_state": "pending_on_credit_not_executed",
+      "audio_refuerzo_pending_price": 0.0126,
+      "audio_refuerzo_pending_amount_usd": 1800.0,
+      "audio_refuerzo_pending_quantity": 142857.14285714287,
+      "audio_refuerzo_state": "pending_on_credit_not_executed",
+      "ondo_refuerzo_pending_price": 0.02205,
+      "ondo_refuerzo_pending_amount_usd": 1800.0,
+      "ondo_refuerzo_pending_quantity": 81632.65306122448,
+      "ondo_refuerzo_state": "pending_on_credit_not_executed",
+      "ldo_refuerzo_pending_price": 0.0225,
+      "ldo_refuerzo_pending_amount_usd": 1800.0,
+      "ldo_refuerzo_pending_quantity": 80000.0,
+      "ldo_refuerzo_state": "pending_on_credit_not_executed",
+      "coti_refuerzo_pending_price": 0.072,
+      "coti_refuerzo_pending_amount_usd": 1800.0,
+      "coti_refuerzo_pending_quantity": 25000.000000000004,
+      "coti_refuerzo_state": "pending_on_credit_not_executed",
+      "lab_refuerzo_pending_price": 0.081,
+      "lab_refuerzo_pending_amount_usd": 1800.0,
+      "lab_refuerzo_pending_quantity": 22222.222222222223,
+      "lab_refuerzo_state": "pending_on_credit_not_executed",
+      "goat_refuerzo_pending_price": 0.0882,
+      "goat_refuerzo_pending_amount_usd": 1800.0,
+      "goat_refuerzo_pending_quantity": 20408.16326530612,
+      "goat_refuerzo_state": "pending_on_credit_not_executed"
     }
   },
   "manual_entries": [
@@ -2362,6 +2412,120 @@
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-audiousdt-pending-00126",
+      "order": 46,
+      "symbol": "AUDIOUSDT",
+      "label": "AUDIO/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.0126,
+      "quantity": 142857.14285714287,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.0126. Audiera/AUDIO validada como AUDIOUSDT en Gate/KuCoin; MEXC no devolvio ticker. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-ondousdt-pending-002205",
+      "order": 47,
+      "symbol": "ONDOUSDT",
+      "label": "ONDO/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.02205,
+      "quantity": 81632.65306122448,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.02205. ONDO reabierta por instruccion nueva; regla KIM-0110 queda historica/superada para esta nueva orden. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-ldousdt-pending-00225",
+      "order": 48,
+      "symbol": "LDOUSDT",
+      "label": "LDO/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.0225,
+      "quantity": 80000.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.0225. LDO validada como LDOUSDT. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-cotiusdt-pending-0072",
+      "order": 49,
+      "symbol": "COTIUSDT",
+      "label": "COTI/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.072,
+      "quantity": 25000.000000000004,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.072. COTI validada como COTIUSDT. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-labusdt-pending-0081",
+      "order": 50,
+      "symbol": "LABUSDT",
+      "label": "LAB/USDT refuerzo pendiente 0.081",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.081,
+      "quantity": 22222.222222222223,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.081. Nueva orden LAB 0.081 por 1,800 USD; no sustituye LAB 0.081 fondeada existente salvo instruccion posterior. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0198-goatusdt-pending-00882",
+      "order": 51,
+      "symbol": "GOATUSDT",
+      "label": "GOAT/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.0882,
+      "quantity": 20408.16326530612,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "notes": "KIM-0198: nueva orden pendiente a crédito por 1,800 USD a 0.0882. GOAT reabierta por instruccion nueva; regla KIM-0096 queda historica/superada para esta nueva orden. No ejecutada; no descuenta saldo disponible hasta ejecución.",
+      "updated_at": "2026-08-06T03:36:40+00:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed"
     }
   ],
   "closed_positions": [
@@ -2566,7 +2730,6 @@
   ],
   "suppress_symbols": [
     "AVAXUSDT",
-    "GOATUSDT",
     "SUIUSDT"
   ],
   "provider_note": "KIM-0141: reporte completo Sr. Eli incluye Balance de Crédito estructurado al final; pendientes por comprar siguen a crédito hasta ejecución.",
@@ -2669,7 +2832,8 @@
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
-    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
+    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
+    "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2712,7 +2876,7 @@
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true,
-    "sort_note": "KIM-0197: reporte ordenado de pérdida a ganancia; ICP refuerzo agregado como pendiente.",
+    "sort_note": "KIM-0198: reporte ordenado de pérdida a ganancia; nuevas órdenes pendientes agregadas en orden numérico por precio.",
     "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
@@ -3539,6 +3703,22 @@
         "KIM-0163 no aglomerar LUNC"
       ],
       "replacement": "LUNC refuerzo ya ejecutado y ahora aglomerado oficialmente bajo KIM-0166."
+    },
+    {
+      "id": "KIM-0198_supersedes_KIM-0096_GOATUSDT",
+      "at": "2026-08-06T03:36:40+00:00",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "symbol": "GOATUSDT",
+      "supersedes_rule": "KIM-0096",
+      "reason": "Nueva instrucción KIM-0198 agrega GOAT como orden pendiente."
+    },
+    {
+      "id": "KIM-0198_supersedes_KIM-0110_ONDOUSDT",
+      "at": "2026-08-06T03:36:40+00:00",
+      "domain": "IGNIS_FINANCIALS/sr_eli_2026",
+      "symbol": "ONDOUSDT",
+      "supersedes_rule": "KIM-0110",
+      "reason": "Nueva instrucción KIM-0198 agrega ONDO como orden pendiente."
     }
   ],
   "change_history": [
@@ -5460,6 +5640,89 @@
         "visible_live_orders": 28,
         "pending_on_credit_orders": 11
       }
+    },
+    {
+      "id": "KIM-0198",
+      "at": "2026-08-06T03:36:40+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_08_05_sr_eli_new_pending_orders",
+      "summary": "Agrega seis órdenes pendientes de 1,800 USD en orden numérico por precio.",
+      "changes": [
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "AUDIOUSDT",
+          "label": "AUDIO/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 0.0126,
+          "quantity": 142857.14285714287,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        },
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "ONDOUSDT",
+          "label": "ONDO/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 0.02205,
+          "quantity": 81632.65306122448,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        },
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "LDOUSDT",
+          "label": "LDO/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 0.0225,
+          "quantity": 80000.0,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        },
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "COTIUSDT",
+          "label": "COTI/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 0.072,
+          "quantity": 25000.000000000004,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        },
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "LABUSDT",
+          "label": "LAB/USDT refuerzo pendiente 0.081",
+          "amount_usd": 1800.0,
+          "entry_price": 0.081,
+          "quantity": 22222.222222222223,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        },
+        {
+          "action": "add_pending_credit_order",
+          "symbol": "GOATUSDT",
+          "label": "GOAT/USDT refuerzo pendiente",
+          "amount_usd": 1800.0,
+          "entry_price": 0.0882,
+          "quantity": 20408.16326530612,
+          "state": "pending",
+          "credit_usd": 1800.0,
+          "accounting_change_usd": 0
+        }
+      ],
+      "totals": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 30600.0,
+        "credit_total_usd": 34885.9,
+        "visible_live_orders": 34,
+        "pending_on_credit_orders": 17
+      }
     }
   ],
   "cancelled_orders": [
@@ -5500,6 +5763,7 @@
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
     "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
-    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD."
+    "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
+    "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
   ]
 }
