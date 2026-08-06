@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0206"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0207"
 
 
 def portfolio_float(value, default=None):
@@ -23072,7 +23072,7 @@ def portfolio_accounting_whatsapp_messages(report, parameters=None):
         for index, item in enumerate(events, start=1):
             event_type = str(item.get("type") or "funding").strip().lower()
             label = {
-                "funding": "Fondeo",
+                "funding": "Depósito",
                 "deposit": "Deposito",
                 "deposito": "Deposito",
                 "withdrawal": "Retiro",
@@ -23272,7 +23272,7 @@ def portfolio_credit_balance_statement_message(report):
     lines = [
         "Balance de Crédito",
         "",
-        f"Fondeos/Depósitos totales: {money_usd(fundings_usd)} / {money_mxn(fundings_mxn)}",
+        f"Depósitos totales: {money_usd(fundings_usd)} / {money_mxn(fundings_mxn)}",
         f"Retiros totales: {money_usd(withdrawals_usd)} / {money_mxn(withdrawals_mxn)}",
         f"Balance neto depósitos - retiros: {money_usd(deposit_withdrawal_balance_usd)} / {money_mxn(deposit_withdrawal_balance_mxn)}",
         f"Comisiones retiro/conversión: {money_usd(withdrawal_fee_usd)}",

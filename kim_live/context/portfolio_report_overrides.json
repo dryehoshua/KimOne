@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0206",
+  "standard_version": "KIM-0207",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
+  "standard_note": "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -109,7 +109,7 @@
         "fee_usd": 68.89,
         "fee_mxn_equivalent": 1200.0,
         "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-16T16:20:15+00:00"
       },
@@ -127,7 +127,7 @@
         "fee_usd": 61.96,
         "fee_mxn_equivalent": 1080.0,
         "source": "doctor_chat_2026_07_20_funding_90000_mxn_17_43",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 90,000 MXN el 2026-07-20 con tipo de cambio 17.43 MXN/USD = 5,163.51 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-20T22:42:01+00:00"
       },
@@ -145,7 +145,7 @@
         "fee_usd": 62.07,
         "fee_mxn_equivalent": 1080.0,
         "source": "doctor_chat_2026_07_21_funding_90000_mxn_17_40",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 90,000 MXN el 2026-07-21 con tipo de cambio 17.40 MXN/USD = 5,172.41 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-21T18:59:13+00:00"
       },
@@ -199,7 +199,7 @@
         "fee_usd": 125.51,
         "fee_mxn_equivalent": 2160.0,
         "source": "receipt_ignis_sf_sr_eli_2026_08_06_180000_mxn_10459_04_usd",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 180,000 MXN el 2026-08-06 con tipo de cambio 17.21 MXN/USD = 10,459.04 USD. Registrado como saldo disponible; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-08-06T18:15:00+00:00",
         "receipt_confirmed_at": "2026-08-06T18:15:00+00:00",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0206",
-      "updated_at": "2026-08-06T18:45:00+00:00",
+      "version": "KIM-0207",
+      "updated_at": "2026-08-06T16:25:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -520,7 +520,7 @@
           "mxn": 100000,
           "usd": 5740.53,
           "exchange_rate_mxn_per_usd": 17.42,
-          "concept": "Fondeo confirmado"
+          "concept": "Depósito confirmado"
         },
         {
           "id": "funding_2026_07_20_cash_90000_mxn_5163_51_usd",
@@ -528,7 +528,7 @@
           "mxn": 90000,
           "usd": 5163.51,
           "exchange_rate_mxn_per_usd": 17.43,
-          "concept": "Fondeo confirmado"
+          "concept": "Depósito confirmado"
         },
         {
           "id": "funding_2026_07_21_cash_90000_mxn_5172_41_usd",
@@ -536,7 +536,7 @@
           "mxn": 90000,
           "usd": 5172.41,
           "exchange_rate_mxn_per_usd": 17.4,
-          "concept": "Fondeo confirmado"
+          "concept": "Depósito confirmado"
         },
         {
           "id": "funding_2026_08_06_cash_180000_mxn_10459_04_usd",
@@ -544,7 +544,7 @@
           "mxn": 180000,
           "usd": 10459.04,
           "exchange_rate_mxn_per_usd": 17.21,
-          "concept": "Fondeo confirmado"
+          "concept": "Depósito confirmado"
         }
       ],
       "client_funding_total_mxn": 1080000,
@@ -758,7 +758,7 @@
       ],
       "latest_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_balance_section_titles": {
-        "fundings": "Fondeos",
+        "fundings": "Depósitos",
         "covered_orders": "Órdenes Compradas Cubiertas Completas",
         "bought_on_credit": "Órdenes Compradas A Crédito",
         "pending_on_credit": "Órdenes pendientes 📋✅",
@@ -773,7 +773,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0206: tabla/lista unica de Movimientos por fecha; cada linea marca Deposito o Retiro.",
+      "latest_format_note": "KIM-0207: usar Deposito/Depósito confirmado en vez de Fondeo en reporte cliente.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -816,7 +816,8 @@
         "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
         "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
         "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
-        "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha."
+        "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
+        "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -1068,7 +1069,7 @@
           "mxn": 100000,
           "usd": 5740.53,
           "exchange_rate_mxn_per_usd": 17.42,
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "movement_type": "deposit",
           "movement_label": "Depósito"
         },
@@ -1078,7 +1079,7 @@
           "mxn": 90000,
           "usd": 5163.51,
           "exchange_rate_mxn_per_usd": 17.43,
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "movement_type": "deposit",
           "movement_label": "Depósito"
         },
@@ -1088,7 +1089,7 @@
           "mxn": 90000,
           "usd": 5172.41,
           "exchange_rate_mxn_per_usd": 17.4,
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "movement_type": "deposit",
           "movement_label": "Depósito"
         },
@@ -1113,12 +1114,12 @@
           "mxn": 180000,
           "usd": 10459.04,
           "exchange_rate_mxn_per_usd": 17.21,
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "movement_type": "deposit",
           "movement_label": "Depósito"
         }
       ],
-      "client_facing_movements_note": "KIM-0206: usar esta lista para tabla cliente; columna Movimiento debe decir Deposito o Retiro. No mostrar fondeos y retiros separados cuando se use tabla."
+      "client_facing_movements_note": "KIM-0207: usar esta lista para tabla cliente; columna Movimiento debe decir Deposito o Retiro y conceptos visibles deben decir Depósito confirmado, no Fondeo confirmado."
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1213,7 +1214,7 @@
           "fee_usd": 68.89,
           "fee_mxn_equivalent": 1200.0,
           "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
           "updated_at": "2026-07-16T16:20:15+00:00"
         },
@@ -1231,7 +1232,7 @@
           "fee_usd": 125.51,
           "fee_mxn_equivalent": 2160.0,
           "source": "receipt_ignis_sf_sr_eli_2026_08_06_180000_mxn_10459_04_usd",
-          "concept": "Fondeo confirmado",
+          "concept": "Depósito confirmado",
           "notes": "Sr. Eli fondeo 180,000 MXN el 2026-08-06 con tipo de cambio 17.21 MXN/USD = 10,459.04 USD. Registrado como saldo disponible; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
           "updated_at": "2026-08-06T18:15:00+00:00",
           "receipt_confirmed_at": "2026-08-06T18:15:00+00:00",
@@ -1540,7 +1541,7 @@
         "fee_usd": 68.89,
         "fee_mxn_equivalent": 1200.0,
         "source": "doctor_chat_2026_07_16_yesterday_funding_100000_mxn_17_42",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 100,000 MXN el 2026-07-15 con tipo de cambio 17.42 MXN/USD = 5,740.53 USD. Registrado solo como fondeo; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-07-16T16:20:15+00:00"
       },
@@ -1594,7 +1595,7 @@
         "fee_usd": 125.51,
         "fee_mxn_equivalent": 2160.0,
         "source": "receipt_ignis_sf_sr_eli_2026_08_06_180000_mxn_10459_04_usd",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 180,000 MXN el 2026-08-06 con tipo de cambio 17.21 MXN/USD = 10,459.04 USD. Registrado como saldo disponible; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-08-06T18:15:00+00:00",
         "receipt_confirmed_at": "2026-08-06T18:15:00+00:00",
@@ -1668,9 +1669,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 20408.16326530612,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0206",
-      "updated_at": "2026-08-06T18:45:00+00:00",
-      "note": "Formato de movimientos cliente actualizado: lista unica por fecha con Deposito/Retiro; sin cambio contable.",
+      "id": "KIM-0207",
+      "updated_at": "2026-08-06T16:25:00+00:00",
+      "note": "Formato cliente: usar Depósito en vez de Fondeo para movimientos y totales visibles; sin cambio contable.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -3455,6 +3456,12 @@
       "notes": [
         "El retiro 24-jul-2026 se muestra dentro de la tabla de movimientos, no en seccion separada."
       ]
+    },
+    {
+      "version": "KIM-0207",
+      "date": "2026-08-06",
+      "summary": "Reemplaza Fondeo por Depósito en conceptos visibles del reporte cliente.",
+      "accounting_change": false
     }
   ],
   "consumed_orders": [
@@ -6315,7 +6322,7 @@
         "fee_usd": 125.51,
         "fee_mxn_equivalent": 2160.0,
         "source": "receipt_ignis_sf_sr_eli_2026_08_06_180000_mxn_10459_04_usd",
-        "concept": "Fondeo confirmado",
+        "concept": "Depósito confirmado",
         "notes": "Sr. Eli fondeo 180,000 MXN el 2026-08-06 con tipo de cambio 17.21 MXN/USD = 10,459.04 USD. Registrado como saldo disponible; no reasignar automaticamente a cobertura de credito sin instruccion expresa.",
         "updated_at": "2026-08-06T18:15:00+00:00",
         "receipt_confirmed_at": "2026-08-06T18:15:00+00:00",
@@ -6358,6 +6365,12 @@
       "summary": "Formato cliente: tabla unica Movimientos con Deposito/Retiro por fecha.",
       "accounting_change": false,
       "movement_count": 13
+    },
+    {
+      "id": "KIM-0207",
+      "timestamp": "2026-08-06T16:25:00+00:00",
+      "summary": "Formato cliente: Fondeo -> Depósito en resumen de movimientos.",
+      "accounting_change": false
     }
   ],
   "cancelled_orders": [
@@ -6409,6 +6422,7 @@
   ],
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
-    "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha."
+    "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
+    "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable."
   ]
 }
