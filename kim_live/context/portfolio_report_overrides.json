@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0205",
+  "standard_version": "KIM-0206",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
+  "standard_note": "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0205",
-      "updated_at": "2026-08-06T18:15:00+00:00",
+      "version": "KIM-0206",
+      "updated_at": "2026-08-06T18:45:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -773,7 +773,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0205: fondeo nuevo agregado; balance neto MXN visible como 990,000 MXN despues del unico retiro.",
+      "latest_format_note": "KIM-0206: tabla/lista unica de Movimientos por fecha; cada linea marca Deposito o Retiro.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -815,7 +815,8 @@
         "KIM-0196: regla contable establecida: cuando una orden se ejecuta, se descuenta primero del saldo disponible; si el saldo no alcanza, solo la diferencia queda como crédito por cubrir. Se aplican 1,114.10 USD de saldo disponible contra órdenes ejecutadas por 5,400 USD; saldo disponible 0.00 USD; crédito neto por cubrir 4,285.90 USD; crédito total actual 22,285.90 USD.",
         "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
         "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
-        "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa."
+        "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
+        "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha."
       ],
       "covered_orders_subtotal_usd": 43954,
       "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
@@ -994,7 +995,130 @@
       "executed_bought_orders_gross_usd": 5400.0,
       "available_balance_applied_to_executed_orders_usd": 1114.1,
       "credit_bought_pending_payment_gross_usd": 5400.0,
-      "available_balance_rule": "KIM-0205: el fondeo nuevo queda en saldo disponible; cuando una orden se ejecuta, se descuenta primero del saldo disponible; si no alcanza, solo la diferencia queda como credito por cubrir. No cubrir credito con el fondeo nuevo sin instruccion expresa."
+      "available_balance_rule": "KIM-0205: el fondeo nuevo queda en saldo disponible; cuando una orden se ejecuta, se descuenta primero del saldo disponible; si no alcanza, solo la diferencia queda como credito por cubrir. No cubrir credito con el fondeo nuevo sin instruccion expresa.",
+      "client_facing_movements": [
+        {
+          "date": "06-mar-2025",
+          "mxn": 50000,
+          "usd": 2808.99,
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "date": "05-may-2025",
+          "mxn": 18000,
+          "usd": 1034.48,
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "date": "06-may-2025",
+          "mxn": 100000,
+          "usd": 5780.35,
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "date": "02-jun-2026",
+          "mxn": 50000,
+          "usd": 2890.17,
+          "concept": "NEAR Orden 2700",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "date": "22-jun-2026",
+          "mxn": 50000,
+          "usd": 2877.0,
+          "concept": "Cobertura de crédito",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "date": "23-jun-2026",
+          "mxn": 50000,
+          "usd": 2844.0,
+          "concept": "Cobertura de crédito",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "funding_2026_06_29_cash_50000_mxn_2861_16_usd",
+          "date": "29-jun-2026",
+          "mxn": 50000,
+          "usd": 2861.16,
+          "exchange_rate_mxn_per_usd": 17.4754,
+          "concept": "Cobertura de crédito",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "funding_2026_07_01_cash_252000_mxn_14424_usd",
+          "date": "01-jul-2026",
+          "mxn": 252000,
+          "usd": 14424.0,
+          "exchange_rate_mxn_per_usd": 17.470882,
+          "concept": "Cobertura 8 órdenes 1800",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "funding_2026_07_15_cash_100000_mxn_5740_53_usd",
+          "date": "15-jul-2026",
+          "mxn": 100000,
+          "usd": 5740.53,
+          "exchange_rate_mxn_per_usd": 17.42,
+          "concept": "Fondeo confirmado",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "funding_2026_07_20_cash_90000_mxn_5163_51_usd",
+          "date": "20-jul-2026",
+          "mxn": 90000,
+          "usd": 5163.51,
+          "exchange_rate_mxn_per_usd": 17.43,
+          "concept": "Fondeo confirmado",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "funding_2026_07_21_cash_90000_mxn_5172_41_usd",
+          "date": "21-jul-2026",
+          "mxn": 90000,
+          "usd": 5172.41,
+          "exchange_rate_mxn_per_usd": 17.4,
+          "concept": "Fondeo confirmado",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        },
+        {
+          "id": "withdrawal_2026_07_24_cash_90000_mxn_5151_69_usd",
+          "date": "24-jul-2026",
+          "mxn": 90000.0,
+          "usd": 5151.69,
+          "fee_usd": 61.82,
+          "total_debit_usd": 5213.51,
+          "exchange_rate_mxn_per_usd": 17.47,
+          "concept": "Retiro confirmado SPEI",
+          "status": "confirmed_with_receipt",
+          "receipt_reference": "RET-20250724-001",
+          "cep_reference": "971315",
+          "movement_type": "withdrawal",
+          "movement_label": "Retiro"
+        },
+        {
+          "id": "funding_2026_08_06_cash_180000_mxn_10459_04_usd",
+          "date": "06-ago-2026",
+          "mxn": 180000,
+          "usd": 10459.04,
+          "exchange_rate_mxn_per_usd": 17.21,
+          "concept": "Fondeo confirmado",
+          "movement_type": "deposit",
+          "movement_label": "Depósito"
+        }
+      ],
+      "client_facing_movements_note": "KIM-0206: usar esta lista para tabla cliente; columna Movimiento debe decir Deposito o Retiro. No mostrar fondeos y retiros separados cuando se use tabla."
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1544,16 +1668,18 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 20408.16326530612,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0205",
-      "updated_at": "2026-08-06T18:15:00+00:00",
-      "note": "Nuevo fondeo 180,000 MXN / 10,459.04 USD registrado como saldo disponible. Depositos totales 1,080,000 MXN; neto despues del unico retiro 990,000 MXN.",
+      "id": "KIM-0206",
+      "updated_at": "2026-08-06T18:45:00+00:00",
+      "note": "Formato de movimientos cliente actualizado: lista unica por fecha con Deposito/Retiro; sin cambio contable.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
       "client_deposit_withdrawal_balance_mxn": 990000.0,
       "client_deposit_withdrawal_balance_usd": 56903.95,
       "client_deposit_withdrawal_balance_after_fees_usd": 56842.13,
-      "funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa."
+      "funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
+      "client_facing_movements_count": 13,
+      "client_facing_movements_note": "Retiro 24-jul-2026 insertado cronologicamente entre 21-jul-2026 y 06-ago-2026."
     }
   },
   "manual_entries": [
@@ -3318,6 +3444,16 @@
       "credit_total_usd": 33085.9,
       "notes": [
         "No se aplica el fondeo a credito sin instruccion expresa."
+      ]
+    },
+    {
+      "version": "KIM-0206",
+      "date": "2026-08-06",
+      "summary": "Cambia presentacion de fondeos/retiros a Movimientos por fecha con tipo Deposito/Retiro.",
+      "movement_count": 13,
+      "accounting_change": false,
+      "notes": [
+        "El retiro 24-jul-2026 se muestra dentro de la tabla de movimientos, no en seccion separada."
       ]
     }
   ],
@@ -6215,6 +6351,13 @@
         "Fondeo nuevo queda como saldo disponible.",
         "No cubrir credito automaticamente sin instruccion expresa."
       ]
+    },
+    {
+      "id": "KIM-0206",
+      "timestamp": "2026-08-06T18:45:00+00:00",
+      "summary": "Formato cliente: tabla unica Movimientos con Deposito/Retiro por fecha.",
+      "accounting_change": false,
+      "movement_count": 13
     }
   ],
   "cancelled_orders": [
@@ -6265,6 +6408,7 @@
     "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
   ],
   "standard_history": [
-    "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa."
+    "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
+    "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha."
   ]
 }
