@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0200",
-  "updated_at": "2026-08-06T04:11:19+00:00",
-  "standard_note": "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
+  "standard_version": "KIM-0201",
+  "updated_at": "2026-08-06T16:29:00+00:00",
+  "standard_note": "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0200",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "version": "KIM-0201",
+      "updated_at": "2026-08-06T16:29:00+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -640,7 +640,7 @@
           1800.0
         ],
         [
-          "AUDIO refuerzo",
+          "BEAT/Audiera refuerzo",
           1800.0
         ],
         [
@@ -734,7 +734,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0200: LAB duplicada removida; quedan cinco órdenes nuevas pendientes a crédito; crédito pendiente por ejecutar 28,800 USD.",
+      "latest_format_note": "KIM-0201: Audiera corregida a BEAT/USDT 1.26; crédito pendiente por ejecutar 28,800 USD.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -746,7 +746,7 @@
         "total_visible_orders": 33,
         "client_visible_lines": 33,
         "accounting_underlying_orders": 40,
-        "rule": "KIM-0200: LAB duplicada removida porque LAB 0.081 ya existía como pendiente fondeada. Reporte de precios: 33 líneas visibles. Contabilidad: 3 compradas a crédito y 16 pendientes a crédito.",
+        "rule": "KIM-0201: Audiera se corrige a BEAT/USDT; AUDIOUSDT queda suprimida por error previo. Reporte de precios: 33 líneas visibles. Contabilidad: 3 compradas a crédito y 16 pendientes a crédito.",
         "cash_funded_pending_orders": 1,
         "visible_live_orders": 33,
         "pending_to_buy_on_credit": 16,
@@ -2406,10 +2406,10 @@
       "execution_status": "pending_not_executed"
     },
     {
-      "id": "kim0199-audiousdt-pending-126",
+      "id": "kim0201-beatusdt-audiera-pending-126",
       "order": 50,
-      "symbol": "AUDIOUSDT",
-      "label": "AUDIO/USDT refuerzo pendiente",
+      "symbol": "BEATUSDT",
+      "label": "BEAT/USDT Audiera refuerzo pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2417,9 +2417,9 @@
       "quantity": 1428.5714285714287,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0199: corrección de precio de orden pendiente a crédito por 1,800 USD. Audiera/AUDIO corregida a 1.26 segun ultimo mensaje. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "source": "doctor_message_2026_08_06_sr_eli_audiera_is_beat",
+      "notes": "KIM-0201: corrección de moneda: Audiera es BEAT, no AUDIO. Orden pendiente a crédito por 1,800 USD a 1.26. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:29:00+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2703,7 +2703,8 @@
   ],
   "suppress_symbols": [
     "AVAXUSDT",
-    "SUIUSDT"
+    "SUIUSDT",
+    "AUDIOUSDT"
   ],
   "provider_note": "KIM-0141: reporte completo Sr. Eli incluye Balance de Crédito estructurado al final; pendientes por comprar siguen a crédito hasta ejecución.",
   "doctor_rules": [
@@ -2808,7 +2809,8 @@
     "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
     "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
-    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD."
+    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2851,7 +2853,7 @@
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true,
-    "sort_note": "KIM-0200: reporte ordenado de pérdida a ganancia; LAB duplicada removida; cinco órdenes nuevas pendientes quedan en orden numérico por precio.",
+    "sort_note": "KIM-0201: reporte ordenado de pérdida a ganancia; Audiera corregida a BEAT/USDT; se mantiene separación de pendientes.",
     "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
@@ -3185,7 +3187,8 @@
       "credit_total_usd": 23400.0
     },
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
-    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD."
+    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
   ],
   "consumed_orders": [
     {
@@ -3535,6 +3538,12 @@
       "removed_manual_entry_id": "kim0199-labusdt-pending-0081",
       "reason": "LAB 0.081 ya existía como pendiente fondeada por 1,378.01 USD; no duplicar como crédito de 1,800 USD.",
       "amount_usd_removed_from_pending_credit": 1800.0
+    },
+    {
+      "id": "kim0201-audiousdt-error-suppressed",
+      "at": "2026-08-06T16:29:00+00:00",
+      "symbol": "AUDIOUSDT",
+      "reason": "Audiera fue corregida por el doctor como BEAT, no AUDIO; ocultar registros paper broker erróneos de AUDIOUSDT."
     }
   ],
   "compact_client_ordering": true,
@@ -5845,6 +5854,32 @@
         "visible_order_count": 33,
         "pending_on_credit_orders": 16
       }
+    },
+    {
+      "id": "KIM-0201",
+      "at": "2026-08-06T16:29:00+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_08_06_sr_eli_audiera_is_beat",
+      "summary": "Corrige Audiera de AUDIOUSDT a BEATUSDT y suprime AUDIOUSDT por error previo.",
+      "changes": [
+        {
+          "action": "replace_pending_credit_order_symbol",
+          "old_symbol": "AUDIOUSDT",
+          "new_symbol": "BEATUSDT",
+          "label": "BEAT/USDT Audiera refuerzo pendiente",
+          "entry_price": 1.26,
+          "amount_usd": 1800.0,
+          "state": "pending"
+        }
+      ],
+      "accounting_after": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 28800.0,
+        "credit_total_usd": 33085.9,
+        "visible_order_count": 33,
+        "pending_on_credit_orders": 16
+      }
     }
   ],
   "cancelled_orders": [
@@ -5879,7 +5914,7 @@
       "notes": "KIM-0157: orden colocada durante Shabbat, evidentemente a credito segun instruccion del doctor, y finalmente cancelada Motzaei Shabbat; no debe aparecer viva ni afectar P/L ni credito pendiente."
     }
   ],
-  "previous_standard_note": "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
+  "previous_standard_note": "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
   "reporting_notes": [
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
@@ -5888,6 +5923,7 @@
     "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
     "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
-    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD."
+    "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
   ]
 }
