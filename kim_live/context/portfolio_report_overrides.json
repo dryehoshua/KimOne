@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0201",
-  "updated_at": "2026-08-06T16:29:00+00:00",
-  "standard_note": "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
+  "standard_version": "KIM-0204",
+  "updated_at": "2026-08-06T16:39:15+00:00",
+  "standard_note": "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -429,8 +429,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0201",
-      "updated_at": "2026-08-06T16:29:00+00:00",
+      "version": "KIM-0204",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -640,23 +640,23 @@
           1800.0
         ],
         [
-          "BEAT/Audiera refuerzo",
+          "BEAT/Audiera nueva orden",
           1800.0
         ],
         [
-          "ONDO refuerzo",
+          "ONDO nueva orden",
           1800.0
         ],
         [
-          "LDO refuerzo",
+          "LDO nueva orden",
           1800.0
         ],
         [
-          "COTI refuerzo",
+          "COTI nueva orden",
           1800.0
         ],
         [
-          "GOAT refuerzo",
+          "GOAT nueva orden",
           1800.0
         ]
       ],
@@ -734,7 +734,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0201: Audiera corregida a BEAT/USDT 1.26; crédito pendiente por ejecutar 28,800 USD.",
+      "latest_format_note": "KIM-0204: nuevas órdenes pendientes sin “refuerzo”: COTI, GOAT, ONDO, LDO y BEAT/Audiera.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 15,
@@ -746,7 +746,7 @@
         "total_visible_orders": 33,
         "client_visible_lines": 33,
         "accounting_underlying_orders": 40,
-        "rule": "KIM-0201: Audiera se corrige a BEAT/USDT; AUDIOUSDT queda suprimida por error previo. Reporte de precios: 33 líneas visibles. Contabilidad: 3 compradas a crédito y 16 pendientes a crédito.",
+        "rule": "KIM-0204: “refuerzo” solo si hay orden previa/recompra; “nueva orden” solo primer día/ayer. Estas cinco se muestran como nuevas órdenes pendientes. Conteos sin cambio: 33 líneas visibles, 16 pendientes a crédito.",
         "cash_funded_pending_orders": 1,
         "visible_live_orders": 33,
         "pending_to_buy_on_credit": 16,
@@ -2409,7 +2409,7 @@
       "id": "kim0201-beatusdt-audiera-pending-126",
       "order": 50,
       "symbol": "BEATUSDT",
-      "label": "BEAT/USDT Audiera refuerzo pendiente",
+      "label": "BEAT/USDT Audiera nueva orden pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2418,8 +2418,8 @@
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_06_sr_eli_audiera_is_beat",
-      "notes": "KIM-0201: corrección de moneda: Audiera es BEAT, no AUDIO. Orden pendiente a crédito por 1,800 USD a 1.26. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T16:29:00+00:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 1.26. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2428,7 +2428,7 @@
       "id": "kim0199-ondousdt-pending-02205",
       "order": 48,
       "symbol": "ONDOUSDT",
-      "label": "ONDO/USDT refuerzo pendiente",
+      "label": "ONDO/USDT nueva orden pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2437,8 +2437,8 @@
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0199: corrección de precio de orden pendiente a crédito por 1,800 USD. ONDO corregida a 0.2205. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.2205. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2447,7 +2447,7 @@
       "id": "kim0199-ldousdt-pending-02250",
       "order": 49,
       "symbol": "LDOUSDT",
-      "label": "LDO/USDT refuerzo pendiente",
+      "label": "LDO/USDT nueva orden pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2456,8 +2456,8 @@
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0199: corrección de precio de orden pendiente a crédito por 1,800 USD. LDO corregida a 0.2250. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.225. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2466,7 +2466,7 @@
       "id": "kim0199-cotiusdt-pending-00072",
       "order": 46,
       "symbol": "COTIUSDT",
-      "label": "COTI/USDT refuerzo pendiente",
+      "label": "COTI/USDT nueva orden pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2475,8 +2475,8 @@
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0199: corrección de precio de orden pendiente a crédito por 1,800 USD. COTI corregida a 0.0072. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.0072. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2485,7 +2485,7 @@
       "id": "kim0199-goatusdt-pending-000882",
       "order": 47,
       "symbol": "GOATUSDT",
-      "label": "GOAT/USDT refuerzo pendiente",
+      "label": "GOAT/USDT nueva orden pendiente",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
@@ -2494,8 +2494,8 @@
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0199: corrección de precio de orden pendiente a crédito por 1,800 USD. GOAT corregida a 0.00882. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
-      "updated_at": "2026-08-06T04:11:19+00:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.00882. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada.",
+      "updated_at": "2026-08-06T16:39:15+00:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
@@ -2810,7 +2810,10 @@
     "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
     "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
-    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
+    "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
+    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -2853,7 +2856,7 @@
     "active_phrase_positive": "Estamos en ganancia por +X%",
     "pending_phrase": "Estamos por debajo/arriba del precio actual por X%",
     "pending_after_active": true,
-    "sort_note": "KIM-0201: reporte ordenado de pérdida a ganancia; Audiera corregida a BEAT/USDT; se mantiene separación de pendientes.",
+    "sort_note": "KIM-0204: reporte ordenado de pérdida a ganancia; “refuerzo” reservado para recompra/orden previa; nuevas órdenes solo primer día.",
     "compact_visible_ids": true
   },
   "partial_credit_mark": "(c parcial)",
@@ -3188,7 +3191,10 @@
     },
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
     "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
-    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
+    "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
+    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
   ],
   "consumed_orders": [
     {
@@ -3600,7 +3606,10 @@
     "KIM-0187: ajustar órdenes pendientes a crédito: XRP refuerzo sube a 1.008 y SHIB sube a 0.000004005; ambas siguen pendientes por 1,800 USD, sin ejecución y sin cambio de saldo.",
     "KIM-0188: usar los últimos precios del hilo WhatsApp/Kim para pendientes a crédito: SHIB 0.000004608 y HBAR refuerzo 0.06805; valores anteriores quedan superados. No ejecutar sin confirmación real.",
     "KIM-0189: WhatsApp/Kim muestra ajustes claros XRP 1.0566, ZEC 396, BONK 0.00000263, PENGU 0.005382, AAVE 81, SHIB 0.000004608 y HBAR corregido a 0.0684. XRP, HBAR refuerzo y SHIB quedaron compradas a crédito; mover 5,400 USD de pendiente por ejecutar a comprado a crédito por cubrir.",
-    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas."
+    "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
+    "KIM-0203: Regla de lenguaje: “refuerzo” solo aplica si existe orden previa/recompra de la misma moneda; si no, usar “orden pendiente”.",
+    "KIM-0204: Usar “refuerzo” solo si ya existe orden previa/recompra de la misma moneda.",
+    "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”."
   ],
   "superseded_facts": [
     {
@@ -5880,6 +5889,152 @@
         "visible_order_count": 33,
         "pending_on_credit_orders": 16
       }
+    },
+    {
+      "id": "KIM-0202",
+      "at": "2026-08-06T16:37:34+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_08_06_sr_eli_new_orders_not_refuerzos",
+      "summary": "Renombra cinco órdenes nuevas para quitar “refuerzo”.",
+      "changes": [
+        {
+          "action": "rename_new_pending_order",
+          "id": "kim0199-cotiusdt-pending-00072",
+          "symbol": "COTIUSDT",
+          "label": "COTI/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_new_pending_order",
+          "id": "kim0199-goatusdt-pending-000882",
+          "symbol": "GOATUSDT",
+          "label": "GOAT/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_new_pending_order",
+          "id": "kim0199-ondousdt-pending-02205",
+          "symbol": "ONDOUSDT",
+          "label": "ONDO/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_new_pending_order",
+          "id": "kim0199-ldousdt-pending-02250",
+          "symbol": "LDOUSDT",
+          "label": "LDO/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_new_pending_order",
+          "id": "kim0201-beatusdt-audiera-pending-126",
+          "symbol": "BEATUSDT",
+          "label": "BEAT/USDT Audiera nueva orden pendiente"
+        }
+      ],
+      "accounting_after": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 28800.0,
+        "credit_total_usd": 33085.9,
+        "visible_order_count": 33,
+        "pending_on_credit_orders": 16
+      }
+    },
+    {
+      "id": "KIM-0203",
+      "at": "2026-08-06T16:38:18+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_08_06_refuerzo_language_rule",
+      "summary": "Registra regla de lenguaje para “refuerzo” y renombra cinco órdenes como orden pendiente.",
+      "rule": "KIM-0203: Regla de lenguaje: “refuerzo” solo aplica si existe orden previa/recompra de la misma moneda; si no, usar “orden pendiente”.",
+      "changes": [
+        {
+          "action": "rename_pending_order_language",
+          "id": "kim0199-cotiusdt-pending-00072",
+          "symbol": "COTIUSDT",
+          "label": "COTI/USDT orden pendiente"
+        },
+        {
+          "action": "rename_pending_order_language",
+          "id": "kim0199-goatusdt-pending-000882",
+          "symbol": "GOATUSDT",
+          "label": "GOAT/USDT orden pendiente"
+        },
+        {
+          "action": "rename_pending_order_language",
+          "id": "kim0199-ondousdt-pending-02205",
+          "symbol": "ONDOUSDT",
+          "label": "ONDO/USDT orden pendiente"
+        },
+        {
+          "action": "rename_pending_order_language",
+          "id": "kim0199-ldousdt-pending-02250",
+          "symbol": "LDOUSDT",
+          "label": "LDO/USDT orden pendiente"
+        },
+        {
+          "action": "rename_pending_order_language",
+          "id": "kim0201-beatusdt-audiera-pending-126",
+          "symbol": "BEATUSDT",
+          "label": "BEAT/USDT Audiera orden pendiente"
+        }
+      ],
+      "accounting_after": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 28800.0,
+        "credit_total_usd": 33085.9,
+        "visible_order_count": 33,
+        "pending_on_credit_orders": 16
+      }
+    },
+    {
+      "id": "KIM-0204",
+      "at": "2026-08-06T16:39:15+00:00",
+      "actor": "codex",
+      "source": "doctor_message_2026_08_06_new_order_language_rule",
+      "summary": "Define cuándo usar nueva orden/refuerzo y renombra cinco órdenes para primer día.",
+      "rules": [
+        "KIM-0204: Usar “refuerzo” solo si ya existe orden previa/recompra de la misma moneda.",
+        "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”."
+      ],
+      "changes": [
+        {
+          "action": "rename_first_day_pending_order",
+          "id": "kim0199-cotiusdt-pending-00072",
+          "symbol": "COTIUSDT",
+          "label": "COTI/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_first_day_pending_order",
+          "id": "kim0199-goatusdt-pending-000882",
+          "symbol": "GOATUSDT",
+          "label": "GOAT/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_first_day_pending_order",
+          "id": "kim0199-ondousdt-pending-02205",
+          "symbol": "ONDOUSDT",
+          "label": "ONDO/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_first_day_pending_order",
+          "id": "kim0199-ldousdt-pending-02250",
+          "symbol": "LDOUSDT",
+          "label": "LDO/USDT nueva orden pendiente"
+        },
+        {
+          "action": "rename_first_day_pending_order",
+          "id": "kim0201-beatusdt-audiera-pending-126",
+          "symbol": "BEATUSDT",
+          "label": "BEAT/USDT Audiera nueva orden pendiente"
+        }
+      ],
+      "accounting_after": {
+        "available_balance_usd": 0.0,
+        "credit_bought_pending_payment_usd": 4285.9,
+        "credit_pending_execution_usd": 28800.0,
+        "credit_total_usd": 33085.9,
+        "visible_order_count": 33,
+        "pending_on_credit_orders": 16
+      }
     }
   ],
   "cancelled_orders": [
@@ -5914,7 +6069,7 @@
       "notes": "KIM-0157: orden colocada durante Shabbat, evidentemente a credito segun instruccion del doctor, y finalmente cancelada Motzaei Shabbat; no debe aparecer viva ni afectar P/L ni credito pendiente."
     }
   ],
-  "previous_standard_note": "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
+  "previous_standard_note": "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
   "reporting_notes": [
     "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
     "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
@@ -5924,6 +6079,9 @@
     "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción.",
     "KIM-0199: corrección de precios para las seis órdenes pendientes nuevas de 1,800 USD: COTI 0.0072, GOAT 0.00882, LAB 0.081, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Todas siguen pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. Crédito pendiente por ejecutar se mantiene en 30,600 USD.",
     "KIM-0200: corrección de duplicado LAB. Se elimina la orden LAB/USDT refuerzo pendiente 0.081 por 1,800 USD a crédito porque LAB 0.081 ya estaba registrada como orden pendiente fondeada por 1,378.01 USD. Quedan cinco órdenes nuevas pendientes a crédito: COTI 0.0072, GOAT 0.00882, ONDO 0.2205, LDO 0.2250 y AUDIO/Audiera 1.26. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar baja a 28,800 USD.",
-    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
+    "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
+    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
   ]
 }
