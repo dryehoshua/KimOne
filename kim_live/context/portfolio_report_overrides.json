@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0208",
+  "standard_version": "KIM-0209",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes.",
+  "standard_note": "KIM-0209: BONK/USDT se confirma comprada por 1,800 USD a 0.00000263 y se descuenta del saldo disponible. Tambien se cubre con saldo disponible el credito comprado previo neto por 4,285.90 USD. Saldo disponible final 4,373.14 USD; credito comprado por cubrir 0.00 USD; credito pendiente por ejecutar 27,000 USD.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -218,7 +218,7 @@
       }
     ],
     "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito.",
-    "available_balance_policy": "KIM-0208: depositos/fondeos no pagan comision visible; solo retiro paga 1.2%. El saldo disponible no se reduce por comision de deposito.",
+    "available_balance_policy": "KIM-0209: depósito disponible cubre primero el crédito comprado neto pendiente de 4,285.90 USD y después la ejecución BONK por 1,800 USD; saldo disponible final 4,373.14 USD.",
     "confirmed_cash_funding_total_usd": 49541.65,
     "confirmed_cash_funding_total_mxn": 862000.0,
     "last_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0208",
-      "updated_at": "2026-08-06T16:45:00+00:00",
+      "version": "KIM-0209",
+      "updated_at": "2026-08-07T09:45:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -553,10 +553,10 @@
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
       "client_total_net_considered_usd": 56905.15,
       "firm_assigned_usd": 56905.15,
-      "available_balance_usd": 10459.04,
-      "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 28800.0,
-      "credit_total_usd": 33085.9,
+      "available_balance_usd": 4373.14,
+      "credit_bought_pending_payment_usd": 0.0,
+      "credit_pending_execution_usd": 27000.0,
+      "credit_total_usd": 27000.0,
       "covered_orders": [
         [
           "ADA",
@@ -584,7 +584,7 @@
         ],
         [
           "XRP",
-          1800
+          3600
         ],
         [
           "PEPE",
@@ -592,7 +592,7 @@
         ],
         [
           "HBAR",
-          1800
+          3600
         ],
         [
           "NEAR",
@@ -617,22 +617,17 @@
         [
           "LAB",
           1800
-        ]
-      ],
-      "bought_on_credit_pending_payment": [
-        [
-          "XRP refuerzo",
-          1800
-        ],
-        [
-          "HBAR refuerzo",
-          1800
         ],
         [
           "SHIB",
           1800
+        ],
+        [
+          "BONK",
+          1800
         ]
       ],
+      "bought_on_credit_pending_payment": [],
       "pending_to_buy_on_credit": [
         [
           "HYPE",
@@ -664,10 +659,6 @@
         ],
         [
           "PENGU",
-          1800
-        ],
-        [
-          "BONK",
           1800
         ],
         [
@@ -773,22 +764,22 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0208: resumen de movimientos cobra comision solo al retiro; depositos/fondeos no llevan comision visible.",
+      "latest_format_note": "KIM-0209: BONK comprada y cubierta con saldo disponible; credito comprado previo 4,285.90 USD tambien queda cubierto con el deposito.",
       "visible_order_count": 33,
       "section_count_validation": {
-        "covered_orders": 15,
+        "covered_orders": 17,
         "covered_active": 15,
         "cash_funded_pending": 1,
         "bought_on_credit": 3,
-        "bought_on_credit_pending_payment": 3,
+        "bought_on_credit_pending_payment": 0,
         "pending_on_credit": 16,
         "total_visible_orders": 33,
         "client_visible_lines": 33,
         "accounting_underlying_orders": 40,
-        "rule": "KIM-0204: “refuerzo” solo si hay orden previa/recompra; “nueva orden” solo primer día/ayer. Estas cinco se muestran como nuevas órdenes pendientes. Conteos sin cambio: 33 líneas visibles, 16 pendientes a crédito.",
+        "rule": "KIM-0209: BONK ejecutada; crédito comprado previo cubierto con saldo disponible.",
         "cash_funded_pending_orders": 1,
         "visible_live_orders": 33,
-        "pending_to_buy_on_credit": 16,
+        "pending_to_buy_on_credit": 15,
         "visible_order_count": 33
       },
       "daily_report_required": true,
@@ -819,11 +810,12 @@
         "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
         "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
         "KIM-0208: se corrige resumen de movimientos para incluir comision 1.2% sobre depositos/fondeos: 744.67 USD, ademas de retiro 61.82 USD. Total comisiones depositos + retiro: 806.49 USD.",
-        "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes."
+        "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes.",
+        "KIM-0209: BONK/USDT se confirma comprada por 1,800 USD a 0.00000263 y se descuenta del saldo disponible. Tambien se cubre con saldo disponible el credito comprado previo neto por 4,285.90 USD. Saldo disponible final 4,373.14 USD; credito comprado por cubrir 0.00 USD; credito pendiente por ejecutar 27,000 USD."
       ],
-      "covered_orders_subtotal_usd": 43954,
-      "bought_on_credit_pending_payment_subtotal_usd": 5400.0,
-      "pending_to_buy_on_credit_subtotal_usd": 28800.0,
+      "covered_orders_subtotal_usd": 51154.0,
+      "bought_on_credit_pending_payment_subtotal_usd": 0.0,
+      "pending_to_buy_on_credit_subtotal_usd": 27000.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
@@ -853,7 +845,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 16,
+      "pending_on_credit_orders": 15,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -994,11 +986,11 @@
         "KIM-0197: se agrega ICP/USDT refuerzo pendiente a 1.44 por 1,800 USD a las órdenes pendientes a crédito. No ejecutada; no descuenta saldo disponible. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar 19,800 USD; crédito total actual 24,085.90 USD.",
         "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
       ],
-      "available_balance_before_executed_orders_usd": 1114.1,
-      "executed_bought_orders_gross_usd": 5400.0,
-      "available_balance_applied_to_executed_orders_usd": 1114.1,
-      "credit_bought_pending_payment_gross_usd": 5400.0,
-      "available_balance_rule": "KIM-0205: el fondeo nuevo queda en saldo disponible; cuando una orden se ejecuta, se descuenta primero del saldo disponible; si no alcanza, solo la diferencia queda como credito por cubrir. No cubrir credito con el fondeo nuevo sin instruccion expresa.",
+      "available_balance_before_executed_orders_usd": 10459.04,
+      "executed_bought_orders_gross_usd": 7200.0,
+      "available_balance_applied_to_executed_orders_usd": 7200.0,
+      "credit_bought_pending_payment_gross_usd": 0.0,
+      "available_balance_rule": "KIM-0209: depósito disponible cubre primero el crédito comprado neto pendiente de 4,285.90 USD y después la ejecución BONK por 1,800 USD; saldo disponible final 4,373.14 USD.",
       "client_facing_movements": [
         {
           "date": "06-mar-2025",
@@ -1121,7 +1113,19 @@
           "movement_label": "Depósito"
         }
       ],
-      "client_facing_movements_note": "KIM-0207: usar esta lista para tabla cliente; columna Movimiento debe decir Deposito o Retiro y conceptos visibles deben decir Depósito confirmado, no Fondeo confirmado."
+      "client_facing_movements_note": "KIM-0207: usar esta lista para tabla cliente; columna Movimiento debe decir Deposito o Retiro y conceptos visibles deben decir Depósito confirmado, no Fondeo confirmado.",
+      "available_balance_before_bonk_execution_usd": 10459.04,
+      "available_balance_applied_to_prior_credit_usd": 4285.9,
+      "available_balance_applied_to_bonk_execution_usd": 1800.0,
+      "available_balance_applied_kim0209_total_usd": 6085.9,
+      "kim0209_available_balance_calculation": {
+        "previous_available_balance_usd": 10459.04,
+        "prior_credit_net_covered_usd": 4285.9,
+        "bonk_execution_covered_usd": 1800.0,
+        "total_applied_this_update_usd": 6085.9,
+        "cumulative_available_applied_to_executed_orders_usd": 7200.0,
+        "new_available_balance_usd": 4373.14
+      }
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1638,17 +1642,17 @@
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
       "xrp_consolidated_credit_usd": 1800.0,
-      "available_balance_usd": 10459.04,
+      "available_balance_usd": 4373.14,
       "available_balance_before_executed_orders_usd": 1114.1,
-      "available_balance_applied_to_executed_orders_usd": 1114.1,
-      "executed_bought_orders_gross_usd": 5400.0,
+      "available_balance_applied_to_executed_orders_usd": 7200.0,
+      "executed_bought_orders_gross_usd": 7200.0,
       "credit_bought_pending_payment_gross_usd": 5400.0,
-      "credit_bought_pending_payment_usd": 4285.9,
-      "credit_pending_execution_usd": 28800.0,
-      "credit_total_usd": 33085.9,
+      "credit_bought_pending_payment_usd": 0.0,
+      "credit_pending_execution_usd": 27000.0,
+      "credit_total_usd": 27000.0,
       "firm_assigned_usd": 56905.15,
       "available_balance_rule": "new_funding_stays_available_until_explicit_credit_coverage_or_order_execution",
-      "pending_on_credit_orders": 16,
+      "pending_on_credit_orders": 15,
       "visible_live_orders": 33,
       "accounting_underlying_orders": 40,
       "icp_refuerzo_pending_price": 1.44,
@@ -1671,9 +1675,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 20408.16326530612,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0208",
-      "updated_at": "2026-08-06T16:45:00+00:00",
-      "note": "Politica final: solo cobrar comision al retiro; no cobrar comision sobre depositos/fondeos.",
+      "id": "KIM-0209",
+      "updated_at": "2026-08-07T09:45:00-06:00",
+      "note": "BONK ejecutada y cubierta con saldo disponible; crédito comprado previo neto también cubierto con depósito.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1683,7 +1687,11 @@
       "funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_facing_movements_count": 13,
       "client_facing_movements_note": "Retiro 24-jul-2026 insertado cronologicamente entre 21-jul-2026 y 06-ago-2026.",
-      "withdrawal_only_fee_policy": true
+      "withdrawal_only_fee_policy": true,
+      "covered_orders_count": 17,
+      "bonk_execution_status": "active_covered_with_available_balance",
+      "available_balance_applied_to_prior_credit_usd": 4285.9,
+      "available_balance_applied_to_bonk_execution_usd": 1800.0
     }
   },
   "manual_entries": [
@@ -2446,23 +2454,27 @@
     {
       "id": "kim0172-bonkusdt-pending",
       "symbol": "BONKUSDT",
-      "state": "pending",
+      "state": "active",
       "order": 41,
-      "label": "BONK/USDT nueva orden pendiente",
+      "label": "BONK/USDT",
       "invested_usd": 1800.0,
       "entry_price": 2.63e-06,
       "quantity": 684410646.3878328,
-      "credit": true,
-      "credit_usd": 1800.0,
+      "credit": false,
+      "credit_usd": 0.0,
       "side": "BUY",
-      "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "updated_at": "2026-07-28T21:40:00+00:00",
-      "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0181: correccion recibida por WhatsApp/Kim; BONK pendiente debe estar a 0.000002205, no 0.00000225. Monto 1,800 USD; sigue pendiente a credito, no ejecutada. KIM-0189: último ajuste confirmado en WhatsApp/Kim; BONK pendiente queda en 2.63e-06; cantidad recalculada 684410646.3878328; sigue pendiente a crédito, no ejecutada.",
+      "source": "doctor_chat_2026_08_07_bonk_executed",
+      "updated_at": "2026-08-07T09:45:00-06:00",
+      "no_auto_fill": false,
+      "requires_manual_fill_confirmation": false,
+      "notes": "KIM-0181: correccion recibida por WhatsApp/Kim; BONK pendiente debe estar a 0.000002205, no 0.00000225. Monto 1,800 USD; sigue pendiente a credito, no ejecutada. KIM-0189: último ajuste confirmado en WhatsApp/Kim; BONK pendiente queda en 2.63e-06; cantidad recalculada 684410646.3878328; sigue pendiente a crédito, no ejecutada. KIM-0209: ejecución confirmada por el doctor; BONK comprada por 1,800 USD a 0.00000263 y cubierta con saldo disponible, no queda a crédito.",
       "price_adjusted_from": 2.205e-06,
       "price_adjusted_to": 2.63e-06,
-      "price_adjusted_at": "2026-07-28T21:40:00+00:00"
+      "price_adjusted_at": "2026-07-28T21:40:00+00:00",
+      "coverage_status": "covered_with_available_balance",
+      "covered_from_available_balance_usd": 1800.0,
+      "executed_at": "2026-08-07",
+      "execution_confirmed_at": "2026-08-07T09:45:00-06:00"
     },
     {
       "id": "kim0172-flokiusdt-pending",
@@ -2494,19 +2506,21 @@
       "invested_usd": 1800.0,
       "entry_price": 4.608e-06,
       "quantity": 390625000.0,
-      "credit": true,
-      "credit_usd": 1800.0,
+      "credit": false,
+      "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "updated_at": "2026-07-28T21:40:00+00:00",
+      "updated_at": "2026-08-07T09:45:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0187: precio pendiente ajustado a 4.005e-06; cantidad 449438202.247191; sigue pendiente a crédito, no ejecutada. KIM-0188: último ajuste confirmado en WhatsApp/Kim; SHIB pendiente queda en 4.608e-06; cantidad recalculada 390625000.0; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; SHIB comprada a crédito a 4.608e-06 por 1,800 USD; cantidad 390625000.0; queda por cubrir con crédito.",
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. SHIB/USDT nueva orden pendiente por 1,800 USD a 2.88e-06; cantidad calculada 625000000.0. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0187: precio pendiente ajustado a 4.005e-06; cantidad 449438202.247191; sigue pendiente a crédito, no ejecutada. KIM-0188: último ajuste confirmado en WhatsApp/Kim; SHIB pendiente queda en 4.608e-06; cantidad recalculada 390625000.0; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; SHIB comprada a crédito a 4.608e-06 por 1,800 USD; cantidad 390625000.0; queda por cubrir con crédito. KIM-0209: crédito pendiente de 1,800.00 USD cubierto con saldo disponible del depósito; ya no queda crédito por cubrir en esta posición.",
       "price_adjusted_from": 4.608e-06,
       "price_adjusted_to": 4.608e-06,
       "price_adjusted_at": "2026-07-28T21:40:00+00:00",
       "execution_confirmed_at": "2026-07-28T21:40:00+00:00",
-      "execution_source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions"
+      "execution_source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
+      "coverage_status": "credit_covered_with_available_balance",
+      "covered_from_available_balance_usd": 1800.0
     },
     {
       "id": "kim0180-labusdt-pending-0081-funded",
@@ -2536,15 +2550,15 @@
       "invested_usd": 3600.0,
       "entry_price": 0.07776081771720614,
       "quantity": 46295.80945370419,
-      "credit_usd": 1800.0,
+      "credit_usd": 0.0,
       "source": "doctor_instruction_2026_07_29_hbar_weighted_average",
-      "notes": "A9 HBAR activa canonica a credito. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-      "credit": true,
+      "notes": "A9 HBAR activa canonica a credito. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos. KIM-0209: crédito pendiente de 1,800.00 USD cubierto con saldo disponible del depósito; ya no queda crédito por cubrir en esta posición.",
+      "credit": false,
       "id": "kim0194-hbar-consolidated-weighted-average",
       "firm_usd": 1800.0,
       "raw_weighted_average_price": 0.07776081771720614,
       "weighted_average_price": 0.07776081771720614,
-      "updated_at": "2026-07-29T16:13:46+00:00",
+      "updated_at": "2026-08-07T09:45:00-06:00",
       "consumed_orders": [
         "A9",
         "A35"
@@ -2574,7 +2588,9 @@
           "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
           "notes": "Nueva orden de refuerzo para HBAR a 0.0657 Sincronizada desde Kim Paper Broker KPB-20260703194503-9559DE (place_order) el 2026-07-03T13:45:03. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0145: correccion doctor, faltaba un cero; precio correcto del refuerzo HBAR pendiente es 0.0657, no 0.657. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 0.0657, precio nuevo 0.059787, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.059787, precio final 0.0603. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0167: el doctor baja HBAR refuerzo pendiente de 0.0603 a 0.054 por 1,800 USD. Cantidad recalculada 33333.3333333333 HBAR. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0188: último ajuste confirmado en WhatsApp/Kim; HBAR refuerzo pendiente queda en 0.0684; cantidad recalculada 26315.78947368421; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; HBAR refuerzo comprada a crédito a 0.0684 por 1,800 USD; cantidad 26315.78947368421; queda por cubrir con crédito."
         }
-      ]
+      ],
+      "coverage_status": "credit_covered_with_available_balance",
+      "covered_from_available_balance_usd": 1800.0
     },
     {
       "symbol": "XRPUSDT",
@@ -2584,11 +2600,11 @@
       "invested_usd": 3600.0,
       "entry_price": 1.1990891672807664,
       "quantity": 3002.27881147813,
-      "credit_usd": 1800.0,
+      "credit_usd": 0.0,
       "source": "doctor_instruction_2026_07_29_xrp_weighted_average",
-      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
-      "updated_at": "2026-07-29T16:30:00+00:00",
-      "credit": true,
+      "notes": "A7 XRP activa canonica. KIM-0123: reclasificacion contable: esta orden pasa a credito completo para liberar cobertura y cerrar posiciones parciales; no es venta ni nueva compra. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0195: XRP se consolida con promedio ponderado: 1,800 USD a 1.386 + 1,800 USD a 1.0566 = 3,600 USD a 1.19908917. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos. KIM-0209: crédito pendiente de 1,800.00 USD cubierto con saldo disponible del depósito; ya no queda crédito por cubrir en esta posición.",
+      "updated_at": "2026-08-07T09:45:00-06:00",
+      "credit": false,
       "id": "kim0195-xrp-consolidated-weighted-average",
       "firm_usd": 1800.0,
       "raw_weighted_average_price": 1.1990891672807664,
@@ -2622,7 +2638,9 @@
           "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
           "notes": "Nueva orden de refuerzo para XRP a 0.882 Sincronizada desde Kim Paper Broker KPB-20260703194502-62337A (place_order) el 2026-07-03T13:45:02. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0187: precio pendiente ajustado a 1.008; cantidad 1785.7142857142858; sigue pendiente a crédito, no ejecutada. KIM-0189: ejecución confirmada por el doctor; XRP refuerzo comprada a crédito a 1.0566 por 1,800 USD; cantidad 1703.5775127768313; queda por cubrir con crédito."
         }
-      ]
+      ],
+      "coverage_status": "credit_covered_with_available_balance",
+      "covered_from_available_balance_usd": 1800.0
     },
     {
       "id": "kim0197-icpusdt-refuerzo-pending-144",
@@ -3475,6 +3493,19 @@
       "client_deposit_fee_usd": 0.0,
       "balance_after_withdrawal_fee_usd": 56842.13,
       "available_balance_usd": 10459.04
+    },
+    {
+      "version": "KIM-0209",
+      "date": "2026-08-07",
+      "summary": "BONK ejecutada; se cubre crédito comprado previo y BONK con saldo disponible.",
+      "accounting_change": true,
+      "previous_available_balance_usd": 10459.04,
+      "covered_prior_credit_usd": 4285.9,
+      "bonk_executed_amount_usd": 1800.0,
+      "new_available_balance_usd": 4373.14,
+      "credit_bought_pending_payment_usd": 0.0,
+      "credit_pending_execution_usd": 27000.0,
+      "credit_total_usd": 27000.0
     }
   ],
   "consumed_orders": [
@@ -6396,6 +6427,29 @@
         "client_total_net_considered_usd": 56905.15,
         "available_balance_usd": 10459.04
       }
+    },
+    {
+      "id": "KIM-0209",
+      "timestamp": "2026-08-07T09:45:00-06:00",
+      "summary": "Registra ejecución BONK y aplica depósito al crédito comprado previo.",
+      "accounting_after": {
+        "available_balance_usd": 4373.14,
+        "credit_bought_pending_payment_usd": 0.0,
+        "credit_pending_execution_usd": 27000.0,
+        "credit_total_usd": 27000.0,
+        "pending_on_credit_orders": 15
+      },
+      "bonk_execution": {
+        "symbol": "BONKUSDT",
+        "amount_usd": 1800.0,
+        "price": 2.63e-06,
+        "quantity": 684410646.3878328,
+        "covered_from_available_balance_usd": 1800.0
+      },
+      "prior_credit_coverage": {
+        "amount_usd": 4285.9,
+        "source": "deposit_available_balance"
+      }
     }
   ],
   "cancelled_orders": [
@@ -6450,6 +6504,7 @@
     "KIM-0206: formato cliente cambia a tabla/lista cronologica unica de Movimientos; cada linea indica Deposito o Retiro. El retiro 24-jul-2026 queda insertado entre 21-jul-2026 y 06-ago-2026 por fecha.",
     "KIM-0207: formato cliente reemplaza la palabra Fondeo por Deposito en movimientos y totales visibles. Sin cambio contable.",
     "KIM-0208: se corrige resumen de movimientos para incluir comision 1.2% sobre depositos/fondeos: 744.67 USD, ademas de retiro 61.82 USD. Total comisiones depositos + retiro: 806.49 USD.",
-    "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes."
+    "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes.",
+    "KIM-0209: BONK/USDT se confirma comprada por 1,800 USD a 0.00000263 y se descuenta del saldo disponible. Tambien se cubre con saldo disponible el credito comprado previo neto por 4,285.90 USD. Saldo disponible final 4,373.14 USD; credito comprado por cubrir 0.00 USD; credito pendiente por ejecutar 27,000 USD."
   ]
 }
