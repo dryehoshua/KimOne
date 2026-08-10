@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0213",
+  "standard_version": "KIM-0215",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
+  "standard_note": "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0213",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "version": "KIM-0215",
+      "updated_at": "2026-08-10T13:05:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -551,12 +551,12 @@
       "client_funding_total_usd": 62055.64,
       "realized_profit_for_statement_usd": 63.02,
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
-      "client_total_net_considered_usd": 56905.15,
-      "firm_assigned_usd": 56905.15,
+      "client_total_net_considered_usd": 57327.14,
+      "firm_assigned_usd": 57327.14,
       "available_balance_usd": 4373.14,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 27000.0,
-      "credit_total_usd": 27000.0,
+      "credit_pending_execution_usd": 28800.0,
+      "credit_total_usd": 28800.0,
       "covered_orders": [
         [
           "ADA",
@@ -616,7 +616,7 @@
         ],
         [
           "LAB",
-          1800
+          3600.0
         ],
         [
           "SHIB",
@@ -687,6 +687,10 @@
         ],
         [
           "GOAT",
+          1800.0
+        ],
+        [
+          "LAB 0.07695",
           1800.0
         ]
       ],
@@ -764,22 +768,22 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0213: pendientes ajustadas aprox -5% con raiz digital 9; BEAT/Audiera 1.17 por decision expresa.",
+      "latest_format_note": "KIM-0215: LAB 1,378.01 comprada a 0.11807 se consolida; diferencia 421.99 es perdida no manifiesta, no credito. Nueva LAB pendiente a credito 1,800 en 0.07695.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 17,
-        "covered_active": 15,
-        "cash_funded_pending": 1,
-        "bought_on_credit": 3,
+        "covered_active": 17,
+        "cash_funded_pending": 0,
+        "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
         "pending_on_credit": 16,
         "total_visible_orders": 33,
         "client_visible_lines": 33,
         "accounting_underlying_orders": 40,
-        "rule": "KIM-0209: BONK ejecutada; crédito comprado previo cubierto con saldo disponible.",
-        "cash_funded_pending_orders": 1,
+        "rule": "KIM-0215: LAB 421.99 se trata como perdida no manifiesta, no credito; nueva LAB 0.07695 queda pendiente a credito.",
+        "cash_funded_pending_orders": 0,
         "visible_live_orders": 33,
-        "pending_to_buy_on_credit": 15,
+        "pending_to_buy_on_credit": 16,
         "visible_order_count": 33
       },
       "daily_report_required": true,
@@ -815,19 +819,14 @@
         "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
         "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable."
       ],
-      "covered_orders_subtotal_usd": 51154.0,
+      "covered_orders_subtotal_usd": 52954.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
-      "pending_to_buy_on_credit_subtotal_usd": 27000.0,
+      "pending_to_buy_on_credit_subtotal_usd": 28800.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
-      "cash_funded_pending_orders": [
-        [
-          "LAB orden 0.07695",
-          1378.01
-        ]
-      ],
-      "cash_funded_pending_total_usd": 1378.01,
+      "cash_funded_pending_orders": [],
+      "cash_funded_pending_total_usd": 0.0,
       "client_withdrawal_total_mxn": 90000.0,
       "client_withdrawal_total_usd": 5151.69,
       "client_facing_withdrawals": [
@@ -847,7 +846,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 15,
+      "pending_on_credit_orders": 16,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -957,6 +956,18 @@
           "total_quantity": 5976.505139500734,
           "weighted_average_price": 0.45176904176904176,
           "covered_from_available_balance_usd": 900.0
+        },
+        {
+          "version": "KIM-0215",
+          "symbol": "LABUSDT",
+          "label": "LAB/USDT consolidada",
+          "base_order": "1,800 USD a 4.5",
+          "new_order": "1,378.01 USD ejecutados a 0.11807; base contable 1,800 por perdida no manifiesta 421.99",
+          "total_amount_usd": 3600.0,
+          "weighted_average_price": 0.29823229523770767,
+          "quantity": 12071.127297365969,
+          "credit_pending_payment_usd": 0.0,
+          "embedded_unmanifested_loss_usd": 421.99
         }
       ],
       "latest_weighted_average_operations_total_covered_usd": 6300.0,
@@ -1339,7 +1350,20 @@
         }
       ],
       "pending_orders_total_visible": 16,
-      "pending_orders_breakdown": "15 a credito + 1 fondeada (LAB 0.07695 por 1,378.01 USD)"
+      "pending_orders_breakdown": "16 a credito; incluye nueva LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "note": "LAB consolidada usa perdida no manifiesta, no credito: break-even 0.29823145. Nueva LAB pendiente a credito 1,800 USD en 0.07695.",
+      "credit_bought_pending_payment_subtotal_usd": 0.0,
+      "visible_live_orders": 33,
+      "lab_consolidated_amount_usd": 3600.0,
+      "lab_consolidated_entry_price": 0.29823229523770767,
+      "lab_consolidated_quantity": 12071.127297365969,
+      "lab_new_execution_price": 0.11807,
+      "lab_new_execution_cash_usd": 1378.01,
+      "lab_embedded_unmanifested_loss_usd": 421.99,
+      "lab_credit_top_up_usd": 0.0,
+      "lab_pending_credit_price": 0.07695,
+      "lab_pending_credit_amount_usd": 1800.0,
+      "lab_pending_credit_quantity": 23391.812865497075
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1860,13 +1884,13 @@
       "available_balance_before_executed_orders_usd": 1114.1,
       "available_balance_applied_to_executed_orders_usd": 7200.0,
       "executed_bought_orders_gross_usd": 7200.0,
-      "credit_bought_pending_payment_gross_usd": 5400.0,
+      "credit_bought_pending_payment_gross_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 27000.0,
-      "credit_total_usd": 27000.0,
-      "firm_assigned_usd": 56905.15,
+      "credit_pending_execution_usd": 28800.0,
+      "credit_total_usd": 28800.0,
+      "firm_assigned_usd": 57327.14,
       "available_balance_rule": "new_funding_stays_available_until_explicit_credit_coverage_or_order_execution",
-      "pending_on_credit_orders": 15,
+      "pending_on_credit_orders": 16,
       "visible_live_orders": 33,
       "accounting_underlying_orders": 40,
       "icp_refuerzo_pending_price": 1.368,
@@ -1889,10 +1913,10 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0213",
-      "updated_at": "2026-08-10T11:15:00-06:00",
-      "note": "Pendientes bajadas aprox 5% con raiz digital 9; BEAT/Audiera a 1.17 por decision expresa. Sin cambio contable.",
-      "client_total_net_considered_usd": 56905.15,
+      "id": "KIM-0215",
+      "updated_at": "2026-08-10T13:05:00-06:00",
+      "note": "LAB consolidada usa perdida no manifiesta, no credito: break-even 0.29823145. Nueva LAB pendiente a credito 1,800 USD en 0.07695.",
+      "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
       "client_deposit_withdrawal_balance_mxn": 990000.0,
@@ -2073,7 +2097,21 @@
         }
       ],
       "pending_orders_total_visible": 16,
-      "pending_orders_breakdown": "15 a credito + 1 fondeada (LAB 0.07695 por 1,378.01 USD)"
+      "pending_orders_breakdown": "16 a credito; incluye nueva LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "credit_bought_pending_payment_subtotal_usd": 0.0,
+      "cash_funded_pending_orders": [],
+      "cash_funded_pending_total_usd": 0.0,
+      "visible_order_count": 33,
+      "lab_consolidated_amount_usd": 3600.0,
+      "lab_consolidated_entry_price": 0.29823229523770767,
+      "lab_consolidated_quantity": 12071.127297365969,
+      "lab_new_execution_price": 0.11807,
+      "lab_new_execution_cash_usd": 1378.01,
+      "lab_embedded_unmanifested_loss_usd": 421.99,
+      "lab_credit_top_up_usd": 0.0,
+      "lab_pending_credit_price": 0.07695,
+      "lab_pending_credit_amount_usd": 1800.0,
+      "lab_pending_credit_quantity": 23391.812865497075
     }
   },
   "manual_entries": [
@@ -2756,21 +2794,21 @@
       "covered_from_available_balance_usd": 900.0
     },
     {
-      "id": "kim0149-labusdt-pending-45",
+      "id": "kim0215-labusdt-consolidated-break-even-3600",
       "symbol": "LABUSDT",
       "state": "active",
       "order": 30,
-      "label": "LAB/USDT 1",
-      "invested_usd": 1800.0,
-      "entry_price": 4.5,
-      "quantity": 400.0,
+      "label": "LAB/USDT consolidada",
+      "invested_usd": 3600.0,
+      "entry_price": 0.29823229523770767,
+      "quantity": 12071.127297365969,
       "credit": false,
       "credit_usd": 0.0,
       "side": "BUY",
-      "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07",
-      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre. KIM-0173: precio actual LAB/USDT investigado externamente el 2026-07-20: Gate spot LAB_USDT 0.1499, CoinGecko 0.149415; LAB 1 sigue activa, sin cierre. KIM-0178: precio actual LAB corregido tras verificacion fresca 2026-07-21: MEXC 0.14118, KuCoin 0.14135, Gate 0.141; consenso 0.141176666667. LAB 1 sigue activa, sin cierre. KIM-0190: se elimina precio actual de mercado guardado para evitar stale override; LAB debe validarse fresco en cada reporte.",
-      "updated_at": "2026-07-29T10:05:00+00:00",
-      "executed_at": "2026-07-07T14:08:09",
+      "source": "doctor_correction_2026_08_10_lab_loss_embedded_not_credit",
+      "notes": "KIM-0150: Dr. Yehoshua confirma compra LAB en 4.5 y precio actual 5.16; usar balance disponible de 2,000 USD, no crédito. Ejecución registrada en ledger tx_4ca1fe072644. LAB cerrada KIM-0139 permanece solo para P/L realizado histórico. KIM-0152: precio actual LAB actualizado por instrucción del doctor a 1.18 el 2026-07-08; no es cierre ni nueva operación. KIM-0155: precio actual LAB informado por el doctor a 0.93 el 2026-07-09. KIM-0156: el doctor pide separar LAB 1 y LAB 2; esta queda como LAB 1, sin stop loss nuevo. KIM-0157: LAB 1 sigue activa; LAB 2 se cerro por stop loss y no debe ocultar esta posicion. KIM-0159: precio actual LAB informado por el doctor a 0.28 el 2026-07-13; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0160: precio actual LAB informado como 31.80 centavos, registrado como 0.3180 USD el 2026-07-14; LAB 1 sigue activa, sin cierre ni stop nuevo. KIM-0163: precio actual LAB informado por el doctor a 0.214 el 2026-07-16; LAB 1 sigue activa, sin cierre. KIM-0173: precio actual LAB/USDT investigado externamente el 2026-07-20: Gate spot LAB_USDT 0.1499, CoinGecko 0.149415; LAB 1 sigue activa, sin cierre. KIM-0178: precio actual LAB corregido tras verificacion fresca 2026-07-21: MEXC 0.14118, KuCoin 0.14135, Gate 0.141; consenso 0.141176666667. LAB 1 sigue activa, sin cierre. KIM-0190: se elimina precio actual de mercado guardado para evitar stale override; LAB debe validarse fresco en cada reporte. KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
+      "updated_at": "2026-08-10T13:05:00-06:00",
+      "executed_at": "2026-08-10",
       "execution_ref": "tx_4ca1fe072644",
       "doctor_validated_at": "2026-07-16T16:16:06+00:00",
       "market_checked_at": "2026-07-20T15:01:29+00:00",
@@ -2778,7 +2816,49 @@
         "gate_spot_lab_usdt": 0.1499,
         "coingecko_lab_usd": 0.149415
       },
-      "current_price_refresh_policy": "always_validate_market_on_report"
+      "current_price_refresh_policy": "always_validate_market_on_report",
+      "firm_usd": 3600.0,
+      "raw_weighted_average_price": 0.29823229523770767,
+      "weighted_average_price": 0.29823229523770767,
+      "break_even_price": 0.29823229523770767,
+      "consumed_orders": [
+        "LAB 4.5",
+        "LAB compra 0.11807"
+      ],
+      "split_members": [
+        {
+          "member_order": "LAB 4.5",
+          "symbol": "LABUSDT",
+          "label": "LAB/USDT base 4.5",
+          "state": "active",
+          "amount_usd": 1800.0,
+          "price": 4.5,
+          "quantity": 400.0,
+          "credit_usd": 0.0,
+          "source": "doctor_confirmed_lab_execution_cash_balance_2026_07_07"
+        },
+        {
+          "member_order": "LAB 0.11807",
+          "symbol": "LABUSDT",
+          "label": "LAB/USDT compra confirmada 0.11807",
+          "state": "active",
+          "accounting_basis_usd": 1800.0,
+          "cash_executed_usd": 1378.01,
+          "embedded_unmanifested_loss_usd": 421.99,
+          "price": 0.11807,
+          "quantity": 11671.127297365969,
+          "credit_usd": 0.0,
+          "source": "doctor_instruction_2026_08_10_lab_1378_bought_011807"
+        }
+      ],
+      "coverage_status": "covered_with_embedded_unmanifested_loss",
+      "covered_from_previous_lab_net_sales_usd": 1378.01,
+      "embedded_unmanifested_loss_usd": 421.99,
+      "credit_top_up_pending_coverage_usd": 0.0,
+      "execution_status": "filled_confirmed_by_doctor",
+      "execution_price": 0.11807,
+      "execution_amount_cash_usd": 1378.01,
+      "execution_accounting_basis_usd": 1800.0
     },
     {
       "id": "kim0157-labusdt-pending-018-available",
@@ -2930,24 +3010,25 @@
       "symbol": "LABUSDT",
       "state": "pending",
       "order": 44,
-      "label": "LAB/USDT orden pendiente fondeada",
-      "invested_usd": 1378.01,
+      "label": "LAB/USDT orden pendiente a crédito 0.07695",
+      "invested_usd": 1800.0,
       "entry_price": 0.07695,
-      "quantity": 17907.862248213125,
-      "credit": false,
-      "credit_usd": 0.0,
+      "quantity": 23391.812865497075,
+      "credit": true,
+      "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_22_sr_eli_lab_0081_from_lab_02025_net_sale",
-      "notes": "KIM-0180: Sr. Eli pidio colocar nueva orden LAB a 0.081 usando el neto disponible de la ultima operacion LAB 0.2025 cerrada por stop. Monto 1,378.01 USD, cantidad 17,012.46913580247 LAB. Orden pendiente fondeada con saldo disponible; no es credito y no esta ejecutada. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.081, precio nuevo 0.07695, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "updated_at": "2026-08-10T11:15:00-06:00",
-      "funding_status": "cash_funded_pending_from_lab_02025_net_sale",
+      "source": "doctor_correction_2026_08_10_lab_new_credit_order_007695",
+      "notes": "KIM-0180: Sr. Eli pidio colocar nueva orden LAB a 0.081 usando el neto disponible de la ultima operacion LAB 0.2025 cerrada por stop. Monto 1,378.01 USD, cantidad 17,012.46913580247 LAB. Orden pendiente fondeada con saldo disponible; no es credito y no esta ejecutada. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.081, precio nuevo 0.07695, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695. Esta linea representa la nueva orden LAB pendiente a credito por 1,800 USD en 0.07695; no esta ejecutada.",
+      "updated_at": "2026-08-10T13:05:00-06:00",
+      "funding_status": "pending_on_credit_not_executed",
       "source_net_sale_order_id": "kim0168-lab-02025-stop-10-sale",
       "source_net_sale_usd": 1378.01,
       "execution_status": "pending_not_executed",
-      "price_adjusted_from": 0.081,
+      "price_adjusted_from": 0.07695,
       "price_adjusted_to": 0.07695,
-      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "price_adjusted_at": "2026-08-10T13:05:00-06:00",
+      "latest_price_adjustment_source": "doctor_correction_2026_08_10_lab_new_credit_order_007695",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "symbol": "HBARUSDT",
@@ -4200,6 +4281,25 @@
           "credit": true
         }
       ]
+    },
+    {
+      "id": "KIM-0215",
+      "timestamp": "2026-08-10T13:05:00-06:00",
+      "summary": "Correccion LAB: 421.99 no es credito, es perdida no manifiesta; nueva LAB pendiente a credito 1,800 en 0.07695.",
+      "accounting_change": true,
+      "lab_consolidation": {
+        "base_amount_usd": 1800.0,
+        "base_price": 4.5,
+        "new_cash_executed_usd": 1378.01,
+        "new_execution_price": 0.11807,
+        "embedded_unmanifested_loss_usd": 421.99,
+        "total_accounting_basis_usd": 3600.0,
+        "break_even_price": 0.29823229523770767,
+        "total_quantity": 12071.127297365969,
+        "credit_top_up_usd": 0.0,
+        "new_pending_credit_order_usd": 1800.0,
+        "new_pending_credit_order_price": 0.07695
+      }
     }
   ],
   "consumed_orders": [
@@ -4617,7 +4717,8 @@
     "KIM-0204: Usar “refuerzo” solo si ya existe orden previa/recompra de la misma moneda.",
     "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”.",
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
-    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
+    "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695."
   ],
   "superseded_facts": [
     {
@@ -7380,6 +7481,25 @@
           "credit": true
         }
       ]
+    },
+    {
+      "id": "KIM-0215",
+      "timestamp": "2026-08-10T13:05:00-06:00",
+      "summary": "Correccion LAB: 421.99 no es credito, es perdida no manifiesta; nueva LAB pendiente a credito 1,800 en 0.07695.",
+      "accounting_change": true,
+      "lab_consolidation": {
+        "base_amount_usd": 1800.0,
+        "base_price": 4.5,
+        "new_cash_executed_usd": 1378.01,
+        "new_execution_price": 0.11807,
+        "embedded_unmanifested_loss_usd": 421.99,
+        "total_accounting_basis_usd": 3600.0,
+        "break_even_price": 0.29823229523770767,
+        "total_quantity": 12071.127297365969,
+        "credit_top_up_usd": 0.0,
+        "new_pending_credit_order_usd": 1800.0,
+        "new_pending_credit_order_price": 0.07695
+      }
     }
   ],
   "cancelled_orders": [
@@ -7429,7 +7549,8 @@
     "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
     "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable.",
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
-    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
+    "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695."
   ],
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -7441,6 +7562,7 @@
     "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
     "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable.",
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
-    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
+    "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695."
   ]
 }
