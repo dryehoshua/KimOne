@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0212",
+  "standard_version": "KIM-0213",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
+  "standard_note": "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0212",
-      "updated_at": "2026-08-10T10:20:00-06:00",
+      "version": "KIM-0213",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -764,7 +764,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0212: reporte tecnico puede incluir mensaje adicional “Análisis volumétrico” con volumen ayer vs hoy parcial.",
+      "latest_format_note": "KIM-0213: pendientes ajustadas aprox -5% con raiz digital 9; BEAT/Audiera 1.17 por decision expresa.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 17,
@@ -823,7 +823,7 @@
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
       "cash_funded_pending_orders": [
         [
-          "LAB orden 0.081",
+          "LAB orden 0.07695",
           1378.01
         ]
       ],
@@ -972,14 +972,14 @@
       "hbar_refuerzo_execution_quantity": 26315.78947368421,
       "shib_execution_price": 4.608e-06,
       "shib_execution_quantity": 390625000.0,
-      "zec_pending_price": 396.0,
-      "zec_pending_quantity": 4.545454545454546,
+      "zec_pending_price": 376.2,
+      "zec_pending_quantity": 4.784688995215311,
       "bonk_pending_price": 2.63e-06,
       "bonk_pending_quantity": 684410646.3878328,
-      "pengu_pending_price": 0.005382,
-      "pengu_pending_quantity": 334448.1605351171,
-      "aave_pending_price": 81.0,
-      "aave_pending_quantity": 22.22222222222222,
+      "pengu_pending_price": 0.005121,
+      "pengu_pending_quantity": 351493.848857645,
+      "aave_pending_price": 76.95,
+      "aave_pending_quantity": 23.391812865497077,
       "rules": [
         "KIM-0193: por instruccion del doctor, el reporte completo del Sr. Eli debe ordenarse de mayor perdida a ganancia; mantener IDs visibles compactos consecutivos A1-A29 y no cambiar contabilidad.",
         "KIM-0194: HBAR se consolida con promedio ponderado: 1,800 USD a 0.09009 + 1,800 USD a 0.0684 = 3,600 USD a 0.07776082. El refuerzo de 1,800 USD sigue como crédito por cubrir; sin cambio de saldos.",
@@ -1139,8 +1139,8 @@
         "XLMUSDT",
         "ZECUSDT"
       ],
-      "beat_audiera_pending_price": 1.62,
-      "beat_audiera_pending_quantity": 1111.111111111111,
+      "beat_audiera_pending_price": 1.17,
+      "beat_audiera_pending_quantity": 1538.4615384615386,
       "technical_volume_protocol": {
         "section_name": "Análisis volumétrico",
         "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
@@ -1165,7 +1165,181 @@
           "kucoin"
         ],
         "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
-      }
+      },
+      "icp_refuerzo_pending_price": 1.368,
+      "icp_refuerzo_pending_quantity": 1315.7894736842106,
+      "ondo_refuerzo_pending_price": 0.20952,
+      "ondo_refuerzo_pending_quantity": 8591.06529209622,
+      "ldo_refuerzo_pending_price": 0.21375,
+      "ldo_refuerzo_pending_quantity": 8421.052631578947,
+      "coti_refuerzo_pending_price": 0.00684,
+      "coti_refuerzo_pending_quantity": 263157.8947368421,
+      "goat_refuerzo_pending_price": 0.008379,
+      "goat_refuerzo_pending_quantity": 214822.77121374867,
+      "pending_digital_root_9_adjustments": [
+        {
+          "symbol": "HYPEUSDT",
+          "label": "HYPE",
+          "old_price": 49.5,
+          "new_price": 47.25,
+          "change_pct": 4.55,
+          "amount_usd": 1800.0,
+          "quantity": 38.095238095238095,
+          "credit": true
+        },
+        {
+          "symbol": "SOLUSDT",
+          "label": "SOL refuerzo",
+          "old_price": 63.0,
+          "new_price": 60.12,
+          "change_pct": 4.57,
+          "amount_usd": 1800.0,
+          "quantity": 29.940119760479043,
+          "credit": true
+        },
+        {
+          "symbol": "ZECUSDT",
+          "label": "ZEC",
+          "old_price": 396.0,
+          "new_price": 376.2,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 4.784688995215311,
+          "credit": true
+        },
+        {
+          "symbol": "WIFUSDT",
+          "label": "WIF",
+          "old_price": 0.12177,
+          "new_price": 0.11592,
+          "change_pct": 4.8,
+          "amount_usd": 1800.0,
+          "quantity": 15527.950310559007,
+          "credit": true
+        },
+        {
+          "symbol": "XLMUSDT",
+          "label": "XLM",
+          "old_price": 0.1395,
+          "new_price": 0.13284,
+          "change_pct": 4.77,
+          "amount_usd": 1800.0,
+          "quantity": 13550.135501355013,
+          "credit": true
+        },
+        {
+          "symbol": "AAVEUSDT",
+          "label": "AAVE",
+          "old_price": 81.0,
+          "new_price": 76.95,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 23.391812865497077,
+          "credit": true
+        },
+        {
+          "symbol": "AVAXUSDT",
+          "label": "AVAX",
+          "old_price": 5.481,
+          "new_price": 5.211,
+          "change_pct": 4.93,
+          "amount_usd": 1800.0,
+          "quantity": 345.4231433506045,
+          "credit": true
+        },
+        {
+          "symbol": "PENGUUSDT",
+          "label": "PENGU",
+          "old_price": 0.005382,
+          "new_price": 0.005121,
+          "change_pct": 4.85,
+          "amount_usd": 1800.0,
+          "quantity": 351493.848857645,
+          "credit": true
+        },
+        {
+          "symbol": "FLOKIUSDT",
+          "label": "FLOKI",
+          "old_price": 1.8e-05,
+          "new_price": 1.71e-05,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 105263157.89473684,
+          "credit": true
+        },
+        {
+          "symbol": "LABUSDT",
+          "label": "LAB 0.081",
+          "old_price": 0.081,
+          "new_price": 0.07695,
+          "change_pct": 5.0,
+          "amount_usd": 1378.01,
+          "quantity": 17907.862248213125,
+          "credit": false
+        },
+        {
+          "symbol": "ICPUSDT",
+          "label": "ICP refuerzo",
+          "old_price": 1.44,
+          "new_price": 1.368,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 1315.7894736842106,
+          "credit": true
+        },
+        {
+          "symbol": "BEATUSDT",
+          "label": "BEAT/Audiera",
+          "old_price": 1.62,
+          "new_price": 1.17,
+          "change_pct": 27.78,
+          "amount_usd": 1800.0,
+          "quantity": 1538.4615384615386,
+          "credit": true
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "label": "ONDO",
+          "old_price": 0.2205,
+          "new_price": 0.20952,
+          "change_pct": 4.98,
+          "amount_usd": 1800.0,
+          "quantity": 8591.06529209622,
+          "credit": true
+        },
+        {
+          "symbol": "LDOUSDT",
+          "label": "LDO",
+          "old_price": 0.225,
+          "new_price": 0.21375,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 8421.052631578947,
+          "credit": true
+        },
+        {
+          "symbol": "COTIUSDT",
+          "label": "COTI",
+          "old_price": 0.0072,
+          "new_price": 0.00684,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 263157.8947368421,
+          "credit": true
+        },
+        {
+          "symbol": "GOATUSDT",
+          "label": "GOAT",
+          "old_price": 0.00882,
+          "new_price": 0.008379,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 214822.77121374867,
+          "credit": true
+        }
+      ],
+      "pending_orders_total_visible": 16,
+      "pending_orders_breakdown": "15 a credito + 1 fondeada (LAB 0.07695 por 1,378.01 USD)"
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1695,29 +1869,29 @@
       "pending_on_credit_orders": 15,
       "visible_live_orders": 33,
       "accounting_underlying_orders": 40,
-      "icp_refuerzo_pending_price": 1.44,
+      "icp_refuerzo_pending_price": 1.368,
       "icp_refuerzo_pending_amount_usd": 1800.0,
-      "icp_refuerzo_pending_quantity": 1250.0,
+      "icp_refuerzo_pending_quantity": 1315.7894736842106,
       "icp_refuerzo_state": "pending_on_credit_not_executed",
-      "ondo_refuerzo_pending_price": 0.02205,
+      "ondo_refuerzo_pending_price": 0.20952,
       "ondo_refuerzo_pending_amount_usd": 1800.0,
-      "ondo_refuerzo_pending_quantity": 81632.65306122448,
+      "ondo_refuerzo_pending_quantity": 8591.06529209622,
       "ondo_refuerzo_state": "pending_on_credit_not_executed",
-      "ldo_refuerzo_pending_price": 0.0225,
+      "ldo_refuerzo_pending_price": 0.21375,
       "ldo_refuerzo_pending_amount_usd": 1800.0,
-      "ldo_refuerzo_pending_quantity": 80000.0,
+      "ldo_refuerzo_pending_quantity": 8421.052631578947,
       "ldo_refuerzo_state": "pending_on_credit_not_executed",
-      "coti_refuerzo_pending_price": 0.072,
+      "coti_refuerzo_pending_price": 0.00684,
       "coti_refuerzo_pending_amount_usd": 1800.0,
-      "coti_refuerzo_pending_quantity": 25000.000000000004,
+      "coti_refuerzo_pending_quantity": 263157.8947368421,
       "coti_refuerzo_state": "pending_on_credit_not_executed",
-      "goat_refuerzo_pending_price": 0.0882,
+      "goat_refuerzo_pending_price": 0.008379,
       "goat_refuerzo_pending_amount_usd": 1800.0,
-      "goat_refuerzo_pending_quantity": 20408.16326530612,
+      "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0212",
-      "updated_at": "2026-08-10T10:20:00-06:00",
-      "note": "Se agrega Analisis volumetrico al protocolo: volumen tradeado ayer vs hoy parcial, mensaje WhatsApp adicional.",
+      "id": "KIM-0213",
+      "updated_at": "2026-08-10T11:15:00-06:00",
+      "note": "Pendientes bajadas aprox 5% con raiz digital 9; BEAT/Audiera a 1.17 por decision expresa. Sin cambio contable.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1733,9 +1907,173 @@
       "available_balance_applied_to_prior_credit_usd": 4285.9,
       "available_balance_applied_to_bonk_execution_usd": 1800.0,
       "pending_order_age_language_rule": "new_order_label_max_age_days=2",
-      "beat_audiera_pending_price": 1.62,
-      "beat_audiera_pending_quantity": 1111.111111111111,
-      "technical_volume_protocol": "active"
+      "beat_audiera_pending_price": 1.17,
+      "beat_audiera_pending_quantity": 1538.4615384615386,
+      "technical_volume_protocol": "active",
+      "pending_digital_root_9_adjustments": [
+        {
+          "symbol": "HYPEUSDT",
+          "label": "HYPE",
+          "old_price": 49.5,
+          "new_price": 47.25,
+          "change_pct": 4.55,
+          "amount_usd": 1800.0,
+          "quantity": 38.095238095238095,
+          "credit": true
+        },
+        {
+          "symbol": "SOLUSDT",
+          "label": "SOL refuerzo",
+          "old_price": 63.0,
+          "new_price": 60.12,
+          "change_pct": 4.57,
+          "amount_usd": 1800.0,
+          "quantity": 29.940119760479043,
+          "credit": true
+        },
+        {
+          "symbol": "ZECUSDT",
+          "label": "ZEC",
+          "old_price": 396.0,
+          "new_price": 376.2,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 4.784688995215311,
+          "credit": true
+        },
+        {
+          "symbol": "WIFUSDT",
+          "label": "WIF",
+          "old_price": 0.12177,
+          "new_price": 0.11592,
+          "change_pct": 4.8,
+          "amount_usd": 1800.0,
+          "quantity": 15527.950310559007,
+          "credit": true
+        },
+        {
+          "symbol": "XLMUSDT",
+          "label": "XLM",
+          "old_price": 0.1395,
+          "new_price": 0.13284,
+          "change_pct": 4.77,
+          "amount_usd": 1800.0,
+          "quantity": 13550.135501355013,
+          "credit": true
+        },
+        {
+          "symbol": "AAVEUSDT",
+          "label": "AAVE",
+          "old_price": 81.0,
+          "new_price": 76.95,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 23.391812865497077,
+          "credit": true
+        },
+        {
+          "symbol": "AVAXUSDT",
+          "label": "AVAX",
+          "old_price": 5.481,
+          "new_price": 5.211,
+          "change_pct": 4.93,
+          "amount_usd": 1800.0,
+          "quantity": 345.4231433506045,
+          "credit": true
+        },
+        {
+          "symbol": "PENGUUSDT",
+          "label": "PENGU",
+          "old_price": 0.005382,
+          "new_price": 0.005121,
+          "change_pct": 4.85,
+          "amount_usd": 1800.0,
+          "quantity": 351493.848857645,
+          "credit": true
+        },
+        {
+          "symbol": "FLOKIUSDT",
+          "label": "FLOKI",
+          "old_price": 1.8e-05,
+          "new_price": 1.71e-05,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 105263157.89473684,
+          "credit": true
+        },
+        {
+          "symbol": "LABUSDT",
+          "label": "LAB 0.081",
+          "old_price": 0.081,
+          "new_price": 0.07695,
+          "change_pct": 5.0,
+          "amount_usd": 1378.01,
+          "quantity": 17907.862248213125,
+          "credit": false
+        },
+        {
+          "symbol": "ICPUSDT",
+          "label": "ICP refuerzo",
+          "old_price": 1.44,
+          "new_price": 1.368,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 1315.7894736842106,
+          "credit": true
+        },
+        {
+          "symbol": "BEATUSDT",
+          "label": "BEAT/Audiera",
+          "old_price": 1.62,
+          "new_price": 1.17,
+          "change_pct": 27.78,
+          "amount_usd": 1800.0,
+          "quantity": 1538.4615384615386,
+          "credit": true
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "label": "ONDO",
+          "old_price": 0.2205,
+          "new_price": 0.20952,
+          "change_pct": 4.98,
+          "amount_usd": 1800.0,
+          "quantity": 8591.06529209622,
+          "credit": true
+        },
+        {
+          "symbol": "LDOUSDT",
+          "label": "LDO",
+          "old_price": 0.225,
+          "new_price": 0.21375,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 8421.052631578947,
+          "credit": true
+        },
+        {
+          "symbol": "COTIUSDT",
+          "label": "COTI",
+          "old_price": 0.0072,
+          "new_price": 0.00684,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 263157.8947368421,
+          "credit": true
+        },
+        {
+          "symbol": "GOATUSDT",
+          "label": "GOAT",
+          "old_price": 0.00882,
+          "new_price": 0.008379,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 214822.77121374867,
+          "credit": true
+        }
+      ],
+      "pending_orders_total_visible": 16,
+      "pending_orders_breakdown": "15 a credito + 1 fondeada (LAB 0.07695 por 1,378.01 USD)"
     }
   },
   "manual_entries": [
@@ -2109,15 +2447,19 @@
       "side": "BUY",
       "label": "HYPE/USDT pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 49.5,
+      "entry_price": 47.25,
       "credit_usd": 1800.0,
-      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 45.0, precio nuevo 49.5, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 49.5, precio final 49.5. Cualquier ajuste posterior queda sujeto a nueva instruccion.",
-      "quantity": 36.363636363636,
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 45.0, precio nuevo 49.5, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 49.5, precio final 49.5. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 49.5, precio nuevo 47.25, baja 4.55%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "quantity": 38.095238095238095,
       "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
-      "updated_at": "2026-07-06T19:01:13+00:00",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "credit": true,
       "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "requires_manual_fill_confirmation": true,
+      "price_adjusted_from": 49.5,
+      "price_adjusted_to": 47.25,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "order": 23,
@@ -2127,12 +2469,16 @@
       "side": "BUY",
       "label": "SOL/USDT refuerzo",
       "invested_usd": 1800.0,
-      "entry_price": 63.0,
+      "entry_price": 60.12,
       "credit_usd": 1800.0,
-      "notes": "KIM-0179: correccion del doctor; SOL refuerzo pendiente debe estar a 63, no 54. Sigue pendiente a credito, no ejecutado.",
-      "quantity": 28.571428571428573,
-      "updated_at": "2026-07-21T21:01:45+00:00",
-      "source": "doctor_chat_2026_07_21_sol_refuerzo_63_correction"
+      "notes": "KIM-0179: correccion del doctor; SOL refuerzo pendiente debe estar a 63, no 54. Sigue pendiente a credito, no ejecutado. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 63.0, precio nuevo 60.12, baja 4.57%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "quantity": 29.940119760479043,
+      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_chat_2026_07_21_sol_refuerzo_63_correction",
+      "price_adjusted_from": 63.0,
+      "price_adjusted_to": 60.12,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0113-a25-dotusdt-refuerzo",
@@ -2201,19 +2547,20 @@
       "order": 27,
       "label": "ZEC/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 396.0,
-      "quantity": 4.545454545454546,
+      "entry_price": 376.2,
+      "quantity": 4.784688995215311,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "notes": "ZEC pendiente actualizada por el doctor 2026-06-25: 296. Sustituye 333. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 296.0, precio nuevo 324.0, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 324.0, precio final 324.0. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo ZEC de 324 a 356.4; monto 1,800 USD; cantidad recalculada 5.0505050505 ZEC. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0189: último ajuste confirmado en WhatsApp/Kim; ZEC pendiente queda en 396.0; cantidad recalculada 4.545454545454546; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "notes": "ZEC pendiente actualizada por el doctor 2026-06-25: 296. Sustituye 333. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 296.0, precio nuevo 324.0, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 324.0, precio final 324.0. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo ZEC de 324 a 356.4; monto 1,800 USD; cantidad recalculada 5.0505050505 ZEC. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0189: último ajuste confirmado en WhatsApp/Kim; ZEC pendiente queda en 396.0; cantidad recalculada 4.545454545454546; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 396.0, precio nuevo 376.2, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "credit": true,
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "price_adjusted_from": 356.4,
-      "price_adjusted_to": 396.0,
-      "price_adjusted_at": "2026-07-28T21:40:00+00:00"
+      "price_adjusted_from": 396.0,
+      "price_adjusted_to": 376.2,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0119-a28-wifusdt-pending",
@@ -2222,20 +2569,21 @@
       "order": 28,
       "label": "WIF/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 0.12177,
-      "quantity": 14781.966001478197,
+      "entry_price": 0.11592,
+      "quantity": 15527.950310559007,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_whatsapp_2026_07_21_wif_refuerzo_012177",
-      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 0.1008, precio nuevo 0.109872, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.109872, precio final 0.1107. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo WIF de 0.1107 a 0.12177; monto 1,800 USD; cantidad recalculada 14,781.9660014782 WIF. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 0.1008, precio nuevo 0.109872, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.109872, precio final 0.1107. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo WIF de 0.1107 a 0.12177; monto 1,800 USD; cantidad recalculada 14,781.9660014782 WIF. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.12177, precio nuevo 0.11592, baja 4.80%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "executed_at": "2026-06-25T13:30:26",
       "credit": true,
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "price_adjusted_from": 0.1107,
-      "price_adjusted_to": 0.12177,
-      "price_adjusted_at": "2026-07-21T20:55:07+00:00"
+      "price_adjusted_from": 0.12177,
+      "price_adjusted_to": 0.11592,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0119-a29-xlmusdt-pending",
@@ -2244,13 +2592,17 @@
       "order": 29,
       "label": "XLM/USDT orden pendiente",
       "invested_usd": 1800,
-      "entry_price": 0.1395,
-      "quantity": 12903.225806451612,
+      "entry_price": 0.13284,
+      "quantity": 13550.135501355013,
       "credit_usd": 1800,
       "side": "BUY",
       "source": "kim_0119_doctor_new_pending_orders",
-      "notes": "A29 XLM/USDT nueva orden pendiente a credito completo indicada por el doctor el 2026-06-23: 1800 USD @ 0.1395. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "updated_at": "2026-08-07T11:05:00-06:00"
+      "notes": "A29 XLM/USDT nueva orden pendiente a credito completo indicada por el doctor el 2026-06-23: 1800 USD @ 0.1395. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.1395, precio nuevo 0.13284, baja 4.77%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
+      "price_adjusted_from": 0.1395,
+      "price_adjusted_to": 0.13284,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0126-aaveusdt-pending",
@@ -2259,19 +2611,20 @@
       "order": 31,
       "label": "AAVE/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 81.0,
-      "quantity": 22.22222222222222,
+      "entry_price": 76.95,
+      "quantity": 23.391812865497077,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 63.0, precio nuevo 68.67, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 68.67, precio final 68.67. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0189: último ajuste confirmado en WhatsApp/Kim; AAVE pendiente queda en 81.0; cantidad recalculada 22.22222222222222; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 63.0, precio nuevo 68.67, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 68.67, precio final 68.67. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0189: último ajuste confirmado en WhatsApp/Kim; AAVE pendiente queda en 81.0; cantidad recalculada 22.22222222222222; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 81.0, precio nuevo 76.95, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "price_adjusted_from": 68.67,
-      "price_adjusted_to": 81.0,
-      "price_adjusted_at": "2026-07-28T21:40:00+00:00"
+      "price_adjusted_from": 81.0,
+      "price_adjusted_to": 76.95,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "paper-kpb-20260703194457-269a57",
@@ -2362,15 +2715,19 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 5.481,
-      "quantity": 328.407224958949,
+      "entry_price": 5.211,
+      "quantity": 345.4231433506045,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 6.03, precio nuevo 5.4873, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.4873, precio final 5.481. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 6.03, precio nuevo 5.4873, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.4873, precio final 5.481. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 5.481, precio nuevo 5.211, baja 4.93%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true
+      "requires_manual_fill_confirmation": true,
+      "price_adjusted_from": 5.481,
+      "price_adjusted_to": 5.211,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "paper-kpb-20260703194508-65fd02",
@@ -2481,19 +2838,20 @@
       "order": 40,
       "label": "PENGU/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 0.005382,
-      "quantity": 334448.1605351171,
+      "entry_price": 0.005121,
+      "quantity": 351493.848857645,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. PENGU/USDT nueva orden pendiente por 1,800 USD a 0.00414; cantidad calculada 434782.6086956522. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0189: último ajuste confirmado en WhatsApp/Kim; PENGU pendiente queda en 0.005382; cantidad recalculada 334448.1605351171; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "price_adjusted_from": 0.0045,
-      "price_adjusted_to": 0.005382,
-      "price_adjusted_at": "2026-07-28T21:40:00+00:00"
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. PENGU/USDT nueva orden pendiente por 1,800 USD a 0.00414; cantidad calculada 434782.6086956522. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0189: último ajuste confirmado en WhatsApp/Kim; PENGU pendiente queda en 0.005382; cantidad recalculada 334448.1605351171; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.005382, precio nuevo 0.005121, baja 4.85%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "price_adjusted_from": 0.005382,
+      "price_adjusted_to": 0.005121,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0172-bonkusdt-pending",
@@ -2527,19 +2885,20 @@
       "order": 42,
       "label": "FLOKI/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 1.8e-05,
-      "quantity": 100000000.0,
+      "entry_price": 1.71e-05,
+      "quantity": 105263157.89473684,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
       "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
-      "updated_at": "2026-08-07T11:05:00-06:00",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. FLOKI/USDT nueva orden pendiente por 1,800 USD a 1.53e-05; cantidad calculada 117647058.8235294. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”.",
-      "price_adjusted_from": 1.53e-05,
-      "price_adjusted_to": 1.8e-05,
-      "price_adjusted_at": "2026-07-26T05:02:37+00:00"
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. FLOKI/USDT nueva orden pendiente por 1,800 USD a 1.53e-05; cantidad calculada 117647058.8235294. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.000018, precio nuevo 0.0000171, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "price_adjusted_from": 1.8e-05,
+      "price_adjusted_to": 1.71e-05,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0172-shibusdt-pending",
@@ -2571,20 +2930,24 @@
       "symbol": "LABUSDT",
       "state": "pending",
       "order": 44,
-      "label": "LAB/USDT orden pendiente 0.081",
+      "label": "LAB/USDT orden pendiente fondeada",
       "invested_usd": 1378.01,
-      "entry_price": 0.081,
-      "quantity": 17012.46913580247,
+      "entry_price": 0.07695,
+      "quantity": 17907.862248213125,
       "credit": false,
       "credit_usd": 0.0,
       "side": "BUY",
       "source": "doctor_chat_2026_07_22_sr_eli_lab_0081_from_lab_02025_net_sale",
-      "notes": "KIM-0180: Sr. Eli pidio colocar nueva orden LAB a 0.081 usando el neto disponible de la ultima operacion LAB 0.2025 cerrada por stop. Monto 1,378.01 USD, cantidad 17,012.46913580247 LAB. Orden pendiente fondeada con saldo disponible; no es credito y no esta ejecutada.",
-      "updated_at": "2026-07-22T20:46:15+00:00",
+      "notes": "KIM-0180: Sr. Eli pidio colocar nueva orden LAB a 0.081 usando el neto disponible de la ultima operacion LAB 0.2025 cerrada por stop. Monto 1,378.01 USD, cantidad 17,012.46913580247 LAB. Orden pendiente fondeada con saldo disponible; no es credito y no esta ejecutada. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.081, precio nuevo 0.07695, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "funding_status": "cash_funded_pending_from_lab_02025_net_sale",
       "source_net_sale_order_id": "kim0168-lab-02025-stop-10-sale",
       "source_net_sale_usd": 1378.01,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 0.081,
+      "price_adjusted_to": 0.07695,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "symbol": "HBARUSDT",
@@ -2694,16 +3057,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 1.44,
-      "quantity": 1250.0,
+      "entry_price": 1.368,
+      "quantity": 1315.7894736842106,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_07_30_yesterday_ledger_changes",
-      "notes": "KIM-0197: refuerzo de ICP agregado a órdenes pendientes a 1.44 por 1,800 USD. Pendiente a crédito; no ejecutada; no descuenta saldo disponible hasta ejecución.",
-      "updated_at": "2026-07-30T15:07:20+00:00",
+      "notes": "KIM-0197: refuerzo de ICP agregado a órdenes pendientes a 1.44 por 1,800 USD. Pendiente a crédito; no ejecutada; no descuenta saldo disponible hasta ejecución. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 1.44, precio nuevo 1.368, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 1.44,
+      "price_adjusted_to": 1.368,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0201-beatusdt-audiera-pending-126",
@@ -2713,19 +3080,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 1.62,
-      "quantity": 1111.111111111111,
+      "entry_price": 1.17,
+      "quantity": 1538.4615384615386,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_chat_2026_08_10_beat_audiera_price_162",
-      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 1.26. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0211: precio de compra BEAT/Audiera actualizado de 1.26 a 1.62; monto 1,800 USD; cantidad recalculada 1111.111111111111. Sigue pendiente a credito, no ejecutada.",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 1.26. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0211: precio de compra BEAT/Audiera actualizado de 1.26 a 1.62; monto 1,800 USD; cantidad recalculada 1111.111111111111. Sigue pendiente a credito, no ejecutada. KIM-0213: BEAT/Audiera bajada por decision expresa de Sr. Eli de 1.62 a 1.17; raiz digital 9. Baja 27.78%, excepcion fuera del rango 4.5%-5.5%. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed",
-      "price_adjusted_from": 1.26,
-      "price_adjusted_to": 1.62,
-      "price_adjusted_at": "2026-08-10T10:00:00-06:00"
+      "price_adjusted_from": 1.62,
+      "price_adjusted_to": 1.17,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0199-ondousdt-pending-02205",
@@ -2735,16 +3103,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.2205,
-      "quantity": 8163.265306122449,
+      "entry_price": 0.20952,
+      "quantity": 8591.06529209622,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.2205. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente.",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.2205. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.2205, precio nuevo 0.20952, baja 4.98%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 0.2205,
+      "price_adjusted_to": 0.20952,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0199-ldousdt-pending-02250",
@@ -2754,16 +3126,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.225,
-      "quantity": 8000.0,
+      "entry_price": 0.21375,
+      "quantity": 8421.052631578947,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.225. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente.",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.225. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.225, precio nuevo 0.21375, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 0.225,
+      "price_adjusted_to": 0.21375,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0199-cotiusdt-pending-00072",
@@ -2773,16 +3149,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.0072,
-      "quantity": 250000.0,
+      "entry_price": 0.00684,
+      "quantity": 263157.8947368421,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.0072. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente.",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.0072. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.0072, precio nuevo 0.00684, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 0.0072,
+      "price_adjusted_to": 0.00684,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     },
     {
       "id": "kim0199-goatusdt-pending-000882",
@@ -2792,16 +3172,20 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.00882,
-      "quantity": 204081.63265306124,
+      "entry_price": 0.008379,
+      "quantity": 214822.77121374867,
       "credit": true,
       "credit_usd": 1800.0,
       "source": "doctor_message_2026_08_05_sr_eli_lab_duplicate_correction",
-      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.00882. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente.",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "notes": "KIM-0204: nueva orden pendiente por estar dentro del primer día/ayer; no usar “refuerzo” porque no hay orden previa activa/recompra de esta moneda. Monto 1,800 USD a 0.00882. No ejecutada; no descuenta saldo disponible hasta ejecución confirmada. KIM-0211: por antiguedad ya no usar “nueva orden”; reportar solo como orden pendiente. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.00882, precio nuevo 0.008379, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "updated_at": "2026-08-10T11:15:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed"
+      "execution_status": "pending_not_executed",
+      "price_adjusted_from": 0.00882,
+      "price_adjusted_to": 0.008379,
+      "price_adjusted_at": "2026-08-10T11:15:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
     }
   ],
   "closed_positions": [
@@ -3648,6 +4032,174 @@
         ],
         "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
       }
+    },
+    {
+      "id": "KIM-0213",
+      "timestamp": "2026-08-10T11:15:00-06:00",
+      "summary": "Pendientes bajadas aprox 5% con raiz digital 9.",
+      "accounting_change": false,
+      "pending_adjustments": [
+        {
+          "symbol": "HYPEUSDT",
+          "label": "HYPE",
+          "old_price": 49.5,
+          "new_price": 47.25,
+          "change_pct": 4.55,
+          "amount_usd": 1800.0,
+          "quantity": 38.095238095238095,
+          "credit": true
+        },
+        {
+          "symbol": "SOLUSDT",
+          "label": "SOL refuerzo",
+          "old_price": 63.0,
+          "new_price": 60.12,
+          "change_pct": 4.57,
+          "amount_usd": 1800.0,
+          "quantity": 29.940119760479043,
+          "credit": true
+        },
+        {
+          "symbol": "ZECUSDT",
+          "label": "ZEC",
+          "old_price": 396.0,
+          "new_price": 376.2,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 4.784688995215311,
+          "credit": true
+        },
+        {
+          "symbol": "WIFUSDT",
+          "label": "WIF",
+          "old_price": 0.12177,
+          "new_price": 0.11592,
+          "change_pct": 4.8,
+          "amount_usd": 1800.0,
+          "quantity": 15527.950310559007,
+          "credit": true
+        },
+        {
+          "symbol": "XLMUSDT",
+          "label": "XLM",
+          "old_price": 0.1395,
+          "new_price": 0.13284,
+          "change_pct": 4.77,
+          "amount_usd": 1800.0,
+          "quantity": 13550.135501355013,
+          "credit": true
+        },
+        {
+          "symbol": "AAVEUSDT",
+          "label": "AAVE",
+          "old_price": 81.0,
+          "new_price": 76.95,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 23.391812865497077,
+          "credit": true
+        },
+        {
+          "symbol": "AVAXUSDT",
+          "label": "AVAX",
+          "old_price": 5.481,
+          "new_price": 5.211,
+          "change_pct": 4.93,
+          "amount_usd": 1800.0,
+          "quantity": 345.4231433506045,
+          "credit": true
+        },
+        {
+          "symbol": "PENGUUSDT",
+          "label": "PENGU",
+          "old_price": 0.005382,
+          "new_price": 0.005121,
+          "change_pct": 4.85,
+          "amount_usd": 1800.0,
+          "quantity": 351493.848857645,
+          "credit": true
+        },
+        {
+          "symbol": "FLOKIUSDT",
+          "label": "FLOKI",
+          "old_price": 1.8e-05,
+          "new_price": 1.71e-05,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 105263157.89473684,
+          "credit": true
+        },
+        {
+          "symbol": "LABUSDT",
+          "label": "LAB 0.081",
+          "old_price": 0.081,
+          "new_price": 0.07695,
+          "change_pct": 5.0,
+          "amount_usd": 1378.01,
+          "quantity": 17907.862248213125,
+          "credit": false
+        },
+        {
+          "symbol": "ICPUSDT",
+          "label": "ICP refuerzo",
+          "old_price": 1.44,
+          "new_price": 1.368,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 1315.7894736842106,
+          "credit": true
+        },
+        {
+          "symbol": "BEATUSDT",
+          "label": "BEAT/Audiera",
+          "old_price": 1.62,
+          "new_price": 1.17,
+          "change_pct": 27.78,
+          "amount_usd": 1800.0,
+          "quantity": 1538.4615384615386,
+          "credit": true
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "label": "ONDO",
+          "old_price": 0.2205,
+          "new_price": 0.20952,
+          "change_pct": 4.98,
+          "amount_usd": 1800.0,
+          "quantity": 8591.06529209622,
+          "credit": true
+        },
+        {
+          "symbol": "LDOUSDT",
+          "label": "LDO",
+          "old_price": 0.225,
+          "new_price": 0.21375,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 8421.052631578947,
+          "credit": true
+        },
+        {
+          "symbol": "COTIUSDT",
+          "label": "COTI",
+          "old_price": 0.0072,
+          "new_price": 0.00684,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 263157.8947368421,
+          "credit": true
+        },
+        {
+          "symbol": "GOATUSDT",
+          "label": "GOAT",
+          "old_price": 0.00882,
+          "new_price": 0.008379,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 214822.77121374867,
+          "credit": true
+        }
+      ]
     }
   ],
   "consumed_orders": [
@@ -4064,7 +4616,8 @@
     "KIM-0203: Regla de lenguaje: “refuerzo” solo aplica si existe orden previa/recompra de la misma moneda; si no, usar “orden pendiente”.",
     "KIM-0204: Usar “refuerzo” solo si ya existe orden previa/recompra de la misma moneda.",
     "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”.",
-    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
   ],
   "superseded_facts": [
     {
@@ -6659,6 +7212,174 @@
         ],
         "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
       }
+    },
+    {
+      "id": "KIM-0213",
+      "timestamp": "2026-08-10T11:15:00-06:00",
+      "summary": "Ajuste de pendientes aprox -5% con raiz digital 9; BEAT/Audiera a 1.17.",
+      "accounting_change": false,
+      "pending_adjustments": [
+        {
+          "symbol": "HYPEUSDT",
+          "label": "HYPE",
+          "old_price": 49.5,
+          "new_price": 47.25,
+          "change_pct": 4.55,
+          "amount_usd": 1800.0,
+          "quantity": 38.095238095238095,
+          "credit": true
+        },
+        {
+          "symbol": "SOLUSDT",
+          "label": "SOL refuerzo",
+          "old_price": 63.0,
+          "new_price": 60.12,
+          "change_pct": 4.57,
+          "amount_usd": 1800.0,
+          "quantity": 29.940119760479043,
+          "credit": true
+        },
+        {
+          "symbol": "ZECUSDT",
+          "label": "ZEC",
+          "old_price": 396.0,
+          "new_price": 376.2,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 4.784688995215311,
+          "credit": true
+        },
+        {
+          "symbol": "WIFUSDT",
+          "label": "WIF",
+          "old_price": 0.12177,
+          "new_price": 0.11592,
+          "change_pct": 4.8,
+          "amount_usd": 1800.0,
+          "quantity": 15527.950310559007,
+          "credit": true
+        },
+        {
+          "symbol": "XLMUSDT",
+          "label": "XLM",
+          "old_price": 0.1395,
+          "new_price": 0.13284,
+          "change_pct": 4.77,
+          "amount_usd": 1800.0,
+          "quantity": 13550.135501355013,
+          "credit": true
+        },
+        {
+          "symbol": "AAVEUSDT",
+          "label": "AAVE",
+          "old_price": 81.0,
+          "new_price": 76.95,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 23.391812865497077,
+          "credit": true
+        },
+        {
+          "symbol": "AVAXUSDT",
+          "label": "AVAX",
+          "old_price": 5.481,
+          "new_price": 5.211,
+          "change_pct": 4.93,
+          "amount_usd": 1800.0,
+          "quantity": 345.4231433506045,
+          "credit": true
+        },
+        {
+          "symbol": "PENGUUSDT",
+          "label": "PENGU",
+          "old_price": 0.005382,
+          "new_price": 0.005121,
+          "change_pct": 4.85,
+          "amount_usd": 1800.0,
+          "quantity": 351493.848857645,
+          "credit": true
+        },
+        {
+          "symbol": "FLOKIUSDT",
+          "label": "FLOKI",
+          "old_price": 1.8e-05,
+          "new_price": 1.71e-05,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 105263157.89473684,
+          "credit": true
+        },
+        {
+          "symbol": "LABUSDT",
+          "label": "LAB 0.081",
+          "old_price": 0.081,
+          "new_price": 0.07695,
+          "change_pct": 5.0,
+          "amount_usd": 1378.01,
+          "quantity": 17907.862248213125,
+          "credit": false
+        },
+        {
+          "symbol": "ICPUSDT",
+          "label": "ICP refuerzo",
+          "old_price": 1.44,
+          "new_price": 1.368,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 1315.7894736842106,
+          "credit": true
+        },
+        {
+          "symbol": "BEATUSDT",
+          "label": "BEAT/Audiera",
+          "old_price": 1.62,
+          "new_price": 1.17,
+          "change_pct": 27.78,
+          "amount_usd": 1800.0,
+          "quantity": 1538.4615384615386,
+          "credit": true
+        },
+        {
+          "symbol": "ONDOUSDT",
+          "label": "ONDO",
+          "old_price": 0.2205,
+          "new_price": 0.20952,
+          "change_pct": 4.98,
+          "amount_usd": 1800.0,
+          "quantity": 8591.06529209622,
+          "credit": true
+        },
+        {
+          "symbol": "LDOUSDT",
+          "label": "LDO",
+          "old_price": 0.225,
+          "new_price": 0.21375,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 8421.052631578947,
+          "credit": true
+        },
+        {
+          "symbol": "COTIUSDT",
+          "label": "COTI",
+          "old_price": 0.0072,
+          "new_price": 0.00684,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 263157.8947368421,
+          "credit": true
+        },
+        {
+          "symbol": "GOATUSDT",
+          "label": "GOAT",
+          "old_price": 0.00882,
+          "new_price": 0.008379,
+          "change_pct": 5.0,
+          "amount_usd": 1800.0,
+          "quantity": 214822.77121374867,
+          "credit": true
+        }
+      ]
     }
   ],
   "cancelled_orders": [
@@ -6707,7 +7428,8 @@
     "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
     "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
     "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable.",
-    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
   ],
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -6718,6 +7440,7 @@
     "KIM-0209: BONK/USDT se confirma comprada por 1,800 USD a 0.00000263 y se descuenta del saldo disponible. Tambien se cubre con saldo disponible el credito comprado previo neto por 4,285.90 USD. Saldo disponible final 4,373.14 USD; credito comprado por cubrir 0.00 USD; credito pendiente por ejecutar 27,000 USD.",
     "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
     "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable.",
-    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
+    "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones."
   ]
 }
