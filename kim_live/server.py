@@ -14966,7 +14966,7 @@ PORTFOLIO_MANUAL_SENSITIVE_ACTIONS = {
 }
 PORTFOLIO_CONFIRMABLE_ACTIONS = PORTFOLIO_SALE_ACTIONS | PORTFOLIO_EXECUTION_ACTIONS | PORTFOLIO_ACCOUNTING_ACTIONS | PORTFOLIO_MANUAL_SENSITIVE_ACTIONS
 PORTFOLIO_CLOSED_STATES = {"closed", "sold", "void", "cancelled", "canceled", "inactive", "cerrada", "vendida", "anulada"}
-PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0211"
+PORTFOLIO_CURRENT_STANDARD_VERSION = "KIM-0212"
 
 
 def portfolio_float(value, default=None):
@@ -20736,6 +20736,7 @@ def portfolio_fundamental_report_standard():
         "required_sections": [
             "Resumen ejecutivo",
             "Estado cuantitativo del Portafolio A",
+            "Cambios significativos de volumen y divergencias precio/volumen",
             "Catalizadores internacionales y seguimiento de noticias",
             "Reserva Federal, tasas y liquidez",
             "Oportunidades populares en mercados",
@@ -20763,6 +20764,7 @@ def portfolio_fundamental_report_standard():
             "Identificar tendencia y efecto probable sobre mercado: risk-on, risk-off, liquidez, dolar, tasas, commodities, flujos institucionales o rotacion sectorial.",
             "No repetir todos los dias un tema de Fed, tasas, fecha macro o geopolitica si no hay avance real o proximidad de fecha; solo mencionarlo cuando afecte la tendencia o se acerque una decision relevante.",
             "No listar moneda por moneda. Mencionar activos del portafolio solo cuando exista catalizador fresco y material.",
+            "En analisis tecnico, no listar moneda por moneda salvo que exista cambio significativo de volumen o divergencia precio/volumen material.",
             "Evitar frases genericas como 'sin catalizadores robustos' por activo; si no hay noticia material, condensarlo en una sola frase editorial.",
             "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
             "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
@@ -20778,6 +20780,41 @@ def portfolio_fundamental_report_standard():
                 "GDELT DOC/Event APIs for media-volume and topic-spike detection; use as alert signal, not as final truth.",
                 "Trading Economics economic calendar API if key is configured; otherwise official Fed/BLS/BEA/EIA calendars.",
             ],
+        },
+        "technical_volume_protocol": {
+            "purpose": "Detectar acumulacion, distribucion o ruptura probable cuando el volumen cambia mas que el precio.",
+            "whatsapp_shape": "Enviar como mensaje separado de WhatsApp, maximo 1-2 mensajes, despues del portafolio o del analisis tecnico.",
+            "assets_scope": "Revisar posiciones activas y ordenes pendientes del portafolio; reportar solo activos con cambio significativo de volumen o divergencia material.",
+            "primary_metric": "Volumen tradeado de mercado en spot, preferentemente notional USDT de la vela diaria. Si solo hay volumen base, convertir a USDT con precio medio aproximado.",
+            "secondary_metrics": [
+                "Volumen de hoy vs volumen de ayer.",
+                "Cambio porcentual de volumen hoy vs ayer.",
+                "Cambio porcentual de precio hoy vs ayer.",
+                "Volumen relativo contra promedio 20 dias cuando exista OHLCV suficiente.",
+                "OBV o acumulacion/distribucion solo como confirmacion secundaria, no como disparador unico.",
+                "Open interest solo para futuros/perpetuos si se consulta derivados; no mezclarlo con spot sin aclararlo.",
+            ],
+            "report_fields": [
+                "Activo",
+                "Volumen ayer",
+                "Volumen hoy",
+                "Cambio volumen %",
+                "Cambio precio %",
+                "Lectura: acumulacion, distribucion, absorcion, ruptura probable o sin senal clara",
+            ],
+            "significance_thresholds": [
+                "Alerta fuerte: volumen hoy >= 1.8x volumen ayer o >= 2.0x promedio 20 dias.",
+                "Alerta media: volumen hoy >= 1.3x volumen ayer con precio moviendose menos de 3%.",
+                "Ignorar ruido: volumen cambia menos de 30% y precio cambia menos de 2%, salvo que sea activo iliquido o cerca de entrada/stop.",
+            ],
+            "divergence_rules": [
+                "Volumen sube fuerte y precio casi no cambia: posible acumulacion o distribucion/absorcion; confirmar direccion con cierre cerca del maximo/minimo, OBV, soporte/resistencia y siguiente vela.",
+                "Volumen sube fuerte y precio sube: breakout/momentum si cierra arriba de resistencia; riesgo de clímax si ya venia extendido.",
+                "Volumen sube fuerte y precio baja: distribucion o capitulacion; distinguir por rechazo en soporte y cierre de vela.",
+                "Precio sube con volumen debil: rebote fragil, menor confirmacion.",
+                "Precio cae con volumen debil: caida sin conviccion, posible pullback si soporte aguanta.",
+            ],
+            "client_language": "Evitar afirmar 'va a explotar'. Usar: 'hay divergencia compatible con acumulacion/absorcion; requiere confirmacion con ruptura y cierre'.",
         },
         "alert_rules": [
             "Escalar de inmediato si hay declaracion de guerra, ataque confirmado, cierre/bloqueo de estrecho, ruptura de negociaciones, sancion energetica material o movimiento de crudo >3% intradia.",

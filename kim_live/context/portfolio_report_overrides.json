@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0211",
+  "standard_version": "KIM-0212",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable.",
+  "standard_note": "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0211",
-      "updated_at": "2026-08-10T10:00:00-06:00",
+      "version": "KIM-0212",
+      "updated_at": "2026-08-10T10:20:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -764,7 +764,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0211: BEAT/Audiera pendiente actualizado a 1.62; ordenes del 06-ago ya no usan “nueva orden”.",
+      "latest_format_note": "KIM-0212: reporte tecnico puede incluir mensaje adicional “Análisis volumétrico” con volumen ayer vs hoy parcial.",
       "visible_order_count": 33,
       "section_count_validation": {
         "covered_orders": 17,
@@ -1140,7 +1140,32 @@
         "ZECUSDT"
       ],
       "beat_audiera_pending_price": 1.62,
-      "beat_audiera_pending_quantity": 1111.111111111111
+      "beat_audiera_pending_quantity": 1111.111111111111,
+      "technical_volume_protocol": {
+        "section_name": "Análisis volumétrico",
+        "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
+        "scope": "Revisar todas las posiciones activas y ordenes pendientes visibles del portafolio. Si hay duplicados de simbolo, puede repetirse por linea o agruparse aclarando que el volumen es por activo.",
+        "primary_metric": "Volumen tradeado de mercado spot en USDT/notional: ayer completo vs hoy parcial. No usar volumen de holding propio como proxy de acumulacion.",
+        "fields": [
+          "Activo",
+          "Volumen ayer",
+          "Volumen hoy",
+          "Fuente",
+          "Opcional: cambio de volumen % y cambio de precio %"
+        ],
+        "divergence_rule": "Si volumen sube fuerte y precio cambia poco, reportar posible acumulacion/absorcion/distribucion y pedir confirmacion con ruptura/cierre; no prometer explosion.",
+        "thresholds": {
+          "medium": "volumen hoy >= 1.3x ayer con precio moviendose <3%",
+          "strong": "volumen hoy >= 1.8x ayer o >=2x promedio 20 dias",
+          "ignore": "volumen cambia <30% y precio <2% salvo cercania a entrada/stop"
+        },
+        "provider_order": [
+          "binance",
+          "mexc",
+          "kucoin"
+        ],
+        "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
+      }
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1690,9 +1715,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 20408.16326530612,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0211",
-      "updated_at": "2026-08-10T10:00:00-06:00",
-      "note": "BEAT/Audiera pendiente a 1.62; todas las ordenes del 06-ago ya se muestran como orden pendiente, no nueva orden.",
+      "id": "KIM-0212",
+      "updated_at": "2026-08-10T10:20:00-06:00",
+      "note": "Se agrega Analisis volumetrico al protocolo: volumen tradeado ayer vs hoy parcial, mensaje WhatsApp adicional.",
       "client_total_net_considered_usd": 56905.15,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1709,7 +1734,8 @@
       "available_balance_applied_to_bonk_execution_usd": 1800.0,
       "pending_order_age_language_rule": "new_order_label_max_age_days=2",
       "beat_audiera_pending_price": 1.62,
-      "beat_audiera_pending_quantity": 1111.111111111111
+      "beat_audiera_pending_quantity": 1111.111111111111,
+      "technical_volume_protocol": "active"
     }
   },
   "manual_entries": [
@@ -3090,7 +3116,8 @@
     "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
     "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
     "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
-    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
+    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable.",
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
   ],
   "fundamental_report_standard": {
     "client_style": "Texto editorial corrido, sobrio e intelectual, como economista profesional de mesa. Debe sonar a informe macrofinanciero, no a lista de cripto ni checklist operativo.",
@@ -3104,6 +3131,7 @@
     "required_sections": [
       "Resumen ejecutivo",
       "Estado cuantitativo del Portafolio A",
+      "Cambios significativos de volumen y divergencias precio/volumen",
       "Catalizadores internacionales y seguimiento de noticias",
       "Reserva Federal, tasas y liquidez",
       "Oportunidades populares en mercados",
@@ -3122,8 +3150,35 @@
       "Evitar frases genericas como 'sin catalizadores robustos' por activo; si no hay noticia material, condensarlo en una sola frase editorial.",
       "Distinguir hechos verificados, inferencias de Kim y puntos pendientes de validacion.",
       "Nunca describir ordenes pendientes como posiciones activas; su distancia contra entrada no es P/L ni ganancia.",
-      "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos."
-    ]
+      "Priorizar fuentes primarias o reconocidas: exchanges, proyectos oficiales, reguladores, bancos centrales, medios financieros reputados y agregadores de mercado conocidos.",
+      "En analisis tecnico/volumetrico, usar volumen tradeado de mercado en USDT/notional; no usar volumen de holding propio para inferir acumulacion.",
+      "El mensaje “Análisis volumétrico” debe listar volumen ayer y volumen hoy parcial para todas las posiciones/pedientes solicitadas; divergencias son inferencias, no garantia direccional."
+    ],
+    "technical_volume_protocol": {
+      "section_name": "Análisis volumétrico",
+      "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
+      "scope": "Revisar todas las posiciones activas y ordenes pendientes visibles del portafolio. Si hay duplicados de simbolo, puede repetirse por linea o agruparse aclarando que el volumen es por activo.",
+      "primary_metric": "Volumen tradeado de mercado spot en USDT/notional: ayer completo vs hoy parcial. No usar volumen de holding propio como proxy de acumulacion.",
+      "fields": [
+        "Activo",
+        "Volumen ayer",
+        "Volumen hoy",
+        "Fuente",
+        "Opcional: cambio de volumen % y cambio de precio %"
+      ],
+      "divergence_rule": "Si volumen sube fuerte y precio cambia poco, reportar posible acumulacion/absorcion/distribucion y pedir confirmacion con ruptura/cierre; no prometer explosion.",
+      "thresholds": {
+        "medium": "volumen hoy >= 1.3x ayer con precio moviendose <3%",
+        "strong": "volumen hoy >= 1.8x ayer o >=2x promedio 20 dias",
+        "ignore": "volumen cambia <30% y precio <2% salvo cercania a entrada/stop"
+      },
+      "provider_order": [
+        "binance",
+        "mexc",
+        "kucoin"
+      ],
+      "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
+    }
   },
   "presentation": {
     "sort_mode": "loss_to_gain",
@@ -3562,6 +3617,37 @@
         "LDOUSDT",
         "ONDOUSDT"
       ]
+    },
+    {
+      "version": "KIM-0212",
+      "date": "2026-08-10",
+      "summary": "Agrega protocolo de analisis volumetrico al reporte tecnico/WhatsApp.",
+      "accounting_change": false,
+      "technical_volume_protocol": {
+        "section_name": "Análisis volumétrico",
+        "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
+        "scope": "Revisar todas las posiciones activas y ordenes pendientes visibles del portafolio. Si hay duplicados de simbolo, puede repetirse por linea o agruparse aclarando que el volumen es por activo.",
+        "primary_metric": "Volumen tradeado de mercado spot en USDT/notional: ayer completo vs hoy parcial. No usar volumen de holding propio como proxy de acumulacion.",
+        "fields": [
+          "Activo",
+          "Volumen ayer",
+          "Volumen hoy",
+          "Fuente",
+          "Opcional: cambio de volumen % y cambio de precio %"
+        ],
+        "divergence_rule": "Si volumen sube fuerte y precio cambia poco, reportar posible acumulacion/absorcion/distribucion y pedir confirmacion con ruptura/cierre; no prometer explosion.",
+        "thresholds": {
+          "medium": "volumen hoy >= 1.3x ayer con precio moviendose <3%",
+          "strong": "volumen hoy >= 1.8x ayer o >=2x promedio 20 dias",
+          "ignore": "volumen cambia <30% y precio <2% salvo cercania a entrada/stop"
+        },
+        "provider_order": [
+          "binance",
+          "mexc",
+          "kucoin"
+        ],
+        "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
+      }
     }
   ],
   "consumed_orders": [
@@ -3977,7 +4063,8 @@
     "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
     "KIM-0203: Regla de lenguaje: “refuerzo” solo aplica si existe orden previa/recompra de la misma moneda; si no, usar “orden pendiente”.",
     "KIM-0204: Usar “refuerzo” solo si ya existe orden previa/recompra de la misma moneda.",
-    "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”."
+    "KIM-0204: Usar “nueva orden” solo si se colocó ayer o hace un día; después usar solo “orden pendiente”.",
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
   ],
   "superseded_facts": [
     {
@@ -6541,6 +6628,37 @@
         "LDOUSDT",
         "ONDOUSDT"
       ]
+    },
+    {
+      "id": "KIM-0212",
+      "timestamp": "2026-08-10T10:20:00-06:00",
+      "summary": "Protocolo de analisis volumetrico agregado.",
+      "accounting_change": false,
+      "technical_volume_protocol": {
+        "section_name": "Análisis volumétrico",
+        "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
+        "scope": "Revisar todas las posiciones activas y ordenes pendientes visibles del portafolio. Si hay duplicados de simbolo, puede repetirse por linea o agruparse aclarando que el volumen es por activo.",
+        "primary_metric": "Volumen tradeado de mercado spot en USDT/notional: ayer completo vs hoy parcial. No usar volumen de holding propio como proxy de acumulacion.",
+        "fields": [
+          "Activo",
+          "Volumen ayer",
+          "Volumen hoy",
+          "Fuente",
+          "Opcional: cambio de volumen % y cambio de precio %"
+        ],
+        "divergence_rule": "Si volumen sube fuerte y precio cambia poco, reportar posible acumulacion/absorcion/distribucion y pedir confirmacion con ruptura/cierre; no prometer explosion.",
+        "thresholds": {
+          "medium": "volumen hoy >= 1.3x ayer con precio moviendose <3%",
+          "strong": "volumen hoy >= 1.8x ayer o >=2x promedio 20 dias",
+          "ignore": "volumen cambia <30% y precio <2% salvo cercania a entrada/stop"
+        },
+        "provider_order": [
+          "binance",
+          "mexc",
+          "kucoin"
+        ],
+        "client_language": "Usar lenguaje breve: Volumen ayer / hoy parcial. Evitar sobreinterpretar si la vela de hoy no ha cerrado."
+      }
     }
   ],
   "cancelled_orders": [
@@ -6588,7 +6706,8 @@
     "KIM-0201: corrección de moneda Audiera. La orden no es AUDIO; se reemplaza por BEAT/USDT (Audiera) a 1.26 por 1,800 USD. Queda pendiente a crédito, no ejecutada. AUDIOUSDT se suprime del reporte por registro erróneo/paper broker anterior. Saldo disponible sigue 0.00 USD; crédito pendiente por ejecutar se mantiene en 28,800 USD.",
     "KIM-0202: corrección de formato. Las cinco órdenes nuevas no son refuerzos; se renombran como nuevas órdenes pendientes: COTI, GOAT, ONDO, LDO y BEAT/Audiera. Sin cambio contable: saldo disponible 0.00 USD; crédito pendiente por ejecutar 28,800 USD.",
     "KIM-0203: regla de lenguaje registrada. Usar “refuerzo” solo cuando ya existe una orden previa/recompra de la misma moneda; si no, llamar “orden pendiente”. COTI, GOAT, ONDO, LDO y BEAT/Audiera quedan como orden pendiente, sin “refuerzo”. Sin cambio contable.",
-    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable."
+    "KIM-0204: regla de lenguaje completa. “Refuerzo” solo si ya hay orden previa/recompra; “nueva orden” si se colocó ayer o hace un día; después usar “orden pendiente”. Para este primer día, COTI, GOAT, ONDO, LDO y BEAT/Audiera se reportan como nuevas órdenes pendientes, sin “refuerzo”. Sin cambio contable.",
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
   ],
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -6598,6 +6717,7 @@
     "KIM-0208: politica final de movimientos cliente: no cobrar comision sobre depositos/fondeos; solo se cobra 1.2% al retiro. Esto promueve depositos. Sin cambios en ordenes.",
     "KIM-0209: BONK/USDT se confirma comprada por 1,800 USD a 0.00000263 y se descuenta del saldo disponible. Tambien se cubre con saldo disponible el credito comprado previo neto por 4,285.90 USD. Saldo disponible final 4,373.14 USD; credito comprado por cubrir 0.00 USD; credito pendiente por ejecutar 27,000 USD.",
     "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
-    "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable."
+    "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable.",
+    "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique."
   ]
 }
