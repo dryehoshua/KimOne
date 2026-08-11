@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0218",
-  "updated_at": "2026-08-11T09:00:00-06:00",
-  "standard_note": "KIM-0218: Sr. Eli pide reconsiderar Audiera/BEAT. Se agrega BEAT/USDT como orden pendiente a credito: 1,800 USD a 0.63, cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Saldo disponible permanece 4,373.14 USD. Credito pendiente por ejecutar sube a 32,400 USD. El reporte debe conservar Analisis volumetrico como seccion final/mensaje separado.",
+  "standard_version": "KIM-0219",
+  "updated_at": "2026-08-11T09:35:00-06:00",
+  "standard_note": "KIM-0219: Se bajan solo ordenes pendientes HYPE, WIF, XLM, AAVE, AVAX y FLOKI aprox. 5%, conservando raiz digital 9. No hay ejecuciones y no cambia saldo disponible ni credito total.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0218",
-      "updated_at": "2026-08-11T09:00:00-06:00",
+      "version": "KIM-0219",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -776,7 +776,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0218: BEAT/Audiera 1,800 @0.63 queda pendiente a credito, no ejecutada. Reporte con Analisis volumetrico al final.",
+      "latest_format_note": "KIM-0219: HYPE, WIF, XLM, AAVE, AVAX y FLOKI pendientes bajadas aprox. 5% con raiz digital 9; sin ejecuciones.",
       "visible_order_count": 35,
       "section_count_validation": {
         "covered_orders": 17,
@@ -1199,12 +1199,13 @@
         {
           "symbol": "HYPEUSDT",
           "label": "HYPE",
-          "old_price": 49.5,
-          "new_price": 47.25,
-          "change_pct": 4.55,
+          "old_price": 47.25,
+          "new_price": 44.91,
+          "change_pct": 4.95,
           "amount_usd": 1800.0,
-          "quantity": 38.095238095238095,
-          "credit": true
+          "quantity": 40.08016032064128,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "SOLUSDT",
@@ -1229,42 +1230,46 @@
         {
           "symbol": "WIFUSDT",
           "label": "WIF",
-          "old_price": 0.12177,
-          "new_price": 0.11592,
-          "change_pct": 4.8,
+          "old_price": 0.11592,
+          "new_price": 0.11016,
+          "change_pct": 4.97,
           "amount_usd": 1800.0,
-          "quantity": 15527.950310559007,
-          "credit": true
+          "quantity": 16339.869281045752,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "XLMUSDT",
           "label": "XLM",
-          "old_price": 0.1395,
-          "new_price": 0.13284,
-          "change_pct": 4.77,
+          "old_price": 0.13284,
+          "new_price": 0.12618,
+          "change_pct": 5.01,
           "amount_usd": 1800.0,
-          "quantity": 13550.135501355013,
-          "credit": true
+          "quantity": 14265.335235378034,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "AAVEUSDT",
           "label": "AAVE",
-          "old_price": 81.0,
-          "new_price": 76.95,
-          "change_pct": 5.0,
+          "old_price": 76.95,
+          "new_price": 73.08,
+          "change_pct": 5.03,
           "amount_usd": 1800.0,
-          "quantity": 23.391812865497077,
-          "credit": true
+          "quantity": 24.63054187192118,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "AVAXUSDT",
           "label": "AVAX",
-          "old_price": 5.481,
-          "new_price": 5.211,
-          "change_pct": 4.93,
+          "old_price": 5.211,
+          "new_price": 4.95,
+          "change_pct": 5.01,
           "amount_usd": 1800.0,
-          "quantity": 345.4231433506045,
-          "credit": true
+          "quantity": 363.6363636363636,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "PENGUUSDT",
@@ -1279,12 +1284,13 @@
         {
           "symbol": "FLOKIUSDT",
           "label": "FLOKI",
-          "old_price": 1.8e-05,
-          "new_price": 1.71e-05,
-          "change_pct": 5.0,
+          "old_price": 1.71e-05,
+          "new_price": 1.62e-05,
+          "change_pct": 5.26,
           "amount_usd": 1800.0,
-          "quantity": 105263157.89473684,
-          "credit": true
+          "quantity": 111111111.1111111,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "LABUSDT",
@@ -1940,9 +1946,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0218",
-      "updated_at": "2026-08-11T09:00:00-06:00",
-      "note": "BEAT/Audiera nueva orden pendiente a credito 1,800 @0.63; no comprada. Saldo disponible 4,373.14; credito pendiente 32,400.",
+      "id": "KIM-0219",
+      "updated_at": "2026-08-11T09:35:00-06:00",
+      "note": "Pendientes HYPE/WIF/XLM/AAVE/AVAX/FLOKI ajustadas aprox. 5% con raiz digital 9; sin cambio de saldo.",
       "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1965,12 +1971,13 @@
         {
           "symbol": "HYPEUSDT",
           "label": "HYPE",
-          "old_price": 49.5,
-          "new_price": 47.25,
-          "change_pct": 4.55,
+          "old_price": 47.25,
+          "new_price": 44.91,
+          "change_pct": 4.95,
           "amount_usd": 1800.0,
-          "quantity": 38.095238095238095,
-          "credit": true
+          "quantity": 40.08016032064128,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "SOLUSDT",
@@ -1995,42 +2002,46 @@
         {
           "symbol": "WIFUSDT",
           "label": "WIF",
-          "old_price": 0.12177,
-          "new_price": 0.11592,
-          "change_pct": 4.8,
+          "old_price": 0.11592,
+          "new_price": 0.11016,
+          "change_pct": 4.97,
           "amount_usd": 1800.0,
-          "quantity": 15527.950310559007,
-          "credit": true
+          "quantity": 16339.869281045752,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "XLMUSDT",
           "label": "XLM",
-          "old_price": 0.1395,
-          "new_price": 0.13284,
-          "change_pct": 4.77,
+          "old_price": 0.13284,
+          "new_price": 0.12618,
+          "change_pct": 5.01,
           "amount_usd": 1800.0,
-          "quantity": 13550.135501355013,
-          "credit": true
+          "quantity": 14265.335235378034,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "AAVEUSDT",
           "label": "AAVE",
-          "old_price": 81.0,
-          "new_price": 76.95,
-          "change_pct": 5.0,
+          "old_price": 76.95,
+          "new_price": 73.08,
+          "change_pct": 5.03,
           "amount_usd": 1800.0,
-          "quantity": 23.391812865497077,
-          "credit": true
+          "quantity": 24.63054187192118,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "AVAXUSDT",
           "label": "AVAX",
-          "old_price": 5.481,
-          "new_price": 5.211,
-          "change_pct": 4.93,
+          "old_price": 5.211,
+          "new_price": 4.95,
+          "change_pct": 5.01,
           "amount_usd": 1800.0,
-          "quantity": 345.4231433506045,
-          "credit": true
+          "quantity": 363.6363636363636,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "PENGUUSDT",
@@ -2045,12 +2056,13 @@
         {
           "symbol": "FLOKIUSDT",
           "label": "FLOKI",
-          "old_price": 1.8e-05,
-          "new_price": 1.71e-05,
-          "change_pct": 5.0,
+          "old_price": 1.71e-05,
+          "new_price": 1.62e-05,
+          "change_pct": 5.26,
           "amount_usd": 1800.0,
-          "quantity": 105263157.89473684,
-          "credit": true
+          "quantity": 111111111.1111111,
+          "credit": true,
+          "version": "KIM-0219"
         },
         {
           "symbol": "LABUSDT",
@@ -2153,7 +2165,7 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0218: BEAT/Audiera 1,800 @0.63 queda pendiente a credito, no ejecutada. Reporte con Analisis volumetrico al final.",
+      "latest_format_note": "KIM-0219: HYPE, WIF, XLM, AAVE, AVAX y FLOKI pendientes bajadas aprox. 5% con raiz digital 9; sin ejecuciones.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
@@ -2534,19 +2546,21 @@
       "side": "BUY",
       "label": "HYPE/USDT pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 47.25,
+      "entry_price": 44.91,
       "credit_usd": 1800.0,
-      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 45.0, precio nuevo 49.5, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 49.5, precio final 49.5. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 49.5, precio nuevo 47.25, baja 4.55%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "quantity": 38.095238095238095,
-      "source": "doctor_explicit_pending_price_adjustment_2026_06_25",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "notes": "Ajuste doctor 2026-06-25: bajar orden pendiente HYPE a 45. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9%+ aprox por segula/raiz digital 9); precio anterior 45.0, precio nuevo 49.5, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 49.5, precio final 49.5. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 49.5, precio nuevo 47.25, baja 4.55%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 47.25 a 44.91 (4.95% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
+      "quantity": 40.08016032064128,
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "credit": true,
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "price_adjusted_from": 49.5,
       "price_adjusted_to": 47.25,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "order": 23,
@@ -2656,13 +2670,13 @@
       "order": 28,
       "label": "WIF/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 0.11592,
-      "quantity": 15527.950310559007,
+      "entry_price": 0.11016,
+      "quantity": 16339.869281045752,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_whatsapp_2026_07_21_wif_refuerzo_012177",
-      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 0.1008, precio nuevo 0.109872, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.109872, precio final 0.1107. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo WIF de 0.1107 a 0.12177; monto 1,800 USD; cantidad recalculada 14,781.9660014782 WIF. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.12177, precio nuevo 0.11592, baja 4.80%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "notes": "Correccion doctor 2026-06-25: WIF pendiente es 0.1008, no 10.08. Debe permanecer pendiente hasta ejecucion validada. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 0.1008, precio nuevo 0.109872, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 0.109872, precio final 0.1107. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0178: mensaje WhatsApp doctor 2026-07-21: Refuerzo WIF de 0.1107 a 0.12177; monto 1,800 USD; cantidad recalculada 14,781.9660014782 WIF. Sigue pendiente a credito; no ejecutar sin confirmacion real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.12177, precio nuevo 0.11592, baja 4.80%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 0.11592 a 0.11016 (4.97% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "executed_at": "2026-06-25T13:30:26",
       "credit": true,
       "no_auto_fill": true,
@@ -2670,7 +2684,9 @@
       "price_adjusted_from": 0.12177,
       "price_adjusted_to": 0.11592,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "id": "kim0119-a29-xlmusdt-pending",
@@ -2678,18 +2694,20 @@
       "state": "pending",
       "order": 29,
       "label": "XLM/USDT orden pendiente",
-      "invested_usd": 1800,
-      "entry_price": 0.13284,
-      "quantity": 13550.135501355013,
-      "credit_usd": 1800,
+      "invested_usd": 1800.0,
+      "entry_price": 0.12618,
+      "quantity": 14265.335235378034,
+      "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "kim_0119_doctor_new_pending_orders",
-      "notes": "A29 XLM/USDT nueva orden pendiente a credito completo indicada por el doctor el 2026-06-23: 1800 USD @ 0.1395. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.1395, precio nuevo 0.13284, baja 4.77%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "notes": "A29 XLM/USDT nueva orden pendiente a credito completo indicada por el doctor el 2026-06-23: 1800 USD @ 0.1395. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.1395, precio nuevo 0.13284, baja 4.77%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 0.13284 a 0.12618 (5.01% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "price_adjusted_from": 0.1395,
       "price_adjusted_to": 0.13284,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "id": "kim0126-aaveusdt-pending",
@@ -2698,20 +2716,22 @@
       "order": 31,
       "label": "AAVE/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 76.95,
-      "quantity": 23.391812865497077,
+      "entry_price": 73.08,
+      "quantity": 24.63054187192118,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_whatsapp_kim_2026_07_28_latest_prices_and_executions",
-      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 63.0, precio nuevo 68.67, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 68.67, precio final 68.67. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0189: último ajuste confirmado en WhatsApp/Kim; AAVE pendiente queda en 81.0; cantidad recalculada 22.22222222222222; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 81.0, precio nuevo 76.95, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "notes": "Nueva orden pendiente indicada por el doctor el 2026-06-26: AAVE/USDT 1800 USD @ 63, a credito completo. Debe aparecer despues de LAB en vista cliente como A26 mientras no existan nuevas lineas previas. KIM-0147: ajuste autorizado por Dr. Yehoshua (sube 9% aprox por segula/raiz digital 9); precio anterior 63.0, precio nuevo 68.67, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 68.67, precio final 68.67. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0189: último ajuste confirmado en WhatsApp/Kim; AAVE pendiente queda en 81.0; cantidad recalculada 22.22222222222222; sigue pendiente a crédito, no ejecutada. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 81.0, precio nuevo 76.95, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 76.95 a 73.08 (5.03% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "price_adjusted_from": 81.0,
       "price_adjusted_to": 76.95,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "id": "paper-kpb-20260703194457-269a57",
@@ -2802,19 +2822,21 @@
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 5.211,
-      "quantity": 345.4231433506045,
+      "entry_price": 4.95,
+      "quantity": 363.6363636363636,
       "credit": true,
       "credit_usd": 1800.0,
-      "source": "kim_paper_broker",
-      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 6.03, precio nuevo 5.4873, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.4873, precio final 5.481. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 5.481, precio nuevo 5.211, baja 4.93%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "notes": "Nueva orden de refuerzo para AVAX a 6.03 Sincronizada desde Kim Paper Broker KPB-20260703194506-687D17 (place_order) el 2026-07-03T13:45:06. Esta linea alimenta el reporte WhatsApp; no debe quedarse solo en paper_orders.json. KIM-0144: refuerzo separado pendiente a credito; no sustituye la orden base y no debe autoejecutarse sin confirmacion real del doctor. KIM-0147: ajuste autorizado por Dr. Yehoshua (baja 9% aprox por segula/raiz digital 9); precio anterior 6.03, precio nuevo 5.4873, raíz digital 9. KIM-0148: precio final recibido por WhatsApp del doctor/Sr Eli; precio anterior 5.4873, precio final 5.481. Cualquier ajuste posterior queda sujeto a nueva instruccion. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 5.481, precio nuevo 5.211, baja 4.93%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 5.211 a 4.95 (5.01% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "price_adjusted_from": 5.481,
       "price_adjusted_to": 5.211,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "id": "paper-kpb-20260703194508-65fd02",
@@ -3014,20 +3036,22 @@
       "order": 42,
       "label": "FLOKI/USDT orden pendiente",
       "invested_usd": 1800.0,
-      "entry_price": 1.71e-05,
-      "quantity": 105263157.89473684,
+      "entry_price": 1.62e-05,
+      "quantity": 111111111.1111111,
       "credit": true,
       "credit_usd": 1800.0,
       "side": "BUY",
-      "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
-      "updated_at": "2026-08-10T11:15:00-06:00",
+      "source": "doctor_instruction_2026_08_11_pending_orders_down_5_root9",
+      "updated_at": "2026-08-11T09:35:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
-      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. FLOKI/USDT nueva orden pendiente por 1,800 USD a 1.53e-05; cantidad calculada 117647058.8235294. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.000018, precio nuevo 0.0000171, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo.",
+      "notes": "KIM-0172: nueva orden pendiente a crédito indicada por el doctor. FLOKI/USDT nueva orden pendiente por 1,800 USD a 1.53e-05; cantidad calculada 117647058.8235294. Ignorar precio actual informado en chat; usar solo precio sugerido de compra como entrada. No ejecutar sin confirmación real. KIM-0210: etiqueta cliente corregida por antiguedad; ya no usar “nueva orden”, solo “orden pendiente”. KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aprox 5% y conservar raiz digital 9; precio anterior 0.000018, precio nuevo 0.0000171, baja 5.00%. BEAT/Audiera es excepcion decidida por Sr. Eli si aplica. Sigue pendiente, no ejecutada; sin cambio de saldo. KIM-0219: orden pendiente bajada de 1.71e-05 a 1.62e-05 (5.26% aprox.) con raiz digital 9; sigue pendiente a credito, no ejecutada.",
       "price_adjusted_from": 1.8e-05,
       "price_adjusted_to": 1.71e-05,
       "price_adjusted_at": "2026-08-10T11:15:00-06:00",
-      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9"
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_10_pending_orders_minus_5pct_digital_root_9",
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     },
     {
       "id": "kim0172-shibusdt-pending",
@@ -4476,6 +4500,62 @@
         "visible_order_count": 35,
         "pending_on_credit_orders": 18,
         "volume_analysis_section": "required_final_section_or_message"
+      }
+    },
+    {
+      "id": "KIM-0219",
+      "timestamp": "2026-08-11T09:35:00-06:00",
+      "summary": "Pendientes HYPE, WIF, XLM, AAVE, AVAX y FLOKI bajadas aprox. 5% con raiz digital 9.",
+      "accounting_change": false,
+      "changes": {
+        "HYPEUSDT": {
+          "old_price": 47.25,
+          "new_price": 44.91,
+          "drop_pct": 4.95,
+          "quantity": 40.08016032064128,
+          "root": 9,
+          "state": "pending_not_executed"
+        },
+        "WIFUSDT": {
+          "old_price": 0.11592,
+          "new_price": 0.11016,
+          "drop_pct": 4.97,
+          "quantity": 16339.869281045752,
+          "root": 9,
+          "state": "pending_not_executed"
+        },
+        "XLMUSDT": {
+          "old_price": 0.13284,
+          "new_price": 0.12618,
+          "drop_pct": 5.01,
+          "quantity": 14265.335235378034,
+          "root": 9,
+          "state": "pending_not_executed"
+        },
+        "AAVEUSDT": {
+          "old_price": 76.95,
+          "new_price": 73.08,
+          "drop_pct": 5.03,
+          "quantity": 24.63054187192118,
+          "root": 9,
+          "state": "pending_not_executed"
+        },
+        "AVAXUSDT": {
+          "old_price": 5.211,
+          "new_price": 4.95,
+          "drop_pct": 5.01,
+          "quantity": 363.6363636363636,
+          "root": 9,
+          "state": "pending_not_executed"
+        },
+        "FLOKIUSDT": {
+          "old_price": 1.71e-05,
+          "new_price": 1.62e-05,
+          "drop_pct": 5.26,
+          "quantity": 111111111.1111111,
+          "root": 9,
+          "state": "pending_not_executed"
+        }
       }
     }
   ],
@@ -7792,6 +7872,7 @@
     "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
     "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
     "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
-    "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Se agrega BEAT/USDT orden pendiente a credito por 1,800 USD a 0.63; cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Credito pendiente por ejecutar 32,400 USD."
+    "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Se agrega BEAT/USDT orden pendiente a credito por 1,800 USD a 0.63; cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Credito pendiente por ejecutar 32,400 USD.",
+    "KIM-0219: Se bajan solo ordenes pendientes HYPE 44.91, WIF 0.11016, XLM 0.12618, AAVE 73.08, AVAX 4.95 y FLOKI 0.0000162; todas aprox. 5% abajo y raiz digital 9. Sin ejecuciones ni cambio de saldo."
   ]
 }
