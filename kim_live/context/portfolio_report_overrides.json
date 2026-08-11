@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0217",
-  "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
+  "standard_version": "KIM-0218",
+  "updated_at": "2026-08-11T09:00:00-06:00",
+  "standard_note": "KIM-0218: Sr. Eli pide reconsiderar Audiera/BEAT. Se agrega BEAT/USDT como orden pendiente a credito: 1,800 USD a 0.63, cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Saldo disponible permanece 4,373.14 USD. Credito pendiente por ejecutar sube a 32,400 USD. El reporte debe conservar Analisis volumetrico como seccion final/mensaje separado.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0217",
-      "updated_at": "2026-08-10T13:40:00-06:00",
+      "version": "KIM-0218",
+      "updated_at": "2026-08-11T09:00:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -555,8 +555,8 @@
       "firm_assigned_usd": 57327.14,
       "available_balance_usd": 4373.14,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 30600.0,
-      "credit_total_usd": 30600.0,
+      "credit_pending_execution_usd": 32400.0,
+      "credit_total_usd": 32400.0,
       "covered_orders": [
         [
           "ADA",
@@ -696,6 +696,10 @@
         [
           "WLD refuerzo",
           1800.0
+        ],
+        [
+          "BEAT/Audiera",
+          1800.0
         ]
       ],
       "language_rules": [
@@ -772,23 +776,23 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0217: WLD 1,800 @0.225 no ejecutada; queda pendiente a credito. Saldo disponible 4,373.14; credito pendiente por ejecutar 30,600.",
-      "visible_order_count": 34,
+      "latest_format_note": "KIM-0218: BEAT/Audiera 1,800 @0.63 queda pendiente a credito, no ejecutada. Reporte con Analisis volumetrico al final.",
+      "visible_order_count": 35,
       "section_count_validation": {
         "covered_orders": 17,
         "covered_active": 17,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
-        "pending_on_credit": 17,
-        "total_visible_orders": 34,
-        "client_visible_lines": 34,
-        "accounting_underlying_orders": 40,
-        "rule": "KIM-0217: WLD refuerzo no comprado; queda pendiente a credito y no descuenta saldo disponible.",
+        "pending_on_credit": 18,
+        "total_visible_orders": 35,
+        "client_visible_lines": 35,
+        "accounting_underlying_orders": 41,
+        "rule": "KIM-0218: BEAT/Audiera reabierta como nueva orden pendiente a credito 1,800 @0.63; no descuenta saldo disponible.",
         "cash_funded_pending_orders": 0,
-        "visible_live_orders": 34,
-        "pending_to_buy_on_credit": 17,
-        "visible_order_count": 34
+        "visible_live_orders": 35,
+        "pending_to_buy_on_credit": 18,
+        "visible_order_count": 35
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -825,7 +829,7 @@
       ],
       "covered_orders_subtotal_usd": 52954.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
-      "pending_to_buy_on_credit_subtotal_usd": 30600.0,
+      "pending_to_buy_on_credit_subtotal_usd": 32400.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
@@ -850,7 +854,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 17,
+      "pending_on_credit_orders": 18,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -1154,8 +1158,8 @@
         "XLMUSDT",
         "ZECUSDT"
       ],
-      "beat_audiera_pending_price": 1.17,
-      "beat_audiera_pending_quantity": 1538.4615384615386,
+      "beat_audiera_pending_price": 0.63,
+      "beat_audiera_pending_quantity": 2857.1428571428573,
       "technical_volume_protocol": {
         "section_name": "Análisis volumétrico",
         "whatsapp_shape": "Agregar como mensaje adicional del reporte, maximo 1-2 mensajes si la lista no cabe.",
@@ -1353,11 +1357,11 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 17,
-      "pending_orders_breakdown": "17 a credito; incluye PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
-      "note": "WLD refuerzo 1,800 @0.225 queda pendiente, no comprado. WLD activo vuelve a 2,700 @0.4517690418.",
+      "pending_orders_total_visible": 18,
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "note": "BEAT/Audiera nueva orden pendiente a credito 1,800 @0.63; no comprada. Saldo disponible 4,373.14; credito pendiente 32,400.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
-      "visible_live_orders": 34,
+      "visible_live_orders": 35,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -1381,7 +1385,12 @@
       "prl_pending_quantity": 7692.307692307692,
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
-      "wld_refuerzo_kim0217_pending_quantity": 8000.0
+      "wld_refuerzo_kim0217_pending_quantity": 8000.0,
+      "beat_audiera_pending_amount_usd": 1800.0,
+      "beat_reconsidered_pending_price": 0.63,
+      "beat_reconsidered_pending_quantity": 2857.1428571428573,
+      "beat_reconsidered_pending_amount_usd": 1800.0,
+      "beat_reconsidered_state": "pending_on_credit_not_executed"
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1904,13 +1913,13 @@
       "executed_bought_orders_gross_usd": 7200.0,
       "credit_bought_pending_payment_gross_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 30600.0,
-      "credit_total_usd": 30600.0,
+      "credit_pending_execution_usd": 32400.0,
+      "credit_total_usd": 32400.0,
       "firm_assigned_usd": 57327.14,
       "available_balance_rule": "new_funding_stays_available_until_explicit_credit_coverage_or_order_execution",
-      "pending_on_credit_orders": 17,
-      "visible_live_orders": 34,
-      "accounting_underlying_orders": 40,
+      "pending_on_credit_orders": 18,
+      "visible_live_orders": 35,
+      "accounting_underlying_orders": 41,
       "icp_refuerzo_pending_price": 1.368,
       "icp_refuerzo_pending_amount_usd": 1800.0,
       "icp_refuerzo_pending_quantity": 1315.7894736842106,
@@ -1931,9 +1940,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0217",
-      "updated_at": "2026-08-10T13:40:00-06:00",
-      "note": "WLD refuerzo 1,800 @0.225 queda pendiente, no comprado. WLD activo vuelve a 2,700 @0.4517690418.",
+      "id": "KIM-0218",
+      "updated_at": "2026-08-11T09:00:00-06:00",
+      "note": "BEAT/Audiera nueva orden pendiente a credito 1,800 @0.63; no comprada. Saldo disponible 4,373.14; credito pendiente 32,400.",
       "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -1949,8 +1958,8 @@
       "available_balance_applied_to_prior_credit_usd": 4285.9,
       "available_balance_applied_to_bonk_execution_usd": 1800.0,
       "pending_order_age_language_rule": "new_order_label_max_age_days=2",
-      "beat_audiera_pending_price": 1.17,
-      "beat_audiera_pending_quantity": 1538.4615384615386,
+      "beat_audiera_pending_price": 0.63,
+      "beat_audiera_pending_quantity": 2857.1428571428573,
       "technical_volume_protocol": "active",
       "pending_digital_root_9_adjustments": [
         {
@@ -2114,12 +2123,12 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 17,
-      "pending_orders_breakdown": "17 a credito; incluye PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "pending_orders_total_visible": 18,
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
-      "visible_order_count": 34,
+      "visible_order_count": 35,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -2143,7 +2152,14 @@
       "prl_pending_quantity": 7692.307692307692,
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
-      "wld_refuerzo_kim0217_pending_quantity": 8000.0
+      "wld_refuerzo_kim0217_pending_quantity": 8000.0,
+      "latest_format_note": "KIM-0218: BEAT/Audiera 1,800 @0.63 queda pendiente a credito, no ejecutada. Reporte con Analisis volumetrico al final.",
+      "beat_audiera_pending_amount_usd": 1800.0,
+      "beat_reconsidered_pending_price": 0.63,
+      "beat_reconsidered_pending_quantity": 2857.1428571428573,
+      "beat_reconsidered_pending_amount_usd": 1800.0,
+      "beat_reconsidered_state": "pending_on_credit_not_executed",
+      "pending_to_buy_on_credit_subtotal_usd": 32400.0
     }
   },
   "manual_entries": [
@@ -3342,6 +3358,27 @@
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed",
       "status": "pending_on_credit_not_executed"
+    },
+    {
+      "id": "kim0218-beatusdt-audiera-pending-063",
+      "order": 53,
+      "symbol": "BEATUSDT",
+      "label": "BEAT/USDT Audiera orden pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.63,
+      "quantity": 2857.1428571428573,
+      "credit_usd": 1800.0,
+      "credit": true,
+      "source": "doctor_instruction_2026_08_11_reconsider_audiera_beat_063",
+      "notes": "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Nueva orden pendiente a credito por 1,800 USD a 0.63; no ejecutada y no descuenta saldo disponible hasta confirmacion de compra.",
+      "updated_at": "2026-08-11T09:00:00-06:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed",
+      "credit_mark": "(c)"
     }
   ],
   "closed_positions": [
@@ -4419,6 +4456,26 @@
         },
         "available_balance_usd": 4373.14,
         "credit_pending_execution_usd": 30600.0
+      }
+    },
+    {
+      "id": "KIM-0218",
+      "timestamp": "2026-08-11T09:00:00-06:00",
+      "summary": "BEAT/Audiera reconsiderada: nueva orden pendiente a credito por 1,800 USD a 0.63; no ejecutada.",
+      "accounting_change": true,
+      "changes": {
+        "new_pending_credit": {
+          "symbol": "BEATUSDT",
+          "label": "BEAT/Audiera",
+          "amount_usd": 1800.0,
+          "entry_price": 0.63,
+          "quantity": 2857.1428571428573
+        },
+        "available_balance_usd": 4373.14,
+        "credit_pending_execution_usd": 32400.0,
+        "visible_order_count": 35,
+        "pending_on_credit_orders": 18,
+        "volume_analysis_section": "required_final_section_or_message"
       }
     }
   ],
@@ -7734,6 +7791,7 @@
     "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
     "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
     "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
-    "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente."
+    "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
+    "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Se agrega BEAT/USDT orden pendiente a credito por 1,800 USD a 0.63; cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Credito pendiente por ejecutar 32,400 USD."
   ]
 }
