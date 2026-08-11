@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0216",
+  "standard_version": "KIM-0217",
   "updated_at": "2026-08-06T16:39:15+00:00",
-  "standard_note": "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
+  "standard_note": "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0216",
-      "updated_at": "2026-08-10T13:25:00-06:00",
+      "version": "KIM-0217",
+      "updated_at": "2026-08-10T13:40:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -553,10 +553,10 @@
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
       "client_total_net_considered_usd": 57327.14,
       "firm_assigned_usd": 57327.14,
-      "available_balance_usd": 2573.14,
+      "available_balance_usd": 4373.14,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 28800.0,
-      "credit_total_usd": 28800.0,
+      "credit_pending_execution_usd": 30600.0,
+      "credit_total_usd": 30600.0,
       "covered_orders": [
         [
           "ADA",
@@ -612,7 +612,7 @@
         ],
         [
           "WLD",
-          4500.0
+          2700.0
         ],
         [
           "LAB",
@@ -692,6 +692,10 @@
         [
           "LAB 0.07695",
           1800.0
+        ],
+        [
+          "WLD refuerzo",
+          1800.0
         ]
       ],
       "language_rules": [
@@ -768,23 +772,23 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0216: BEAT cancelada por volatilidad y reemplazada por PRL 1,800 @0.234 pendiente a credito; WLD agrega 1,800 @0.225 y queda promedio 0.32196890.",
-      "visible_order_count": 33,
+      "latest_format_note": "KIM-0217: WLD 1,800 @0.225 no ejecutada; queda pendiente a credito. Saldo disponible 4,373.14; credito pendiente por ejecutar 30,600.",
+      "visible_order_count": 34,
       "section_count_validation": {
         "covered_orders": 17,
         "covered_active": 17,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
-        "pending_on_credit": 16,
-        "total_visible_orders": 33,
-        "client_visible_lines": 33,
+        "pending_on_credit": 17,
+        "total_visible_orders": 34,
+        "client_visible_lines": 34,
         "accounting_underlying_orders": 40,
-        "rule": "KIM-0216: BEAT cancelada/reemplazada por PRL; WLD refuerzo ejecutado con saldo disponible.",
+        "rule": "KIM-0217: WLD refuerzo no comprado; queda pendiente a credito y no descuenta saldo disponible.",
         "cash_funded_pending_orders": 0,
-        "visible_live_orders": 33,
-        "pending_to_buy_on_credit": 16,
-        "visible_order_count": 33
+        "visible_live_orders": 34,
+        "pending_to_buy_on_credit": 17,
+        "visible_order_count": 34
       },
       "daily_report_required": true,
       "append_to_full_portfolio_report": true,
@@ -819,9 +823,9 @@
         "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
         "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable."
       ],
-      "covered_orders_subtotal_usd": 54754.0,
+      "covered_orders_subtotal_usd": 52954.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
-      "pending_to_buy_on_credit_subtotal_usd": 28800.0,
+      "pending_to_buy_on_credit_subtotal_usd": 30600.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
@@ -846,7 +850,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 16,
+      "pending_on_credit_orders": 17,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -968,17 +972,6 @@
           "quantity": 12071.127297365969,
           "credit_pending_payment_usd": 0.0,
           "embedded_unmanifested_loss_usd": 421.99
-        },
-        {
-          "version": "KIM-0216",
-          "symbol": "WLDUSDT",
-          "label": "WLD/USDT consolidada",
-          "base_order": "2,700 USD a 0.4517690418",
-          "new_order": "1,800 USD a 0.225",
-          "total_amount_usd": 4500.0,
-          "weighted_average_price": 0.32196890102962805,
-          "quantity": 13976.505139500734,
-          "covered_from_available_balance_usd": 1800.0
         }
       ],
       "latest_weighted_average_operations_total_covered_usd": 6300.0,
@@ -1360,11 +1353,11 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 16,
-      "pending_orders_breakdown": "16 a credito; incluye nueva LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
-      "note": "BEAT cancelada; PRL pendiente a credito 1,800 @0.234. WLD consolidada 4,500 @0.32196890 y cubierta con saldo disponible.",
+      "pending_orders_total_visible": 17,
+      "pending_orders_breakdown": "17 a credito; incluye PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "note": "WLD refuerzo 1,800 @0.225 queda pendiente, no comprado. WLD activo vuelve a 2,700 @0.4517690418.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
-      "visible_live_orders": 33,
+      "visible_live_orders": 34,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -1375,17 +1368,20 @@
       "lab_pending_credit_price": 0.07695,
       "lab_pending_credit_amount_usd": 1800.0,
       "lab_pending_credit_quantity": 23391.812865497075,
-      "wld_consolidated_amount_usd": 4500.0,
-      "wld_consolidated_entry_price": 0.32196890102962805,
-      "wld_consolidated_quantity": 13976.505139500734,
+      "wld_consolidated_amount_usd": 2700.0,
+      "wld_consolidated_entry_price": 0.45176904176904176,
+      "wld_consolidated_quantity": 5976.505139500734,
       "wld_refuerzo_kim0216_amount_usd": 1800.0,
       "wld_refuerzo_kim0216_price": 0.225,
       "wld_refuerzo_kim0216_quantity": 8000.0,
-      "available_balance_applied_to_wld_kim0216_usd": 1800.0,
+      "available_balance_applied_to_wld_kim0216_usd": 0.0,
       "beat_cancelled_replaced_by": "PRLUSDT",
       "prl_pending_price": 0.234,
       "prl_pending_amount_usd": 1800.0,
-      "prl_pending_quantity": 7692.307692307692
+      "prl_pending_quantity": 7692.307692307692,
+      "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
+      "wld_refuerzo_kim0217_pending_price": 0.225,
+      "wld_refuerzo_kim0217_pending_quantity": 8000.0
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1902,18 +1898,18 @@
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
       "xrp_consolidated_credit_usd": 1800.0,
-      "available_balance_usd": 2573.14,
+      "available_balance_usd": 4373.14,
       "available_balance_before_executed_orders_usd": 1114.1,
       "available_balance_applied_to_executed_orders_usd": 7200.0,
       "executed_bought_orders_gross_usd": 7200.0,
       "credit_bought_pending_payment_gross_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 28800.0,
-      "credit_total_usd": 28800.0,
+      "credit_pending_execution_usd": 30600.0,
+      "credit_total_usd": 30600.0,
       "firm_assigned_usd": 57327.14,
       "available_balance_rule": "new_funding_stays_available_until_explicit_credit_coverage_or_order_execution",
-      "pending_on_credit_orders": 16,
-      "visible_live_orders": 33,
+      "pending_on_credit_orders": 17,
+      "visible_live_orders": 34,
       "accounting_underlying_orders": 40,
       "icp_refuerzo_pending_price": 1.368,
       "icp_refuerzo_pending_amount_usd": 1800.0,
@@ -1935,9 +1931,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0216",
-      "updated_at": "2026-08-10T13:25:00-06:00",
-      "note": "BEAT cancelada; PRL pendiente a credito 1,800 @0.234. WLD consolidada 4,500 @0.32196890 y cubierta con saldo disponible.",
+      "id": "KIM-0217",
+      "updated_at": "2026-08-10T13:40:00-06:00",
+      "note": "WLD refuerzo 1,800 @0.225 queda pendiente, no comprado. WLD activo vuelve a 2,700 @0.4517690418.",
       "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -2118,12 +2114,12 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 16,
-      "pending_orders_breakdown": "16 a credito; incluye nueva LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "pending_orders_total_visible": 17,
+      "pending_orders_breakdown": "17 a credito; incluye PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
-      "visible_order_count": 33,
+      "visible_order_count": 34,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -2134,17 +2130,20 @@
       "lab_pending_credit_price": 0.07695,
       "lab_pending_credit_amount_usd": 1800.0,
       "lab_pending_credit_quantity": 23391.812865497075,
-      "wld_consolidated_amount_usd": 4500.0,
-      "wld_consolidated_entry_price": 0.32196890102962805,
-      "wld_consolidated_quantity": 13976.505139500734,
+      "wld_consolidated_amount_usd": 2700.0,
+      "wld_consolidated_entry_price": 0.45176904176904176,
+      "wld_consolidated_quantity": 5976.505139500734,
       "wld_refuerzo_kim0216_amount_usd": 1800.0,
       "wld_refuerzo_kim0216_price": 0.225,
       "wld_refuerzo_kim0216_quantity": 8000.0,
-      "available_balance_applied_to_wld_kim0216_usd": 1800.0,
+      "available_balance_applied_to_wld_kim0216_usd": 0.0,
       "beat_cancelled_replaced_by": "PRLUSDT",
       "prl_pending_price": 0.234,
       "prl_pending_amount_usd": 1800.0,
-      "prl_pending_quantity": 7692.307692307692
+      "prl_pending_quantity": 7692.307692307692,
+      "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
+      "wld_refuerzo_kim0217_pending_price": 0.225,
+      "wld_refuerzo_kim0217_pending_quantity": 8000.0
     }
   },
   "manual_entries": [
@@ -2480,16 +2479,16 @@
       "symbol": "WLDUSDT",
       "state": "active",
       "order": 19,
-      "label": "WLD/USDT consolidada",
-      "invested_usd": 4500.0,
-      "entry_price": 0.32196890102962805,
-      "quantity": 13976.505139500734,
+      "label": "WLD/USDT",
+      "invested_usd": 2700.0,
+      "entry_price": 0.45176904176904176,
+      "quantity": 5976.505139500734,
       "credit_usd": 0.0,
-      "source": "doctor_instruction_2026_08_10_wld_refuerzo_0225",
-      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0216: se agrega refuerzo WLD por 1,800 USD a 0.225, cubierto con saldo disponible. WLD queda consolidada por 4,500 USD a promedio 0.32196890.",
+      "source": "doctor_correction_2026_08_10_wld_refuerzo_pending_not_bought",
+      "notes": "A19 WLD orden pendiente actualizada por conversacion; a credito completo hasta ejecucion confirmada. Orden pendiente confirmada como ejecutada por el doctor; ya no debe aparecer en pendientes. KIM-0140: credito activo cubierto con fondeo 2026-07-01 por 252,000 MXN / 14,424 USD; no afecta pendientes por comprar. KIM-0216: se agrega refuerzo WLD por 1,800 USD a 0.225, cubierto con saldo disponible. WLD queda consolidada por 4,500 USD a promedio 0.32196890. KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
       "side": "BUY",
       "id": "kim0101-a19-wldusdt",
-      "updated_at": "2026-08-10T13:25:00-06:00",
+      "updated_at": "2026-08-10T13:40:00-06:00",
       "executed_at": "2026-06-23T13:20:43",
       "credit": false,
       "funding_status": "fully_covered_with_available_balance_kim0183",
@@ -2509,49 +2508,7 @@
         "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
         "covered_from_available_balance_usd": 900.0
       },
-      "firm_usd": 4500.0,
-      "raw_weighted_average_price": 0.32196890102962805,
-      "weighted_average_price": 0.32196890102962805,
-      "coverage_status": "covered_with_available_balance",
-      "covered_from_available_balance_usd": 1800.0,
-      "consumed_orders": [
-        "WLD base+refuerzo KIM-0183",
-        "WLD refuerzo 0.225 KIM-0216"
-      ],
-      "split_members": [
-        {
-          "member_order": "WLD base+refuerzo KIM-0183",
-          "symbol": "WLDUSDT",
-          "label": "WLD/USDT previo consolidado",
-          "state": "active",
-          "amount_usd": 2700.0,
-          "price": 0.45176904176904176,
-          "quantity": 5976.505139500734,
-          "credit_usd": 0.0,
-          "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments"
-        },
-        {
-          "member_order": "WLD refuerzo 0.225 KIM-0216",
-          "symbol": "WLDUSDT",
-          "label": "WLD/USDT refuerzo nuevo",
-          "state": "active",
-          "amount_usd": 1800.0,
-          "price": 0.225,
-          "quantity": 8000.0,
-          "credit_usd": 0.0,
-          "covered_from_available_balance_usd": 1800.0,
-          "source": "doctor_instruction_2026_08_10_wld_refuerzo_0225"
-        }
-      ],
-      "kim0216_refuerzo": {
-        "amount_usd": 1800.0,
-        "entry_price": 0.225,
-        "quantity": 8000.0,
-        "credit_usd": 0.0,
-        "status": "covered_with_available_balance",
-        "source": "doctor_instruction_2026_08_10_wld_refuerzo_0225",
-        "covered_from_available_balance_usd": 1800.0
-      }
+      "firm_usd": 2700.0
     },
     {
       "order": 22,
@@ -3365,6 +3322,26 @@
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed"
+    },
+    {
+      "id": "kim0217-wldusdt-pending-0225",
+      "order": 52,
+      "symbol": "WLDUSDT",
+      "label": "WLD/USDT refuerzo pendiente",
+      "state": "pending",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.225,
+      "quantity": 8000.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_correction_2026_08_10_wld_refuerzo_pending_not_bought",
+      "notes": "KIM-0217: el doctor corrige que el refuerzo WLD de 1,800 USD a 0.225 no se ha comprado. Queda como orden pendiente a credito; no descuenta saldo disponible.",
+      "updated_at": "2026-08-10T13:40:00-06:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed",
+      "status": "pending_on_credit_not_executed"
     }
   ],
   "closed_positions": [
@@ -4423,6 +4400,26 @@
         "available_balance_usd": 2573.14,
         "credit_pending_execution_usd": 28800.0
       }
+    },
+    {
+      "id": "KIM-0217",
+      "timestamp": "2026-08-10T13:40:00-06:00",
+      "summary": "Correccion WLD: refuerzo 1,800 @0.225 queda pendiente, no comprado.",
+      "accounting_change": true,
+      "changes": {
+        "wld_active_restored": {
+          "amount_usd": 2700.0,
+          "entry_price": 0.45176904176904176,
+          "quantity": 5976.505139500734
+        },
+        "wld_pending_credit": {
+          "amount_usd": 1800.0,
+          "entry_price": 0.225,
+          "quantity": 8000.0
+        },
+        "available_balance_usd": 4373.14,
+        "credit_pending_execution_usd": 30600.0
+      }
     }
   ],
   "consumed_orders": [
@@ -4842,7 +4839,8 @@
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
     "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
     "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
-    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente."
   ],
   "superseded_facts": [
     {
@@ -7649,6 +7647,26 @@
         "available_balance_usd": 2573.14,
         "credit_pending_execution_usd": 28800.0
       }
+    },
+    {
+      "id": "KIM-0217",
+      "timestamp": "2026-08-10T13:40:00-06:00",
+      "summary": "Correccion WLD: refuerzo 1,800 @0.225 queda pendiente, no comprado.",
+      "accounting_change": true,
+      "changes": {
+        "wld_active_restored": {
+          "amount_usd": 2700.0,
+          "entry_price": 0.45176904176904176,
+          "quantity": 5976.505139500734
+        },
+        "wld_pending_credit": {
+          "amount_usd": 1800.0,
+          "entry_price": 0.225,
+          "quantity": 8000.0
+        },
+        "available_balance_usd": 4373.14,
+        "credit_pending_execution_usd": 30600.0
+      }
     }
   ],
   "cancelled_orders": [
@@ -7700,7 +7718,8 @@
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
     "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
     "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
-    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente."
   ],
   "standard_history": [
     "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -7714,6 +7733,7 @@
     "KIM-0212: se agrega protocolo de Analisis volumetrico al reporte tecnico/WhatsApp: mensaje adicional con volumen tradeado de mercado ayer vs hoy, cambio de volumen y lectura de divergencia precio/volumen cuando aplique.",
     "KIM-0213: Sr. Eli pide bajar todas las ordenes pendientes aproximadamente 5% manteniendo raiz digital 9; BEAT/Audiera queda por decision expresa en 1.17. Sin cambio contable ni ejecuciones.",
     "KIM-0215: Correccion LAB. La diferencia 421.99 USD de la orden original no es credito por cubrir; se mantiene como perdida no manifiesta dentro de LAB consolidada. LAB consolidada queda por 3,600 USD: 1,800 USD a 4.5 + compra real 1,378.01 USD a 0.11807 con perdida embebida 421.99 USD. Break-even/promedio contable 0.29823145. Ademas queda nueva orden LAB pendiente a credito por 1,800 USD en 0.07695.",
-    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD."
+    "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
+    "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente."
   ]
 }
