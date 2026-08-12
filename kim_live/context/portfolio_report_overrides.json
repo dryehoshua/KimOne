@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0221",
-  "updated_at": "2026-08-11T21:38:00-06:00",
-  "standard_note": "KIM-0221: BEAT queda con una compra ejecutada en 1.018 y dos ordenes pendientes en 0.909 y 0.63; FTT se vendio completo en 0.1988. Las compras ejecutadas descuentan monto mas 1.2% de comision del saldo disponible.",
+  "standard_version": "KIM-0222",
+  "updated_at": "2026-08-12T09:00:00-06:00",
+  "standard_note": "KIM-0222: BEAT/Audiera 0.909 se confirma comprada por 1,800 USD; se descuenta compra mas 1.2% de comision del saldo disponible. Queda pendiente solo BEAT 0.63 a credito.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -217,8 +217,8 @@
         }
       }
     ],
-    "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito. KIM-0221: regla explicita, cada compra ejecutada descuenta compra + 1.2% del saldo disponible; venta FTT se suma neta al disponible.",
-    "available_balance_policy": "KIM-0221: compras ejecutadas descuentan monto + 1.2% del saldo disponible; ventas suman neto de venta despues de comision. BEAT 1.018 descuenta 1,821.60 USD; FTT venta 0.1988 suma neto 1,937.69 USD; disponible 4,489.23 USD.",
+    "notes": "KIM-0101: monto en firme base 12,514 USD no cambio. Ganancias realizadas positivas y remanentes operativos siguen como saldo disponible operativo; todas las ordenes pendientes A13-A21 se presentan a credito. KIM-0221: regla explicita, cada compra ejecutada descuenta compra + 1.2% del saldo disponible; venta FTT se suma neta al disponible. KIM-0222: BEAT 0.909 ejecutada; se descuenta compra + 1.2% del saldo disponible.",
+    "available_balance_policy": "KIM-0222: BEAT 0.909 ejecutada por 1,800 USD; compra + 1.2% de comision = 1,821.60 USD descontados del saldo disponible. Disponible final 2,667.63 USD; credito pendiente por ejecutar 32,400 USD.",
     "confirmed_cash_funding_total_usd": 49541.65,
     "confirmed_cash_funding_total_mxn": 862000.0,
     "last_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0221",
-      "updated_at": "2026-08-11T21:38:00-06:00",
+      "version": "KIM-0222",
+      "updated_at": "2026-08-12T09:00:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -553,10 +553,10 @@
       "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
       "client_total_net_considered_usd": 57327.14,
       "firm_assigned_usd": 57327.14,
-      "available_balance_usd": 4489.23,
+      "available_balance_usd": 2667.63,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 34200.0,
-      "credit_total_usd": 34200.0,
+      "credit_pending_execution_usd": 32400.0,
+      "credit_total_usd": 32400.0,
       "covered_orders": [
         [
           "ADA",
@@ -624,6 +624,10 @@
         ],
         [
           "BEAT/Audiera 1.018",
+          1800.0
+        ],
+        [
+          "BEAT/Audiera 0.909",
           1800.0
         ]
       ],
@@ -699,10 +703,6 @@
         ],
         [
           "BEAT/Audiera 0.63",
-          1800.0
-        ],
-        [
-          "BEAT/Audiera 0.909",
           1800.0
         ]
       ],
@@ -780,22 +780,22 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0221: Reporte cliente limpio; conceptos internos permanecen solo para calculo.",
+      "latest_format_note": "KIM-0222: Reporte cliente limpio; conceptos internos permanecen solo para calculo.",
       "visible_order_count": 36,
       "section_count_validation": {
-        "covered_orders": 17,
-        "covered_active": 17,
+        "covered_orders": 18,
+        "covered_active": 18,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
-        "pending_on_credit": 19,
+        "pending_on_credit": 18,
         "total_visible_orders": 36,
         "client_visible_lines": 36,
         "accounting_underlying_orders": 41,
-        "rule": "KIM-0221: BEAT 1.018 ejecutada; BEAT 0.63 y 0.909 pendientes a credito; FTT cerrado.",
+        "rule": "KIM-0222: BEAT 0.909 ejecutada; BEAT 0.63 queda pendiente a credito.",
         "cash_funded_pending_orders": 0,
         "visible_live_orders": 36,
-        "pending_to_buy_on_credit": 19,
+        "pending_to_buy_on_credit": 18,
         "visible_order_count": 36
       },
       "daily_report_required": true,
@@ -831,9 +831,9 @@
         "KIM-0210: regla de lenguaje por antiguedad. Usar “nueva orden” solo durante 1-2 dias desde colocacion; las ordenes viejas de junio/julio se reportan solo como “orden pendiente”. Sin cambio contable.",
         "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable."
       ],
-      "covered_orders_subtotal_usd": 52054.0,
+      "covered_orders_subtotal_usd": 53854.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
-      "pending_to_buy_on_credit_subtotal_usd": 34200.0,
+      "pending_to_buy_on_credit_subtotal_usd": 32400.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
@@ -858,7 +858,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 19,
+      "pending_on_credit_orders": 18,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -1012,10 +1012,10 @@
         "KIM-0198: Sr. Eli agrega seis órdenes pendientes de 1,800 USD: AUDIO 0.0126, ONDO 0.02205, LDO 0.0225, COTI 0.072, LAB 0.081 y GOAT 0.0882. Todas quedan pendientes a crédito, no ejecutadas; saldo disponible sigue 0.00 USD. GOAT y ONDO se reabren por instrucción nueva posterior a reglas antiguas de cancelación/remoción."
       ],
       "available_balance_before_executed_orders_usd": 10459.04,
-      "executed_bought_orders_gross_usd": 9000.0,
-      "available_balance_applied_to_executed_orders_usd": 9021.6,
+      "executed_bought_orders_gross_usd": 10800.0,
+      "available_balance_applied_to_executed_orders_usd": 10843.2,
       "credit_bought_pending_payment_gross_usd": 0.0,
-      "available_balance_rule": "KIM-0221: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 1.018 descuenta 1,821.60 USD. Ventas suman neto despues de comision; FTT 0.1988 suma 1,937.69 USD.",
+      "available_balance_rule": "KIM-0222: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 0.909 descuenta 1,821.60 USD. Saldo disponible final 2,667.63 USD.",
       "client_facing_movements": [
         {
           "date": "06-mar-2025",
@@ -1367,9 +1367,9 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 19,
-      "pending_orders_breakdown": "19 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, BEAT/Audiera 1,800 USD en 0.909, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695.",
-      "note": "BEAT/Audiera: compra ejecutada 1,800 @1.018 descontada con comision 1.2%; pendientes 1,800 @0.909 y 1,800 @0.63 a credito. FTT vendido completo @0.1988; neto sumado a disponible.",
+      "pending_orders_total_visible": 18,
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695.",
+      "note": "BEAT/Audiera 0.909 comprada por 1,800 USD y descontada con comision 1.2%; BEAT/Audiera 0.63 queda pendiente a credito.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "visible_live_orders": 36,
       "lab_consolidated_amount_usd": 3600.0,
@@ -1423,9 +1423,17 @@
       "ftt_sale_fee_usd": 23.53,
       "ftt_sale_net_added_to_available_usd": 1937.69,
       "ftt_sale_net_pnl_usd": -762.31,
-      "operation_buy_fee_rule": "KIM-0221: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
-      "active_order_count": 17,
-      "pending_order_count": 19
+      "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
+      "active_order_count": 18,
+      "pending_order_count": 18,
+      "beat_second_pending_state": "executed_confirmed",
+      "beat_second_execution_price": 0.909,
+      "beat_second_execution_amount_usd": 1800.0,
+      "beat_second_execution_quantity": 1980.1980198019803,
+      "beat_second_buy_fee_usd": 21.6,
+      "beat_second_available_debit_usd": 1821.6,
+      "beat_remaining_pending_price": 0.63,
+      "beat_remaining_pending_amount_usd": 1800.0
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1942,17 +1950,17 @@
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
       "xrp_consolidated_credit_usd": 1800.0,
-      "available_balance_usd": 4489.23,
+      "available_balance_usd": 2667.63,
       "available_balance_before_executed_orders_usd": 1114.1,
-      "available_balance_applied_to_executed_orders_usd": 9021.6,
-      "executed_bought_orders_gross_usd": 9000.0,
+      "available_balance_applied_to_executed_orders_usd": 10843.2,
+      "executed_bought_orders_gross_usd": 10800.0,
       "credit_bought_pending_payment_gross_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 34200.0,
-      "credit_total_usd": 34200.0,
+      "credit_pending_execution_usd": 32400.0,
+      "credit_total_usd": 32400.0,
       "firm_assigned_usd": 57327.14,
-      "available_balance_rule": "KIM-0221: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 1.018 descuenta 1,821.60 USD. Ventas suman neto despues de comision; FTT 0.1988 suma 1,937.69 USD.",
-      "pending_on_credit_orders": 19,
+      "available_balance_rule": "KIM-0222: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 0.909 descuenta 1,821.60 USD. Saldo disponible final 2,667.63 USD.",
+      "pending_on_credit_orders": 18,
       "visible_live_orders": 36,
       "accounting_underlying_orders": 41,
       "icp_refuerzo_pending_price": 1.368,
@@ -1975,9 +1983,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0221",
-      "updated_at": "2026-08-11T21:38:00-06:00",
-      "note": "BEAT/Audiera: compra ejecutada 1,800 @1.018 descontada con comision 1.2%; pendientes 1,800 @0.909 y 1,800 @0.63 a credito. FTT vendido completo @0.1988; neto sumado a disponible.",
+      "id": "KIM-0222",
+      "updated_at": "2026-08-12T09:00:00-06:00",
+      "note": "BEAT/Audiera 0.909 comprada por 1,800 USD y descontada con comision 1.2%; BEAT/Audiera 0.63 queda pendiente a credito.",
       "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -2164,8 +2172,8 @@
           "credit": true
         }
       ],
-      "pending_orders_total_visible": 19,
-      "pending_orders_breakdown": "19 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, BEAT/Audiera 1,800 USD en 0.909, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695.",
+      "pending_orders_total_visible": 18,
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
@@ -2194,13 +2202,13 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0221: Reporte cliente limpio; conceptos internos permanecen solo para calculo.",
+      "latest_format_note": "KIM-0222: Reporte cliente limpio; conceptos internos permanecen solo para calculo.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
       "beat_reconsidered_pending_amount_usd": 1800.0,
       "beat_reconsidered_state": "pending_on_credit_not_executed",
-      "pending_to_buy_on_credit_subtotal_usd": 34200.0,
+      "pending_to_buy_on_credit_subtotal_usd": 32400.0,
       "client_label_rule": "Ocultar terminos internos de calculo en reporte cliente: consolidada, consolidado, aglomerada, aglomerado, agglomerated, consolidated.",
       "client_forbidden_terms": [
         "consolidada",
@@ -2223,9 +2231,9 @@
       "ftt_sale_fee_usd": 23.53,
       "ftt_sale_net_added_to_available_usd": 1937.69,
       "ftt_sale_net_pnl_usd": -762.31,
-      "operation_buy_fee_rule": "KIM-0221: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
-      "active_order_count": 17,
-      "pending_order_count": 19,
+      "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
+      "active_order_count": 18,
+      "pending_order_count": 18,
       "covered_orders": [
         [
           "ADA",
@@ -2294,9 +2302,13 @@
         [
           "BEAT/Audiera 1.018",
           1800.0
+        ],
+        [
+          "BEAT/Audiera 0.909",
+          1800.0
         ]
       ],
-      "covered_orders_subtotal_usd": 52054.0,
+      "covered_orders_subtotal_usd": 53854.0,
       "pending_to_buy_on_credit": [
         [
           "HYPE",
@@ -2369,12 +2381,16 @@
         [
           "BEAT/Audiera 0.63",
           1800.0
-        ],
-        [
-          "BEAT/Audiera 0.909",
-          1800.0
         ]
-      ]
+      ],
+      "beat_second_pending_state": "executed_confirmed",
+      "beat_second_execution_price": 0.909,
+      "beat_second_execution_amount_usd": 1800.0,
+      "beat_second_execution_quantity": 1980.1980198019803,
+      "beat_second_buy_fee_usd": 21.6,
+      "beat_second_available_debit_usd": 1821.6,
+      "beat_remaining_pending_price": 0.63,
+      "beat_remaining_pending_amount_usd": 1800.0
     }
   },
   "manual_entries": [
@@ -3645,22 +3661,24 @@
       "id": "kim0221-beatusdt-audiera-pending-0909",
       "order": 54,
       "symbol": "BEATUSDT",
-      "label": "BEAT/USDT Audiera orden pendiente",
-      "state": "pending",
+      "label": "BEAT/USDT Audiera",
+      "state": "active",
       "side": "BUY",
       "invested_usd": 1800.0,
       "entry_price": 0.909,
       "quantity": 1980.1980198019803,
-      "credit_usd": 1800.0,
-      "credit": true,
-      "source": "doctor_instruction_2026_08_11_beat_three_orders",
-      "notes": "KIM-0221: Sr. Eli pide conservar segunda orden BEAT/Audiera pendiente por 1,800 USD en 0.909; no ejecutada y no descuenta saldo disponible hasta confirmacion de compra.",
-      "updated_at": "2026-08-11T21:38:00-06:00",
-      "no_auto_fill": true,
-      "requires_manual_fill_confirmation": true,
-      "execution_status": "pending_not_executed",
-      "status": "pending_on_credit_not_executed",
-      "credit_mark": "(c)"
+      "credit_usd": 0.0,
+      "credit": false,
+      "source": "doctor_instruction_2026_08_12_beat_0909_bought",
+      "notes": "KIM-0222: BEAT/Audiera compra ejecutada por orden de Sr. Eli: 1,800 USD en 0.909. Se descuenta del saldo disponible el monto de compra mas 1.2% de comision = 1,821.60 USD.",
+      "updated_at": "2026-08-12T09:00:00-06:00",
+      "execution_status": "executed_confirmed",
+      "status": "active_funded_from_available_balance",
+      "firm_usd": 1800.0,
+      "executed_at": "2026-08-12",
+      "buy_fee_rate": 0.012,
+      "buy_fee_usd": 21.6,
+      "available_balance_debit_usd": 1821.6
     },
     {
       "id": "kim0221-beatusdt-audiera-active-1018",
@@ -4930,6 +4948,27 @@
         "credit_pending_execution_usd": 34200.0,
         "visible_order_count": 36,
         "pending_on_credit_orders": 19
+      }
+    },
+    {
+      "id": "KIM-0222",
+      "timestamp": "2026-08-12T09:00:00-06:00",
+      "summary": "BEAT/Audiera 0.909 se confirma comprada por 1,800 USD; se descuenta 1,821.60 USD del saldo disponible.",
+      "accounting_change": true,
+      "changes": {
+        "available_balance_before_usd": 4489.23,
+        "beat_executed": {
+          "symbol": "BEATUSDT",
+          "amount_usd": 1800.0,
+          "entry_price": 0.909,
+          "quantity": 1980.1980198019803,
+          "buy_fee_usd": 21.6,
+          "available_balance_debit_usd": 1821.6
+        },
+        "available_balance_after_usd": 2667.63,
+        "credit_pending_execution_usd": 32400.0,
+        "pending_on_credit_orders": 18,
+        "visible_order_count": 36
       }
     }
   ],
@@ -8226,6 +8265,27 @@
         "visible_order_count": 36,
         "pending_on_credit_orders": 19
       }
+    },
+    {
+      "id": "KIM-0222",
+      "timestamp": "2026-08-12T09:00:00-06:00",
+      "summary": "BEAT/Audiera 0.909 se confirma comprada por 1,800 USD; se descuenta 1,821.60 USD del saldo disponible.",
+      "accounting_change": true,
+      "changes": {
+        "available_balance_before_usd": 4489.23,
+        "beat_executed": {
+          "symbol": "BEATUSDT",
+          "amount_usd": 1800.0,
+          "entry_price": 0.909,
+          "quantity": 1980.1980198019803,
+          "buy_fee_usd": 21.6,
+          "available_balance_debit_usd": 1821.6
+        },
+        "available_balance_after_usd": 2667.63,
+        "credit_pending_execution_usd": 32400.0,
+        "pending_on_credit_orders": 18,
+        "visible_order_count": 36
+      }
     }
   ],
   "cancelled_orders": [
@@ -8297,6 +8357,7 @@
     "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Se agrega BEAT/USDT orden pendiente a credito por 1,800 USD a 0.63; cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Credito pendiente por ejecutar 32,400 USD.",
     "KIM-0219: Se bajan solo ordenes pendientes HYPE 44.91, WIF 0.11016, XLM 0.12618, AAVE 73.08, AVAX 4.95 y FLOKI 0.0000162; todas aprox. 5% abajo y raiz digital 9. Sin ejecuciones ni cambio de saldo.",
     "KIM-0220: Regla cliente: no mostrar consolidada, consolidado, aglomerada, aglomerado ni equivalentes en reportes/WhatsApp; esos terminos quedan solo para calculos internos. Sin cambio contable.",
-    "KIM-0221: BEAT/Audiera compra ejecutada 1,800 USD @1.018 (mas comision 1.2% descontada del saldo disponible); conserva pendientes 1,800 @0.909 y 1,800 @0.63 a credito. FTT vendido completo @0.1988; neto 1,937.69 USD se suma a saldo disponible. Disponible final 4,489.23 USD; credito pendiente por ejecutar 34,200 USD."
+    "KIM-0221: BEAT/Audiera compra ejecutada 1,800 USD @1.018 (mas comision 1.2% descontada del saldo disponible); conserva pendientes 1,800 @0.909 y 1,800 @0.63 a credito. FTT vendido completo @0.1988; neto 1,937.69 USD se suma a saldo disponible. Disponible final 4,489.23 USD; credito pendiente por ejecutar 34,200 USD.",
+    "KIM-0222: BEAT/Audiera 0.909 comprada por 1,800 USD; comision compra 1.2% = 21.60 USD; debito total saldo disponible 1,821.60 USD. Disponible final 2,667.63 USD; BEAT 0.63 queda pendiente a credito; credito pendiente por ejecutar 32,400 USD."
   ]
 }
