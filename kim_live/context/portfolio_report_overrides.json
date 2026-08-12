@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0219",
-  "updated_at": "2026-08-11T09:35:00-06:00",
-  "standard_note": "KIM-0219: Se bajan solo ordenes pendientes HYPE, WIF, XLM, AAVE, AVAX y FLOKI aprox. 5%, conservando raiz digital 9. No hay ejecuciones y no cambia saldo disponible ni credito total.",
+  "standard_version": "KIM-0220",
+  "updated_at": "2026-08-11T10:05:00-06:00",
+  "standard_note": "KIM-0220: Regla de presentación cliente. No usar consolidada, aglomerada ni términos similares en WhatsApp/reportes del Sr. Eli; esos conceptos quedan solo para cálculo interno. Sin cambio contable.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0219",
-      "updated_at": "2026-08-11T09:35:00-06:00",
+      "version": "KIM-0220",
+      "updated_at": "2026-08-11T10:05:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -776,7 +776,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0219: HYPE, WIF, XLM, AAVE, AVAX y FLOKI pendientes bajadas aprox. 5% con raiz digital 9; sin ejecuciones.",
+      "latest_format_note": "KIM-0220: Reporte cliente limpio; no mostrar consolidada/aglomerada ni terminos internos similares.",
       "visible_order_count": 35,
       "section_count_validation": {
         "covered_orders": 17,
@@ -1364,7 +1364,7 @@
         }
       ],
       "pending_orders_total_visible": 18,
-      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y registrada en la posición.",
       "note": "BEAT/Audiera nueva orden pendiente a credito 1,800 @0.63; no comprada. Saldo disponible 4,373.14; credito pendiente 32,400.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "visible_live_orders": 35,
@@ -1396,7 +1396,16 @@
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
       "beat_reconsidered_pending_amount_usd": 1800.0,
-      "beat_reconsidered_state": "pending_on_credit_not_executed"
+      "beat_reconsidered_state": "pending_on_credit_not_executed",
+      "client_label_rule": "Ocultar terminos internos de calculo en reporte cliente: consolidada, consolidado, aglomerada, aglomerado, agglomerated, consolidated.",
+      "client_forbidden_terms": [
+        "consolidada",
+        "consolidado",
+        "aglomerada",
+        "aglomerado",
+        "agglomerated",
+        "consolidated"
+      ]
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -1946,9 +1955,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0219",
-      "updated_at": "2026-08-11T09:35:00-06:00",
-      "note": "Pendientes HYPE/WIF/XLM/AAVE/AVAX/FLOKI ajustadas aprox. 5% con raiz digital 9; sin cambio de saldo.",
+      "id": "KIM-0220",
+      "updated_at": "2026-08-11T10:05:00-06:00",
+      "note": "Regla cliente: ocultar terminos internos como consolidada/aglomerada; sin cambio contable.",
       "client_total_net_considered_usd": 57327.14,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -2136,7 +2145,7 @@
         }
       ],
       "pending_orders_total_visible": 18,
-      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y consolidada.",
+      "pending_orders_breakdown": "18 a credito; incluye BEAT/Audiera 1,800 USD en 0.63, PRL 1,800 USD en 0.234, WLD refuerzo 1,800 USD en 0.225 y LAB 1,800 USD en 0.07695. LAB 1,378.01 ya ejecutada a 0.11807 y registrada en la posición.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
@@ -2165,13 +2174,22 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0219: HYPE, WIF, XLM, AAVE, AVAX y FLOKI pendientes bajadas aprox. 5% con raiz digital 9; sin ejecuciones.",
+      "latest_format_note": "KIM-0220: Reporte cliente limpio; no mostrar consolidada/aglomerada ni terminos internos similares.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
       "beat_reconsidered_pending_amount_usd": 1800.0,
       "beat_reconsidered_state": "pending_on_credit_not_executed",
-      "pending_to_buy_on_credit_subtotal_usd": 32400.0
+      "pending_to_buy_on_credit_subtotal_usd": 32400.0,
+      "client_label_rule": "Ocultar terminos internos de calculo en reporte cliente: consolidada, consolidado, aglomerada, aglomerado, agglomerated, consolidated.",
+      "client_forbidden_terms": [
+        "consolidada",
+        "consolidado",
+        "aglomerada",
+        "aglomerado",
+        "agglomerated",
+        "consolidated"
+      ]
     }
   },
   "manual_entries": [
@@ -2213,7 +2231,7 @@
       "symbol": "APTUSDT",
       "state": "active",
       "order": 2,
-      "label": "APT/USDT consolidada",
+      "label": "APT/USDT",
       "invested_usd": 3600.0,
       "entry_price": 0.7425,
       "quantity": 4848.484848484849,
@@ -2232,7 +2250,11 @@
         "weighted_average_price": 0.7425,
         "total_quantity": 4848.484848484849,
         "total_amount_usd": 3600.0
-      }
+      },
+      "client_label": "APT/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "APT/USDT consolidada"
     },
     {
       "symbol": "DOGEUSDT",
@@ -2272,7 +2294,7 @@
       "symbol": "LUNCUSDT",
       "state": "active",
       "order": 4,
-      "label": "LUNC/USDT consolidada",
+      "label": "LUNC/USDT",
       "invested_usd": 4500.0,
       "entry_price": 6.768201559636118e-05,
       "quantity": 66487381.6234565,
@@ -2329,7 +2351,11 @@
         "status": "covered_with_available_balance",
         "source": "doctor_chat_2026_07_25_refuerzo_executions_and_meme_adjustments",
         "covered_from_available_balance_usd": 900.0
-      }
+      },
+      "client_label": "LUNC/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "LUNC/USDT consolidada"
     },
     {
       "symbol": "DOTUSDT",
@@ -2410,7 +2436,7 @@
       "id": "kim0118-nearusdt-consolidated",
       "order": 10,
       "symbol": "NEARUSDT",
-      "label": "NEAR/USDT consolidada",
+      "label": "NEAR/USDT",
       "state": "active",
       "invested_usd": 3600,
       "entry_price": 2.15625,
@@ -2436,7 +2462,11 @@
           "role": "reinforcement"
         }
       ],
-      "updated_at": "2026-06-23T23:37:48+00:00"
+      "updated_at": "2026-06-23T23:37:48+00:00",
+      "client_label": "NEAR/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "NEAR/USDT consolidada"
     },
     {
       "symbol": "FTTUSDT",
@@ -2869,7 +2899,7 @@
       "symbol": "LABUSDT",
       "state": "active",
       "order": 30,
-      "label": "LAB/USDT consolidada",
+      "label": "LAB/USDT",
       "invested_usd": 3600.0,
       "entry_price": 0.29823229523770767,
       "quantity": 12071.127297365969,
@@ -2929,7 +2959,11 @@
       "execution_status": "filled_confirmed_by_doctor",
       "execution_price": 0.11807,
       "execution_amount_cash_usd": 1378.01,
-      "execution_accounting_basis_usd": 1800.0
+      "execution_accounting_basis_usd": 1800.0,
+      "client_label": "LAB/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "LAB/USDT consolidada"
     },
     {
       "id": "kim0157-labusdt-pending-018-available",
@@ -3107,7 +3141,7 @@
       "symbol": "HBARUSDT",
       "state": "active",
       "order": 9,
-      "label": "HBAR/USDT consolidada",
+      "label": "HBAR/USDT",
       "invested_usd": 3600.0,
       "entry_price": 0.07776081771720614,
       "quantity": 46295.80945370419,
@@ -3151,13 +3185,17 @@
         }
       ],
       "coverage_status": "credit_covered_with_available_balance",
-      "covered_from_available_balance_usd": 1800.0
+      "covered_from_available_balance_usd": 1800.0,
+      "client_label": "HBAR/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "HBAR/USDT consolidada"
     },
     {
       "symbol": "XRPUSDT",
       "state": "active",
       "order": 7,
-      "label": "XRP/USDT consolidada",
+      "label": "XRP/USDT",
       "invested_usd": 3600.0,
       "entry_price": 1.1990891672807664,
       "quantity": 3002.27881147813,
@@ -3201,7 +3239,11 @@
         }
       ],
       "coverage_status": "credit_covered_with_available_balance",
-      "covered_from_available_balance_usd": 1800.0
+      "covered_from_available_balance_usd": 1800.0,
+      "client_label": "XRP/USDT",
+      "presentation_label_updated_at": "2026-08-11T10:05:00-06:00",
+      "presentation_label_note": "KIM-0220: etiqueta limpia para cliente; calculo interno conserva datos de promedio/agrupacion en otros campos.",
+      "internal_previous_label": "XRP/USDT consolidada"
     },
     {
       "id": "kim0197-icpusdt-refuerzo-pending-144",
@@ -4555,6 +4597,30 @@
           "quantity": 111111111.1111111,
           "root": 9,
           "state": "pending_not_executed"
+        }
+      }
+    },
+    {
+      "id": "KIM-0220",
+      "timestamp": "2026-08-11T10:05:00-06:00",
+      "summary": "Regla de presentación: ocultar términos internos consolidada/aglomerada del reporte cliente.",
+      "accounting_change": false,
+      "changes": {
+        "client_forbidden_terms": [
+          "consolidada",
+          "consolidado",
+          "aglomerada",
+          "aglomerado",
+          "agglomerated",
+          "consolidated"
+        ],
+        "labels_cleaned": {
+          "APTUSDT": "APT/USDT",
+          "LUNCUSDT": "LUNC/USDT",
+          "NEARUSDT": "NEAR/USDT",
+          "LABUSDT": "LAB/USDT",
+          "HBARUSDT": "HBAR/USDT",
+          "XRPUSDT": "XRP/USDT"
         }
       }
     }
@@ -7873,6 +7939,7 @@
     "KIM-0216: Se cancela BEAT/Audiera por volatilidad y se reemplaza por PRL/USDT pendiente a credito: 1,800 USD a 0.234. Ademas se ejecuta refuerzo WLD de 1,800 USD a 0.225, cubierto con saldo disponible; WLD queda consolidada en 4,500 USD a promedio 0.32196890. Saldo disponible baja a 2,573.14 USD; credito pendiente por ejecutar se mantiene en 28,800 USD.",
     "KIM-0217: Correccion WLD. El refuerzo WLD de 1,800 USD a 0.225 NO se ha comprado; queda como orden pendiente a credito. WLD activo vuelve a 2,700 USD a promedio 0.4517690418. Saldo disponible regresa a 4,373.14 USD. Credito pendiente por ejecutar sube a 30,600 USD por incluir WLD pendiente.",
     "KIM-0218: Sr. Eli reconsidera Audiera/BEAT. Se agrega BEAT/USDT orden pendiente a credito por 1,800 USD a 0.63; cantidad 2,857.142857 BEAT. No ejecutada; no descuenta saldo disponible. Credito pendiente por ejecutar 32,400 USD.",
-    "KIM-0219: Se bajan solo ordenes pendientes HYPE 44.91, WIF 0.11016, XLM 0.12618, AAVE 73.08, AVAX 4.95 y FLOKI 0.0000162; todas aprox. 5% abajo y raiz digital 9. Sin ejecuciones ni cambio de saldo."
+    "KIM-0219: Se bajan solo ordenes pendientes HYPE 44.91, WIF 0.11016, XLM 0.12618, AAVE 73.08, AVAX 4.95 y FLOKI 0.0000162; todas aprox. 5% abajo y raiz digital 9. Sin ejecuciones ni cambio de saldo.",
+    "KIM-0220: Regla cliente: no mostrar consolidada, consolidado, aglomerada, aglomerado ni equivalentes en reportes/WhatsApp; esos terminos quedan solo para calculos internos. Sin cambio contable."
   ]
 }
