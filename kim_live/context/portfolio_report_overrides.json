@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0232",
-  "updated_at": "2026-08-17T09:20:00-06:00",
-  "standard_note": "KIM-0232: BEAT 0.27 por 1,800 USD se confirma comprado. Se descuenta del saldo disponible compra + 1.2% = 1,821.60 USD. Se registra calculo de recuperacion de perdidas BEAT.",
+  "standard_version": "KIM-0233",
+  "updated_at": "2026-08-17T09:45:00-06:00",
+  "standard_note": "KIM-0233: Cysic/CYS orden pendiente ajustada de 0.45 a 0.36 por 1,800 USD. No ejecutada; sin cambio en saldo disponible ni credito pendiente total.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0232",
-      "updated_at": "2026-08-17T09:20:00-06:00",
+      "version": "KIM-0233",
+      "updated_at": "2026-08-17T09:45:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -710,7 +710,7 @@
           1800.0
         ],
         [
-          "CYSIC/CYS 0.45",
+          "CYSIC/CYS 0.36",
           1800.0
         ],
         [
@@ -780,7 +780,8 @@
         "KIM-0190: para LAB/USDT, y cualquier manual entry con current_price_status=validated_market_consensus o source market_consensus, no usar ese current_price como override manual en reportes con validación; siempre recalcular precio actual desde fuentes frescas.",
         "KIM-0230: agregar CYSIC 0.45, ETHFI 0.27 y VELVET 0.4050 como ordenes pendientes a credito de 1,800 USD cada una; no ejecutadas y sin descuento de saldo disponible.",
         "KIM-0231: para Cysic usar ticker de mercado CYSUSDT; no CYSICUSDT.",
-        "KIM-0232: BEAT 0.27 comprado por 1,800 USD; descontar compra + 1.2% del saldo disponible. BEAT 3 activa."
+        "KIM-0232: BEAT 0.27 comprado por 1,800 USD; descontar compra + 1.2% del saldo disponible. BEAT 3 activa.",
+        "KIM-0233: Cysic/CYS pendiente baja de 0.45 a 0.36 por 1,800 USD; sin ejecucion y sin descuento de saldo disponible."
       ],
       "latest_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_balance_section_titles": {
@@ -799,7 +800,7 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0232: BEAT 3 activa a 0.27; mantener BEAT 1/BEAT 2 como pendientes y LAB 1/LAB 2/LAB 3.",
+      "latest_format_note": "KIM-0233: Cysic/CYS pendiente ahora 0.36; mantener BEAT 3 activa y BEAT 1/BEAT 2 pendientes.",
       "visible_order_count": 40,
       "section_count_validation": {
         "covered_orders": 17,
@@ -851,7 +852,8 @@
         "KIM-0211: BEAT/Audiera orden pendiente actualizada a 1.62 por 1,800 USD; cantidad 1,111.111111 BEAT. Como las ordenes del 06-ago ya exceden 1-2 dias, BEAT, ONDO, LDO, COTI y GOAT dejan de decir nueva orden y se reportan como orden pendiente. Sin cambio contable.",
         "KIM-0230: nuevas pendientes CYSIC/ETHFI/VELVET por 5,400 USD total; credito pendiente por ejecutar sube a 41,400 USD.",
         "KIM-0231: Cysic corregida a CYS/USDT para precios en proveedores.",
-        "KIM-0232: calculo recuperacion BEAT 0.27: vender aprox 0.3752 para perdida neta BEAT; 0.4910 para BEAT + FTT relacionado."
+        "KIM-0232: calculo recuperacion BEAT 0.27: vender aprox 0.3752 para perdida neta BEAT; 0.4910 para BEAT + FTT relacionado.",
+        "KIM-0233: Cysic/CYS pendiente actualizada a 0.36; credito pendiente total no cambia porque monto sigue 1,800 USD."
       ],
       "covered_orders_subtotal_usd": 52054.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
@@ -1387,11 +1389,22 @@
           "amount_usd": 1800.0,
           "quantity": 214822.77121374867,
           "credit": true
+        },
+        {
+          "symbol": "CYSUSDT",
+          "label": "CYSIC/CYS",
+          "old_price": 0.45,
+          "new_price": 0.36,
+          "change_pct": 20.0,
+          "amount_usd": 1800.0,
+          "quantity": 5000.0,
+          "credit": true,
+          "source": "doctor_instruction_2026_08_17_cysic_to_036"
         }
       ],
       "pending_orders_total_visible": 23,
       "pending_orders_breakdown": "23 a credito; LAB 1 es la posicion abierta; LAB 2/LAB 3 y BEAT 1/BEAT 2 siguen pendientes; se agregan CYSIC, ETHFI y VELVET como ordenes pendientes nuevas.",
-      "note": "KIM-0232: BEAT 0.27 por 1,800 USD comprado y descontado del saldo disponible. Para recuperar perdida neta BEAT vender aprox en 0.3752; para cubrir BEAT + deficit FTT vender aprox en 0.4910.",
+      "note": "KIM-0233: Cysic/CYS pendiente ajustada a 0.36 por 1,800 USD. No ejecutada; saldo disponible 3,839.34 USD y credito pendiente por ejecutar 41,400 USD sin cambio.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "visible_live_orders": 40,
       "lab_consolidated_amount_usd": 3600.0,
@@ -1503,10 +1516,10 @@
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
       "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = activa comprada en 0.27.",
-      "id": "KIM-0232",
-      "cysic_pending_price": 0.45,
+      "id": "KIM-0233",
+      "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
-      "cysic_pending_quantity": 4000.0,
+      "cysic_pending_quantity": 5000.0,
       "ethfi_pending_price": 0.27,
       "ethfi_pending_amount_usd": 1800.0,
       "ethfi_pending_quantity": 6666.666666666667,
@@ -1526,7 +1539,9 @@
       "beat_027_recovery_price_to_cover_net_beat_loss": 0.3752262145748988,
       "beat_027_recovery_price_to_cover_stop_loss_only": 0.4254003036437247,
       "beat_027_recovery_price_to_cover_beat_plus_ftt_deficit": 0.49096153846153845,
-      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20)."
+      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20).",
+      "cysic_pending_previous_price": 0.45,
+      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00"
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -2076,9 +2091,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0232",
-      "updated_at": "2026-08-17T09:20:00-06:00",
-      "note": "KIM-0232: BEAT 0.27 por 1,800 USD comprado y descontado del saldo disponible. Para recuperar perdida neta BEAT vender aprox en 0.3752; para cubrir BEAT + deficit FTT vender aprox en 0.4910.",
+      "id": "KIM-0233",
+      "updated_at": "2026-08-17T09:45:00-06:00",
+      "note": "KIM-0233: Cysic/CYS pendiente ajustada a 0.36 por 1,800 USD. No ejecutada; saldo disponible 3,839.34 USD y credito pendiente por ejecutar 41,400 USD sin cambio.",
       "client_total_net_considered_usd": 57148.33,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -2263,6 +2278,17 @@
           "amount_usd": 1800.0,
           "quantity": 214822.77121374867,
           "credit": true
+        },
+        {
+          "symbol": "CYSUSDT",
+          "label": "CYSIC/CYS",
+          "old_price": 0.45,
+          "new_price": 0.36,
+          "change_pct": 20.0,
+          "amount_usd": 1800.0,
+          "quantity": 5000.0,
+          "credit": true,
+          "source": "doctor_instruction_2026_08_17_cysic_to_036"
         }
       ],
       "pending_orders_total_visible": 23,
@@ -2295,7 +2321,7 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0232: BEAT 3 activa a 0.27; mantener BEAT 1/BEAT 2 como pendientes y LAB 1/LAB 2/LAB 3.",
+      "latest_format_note": "KIM-0233: Cysic/CYS pendiente ahora 0.36; mantener BEAT 3 activa y BEAT 1/BEAT 2 pendientes.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
@@ -2480,7 +2506,7 @@
           1800.0
         ],
         [
-          "CYSIC/CYS 0.45",
+          "CYSIC/CYS 0.36",
           1800.0
         ],
         [
@@ -2547,10 +2573,10 @@
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
       "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = activa comprada en 0.27.",
-      "version": "KIM-0232",
-      "cysic_pending_price": 0.45,
+      "version": "KIM-0233",
+      "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
-      "cysic_pending_quantity": 4000.0,
+      "cysic_pending_quantity": 5000.0,
       "ethfi_pending_price": 0.27,
       "ethfi_pending_amount_usd": 1800.0,
       "ethfi_pending_quantity": 6666.666666666667,
@@ -2570,7 +2596,9 @@
       "beat_027_recovery_price_to_cover_net_beat_loss": 0.3752262145748988,
       "beat_027_recovery_price_to_cover_stop_loss_only": 0.4254003036437247,
       "beat_027_recovery_price_to_cover_beat_plus_ftt_deficit": 0.49096153846153845,
-      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20)."
+      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20).",
+      "cysic_pending_previous_price": 0.45,
+      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00"
     }
   },
   "manual_entries": [
@@ -3940,24 +3968,28 @@
       "id": "kim0230-cysicusdt-pending-045",
       "order": 60,
       "symbol": "CYSUSDT",
-      "label": "CYS/USDT Cysic orden pendiente",
-      "client_label": "CYS/USDT Cysic orden pendiente",
+      "label": "CYS/USDT Cysic orden pendiente 0.36",
+      "client_label": "CYS/USDT Cysic orden pendiente 0.36",
       "state": "pending",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.45,
-      "entry_price_display": "0.45",
-      "quantity": 4000.0,
+      "entry_price": 0.36,
+      "entry_price_display": "0.36",
+      "quantity": 5000.0,
       "credit_usd": 1800.0,
       "credit": true,
       "source": "doctor_instruction_2026_08_16_new_pending_orders",
-      "notes": "KIM-0230: orden pendiente a credito por 1,800 USD a 0.45. No ejecutada; no descuenta saldo disponible hasta confirmacion real. KIM-0231: ticker corregido de CYSICUSDT a CYSUSDT; Cysic cotiza como CYS.",
-      "updated_at": "2026-08-16T13:15:00-06:00",
+      "notes": "KIM-0230: orden pendiente a credito por 1,800 USD a 0.45. No ejecutada; no descuenta saldo disponible hasta confirmacion real. KIM-0231: ticker corregido de CYSICUSDT a CYSUSDT; Cysic cotiza como CYS. KIM-0233: precio pendiente ajustado de 0.45 a 0.36; monto 1,800 USD, cantidad 5,000 CYS. Sigue pendiente; no descuenta saldo.",
+      "updated_at": "2026-08-17T09:45:00-06:00",
       "no_auto_fill": true,
       "requires_manual_fill_confirmation": true,
       "execution_status": "pending_not_executed",
       "status": "pending_on_credit_not_executed",
-      "credit_mark": "(c)"
+      "credit_mark": "(c)",
+      "price_adjusted_from": 0.45,
+      "price_adjusted_to": 0.36,
+      "price_adjusted_at": "2026-08-17T09:45:00-06:00",
+      "latest_price_adjustment_source": "doctor_instruction_2026_08_17_cysic_to_036"
     },
     {
       "id": "kim0230-ethfiusdt-pending-027",
@@ -5695,6 +5727,25 @@
           "beat_stop_losses": 0.4254003036437247,
           "beat_plus_ftt_deficit": 0.49096153846153845
         }
+      }
+    },
+    {
+      "version": "KIM-0233",
+      "date": "2026-08-17",
+      "summary": "Cysic/CYS pendiente ajustada a 0.36.",
+      "accounting_change": "Sin cambio de saldo disponible ni credito pendiente total; solo cambia precio/cantidad de la orden pendiente Cysic.",
+      "changes": {
+        "pending_price_adjustment": {
+          "symbol": "CYSUSDT",
+          "label": "CYSIC/CYS",
+          "old_price": 0.45,
+          "new_price": 0.36,
+          "amount_usd": 1800.0,
+          "old_quantity": 4000.0,
+          "new_quantity": 5000.0
+        },
+        "available_balance_usd": 3839.34,
+        "credit_pending_execution_usd": 41400.0
       }
     }
   ],
@@ -9480,6 +9531,25 @@
           "beat_stop_losses": 0.4254003036437247,
           "beat_plus_ftt_deficit": 0.49096153846153845
         }
+      }
+    },
+    {
+      "version": "KIM-0233",
+      "date": "2026-08-17",
+      "summary": "Cysic/CYS pendiente ajustada a 0.36.",
+      "accounting_change": "Sin cambio de saldo disponible ni credito pendiente total; solo cambia precio/cantidad de la orden pendiente Cysic.",
+      "changes": {
+        "pending_price_adjustment": {
+          "symbol": "CYSUSDT",
+          "label": "CYSIC/CYS",
+          "old_price": 0.45,
+          "new_price": 0.36,
+          "amount_usd": 1800.0,
+          "old_quantity": 4000.0,
+          "new_quantity": 5000.0
+        },
+        "available_balance_usd": 3839.34,
+        "credit_pending_execution_usd": 41400.0
       }
     }
   ],
