@@ -21254,6 +21254,10 @@ def portfolio_pending_distance_to_current_pct(item):
 
 
 def portfolio_client_direction_phrase(item, pending=False):
+    label_text = str((item or {}).get("label") or "").lower()
+    state_text = str((item or {}).get("state") or "").lower()
+    credit_mark = str((item or {}).get("credit_mark") or "").strip()
+    pending = bool(pending) or "pendiente" in label_text or state_text == "pending" or credit_mark == "(c)"
     pct = portfolio_pending_distance_to_current_pct(item) if pending else portfolio_client_performance_pct(item)
     if pct is None:
         return "Precio actual no validado; no calcular porcentaje."
@@ -22382,9 +22386,17 @@ def portfolio_client_report(summary, parameters=None):
     if override_config.get("provider_note"):
         provider_warnings.append(str(override_config.get("provider_note")))
     for item in active_items:
-        item["client_state"] = "active"
-        item["client_display_pct"] = round_opt(item.get("variation_pct"), 2) if item.get("variation_pct") not in (None, "") else None
-        item["client_phrase"] = portfolio_active_client_phrase(item.get("client_display_pct"))
+        label_text = str(item.get("label") or "").lower()
+        state_text = str(item.get("state") or "").lower()
+        credit_mark = str(item.get("credit_mark") or "").strip()
+        looks_pending = "pendiente" in label_text or state_text == "pending" or credit_mark == "(c)"
+        item["client_state"] = "pending" if looks_pending else "active"
+        if looks_pending:
+            item["client_display_pct"] = round_opt(portfolio_pending_distance_to_current_pct(item), 2)
+            item["client_phrase"] = portfolio_pending_client_phrase(item.get("client_display_pct"))
+        else:
+            item["client_display_pct"] = round_opt(item.get("variation_pct"), 2) if item.get("variation_pct") not in (None, "") else None
+            item["client_phrase"] = portfolio_active_client_phrase(item.get("client_display_pct"))
     for item in pending_items:
         item["client_state"] = "pending"
         item["client_display_pct"] = round_opt(portfolio_pending_distance_to_current_pct(item), 2)
