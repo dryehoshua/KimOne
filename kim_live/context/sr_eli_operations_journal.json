@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "client_id": "sr_eli",
+  "created_at": "2026-08-18T13:18:19-06:00",
+  "timezone": "America/Mexico_City",
+  "purpose": "Operations journal separado del ledger pesado; registra instrucciones recibidas, hora de captura, efecto contable y version ledger asociada.",
+  "entries": [
+    {
+      "version": "KIM-0235",
+      "instruction_received_at": "2026-08-18T13:18:19-06:00",
+      "recorded_at": "2026-08-18T13:20:00-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "BEAT 1 se bajo de 0.324 a 0.27, se compro por 1,800 USD y se vendio a mercado por instruccion de Sr. Eli aprox 11:00 con utilidad neta +24 USD. Posteriormente ocurrieron las dos ordenes 900 @0.2808 y 900 @0.27 cerradas por stop ya registradas en KIM-0234.",
+      "events": [
+        {
+          "event_time_local": "2026-08-18T07:00:00-06:00",
+          "type": "order_adjusted_and_executed",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 1",
+          "from_price": 0.324,
+          "entry_price": 0.27,
+          "amount_usd": 1800.0,
+          "quantity": 6666.666666666666,
+          "time_precision": "approx_from_user_4h_before_11am"
+        },
+        {
+          "event_time_local": "2026-08-18T11:00:00-06:00",
+          "type": "market_sale",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 1",
+          "net_profit_usd": 24.0,
+          "net_sale_usd": 1845.6,
+          "sell_price_estimated": 0.2802024291497976,
+          "time_precision": "user_reported_approx"
+        }
+      ],
+      "accounting_effect": {
+        "available_balance_before_usd": 5350.98,
+        "available_balance_after_usd": 5374.98,
+        "credit_pending_before_usd": 41400.0,
+        "credit_pending_after_usd": 39600.0,
+        "realized_profit_delta_usd": 24.0
+      },
+      "notes": "Precio real de venta a mercado no fue informado; se guarda utilidad neta confirmada +24 USD y precio estimado derivado solo para conciliacion."
+    }
+  ],
+  "updated_at": "2026-08-18T13:18:19-06:00"
+}
