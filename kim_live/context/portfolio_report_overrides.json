@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0233",
-  "updated_at": "2026-08-17T09:45:00-06:00",
-  "standard_note": "KIM-0233: Cysic/CYS orden pendiente ajustada de 0.45 a 0.36 por 1,800 USD. No ejecutada; sin cambio en saldo disponible ni credito pendiente total.",
+  "standard_version": "KIM-0234",
+  "updated_at": "2026-08-18T09:15:00-06:00",
+  "standard_note": "KIM-0234: BEAT 3 corregida a 900 @0.2808 + 900 @0.27 y cerrada por stop 15% abajo en 0.234. Venta neta 1,511.64 USD; perdida neta -309.96; saldo disponible 5,350.98.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0233",
-      "updated_at": "2026-08-17T09:45:00-06:00",
+      "version": "KIM-0234",
+      "updated_at": "2026-08-18T09:15:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -549,11 +549,11 @@
       ],
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
-      "realized_profit_for_statement_usd": 63.02,
-      "realized_profit_note": "KIM-0169: profit realizado se mantiene en 63.02 USD; la cobertura de LUNC/APT por 3,600 USD mueve saldo disponible a monto en firme, no cambia P/L.",
-      "client_total_net_considered_usd": 57148.33,
-      "firm_assigned_usd": 57148.33,
-      "available_balance_usd": 3839.34,
+      "realized_profit_for_statement_usd": -246.94,
+      "realized_profit_note": "KIM-0234: BEAT 3 cerrada por stop loss; perdida neta -309.96 USD se aplica al profit realizado previo.",
+      "client_total_net_considered_usd": 56859.97,
+      "firm_assigned_usd": 56859.97,
+      "available_balance_usd": 5350.98,
       "credit_bought_pending_payment_usd": 0.0,
       "credit_pending_execution_usd": 41400.0,
       "credit_total_usd": 41400.0,
@@ -621,10 +621,6 @@
         [
           "BONK",
           1800
-        ],
-        [
-          "BEAT 3",
-          1800.0
         ]
       ],
       "bought_on_credit_pending_payment": [],
@@ -781,7 +777,8 @@
         "KIM-0230: agregar CYSIC 0.45, ETHFI 0.27 y VELVET 0.4050 como ordenes pendientes a credito de 1,800 USD cada una; no ejecutadas y sin descuento de saldo disponible.",
         "KIM-0231: para Cysic usar ticker de mercado CYSUSDT; no CYSICUSDT.",
         "KIM-0232: BEAT 0.27 comprado por 1,800 USD; descontar compra + 1.2% del saldo disponible. BEAT 3 activa.",
-        "KIM-0233: Cysic/CYS pendiente baja de 0.45 a 0.36 por 1,800 USD; sin ejecucion y sin descuento de saldo disponible."
+        "KIM-0233: Cysic/CYS pendiente baja de 0.45 a 0.36 por 1,800 USD; sin ejecucion y sin descuento de saldo disponible.",
+        "KIM-0234: BEAT 3 se corrige a 900 USD @0.2808 + 900 USD @0.27, stop 15% abajo ejecutado en 0.234; cerrar posicion y sumar neto 1,511.64 USD a saldo disponible."
       ],
       "latest_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_balance_section_titles": {
@@ -800,17 +797,17 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0233: Cysic/CYS pendiente ahora 0.36; mantener BEAT 3 activa y BEAT 1/BEAT 2 pendientes.",
-      "visible_order_count": 40,
+      "latest_format_note": "KIM-0234: BEAT 3 cerrada por stop; BEAT 1 y BEAT 2 permanecen pendientes.",
+      "visible_order_count": 39,
       "section_count_validation": {
-        "covered_orders": 17,
-        "covered_active": 17,
+        "covered_orders": 16,
+        "covered_active": 16,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
         "pending_on_credit": 23,
-        "total_visible_orders": 40,
-        "client_visible_lines": 40,
+        "total_visible_orders": 39,
+        "client_visible_lines": 39,
         "accounting_underlying_orders": 41,
         "rule": "KIM-0225: BEAT 1 activa; BEAT 2/3/4 pendientes a credito.",
         "cash_funded_pending_orders": 0,
@@ -853,9 +850,10 @@
         "KIM-0230: nuevas pendientes CYSIC/ETHFI/VELVET por 5,400 USD total; credito pendiente por ejecutar sube a 41,400 USD.",
         "KIM-0231: Cysic corregida a CYS/USDT para precios en proveedores.",
         "KIM-0232: calculo recuperacion BEAT 0.27: vender aprox 0.3752 para perdida neta BEAT; 0.4910 para BEAT + FTT relacionado.",
-        "KIM-0233: Cysic/CYS pendiente actualizada a 0.36; credito pendiente total no cambia porque monto sigue 1,800 USD."
+        "KIM-0233: Cysic/CYS pendiente actualizada a 0.36; credito pendiente total no cambia porque monto sigue 1,800 USD.",
+        "KIM-0234: BEAT 3 cerrada por stop; perdida neta -309.96 USD. Saldo disponible 5,350.98 USD; credito pendiente por ejecutar 41,400 USD."
       ],
-      "covered_orders_subtotal_usd": 52054.0,
+      "covered_orders_subtotal_usd": 50254.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
       "pending_to_buy_on_credit_subtotal_usd": 41400.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
@@ -1039,7 +1037,7 @@
       "executed_bought_orders_gross_usd": 12600.0,
       "available_balance_applied_to_executed_orders_usd": 12664.8,
       "credit_bought_pending_payment_gross_usd": 0.0,
-      "available_balance_rule": "KIM-0232: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 0.27 descuenta 1,821.60 USD. Saldo disponible final 3,839.34 USD.",
+      "available_balance_rule": "KIM-0234: BEAT 3 se cierra por stop; venta neta 1,511.64 USD se suma a saldo disponible. Saldo disponible final 5,350.98 USD.",
       "client_facing_movements": [
         {
           "date": "06-mar-2025",
@@ -1404,9 +1402,9 @@
       ],
       "pending_orders_total_visible": 23,
       "pending_orders_breakdown": "23 a credito; LAB 1 es la posicion abierta; LAB 2/LAB 3 y BEAT 1/BEAT 2 siguen pendientes; se agregan CYSIC, ETHFI y VELVET como ordenes pendientes nuevas.",
-      "note": "KIM-0233: Cysic/CYS pendiente ajustada a 0.36 por 1,800 USD. No ejecutada; saldo disponible 3,839.34 USD y credito pendiente por ejecutar 41,400 USD sin cambio.",
+      "note": "KIM-0234: BEAT 3 se corrigio a dos compras de 900 USD en 0.2808 y 0.27; stop 15% abajo del promedio en 0.234 ejecutado. Perdida neta -309.96 USD; saldo disponible 5,350.98 USD.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
-      "visible_live_orders": 40,
+      "visible_live_orders": 39,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -1459,7 +1457,7 @@
       "ftt_sale_net_added_to_available_usd": 1937.69,
       "ftt_sale_net_pnl_usd": -762.31,
       "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
-      "active_order_count": 17,
+      "active_order_count": 16,
       "pending_order_count": 23,
       "beat_second_pending_state": "executed_confirmed",
       "beat_second_execution_price": 0.909,
@@ -1510,13 +1508,13 @@
       "beat_stop_loss_close_price": 0.5827,
       "beat_stop_loss_net_loss_usd": -980.37,
       "beat_historical_profit_0909_usd": 330.48,
-      "beat_net_realized_after_all_beat_usd": -649.89,
-      "beat_plus_ftt_related_deficit_usd": 1412.2,
+      "beat_net_realized_after_all_beat_usd": -959.85,
+      "beat_plus_ftt_related_deficit_usd": 1722.16,
       "lab_0081_pending_status": "cancelled_not_executed_kim0228",
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
-      "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = activa comprada en 0.27.",
-      "id": "KIM-0233",
+      "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234.",
+      "id": "KIM-0234",
       "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
       "cysic_pending_quantity": 5000.0,
@@ -1532,16 +1530,33 @@
       "beat_027_execution_quantity": 6666.666666666666,
       "beat_027_buy_fee_usd": 21.6,
       "beat_027_available_debit_usd": 1821.6,
-      "beat_027_state": "active",
+      "beat_027_state": "sold_stop_loss_kim0234",
       "beat_realized_net_loss_before_027_usd": -649.89,
       "beat_stop_loss_closed_net_loss_usd": -980.37,
       "beat_plus_ftt_related_deficit_before_027_usd": 1412.2,
       "beat_027_recovery_price_to_cover_net_beat_loss": 0.3752262145748988,
       "beat_027_recovery_price_to_cover_stop_loss_only": 0.4254003036437247,
       "beat_027_recovery_price_to_cover_beat_plus_ftt_deficit": 0.49096153846153845,
-      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20).",
+      "beat_recovery_calculation_note": "KIM-0234: BEAT 3 ya no esta activa; se cerro por stop 15% abajo en 0.234 con perdida neta -309.96 USD. Perdida neta acumulada BEAT aprox -959.85 USD; incluyendo deficit FTT restante, deficit neto aprox -1,391.68 USD.",
       "cysic_pending_previous_price": 0.45,
-      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00"
+      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00",
+      "beat_3_split_buy_1_amount_usd": 900.0,
+      "beat_3_split_buy_1_price": 0.2808,
+      "beat_3_split_buy_1_quantity": 3205.128205128205,
+      "beat_3_split_buy_2_amount_usd": 900.0,
+      "beat_3_split_buy_2_price": 0.27,
+      "beat_3_split_buy_2_quantity": 3333.333333333333,
+      "beat_3_total_amount_usd": 1800.0,
+      "beat_3_total_quantity": 6538.461538461538,
+      "beat_3_weighted_average_price": 0.27529411764705886,
+      "beat_3_stop_loss_pct": 15.0,
+      "beat_3_stop_loss_price": 0.234,
+      "beat_3_gross_sale_usd": 1530.0,
+      "beat_3_buy_fee_usd": 21.6,
+      "beat_3_sell_fee_usd": 18.36,
+      "beat_3_net_sale_usd": 1511.64,
+      "beat_3_net_pnl_usd": -309.96,
+      "beat_net_realized_plus_ftt_remaining_deficit_usd": -1391.68
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -2058,7 +2073,7 @@
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
       "xrp_consolidated_credit_usd": 1800.0,
-      "available_balance_usd": 3839.34,
+      "available_balance_usd": 5350.98,
       "available_balance_before_executed_orders_usd": 1114.1,
       "available_balance_applied_to_executed_orders_usd": 12664.8,
       "executed_bought_orders_gross_usd": 12600.0,
@@ -2066,10 +2081,10 @@
       "credit_bought_pending_payment_usd": 0.0,
       "credit_pending_execution_usd": 41400.0,
       "credit_total_usd": 41400.0,
-      "firm_assigned_usd": 57148.33,
-      "available_balance_rule": "KIM-0232: compras ejecutadas descuentan monto + 1.2% del saldo disponible; BEAT 0.27 descuenta 1,821.60 USD. Saldo disponible final 3,839.34 USD.",
+      "firm_assigned_usd": 56859.97,
+      "available_balance_rule": "KIM-0234: BEAT 3 se cierra por stop; venta neta 1,511.64 USD se suma a saldo disponible. Saldo disponible final 5,350.98 USD.",
       "pending_on_credit_orders": 23,
-      "visible_live_orders": 40,
+      "visible_live_orders": 39,
       "accounting_underlying_orders": 39,
       "icp_refuerzo_pending_price": 1.368,
       "icp_refuerzo_pending_amount_usd": 1800.0,
@@ -2091,10 +2106,10 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0233",
-      "updated_at": "2026-08-17T09:45:00-06:00",
-      "note": "KIM-0233: Cysic/CYS pendiente ajustada a 0.36 por 1,800 USD. No ejecutada; saldo disponible 3,839.34 USD y credito pendiente por ejecutar 41,400 USD sin cambio.",
-      "client_total_net_considered_usd": 57148.33,
+      "id": "KIM-0234",
+      "updated_at": "2026-08-18T09:15:00-06:00",
+      "note": "KIM-0234: BEAT 3 se corrigio a dos compras de 900 USD en 0.2808 y 0.27; stop 15% abajo del promedio en 0.234 ejecutado. Perdida neta -309.96 USD; saldo disponible 5,350.98 USD.",
+      "client_total_net_considered_usd": 56859.97,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
       "client_deposit_withdrawal_balance_mxn": 990000.0,
@@ -2296,7 +2311,7 @@
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
-      "visible_order_count": 40,
+      "visible_order_count": 39,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -2321,7 +2336,7 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0233: Cysic/CYS pendiente ahora 0.36; mantener BEAT 3 activa y BEAT 1/BEAT 2 pendientes.",
+      "latest_format_note": "KIM-0234: BEAT 3 cerrada por stop; BEAT 1 y BEAT 2 permanecen pendientes.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
@@ -2351,7 +2366,7 @@
       "ftt_sale_net_added_to_available_usd": 1937.69,
       "ftt_sale_net_pnl_usd": -762.31,
       "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
-      "active_order_count": 17,
+      "active_order_count": 16,
       "pending_order_count": 23,
       "covered_orders": [
         [
@@ -2417,13 +2432,9 @@
         [
           "BONK",
           1800
-        ],
-        [
-          "BEAT 3",
-          1800.0
         ]
       ],
-      "covered_orders_subtotal_usd": 52054.0,
+      "covered_orders_subtotal_usd": 50254.0,
       "pending_to_buy_on_credit": [
         [
           "HYPE",
@@ -2567,13 +2578,13 @@
       "beat_stop_loss_close_price": 0.5827,
       "beat_stop_loss_net_loss_usd": -980.37,
       "beat_historical_profit_0909_usd": 330.48,
-      "beat_net_realized_after_all_beat_usd": -649.89,
-      "beat_plus_ftt_related_deficit_usd": 1412.2,
+      "beat_net_realized_after_all_beat_usd": -959.85,
+      "beat_plus_ftt_related_deficit_usd": 1722.16,
       "lab_0081_pending_status": "cancelled_not_executed_kim0228",
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
-      "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = activa comprada en 0.27.",
-      "version": "KIM-0233",
+      "beat_label_rule": "BEAT 1 = pendiente 0.324; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234.",
+      "version": "KIM-0234",
       "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
       "cysic_pending_quantity": 5000.0,
@@ -2589,16 +2600,35 @@
       "beat_027_execution_quantity": 6666.666666666666,
       "beat_027_buy_fee_usd": 21.6,
       "beat_027_available_debit_usd": 1821.6,
-      "beat_027_state": "active",
+      "beat_027_state": "sold_stop_loss_kim0234",
       "beat_realized_net_loss_before_027_usd": -649.89,
       "beat_stop_loss_closed_net_loss_usd": -980.37,
       "beat_plus_ftt_related_deficit_before_027_usd": 1412.2,
       "beat_027_recovery_price_to_cover_net_beat_loss": 0.3752262145748988,
       "beat_027_recovery_price_to_cover_stop_loss_only": 0.4254003036437247,
       "beat_027_recovery_price_to_cover_beat_plus_ftt_deficit": 0.49096153846153845,
-      "beat_recovery_calculation_note": "Con 6,666.6667 BEAT comprados a 0.27, usando fee compra 21.60 y fee venta 1.2%: 0.3752 recupera perdida neta BEAT (-649.89); 0.4254 recupera perdidas de stops BEAT sin netear ganancia previa (-980.37); 0.4910 recupera BEAT + deficit ligado a FTT (1,412.20).",
+      "beat_recovery_calculation_note": "KIM-0234: BEAT 3 ya no esta activa; se cerro por stop 15% abajo en 0.234 con perdida neta -309.96 USD. Perdida neta acumulada BEAT aprox -959.85 USD; incluyendo deficit FTT restante, deficit neto aprox -1,391.68 USD.",
       "cysic_pending_previous_price": 0.45,
-      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00"
+      "cysic_price_adjusted_at": "2026-08-17T09:45:00-06:00",
+      "realized_profit_for_statement_usd": -246.94,
+      "realized_profit_note": "KIM-0234: BEAT 3 cerrada por stop loss; perdida neta -309.96 USD se aplica al profit realizado previo.",
+      "beat_3_split_buy_1_amount_usd": 900.0,
+      "beat_3_split_buy_1_price": 0.2808,
+      "beat_3_split_buy_1_quantity": 3205.128205128205,
+      "beat_3_split_buy_2_amount_usd": 900.0,
+      "beat_3_split_buy_2_price": 0.27,
+      "beat_3_split_buy_2_quantity": 3333.333333333333,
+      "beat_3_total_amount_usd": 1800.0,
+      "beat_3_total_quantity": 6538.461538461538,
+      "beat_3_weighted_average_price": 0.27529411764705886,
+      "beat_3_stop_loss_pct": 15.0,
+      "beat_3_stop_loss_price": 0.234,
+      "beat_3_gross_sale_usd": 1530.0,
+      "beat_3_buy_fee_usd": 21.6,
+      "beat_3_sell_fee_usd": 18.36,
+      "beat_3_net_sale_usd": 1511.64,
+      "beat_3_net_pnl_usd": -309.96,
+      "beat_net_realized_plus_ftt_remaining_deficit_usd": -1391.68
     }
   },
   "manual_entries": [
@@ -4041,23 +4071,44 @@
       "id": "kim0232-beatusdt-executed-027",
       "order": 63,
       "symbol": "BEATUSDT",
-      "label": "BEAT 3/USDT",
-      "client_label": "BEAT 3/USDT",
-      "state": "active",
+      "label": "BEAT 3/USDT cerrada stop 15%",
+      "client_label": "BEAT 3/USDT cerrada stop 15%",
+      "state": "sold",
       "side": "BUY",
       "invested_usd": 1800.0,
-      "entry_price": 0.27,
-      "entry_price_display": "0.27",
-      "quantity": 6666.666666666666,
+      "entry_price": 0.27529411764705886,
+      "entry_price_display": "0.275294",
+      "quantity": 6538.461538461538,
       "buy_fee_usd": 21.6,
       "available_balance_debit_usd": 1821.6,
       "credit": false,
       "credit_usd": 0.0,
       "source": "doctor_instruction_2026_08_17_beat_027_executed",
-      "notes": "KIM-0232: compra BEAT confirmada por Sr. Eli/doctor: 1,800 USD a 0.27. Regla vigente: compra ejecutada descuenta compra + 1.2% de comision del saldo disponible. Etiquetada BEAT 3 para no mezclar BEAT 1/BEAT 2 pendientes.",
-      "updated_at": "2026-08-17T09:20:00-06:00",
-      "execution_status": "executed_confirmed",
-      "status": "active"
+      "notes": "KIM-0232: compra BEAT confirmada por Sr. Eli/doctor: 1,800 USD a 0.27. Regla vigente: compra ejecutada descuenta compra + 1.2% de comision del saldo disponible. Etiquetada BEAT 3 para no mezclar BEAT 1/BEAT 2 pendientes. KIM-0234: correccion del doctor; se coloco 900 USD en 0.2808 y luego 900 USD en 0.27. Promedio ponderado 0.275294; stop loss 15% abajo en 0.234 ejecutado y cerro la posicion. Venta neta 1,511.64 USD; perdida neta -309.96 USD.",
+      "updated_at": "2026-08-18T09:15:00-06:00",
+      "execution_status": "closed_by_stop_loss",
+      "status": "sold_stop_loss",
+      "split_buys": [
+        {
+          "amount_usd": 900.0,
+          "entry_price": 0.2808,
+          "quantity": 3205.128205128205
+        },
+        {
+          "amount_usd": 900.0,
+          "entry_price": 0.27,
+          "quantity": 3333.333333333333
+        }
+      ],
+      "stop_loss_pct": 15.0,
+      "stop_loss_price": 0.234,
+      "stop_loss_display": "0.234",
+      "sell_price": 0.234,
+      "gross_sale_usd": 1530.0,
+      "sell_fee_usd": 18.36,
+      "net_sale_usd": 1511.64,
+      "net_pnl_usd": -309.96,
+      "sold_at": "2026-08-17"
     }
   ],
   "closed_positions": [
@@ -4343,6 +4394,43 @@
       "sold_at": "2026-08-15",
       "execution_ref": "KIM-0227",
       "notes": "KIM-0227: BEAT 1 comprada en 1.018 cerrada por stop loss en 0.5827. Venta bruta 1,030.31 USD; comision venta 12.36 USD; venta neta 1,017.95 USD; perdida neta con comision compra/venta -803.65 USD."
+    },
+    {
+      "id": "kim0234-beat3-split-stop-0234",
+      "symbol": "BEATUSDT",
+      "identifier": "BEAT 3 cierre 2026-08-17",
+      "order": 63,
+      "label": "BEAT 3/USDT",
+      "state": "sold",
+      "invested_usd": 1800.0,
+      "entry_price": 0.27529411764705886,
+      "weighted_average_price": 0.27529411764705886,
+      "quantity": 6538.461538461538,
+      "split_buys": [
+        {
+          "amount_usd": 900.0,
+          "entry_price": 0.2808,
+          "quantity": 3205.128205128205
+        },
+        {
+          "amount_usd": 900.0,
+          "entry_price": 0.27,
+          "quantity": 3333.333333333333
+        }
+      ],
+      "sell_price": 0.234,
+      "stop_loss_pct": 15.0,
+      "gross_sale_usd": 1530.0,
+      "gross_pnl_usd": -270.0,
+      "buy_fee_usd": 21.6,
+      "sell_fee_rate": 0.012,
+      "sell_fee_usd": 18.36,
+      "net_sale_usd": 1511.64,
+      "net_pnl_usd": -309.96,
+      "source": "doctor_instruction_2026_08_18_beat_split_stop_executed_yesterday",
+      "sold_at": "2026-08-17",
+      "credit": false,
+      "notes": "KIM-0234: BEAT 3 se compro en dos tramos: 900 USD @0.2808 y 900 USD @0.27. Stop loss 15% abajo del promedio ponderado ejecutado en 0.234; perdida neta -309.96 USD."
     }
   ],
   "suppress_symbols": [
@@ -5746,6 +5834,28 @@
         },
         "available_balance_usd": 3839.34,
         "credit_pending_execution_usd": 41400.0
+      }
+    },
+    {
+      "version": "KIM-0234",
+      "date": "2026-08-18",
+      "summary": "BEAT 3 corregida a dos compras y cerrada por stop loss 15%.",
+      "accounting_change": "Venta neta 1,511.64 USD vuelve a saldo disponible; saldo disponible sube a 5,350.98 USD. Perdida neta de la operacion -309.96 USD. Credito pendiente por ejecutar sigue 41,400 USD.",
+      "changes": {
+        "closed_order": {
+          "symbol": "BEATUSDT",
+          "label": "BEAT 3",
+          "amount_usd": 1800.0,
+          "weighted_average_price": 0.27529411764705886,
+          "quantity": 6538.461538461538,
+          "stop_loss_price": 0.234,
+          "net_sale_usd": 1511.64,
+          "net_pnl_usd": -309.96
+        },
+        "available_balance_usd": 5350.98,
+        "credit_pending_execution_usd": 41400.0,
+        "active_order_count": 16,
+        "visible_live_orders": 39
       }
     }
   ],
@@ -9550,6 +9660,28 @@
         },
         "available_balance_usd": 3839.34,
         "credit_pending_execution_usd": 41400.0
+      }
+    },
+    {
+      "version": "KIM-0234",
+      "date": "2026-08-18",
+      "summary": "BEAT 3 corregida a dos compras y cerrada por stop loss 15%.",
+      "accounting_change": "Venta neta 1,511.64 USD vuelve a saldo disponible; saldo disponible sube a 5,350.98 USD. Perdida neta de la operacion -309.96 USD. Credito pendiente por ejecutar sigue 41,400 USD.",
+      "changes": {
+        "closed_order": {
+          "symbol": "BEATUSDT",
+          "label": "BEAT 3",
+          "amount_usd": 1800.0,
+          "weighted_average_price": 0.27529411764705886,
+          "quantity": 6538.461538461538,
+          "stop_loss_price": 0.234,
+          "net_sale_usd": 1511.64,
+          "net_pnl_usd": -309.96
+        },
+        "available_balance_usd": 5350.98,
+        "credit_pending_execution_usd": 41400.0,
+        "active_order_count": 16,
+        "visible_live_orders": 39
       }
     }
   ],
