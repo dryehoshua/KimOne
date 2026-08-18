@@ -42,7 +42,45 @@
         "realized_profit_delta_usd": 24.0
       },
       "notes": "Precio real de venta a mercado no fue informado; se guarda utilidad neta confirmada +24 USD y precio estimado derivado solo para conciliacion."
+    },
+    {
+      "version": "KIM-0236",
+      "instruction_received_at": "2026-08-18T13:23:48-06:00",
+      "recorded_at": "2026-08-18T13:25:00-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "Se coloca nueva orden pendiente BEAT por 1,800 USD a 0.225. Por volatilidad, el doctor indica descontar/reservar las ordenes pendientes de BEAT y LAB del saldo disponible.",
+      "events": [
+        {
+          "event_time_local": "2026-08-18T13:23:48-06:00",
+          "type": "pending_order_created",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "entry_price": 0.225,
+          "amount_usd": 1800.0,
+          "quantity": 8000.0,
+          "execution_status": "pending_not_executed"
+        },
+        {
+          "event_time_local": "2026-08-18T13:23:48-06:00",
+          "type": "available_balance_reserved",
+          "scope": [
+            "BEAT pending",
+            "LAB pending"
+          ],
+          "reserved_usd": 5374.98,
+          "reserved_orders_total_usd": 7200.0,
+          "shortfall_usd": 1825.02
+        }
+      ],
+      "accounting_effect": {
+        "available_balance_before_usd": 5374.98,
+        "available_balance_after_usd": 0.0,
+        "reserved_available_usd": 5374.98,
+        "credit_pending_gross_after_usd": 41400.0,
+        "credit_pending_net_after_usd": 36025.02
+      },
+      "notes": "Reserva operativa por volatilidad: no confirma ejecucion de BEAT 4 ni de LAB/BEAT pendientes; solo deja saldo libre en cero hasta nueva instruccion o fill confirmado."
     }
   ],
-  "updated_at": "2026-08-18T13:18:19-06:00"
+  "updated_at": "2026-08-18T13:23:48-06:00"
 }

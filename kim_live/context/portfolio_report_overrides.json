@@ -1,9 +1,9 @@
 {
   "portfolio_id": "sr_eli_2026",
   "portfolio_label": "A",
-  "standard_version": "KIM-0235",
-  "updated_at": "2026-08-18T13:20:00-06:00",
-  "standard_note": "KIM-0235: BEAT 1 pendiente 0.324 se bajo a 0.27, se compro por 1,800 USD y se vendio a mercado alrededor de 11:00 con utilidad neta +24 USD. Queda fuera de pendientes; BEAT 2 0.18 sigue pendiente.",
+  "standard_version": "KIM-0236",
+  "updated_at": "2026-08-18T13:25:00-06:00",
+  "standard_note": "KIM-0236: nueva orden pendiente BEAT 4 1,800 USD @0.225. Por volatilidad se reserva todo el saldo disponible 5,374.98 USD contra pendientes BEAT/LAB; saldo libre 0.00; credito pendiente neto 36,025.02.",
   "identifier_prefix": "A",
   "client_presentation_mode": "active_then_pending",
   "client_sort_mode": "loss_to_gain",
@@ -460,8 +460,8 @@
     ],
     "last_credit_reallocation_note": "KIM-0123: DOT/TRUMP/XRP pasan a credito completo; ADA/DOGE/NEAR quedan cubiertas completas para evitar posiciones parciales.",
     "report_protocol": {
-      "version": "KIM-0235",
-      "updated_at": "2026-08-18T13:20:00-06:00",
+      "version": "KIM-0236",
+      "updated_at": "2026-08-18T13:25:00-06:00",
       "name": "Estado de cuenta Sr. Eli - Balance de Credito",
       "purpose": "Formato cliente para explicar fondeos, profit, ordenes cubiertas, ordenes compradas a credito y pendientes por comprar sin mezclar con reporte de precios.",
       "client_facing_fundings": [
@@ -553,10 +553,10 @@
       "realized_profit_note": "KIM-0235: BEAT 1 vendido a mercado con utilidad neta confirmada de +24.00 USD; profit realizado actualizado despues de KIM-0234.",
       "client_total_net_considered_usd": 56883.97,
       "firm_assigned_usd": 56883.97,
-      "available_balance_usd": 5374.98,
+      "available_balance_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 39600.0,
-      "credit_total_usd": 39600.0,
+      "credit_pending_execution_usd": 36025.02,
+      "credit_total_usd": 36025.02,
       "covered_orders": [
         [
           "ADA",
@@ -712,6 +712,10 @@
         [
           "VELVET 0.4050",
           1800.0
+        ],
+        [
+          "BEAT 4 0.225",
+          1800.0
         ]
       ],
       "language_rules": [
@@ -775,7 +779,8 @@
         "KIM-0232: BEAT 0.27 comprado por 1,800 USD; descontar compra + 1.2% del saldo disponible. BEAT 3 activa.",
         "KIM-0233: Cysic/CYS pendiente baja de 0.45 a 0.36 por 1,800 USD; sin ejecucion y sin descuento de saldo disponible.",
         "KIM-0234: BEAT 3 se corrige a 900 USD @0.2808 + 900 USD @0.27, stop 15% abajo ejecutado en 0.234; cerrar posicion y sumar neto 1,511.64 USD a saldo disponible.",
-        "KIM-0235: BEAT 1 pendiente 0.324 se bajo a 0.27, se ejecuto por 1,800 USD y se vendio a mercado aprox 11:00 con utilidad neta +24 USD. Quitar de pendientes."
+        "KIM-0235: BEAT 1 pendiente 0.324 se bajo a 0.27, se ejecuto por 1,800 USD y se vendio a mercado aprox 11:00 con utilidad neta +24 USD. Quitar de pendientes.",
+        "KIM-0236: agregar BEAT 4 pendiente 1,800 USD @0.225; por volatilidad reservar/descontar todo saldo disponible contra pendientes BEAT/LAB. Saldo libre 0.00 USD."
       ],
       "latest_funding_note": "KIM-0205: se registra fondeo nuevo confirmado por recibo del 06-ago-2026 por 180,000 MXN a TC 17.21 = 10,459.04 USD. Depositos totales 1,080,000 MXN; menos unico retiro de 90,000 MXN quedan 990,000 MXN netos. El fondeo queda como saldo disponible y no se aplica automaticamente a credito sin instruccion expresa.",
       "client_balance_section_titles": {
@@ -794,17 +799,17 @@
       "forbidden_balance_phrases": [
         "pendientes de pago"
       ],
-      "latest_format_note": "KIM-0235: BEAT 1 cerrada con +24 USD; BEAT 2 0.18 permanece pendiente; BEAT 3 ya estaba cerrada por stop.",
-      "visible_order_count": 38,
+      "latest_format_note": "KIM-0236: agregar BEAT 4 pendiente 0.225; saldo disponible libre 0 por reserva BEAT/LAB; mostrar credito pendiente neto 36,025.02 y pendiente bruto 41,400 si aplica.",
+      "visible_order_count": 39,
       "section_count_validation": {
         "covered_orders": 16,
         "covered_active": 16,
         "cash_funded_pending": 0,
         "bought_on_credit": 0,
         "bought_on_credit_pending_payment": 0,
-        "pending_on_credit": 22,
-        "total_visible_orders": 38,
-        "client_visible_lines": 38,
+        "pending_on_credit": 23,
+        "total_visible_orders": 39,
+        "client_visible_lines": 39,
         "accounting_underlying_orders": 41,
         "rule": "KIM-0225: BEAT 1 activa; BEAT 2/3/4 pendientes a credito.",
         "cash_funded_pending_orders": 0,
@@ -849,11 +854,12 @@
         "KIM-0232: calculo recuperacion BEAT 0.27: vender aprox 0.3752 para perdida neta BEAT; 0.4910 para BEAT + FTT relacionado.",
         "KIM-0233: Cysic/CYS pendiente actualizada a 0.36; credito pendiente total no cambia porque monto sigue 1,800 USD.",
         "KIM-0234: BEAT 3 cerrada por stop; perdida neta -309.96 USD. Saldo disponible 5,350.98 USD; credito pendiente por ejecutar 41,400 USD.",
-        "KIM-0235: cronologia BEAT: primero BEAT 1 0.27 vendido con +24; despues las dos ordenes 900+900 cerradas por stop como BEAT 3/KIM-0234."
+        "KIM-0235: cronologia BEAT: primero BEAT 1 0.27 vendido con +24; despues las dos ordenes 900+900 cerradas por stop como BEAT 3/KIM-0234.",
+        "KIM-0236: pending bruto 41,400 USD; saldo reservado BEAT/LAB 5,374.98 USD; credito pendiente neto 36,025.02 USD; faltante BEAT/LAB 1,825.02 USD."
       ],
       "covered_orders_subtotal_usd": 50254.0,
       "bought_on_credit_pending_payment_subtotal_usd": 0.0,
-      "pending_to_buy_on_credit_subtotal_usd": 39600.0,
+      "pending_to_buy_on_credit_subtotal_usd": 41400.0,
       "pending_orders_heading": "Órdenes pendientes 📋✅",
       "pending_orders_heading_required": true,
       "pending_orders_heading_note": "Use this exact heading whenever separating pending orders in WhatsApp/report output.",
@@ -878,7 +884,7 @@
       ],
       "client_withdrawal_fee_usd": 61.82,
       "client_withdrawal_total_debit_usd": 5213.51,
-      "pending_on_credit_orders": 22,
+      "pending_on_credit_orders": 23,
       "available_if_cover_kim0183_bought_credit_usd": 1114.1,
       "kim0183_consolidated_orders": {
         "DOT": {
@@ -1035,7 +1041,7 @@
       "executed_bought_orders_gross_usd": 12600.0,
       "available_balance_applied_to_executed_orders_usd": 12664.8,
       "credit_bought_pending_payment_gross_usd": 0.0,
-      "available_balance_rule": "KIM-0235: BEAT 1 se ejecuta en 0.27 y se vende a mercado con utilidad neta +24.00 USD; saldo disponible final 5,374.98 USD.",
+      "available_balance_rule": "KIM-0236: no queda saldo libre; 5,374.98 USD quedan reservados contra pendientes BEAT/LAB por volatilidad. Credito pendiente neto por ejecutar 36,025.02 USD.",
       "client_facing_movements": [
         {
           "date": "06-mar-2025",
@@ -1398,11 +1404,11 @@
           "source": "doctor_instruction_2026_08_17_cysic_to_036"
         }
       ],
-      "pending_orders_total_visible": 22,
-      "pending_orders_breakdown": "22 a credito; BEAT 1 fue ejecutada en 0.27 y vendida a mercado con +24 USD; queda BEAT 2 0.18 pendiente, mas LAB 2/LAB 3 y demas pendientes.",
-      "note": "KIM-0235: BEAT 1 pendiente 0.324 se bajo a 0.27, se compro por 1,800 USD y se vendio a mercado aprox 11:00 con utilidad neta confirmada +24 USD. Despues ocurrieron las dos ordenes de BEAT 3 registradas en KIM-0234.",
+      "pending_orders_total_visible": 23,
+      "pending_orders_breakdown": "23 pendientes visibles. Por volatilidad se reserva todo el saldo disponible contra BEAT/LAB: BEAT 2 0.18, BEAT 4 0.225, LAB 2 0.063 y LAB 3 0.0324 suman 7,200 USD; saldo reservado 5,374.98; faltante operativo 1,825.02.",
+      "note": "KIM-0236: nueva pendiente BEAT 4 por 1,800 USD a 0.225. Se reserva/descuenta todo el saldo disponible para pendientes BEAT/LAB por volatilidad; saldo libre 0.00 USD.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
-      "visible_live_orders": 38,
+      "visible_live_orders": 39,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -1456,7 +1462,7 @@
       "ftt_sale_net_pnl_usd": -762.31,
       "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
       "active_order_count": 16,
-      "pending_order_count": 22,
+      "pending_order_count": 23,
       "beat_second_pending_state": "executed_confirmed",
       "beat_second_execution_price": 0.909,
       "beat_second_execution_amount_usd": 1800.0,
@@ -1511,8 +1517,8 @@
       "lab_0081_pending_status": "cancelled_not_executed_kim0228",
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
-      "beat_label_rule": "BEAT 1 = cerrada mercado +24 USD; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234.",
-      "id": "KIM-0235",
+      "beat_label_rule": "BEAT 1 = cerrada mercado +24 USD; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234; BEAT 4 = pendiente 0.225.",
+      "id": "KIM-0236",
       "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
       "cysic_pending_quantity": 5000.0,
@@ -1566,7 +1572,35 @@
       "beat_1_market_sale_gross_usd": 1868.02,
       "beat_1_market_sale_fee_usd": 22.42,
       "beat_1_market_sale_estimated_price": 0.2802024291497976,
-      "beat_1_state": "sold_market_kim0235"
+      "beat_1_state": "sold_market_kim0235",
+      "available_balance_before_pending_reserve_usd": 5374.98,
+      "reserved_available_for_pending_beat_lab_usd": 5374.98,
+      "reserved_pending_orders_total_usd": 7200.0,
+      "reserved_pending_orders_shortfall_usd": 1825.02,
+      "reserved_pending_orders_note": "KIM-0236: por volatilidad se descuenta/reserva todo el saldo disponible contra pendientes BEAT/LAB. Pendientes BEAT/LAB suman 7,200 USD; saldo reservado 5,374.98; faltante operativo 1,825.02 si todas ejecutan.",
+      "credit_pending_execution_gross_usd": 41400.0,
+      "beat_4_pending_price": 0.225,
+      "beat_4_pending_amount_usd": 1800.0,
+      "beat_4_pending_quantity": 8000.0,
+      "beat_4_pending_state": "pending_not_executed_reserved_from_available_shortfall",
+      "beat_lab_pending_reserved_orders": [
+        {
+          "label": "BEAT 2 0.18",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "BEAT 4 0.225",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "LAB 2 0.063",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "LAB 3 0.0324",
+          "amount_usd": 1800.0
+        }
+      ]
     },
     "funding_reconciliation": {
       "updated_at": "2026-08-06T18:15:00+00:00",
@@ -2083,18 +2117,18 @@
       "xrp_consolidated_entry_price": 1.1990891672807664,
       "xrp_consolidated_quantity": 3002.27881147813,
       "xrp_consolidated_credit_usd": 1800.0,
-      "available_balance_usd": 5374.98,
+      "available_balance_usd": 0.0,
       "available_balance_before_executed_orders_usd": 1114.1,
       "available_balance_applied_to_executed_orders_usd": 12664.8,
       "executed_bought_orders_gross_usd": 12600.0,
       "credit_bought_pending_payment_gross_usd": 0.0,
       "credit_bought_pending_payment_usd": 0.0,
-      "credit_pending_execution_usd": 39600.0,
-      "credit_total_usd": 39600.0,
+      "credit_pending_execution_usd": 36025.02,
+      "credit_total_usd": 36025.02,
       "firm_assigned_usd": 56883.97,
-      "available_balance_rule": "KIM-0235: BEAT 1 se ejecuta en 0.27 y se vende a mercado con utilidad neta +24.00 USD; saldo disponible final 5,374.98 USD.",
-      "pending_on_credit_orders": 22,
-      "visible_live_orders": 38,
+      "available_balance_rule": "KIM-0236: no queda saldo libre; 5,374.98 USD quedan reservados contra pendientes BEAT/LAB por volatilidad. Credito pendiente neto por ejecutar 36,025.02 USD.",
+      "pending_on_credit_orders": 23,
+      "visible_live_orders": 39,
       "accounting_underlying_orders": 39,
       "icp_refuerzo_pending_price": 1.368,
       "icp_refuerzo_pending_amount_usd": 1800.0,
@@ -2116,9 +2150,9 @@
       "goat_refuerzo_pending_amount_usd": 1800.0,
       "goat_refuerzo_pending_quantity": 214822.77121374867,
       "goat_refuerzo_state": "pending_on_credit_not_executed",
-      "id": "KIM-0235",
-      "updated_at": "2026-08-18T13:20:00-06:00",
-      "note": "KIM-0235: BEAT 1 pendiente 0.324 se bajo a 0.27, se compro por 1,800 USD y se vendio a mercado aprox 11:00 con utilidad neta confirmada +24 USD. Despues ocurrieron las dos ordenes de BEAT 3 registradas en KIM-0234.",
+      "id": "KIM-0236",
+      "updated_at": "2026-08-18T13:25:00-06:00",
+      "note": "KIM-0236: nueva pendiente BEAT 4 por 1,800 USD a 0.225. Se reserva/descuenta todo el saldo disponible para pendientes BEAT/LAB por volatilidad; saldo libre 0.00 USD.",
       "client_total_net_considered_usd": 56883.97,
       "client_funding_total_mxn": 1080000,
       "client_funding_total_usd": 62055.64,
@@ -2316,12 +2350,12 @@
           "source": "doctor_instruction_2026_08_17_cysic_to_036"
         }
       ],
-      "pending_orders_total_visible": 22,
-      "pending_orders_breakdown": "22 a credito; BEAT 1 fue ejecutada en 0.27 y vendida a mercado con +24 USD; queda BEAT 2 0.18 pendiente, mas LAB 2/LAB 3 y demas pendientes.",
+      "pending_orders_total_visible": 23,
+      "pending_orders_breakdown": "23 pendientes visibles. Por volatilidad se reserva todo el saldo disponible contra BEAT/LAB: BEAT 2 0.18, BEAT 4 0.225, LAB 2 0.063 y LAB 3 0.0324 suman 7,200 USD; saldo reservado 5,374.98; faltante operativo 1,825.02.",
       "credit_bought_pending_payment_subtotal_usd": 0.0,
       "cash_funded_pending_orders": [],
       "cash_funded_pending_total_usd": 0.0,
-      "visible_order_count": 38,
+      "visible_order_count": 39,
       "lab_consolidated_amount_usd": 3600.0,
       "lab_consolidated_entry_price": 0.29823229523770767,
       "lab_consolidated_quantity": 12071.127297365969,
@@ -2346,13 +2380,13 @@
       "wld_refuerzo_kim0217_pending_amount_usd": 1800.0,
       "wld_refuerzo_kim0217_pending_price": 0.225,
       "wld_refuerzo_kim0217_pending_quantity": 8000.0,
-      "latest_format_note": "KIM-0235: BEAT 1 cerrada con +24 USD; BEAT 2 0.18 permanece pendiente; BEAT 3 ya estaba cerrada por stop.",
+      "latest_format_note": "KIM-0236: agregar BEAT 4 pendiente 0.225; saldo disponible libre 0 por reserva BEAT/LAB; mostrar credito pendiente neto 36,025.02 y pendiente bruto 41,400 si aplica.",
       "beat_audiera_pending_amount_usd": 1800.0,
       "beat_reconsidered_pending_price": 0.63,
       "beat_reconsidered_pending_quantity": 2857.1428571428573,
       "beat_reconsidered_pending_amount_usd": 1800.0,
       "beat_reconsidered_state": "pending_on_credit_not_executed",
-      "pending_to_buy_on_credit_subtotal_usd": 39600.0,
+      "pending_to_buy_on_credit_subtotal_usd": 41400.0,
       "client_label_rule": "Ocultar terminos internos de calculo en reporte cliente: consolidada, consolidado, aglomerada, aglomerado, agglomerated, consolidated.",
       "client_forbidden_terms": [
         "consolidada",
@@ -2377,7 +2411,7 @@
       "ftt_sale_net_pnl_usd": -762.31,
       "operation_buy_fee_rule": "KIM-0222: cada compra ejecutada descuenta del saldo disponible el monto de compra mas 1.2% de comision.",
       "active_order_count": 16,
-      "pending_order_count": 22,
+      "pending_order_count": 23,
       "covered_orders": [
         [
           "ADA",
@@ -2533,6 +2567,10 @@
         [
           "VELVET 0.4050",
           1800.0
+        ],
+        [
+          "BEAT 4 0.225",
+          1800.0
         ]
       ],
       "beat_second_pending_state": "executed_confirmed",
@@ -2589,8 +2627,8 @@
       "lab_0081_pending_status": "cancelled_not_executed_kim0228",
       "lab_0081_cancelled_credit_reduction_usd": 1800.0,
       "lab_label_rule": "LAB 1 = posicion abierta; LAB 2 = pendiente 0.063; LAB 3 = pendiente 0.0324.",
-      "beat_label_rule": "BEAT 1 = cerrada mercado +24 USD; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234.",
-      "version": "KIM-0235",
+      "beat_label_rule": "BEAT 1 = cerrada mercado +24 USD; BEAT 2 = pendiente 0.18; BEAT 3 = cerrada por stop loss 0.234; BEAT 4 = pendiente 0.225.",
+      "version": "KIM-0236",
       "cysic_pending_price": 0.36,
       "cysic_pending_amount_usd": 1800.0,
       "cysic_pending_quantity": 5000.0,
@@ -2646,7 +2684,35 @@
       "beat_1_market_sale_gross_usd": 1868.02,
       "beat_1_market_sale_fee_usd": 22.42,
       "beat_1_market_sale_estimated_price": 0.2802024291497976,
-      "beat_1_state": "sold_market_kim0235"
+      "beat_1_state": "sold_market_kim0235",
+      "available_balance_before_pending_reserve_usd": 5374.98,
+      "reserved_available_for_pending_beat_lab_usd": 5374.98,
+      "reserved_pending_orders_total_usd": 7200.0,
+      "reserved_pending_orders_shortfall_usd": 1825.02,
+      "reserved_pending_orders_note": "KIM-0236: por volatilidad se descuenta/reserva todo el saldo disponible contra pendientes BEAT/LAB. Pendientes BEAT/LAB suman 7,200 USD; saldo reservado 5,374.98; faltante operativo 1,825.02 si todas ejecutan.",
+      "credit_pending_execution_gross_usd": 41400.0,
+      "beat_4_pending_price": 0.225,
+      "beat_4_pending_amount_usd": 1800.0,
+      "beat_4_pending_quantity": 8000.0,
+      "beat_4_pending_state": "pending_not_executed_reserved_from_available_shortfall",
+      "beat_lab_pending_reserved_orders": [
+        {
+          "label": "BEAT 2 0.18",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "BEAT 4 0.225",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "LAB 2 0.063",
+          "amount_usd": 1800.0
+        },
+        {
+          "label": "LAB 3 0.0324",
+          "amount_usd": 1800.0
+        }
+      ]
     }
   },
   "manual_entries": [
@@ -4138,6 +4204,29 @@
       "net_sale_usd": 1511.64,
       "net_pnl_usd": -309.96,
       "sold_at": "2026-08-17"
+    },
+    {
+      "id": "kim0236-beat4-pending-0225",
+      "order": 64,
+      "symbol": "BEATUSDT",
+      "label": "BEAT 4/USDT orden pendiente 0.225",
+      "client_label": "BEAT 4/USDT orden pendiente 0.225",
+      "state": "pending",
+      "status": "pending_reserved_from_available_shortfall",
+      "side": "BUY",
+      "invested_usd": 1800.0,
+      "entry_price": 0.225,
+      "entry_price_display": "0.225",
+      "quantity": 8000.0,
+      "credit": true,
+      "credit_usd": 1800.0,
+      "source": "doctor_instruction_2026_08_18_beat_0225_pending_reserve_volatility",
+      "notes": "KIM-0236: nueva orden pendiente BEAT por 1,800 USD a 0.225. Por volatilidad, el saldo disponible se reserva contra pendientes BEAT/LAB; esta orden sigue esperando ejecucion y no es fill confirmado.",
+      "updated_at": "2026-08-18T13:25:00-06:00",
+      "no_auto_fill": true,
+      "requires_manual_fill_confirmation": true,
+      "execution_status": "pending_not_executed",
+      "credit_mark": "(c)"
     }
   ],
   "closed_positions": [
@@ -5930,6 +6019,32 @@
         "credit_pending_execution_usd": 39600.0,
         "pending_order_count": 22,
         "visible_live_orders": 38
+      }
+    },
+    {
+      "version": "KIM-0236",
+      "date": "2026-08-18",
+      "summary": "Nueva pendiente BEAT 0.225 y reserva de saldo contra pendientes BEAT/LAB por volatilidad.",
+      "accounting_change": "Saldo disponible libre baja de 5,374.98 a 0.00 USD por reserva operativa. Pendientes BEAT/LAB suman 7,200 USD; faltante operativo 1,825.02. Credito pendiente bruto 41,400 USD; neto tras reserva 36,025.02 USD.",
+      "changes": {
+        "new_pending_order": {
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "entry_price": 0.225,
+          "amount_usd": 1800.0,
+          "quantity": 8000.0
+        },
+        "reserve": {
+          "available_before_usd": 5374.98,
+          "reserved_usd": 5374.98,
+          "available_after_usd": 0.0,
+          "reserved_orders_total_usd": 7200.0,
+          "shortfall_usd": 1825.02
+        },
+        "credit_pending_gross_usd": 41400.0,
+        "credit_pending_net_usd": 36025.02,
+        "pending_order_count": 23,
+        "visible_live_orders": 39
       }
     }
   ],
@@ -9778,6 +9893,32 @@
         "credit_pending_execution_usd": 39600.0,
         "pending_order_count": 22,
         "visible_live_orders": 38
+      }
+    },
+    {
+      "version": "KIM-0236",
+      "date": "2026-08-18",
+      "summary": "Nueva pendiente BEAT 0.225 y reserva de saldo contra pendientes BEAT/LAB por volatilidad.",
+      "accounting_change": "Saldo disponible libre baja de 5,374.98 a 0.00 USD por reserva operativa. Pendientes BEAT/LAB suman 7,200 USD; faltante operativo 1,825.02. Credito pendiente bruto 41,400 USD; neto tras reserva 36,025.02 USD.",
+      "changes": {
+        "new_pending_order": {
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "entry_price": 0.225,
+          "amount_usd": 1800.0,
+          "quantity": 8000.0
+        },
+        "reserve": {
+          "available_before_usd": 5374.98,
+          "reserved_usd": 5374.98,
+          "available_after_usd": 0.0,
+          "reserved_orders_total_usd": 7200.0,
+          "shortfall_usd": 1825.02
+        },
+        "credit_pending_gross_usd": 41400.0,
+        "credit_pending_net_usd": 36025.02,
+        "pending_order_count": 23,
+        "visible_live_orders": 39
       }
     }
   ],
