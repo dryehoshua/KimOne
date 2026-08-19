@@ -80,7 +80,43 @@
         "credit_pending_net_after_usd": 36025.02
       },
       "notes": "Reserva operativa por volatilidad: no confirma ejecucion de BEAT 4 ni de LAB/BEAT pendientes; solo deja saldo libre en cero hasta nueva instruccion o fill confirmado."
+    },
+    {
+      "version": "KIM-0237",
+      "instruction_received_at": "2026-08-19T10:22:00-06:00",
+      "recorded_at": "2026-08-19T10:22:00-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "Se baja BEAT 4 de 0.225 a 0.1440 por 1,800 USD. La orden BEAT 2 en 0.18 sigue vigente sin cambios. No hay ejecucion confirmada.",
+      "events": [
+        {
+          "event_time_local": "2026-08-19T10:22:00-06:00",
+          "type": "pending_order_price_adjusted",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "from_price": 0.225,
+          "to_price": 0.144,
+          "amount_usd": 1800.0,
+          "quantity": 12500.0,
+          "execution_status": "pending_not_executed"
+        },
+        {
+          "event_time_local": "2026-08-19T10:22:00-06:00",
+          "type": "pending_order_unchanged",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 2",
+          "entry_price": 0.18,
+          "amount_usd": 1800.0,
+          "quantity": 10000.0,
+          "execution_status": "pending_not_executed"
+        }
+      ],
+      "accounting_effect": {
+        "available_balance_after_usd": 0.0,
+        "credit_pending_gross_after_usd": 41400.0,
+        "credit_pending_net_after_usd": 36025.02
+      },
+      "notes": "Solo cambia precio/cantidad de BEAT 4; el monto sigue 1,800 USD a credito pendiente y no modifica saldo disponible."
     }
   ],
-  "updated_at": "2026-08-18T13:23:48-06:00"
+  "updated_at": "2026-08-19T10:22:00-06:00"
 }
