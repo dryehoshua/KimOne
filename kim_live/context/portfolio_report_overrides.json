@@ -761,6 +761,7 @@
         "KIM-0170: APT debe reportarse como posicion consolidada de 3,600 USD a promedio 0.7425; no mostrar APT refuerzo como linea separada.",
         "KIM-0170: LUNC debe reportarse como posicion consolidada de 3,600 USD a promedio 0.00007271338677555; no duplicar LUNC refuerzo.",
         "KIM-0171: separar siempre las ordenes pendientes con el encabezado exacto \"Órdenes pendientes 📋✅\".",
+        "KIM-0238: en Analisis volumetrico usar doble salto de linea entre cada moneda para que sea legible en WhatsApp.",
         "KIM-0172: PENGU, BONK, FLOKI y SHIB son órdenes pendientes a crédito; usar solo precio sugerido de compra como entrada, no precio actual informado en chat.",
         "KIM-0173: LAB/USDT precio actual externo 0.1499 USDT; fuente primaria Gate spot LAB_USDT, contraste CoinGecko 0.149415; LAB 1 sigue activa en spot a 4.5.",
         "KIM-0180: LAB orden 0.081 por 1,378.01 USD es pendiente fondeada con saldo disponible; no reportar como credito ni ejecutada.",
