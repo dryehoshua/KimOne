@@ -155,7 +155,49 @@
         "buy_fee_usd": 21.6
       },
       "notes": "BEAT 2 se manda aparte al cliente; BEAT 4 no debe moverse a activa hasta confirmacion expresa."
+    },
+    {
+      "version": "KIM-0240",
+      "instruction_received_at": "2026-08-19T11:24:47-06:00",
+      "recorded_at": "2026-08-19T11:24:47-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "BEAT 2 comprada en 0.18 se cerró por stop loss 7.5% en 0.1665. Pérdida neta -176.58 USD. BEAT 4 0.1440 sigue pendiente.",
+      "events": [
+        {
+          "event_time_local": "2026-08-19T11:24:47-06:00",
+          "type": "stop_loss_executed",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 2",
+          "entry_price": 0.18,
+          "stop_loss_pct": 7.5,
+          "sell_price": 0.1665,
+          "amount_usd": 1800.0,
+          "quantity": 10000.0,
+          "gross_sale_usd": 1665.0,
+          "buy_fee_usd": 21.6,
+          "sell_fee_usd": 19.98,
+          "net_sale_usd": 1645.02,
+          "net_pnl_usd": -176.58
+        },
+        {
+          "event_time_local": "2026-08-19T11:24:47-06:00",
+          "type": "pending_order_still_open",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "entry_price": 0.144,
+          "amount_usd": 1800.0,
+          "quantity": 12500.0,
+          "execution_status": "pending_not_executed"
+        }
+      ],
+      "accounting_effect": {
+        "realized_profit_delta_usd": -176.58,
+        "bought_on_credit_delta_usd": -1800.0,
+        "available_balance_after_usd": 0.0,
+        "pending_credit_gross_after_usd": 39600.0
+      },
+      "notes": "Se registra solo pérdida neta por stop; no se ejecuta BEAT 4."
     }
   ],
-  "updated_at": "2026-08-19T11:13:55-06:00"
+  "updated_at": "2026-08-19T11:24:47-06:00"
 }
