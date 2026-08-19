@@ -197,7 +197,33 @@
         "pending_credit_gross_after_usd": 39600.0
       },
       "notes": "Se registra solo pérdida neta por stop; no se ejecuta BEAT 4."
+    },
+    {
+      "version": "KIM-0241",
+      "instruction_received_at": "2026-08-19T11:30:00-06:00",
+      "recorded_at": "2026-08-19T11:30:00-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "BEAT 4 pendiente se mueve de 0.1440 a 0.1260 por 1,800 USD. No ejecutada.",
+      "events": [
+        {
+          "event_time_local": "2026-08-19T11:30:00-06:00",
+          "type": "pending_order_price_adjusted",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "from_price": 0.144,
+          "to_price": 0.126,
+          "amount_usd": 1800.0,
+          "quantity": 14285.71428571,
+          "execution_status": "pending_not_executed"
+        }
+      ],
+      "accounting_effect": {
+        "available_balance_after_usd": 0.0,
+        "pending_credit_gross_after_usd": 39600.0,
+        "pending_credit_delta_usd": 0.0
+      },
+      "notes": "Solo cambia precio/cantidad de BEAT 4; BEAT 2 permanece cerrada por stop loss."
     }
   ],
-  "updated_at": "2026-08-19T11:24:47-06:00"
+  "updated_at": "2026-08-19T11:30:00-06:00"
 }
