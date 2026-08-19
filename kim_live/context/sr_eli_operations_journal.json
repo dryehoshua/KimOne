@@ -116,7 +116,46 @@
         "credit_pending_net_after_usd": 36025.02
       },
       "notes": "Solo cambia precio/cantidad de BEAT 4; el monto sigue 1,800 USD a credito pendiente y no modifica saldo disponible."
+    },
+    {
+      "version": "KIM-0239",
+      "instruction_received_at": "2026-08-19T11:13:55-06:00",
+      "recorded_at": "2026-08-19T11:13:55-06:00",
+      "source": "doctor_chat_current_thread",
+      "summary": "Se confirma compra de BEAT 2 por 1,800 USD a 0.18. BEAT 4 en 0.1440 sigue pendiente no ejecutada.",
+      "events": [
+        {
+          "event_time_local": "2026-08-19T11:13:55-06:00",
+          "type": "pending_order_executed",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 2",
+          "entry_price": 0.18,
+          "amount_usd": 1800.0,
+          "quantity": 10000.0,
+          "buy_fee_rate": 0.012,
+          "buy_fee_usd": 21.6,
+          "execution_status": "executed_confirmed",
+          "funding_status": "bought_on_credit_pending_coverage"
+        },
+        {
+          "event_time_local": "2026-08-19T11:13:55-06:00",
+          "type": "pending_order_still_open",
+          "symbol": "BEATUSDT",
+          "label": "BEAT 4",
+          "entry_price": 0.144,
+          "amount_usd": 1800.0,
+          "quantity": 12500.0,
+          "execution_status": "pending_not_executed"
+        }
+      ],
+      "accounting_effect": {
+        "available_balance_after_usd": 0.0,
+        "bought_on_credit_delta_usd": 1800.0,
+        "pending_credit_delta_usd": -1800.0,
+        "buy_fee_usd": 21.6
+      },
+      "notes": "BEAT 2 se manda aparte al cliente; BEAT 4 no debe moverse a activa hasta confirmacion expresa."
     }
   ],
-  "updated_at": "2026-08-19T10:22:00-06:00"
+  "updated_at": "2026-08-19T11:13:55-06:00"
 }
